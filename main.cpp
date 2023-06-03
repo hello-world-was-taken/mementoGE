@@ -12,40 +12,46 @@ int main()
 
 void open_window() {
     GLFWwindow* window;
-    GLenum glewInitResult;
 
-   /* Init GLFW */
-   if( !glfwInit() )
-      exit( EXIT_FAILURE );
+    /* Init GLFW */
+    if( !glfwInit() ) exit( EXIT_FAILURE );
 
-   window = glfwCreateWindow( 400, 400, "Boing (classic Amiga demo)", NULL, NULL );
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    #ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    #endif
 
-   if (!window)
-   {
-       glfwTerminate();
-       exit( EXIT_FAILURE );
-   }
-
-    /* Init Glew*/
-    glewInitResult = glewInit();
-    if (glewInitResult != GLEW_OK) {
-        std::cout << "Error initializing glew" << std::endl;
+    window = glfwCreateWindow( 400, 400, "OpenGL Playaround", NULL, NULL );
+    glfwMakeContextCurrent(window);
+    if (!window)
+    {
+        glfwTerminate();
+        exit( EXIT_FAILURE );
     }
 
-   glfwSetWindowAspectRatio(window, 1, 1);
+    glfwSetWindowAspectRatio(window, 1, 1);
+    
+    /* Initialize Glew. Must be done after glfw is initialized!*/
+    GLenum res = glewInit();
+    if (res != GLEW_OK) {
+        fprintf(stderr, "Error: '%s'\n", glewGetErrorString(res));
+        return ;
+    }
 
-   /* Main loop */
-   for (;;)
-   {
-       /* Swap buffers */
-       glfwSwapBuffers(window);
-       glfwPollEvents();
+    /* Main loop */
+    for (;;)
+    {
+        /* Swap buffers */
+        glfwSwapBuffers(window);
+        glfwPollEvents();
 
-       /* Check if we are still running */
-       if (glfwWindowShouldClose(window))
-           break;
-   }
+        /* Check if we are still running */
+        if (glfwWindowShouldClose(window))
+            break;
+    }
 
-   glfwTerminate();
-   exit( EXIT_SUCCESS );
+    glfwTerminate();
+    exit( EXIT_SUCCESS );
 }
