@@ -11,19 +11,19 @@ int main()
 }
 
 void open_window() {
-    GLFWwindow* window;
 
-    /* Init GLFW */
-    if( !glfwInit() ) exit( EXIT_FAILURE );
-
+    /* Asking for core profile */
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     #endif
+    
+    /* Init GLFW */
+    if( !glfwInit() ) exit( EXIT_FAILURE );
 
-    window = glfwCreateWindow( 400, 400, "OpenGL Playaround", NULL, NULL );
+    GLFWwindow* window = glfwCreateWindow( 400, 400, "OpenGL Playaround", NULL, NULL );
     glfwMakeContextCurrent(window);
     if (!window)
     {
@@ -41,15 +41,22 @@ void open_window() {
     }
 
     /* Main loop */
-    for (;;)
+    std::cout << "Drawing our triangle" << std::endl;
+    while (!glfwWindowShouldClose(window))
     {
+        glClear(GL_COLOR_BUFFER_BIT);
+        
+        /* Drawing our triangle */
+        glBegin(GL_TRIANGLES);
+        glVertex2f(-0.5f, -0.5f);
+        glVertex2f(0.0f, 0.5f);
+        glVertex2f(0.5f, -0.5f);
+        glEnd();
+        
+        
         /* Swap buffers */
         glfwSwapBuffers(window);
         glfwPollEvents();
-
-        /* Check if we are still running */
-        if (glfwWindowShouldClose(window))
-            break;
     }
 
     glfwTerminate();
