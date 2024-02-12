@@ -29,7 +29,7 @@ target_link_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     # 'glfw3' won't work. It should be just 'glfw'
     glfw
-    GLEW::glew
+    GLEW::glew  # For this one, I installed to the the system.
     ${OpenGL_FRAMEWORK}
     ${Cocoa_FRAMEWORK}
     ${IOKit_FRAMEWORK}
