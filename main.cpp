@@ -2,6 +2,8 @@
 #include<GL/glew.h>
 #include<GLFW/glfw3.h>
 
+#include "opengl/draw.h"
+
 void open_window();
 
 int main()
@@ -44,18 +46,7 @@ void open_window() {
     std::cout << "Drawing our triangle" << std::endl;
     while (!glfwWindowShouldClose(window))
     {
-        glClear(GL_COLOR_BUFFER_BIT);
-        
-        /* Drawing our triangle */
-        glBegin(GL_TRIANGLES);
-        glVertex2f(-0.5f, -0.5f);
-        glVertex2f(0.0f, 0.5f);
-        glVertex2f(0.5f, -0.5f);
-        glEnd();
-        
-        
-        /* Swap buffers */
-        glfwSwapBuffers(window);
+        drawTriangle(window);
         glfwPollEvents();
     }
 
