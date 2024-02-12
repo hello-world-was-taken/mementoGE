@@ -2,11 +2,14 @@ cmake_minimum_required(VERSION 3.26.4)
 
 project(opengl_playground)
 
+# Set C++ standard to C++11
+set(CMAKE_CXX_STANDARD 11)
+
 # add external libraries (glfw) as a submodule. We have to build glew manually, because it doesn't have CMakeLists.text. Therefore, we need to build it manually by running the Makefile it contains.
 add_subdirectory(${CMAKE_SOURCE_DIR}/lib/glfw)
 
 # since the imported libraries (glfw, glew) don't change, I don't think we need to add them here
-add_executable(${PROJECT_NAME} main.cpp)
+add_executable(${PROJECT_NAME} main.cpp opengl/draw.cpp)
 
 # get a hold of the frameworks we'll need. These are already installed and come with OSX.
 find_library(OpenGL_FRAMEWORK OpenGL)
