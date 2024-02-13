@@ -3,9 +3,9 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-struct Vertex {
-    float x, y, z;
-};
+#include "draw.h"
+#include "shader/create_shader.h"
+#include "../util/log_error.h"
 
 // Define vertices for a triangle
 std::vector<Vertex> vertices = {
@@ -14,35 +14,40 @@ std::vector<Vertex> vertices = {
     {  1.0f, -1.0f, 0.0f }, // bottom right
 };
 
-GLuint vbo;
+GLuint vao; // New VAO variable
+GLuint vbo; // New VBO variable
 
-// Function to generate, bind and allocate to the vertex buffer object
+// Function to generate, bind and allocate to the vertex buffer object and vertex array object
 void setBufferData() {
+    glGenVertexArrays(1, &vao); // Generate VAO
+    glBindVertexArray(vao); // Bind VAO
+
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
-    
-    // Unbind the VBO
+
+    // Specify vertex attribute pointer
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+
+    // Unbind the VBO and VAO
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
 }
 
 void drawTriangle(GLFWwindow* window) {
     setBufferData();
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // rebounding the buffer since openGL is a state machine and we might have unbound it or bound another buffer
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBindVertexArray(vao); // Bind VAO
     
-    // Enable vertex attribute array
-    glEnableVertexAttribArray(0);
-    // Specify vertex attribute pointer
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-
+    glUseProgram(createShaderProgram());
+    
+    glClearError();
     glDrawArrays(GL_TRIANGLES, 0, vertices.size());
-    glEnableVertexAttribArray(0);
+    glCheckError("glDrawArrays", __FILE__, __LINE__);
 
-    // Unbind the VBO
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0); // Unbind VAO
 
     glfwSwapBuffers(window);
 }
