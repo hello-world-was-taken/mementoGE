@@ -1,7 +1,3 @@
-#include<iostream>
-#include<GL/glew.h>
-#include<GLFW/glfw3.h>
-
 #include "opengl/draw.h"
 
 void open_window();
@@ -13,17 +9,18 @@ int main()
 }
 
 void open_window() {
-
-    /* Asking for core profile */
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    #ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    #endif
     
     /* Init GLFW */
     if( !glfwInit() ) exit( EXIT_FAILURE );
+
+    /* Asking for core profile. Should be after glfwInit and before creating a windo. Otherwise, it won't work.*/
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    #ifdef __APPLE__
+    std::cout << "Running on Mac" << std::endl;
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    #endif
 
     GLFWwindow* window = glfwCreateWindow( 400, 400, "OpenGL Playaround", NULL, NULL );
     glfwMakeContextCurrent(window);
