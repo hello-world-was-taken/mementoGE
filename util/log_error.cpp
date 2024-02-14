@@ -1,7 +1,7 @@
 #include <iostream>
 #include <GL/glew.h>
 
-
+// TODO: We should update this to a MACRO
 void glClearError() {
     while (glGetError() != GL_NO_ERROR);
 }
