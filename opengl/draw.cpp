@@ -9,9 +9,16 @@
 
 // Define vertices for a triangle
 std::vector<Vertex> vertices = {
-    {  0.0f,  1.0f, 0.0f },  // top
-    { -1.0f, -1.0f, 0.0f }, // bottom left
-    {  1.0f, -1.0f, 0.0f }, // bottom right
+    { -0.5f,  0.5f, 0.0f }, // top left
+    { -0.5f, -0.5f, 0.0f }, // bottom left
+    {  0.5f, -0.5f, 0.0f }, // bottom right
+    {  0.5f,  0.5f, 0.0f }, // top right
+};
+
+// Define indices for the vertices
+unsigned int indices[] = {
+    0, 1, 2,
+    0, 3, 2
 };
 
 GLuint vao; // New VAO variable
@@ -25,6 +32,12 @@ void setBufferData() {
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+
+    // Use index buffer to specify the order of vertices
+    GLuint ibo;
+    glGenBuffers(1, &ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     // Specify vertex attribute pointer
     glEnableVertexAttribArray(0);
@@ -44,7 +57,8 @@ void drawTriangle(GLFWwindow* window) {
     glUseProgram(createShaderProgram());
     
     glClearError();
-    glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+    // glDrawArrays(GL_TRIANGLES, 0, vertices.size());
     glCheckError("glDrawArrays", __FILE__, __LINE__);
 
     glBindVertexArray(0); // Unbind VAO
