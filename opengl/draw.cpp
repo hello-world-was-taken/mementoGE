@@ -33,15 +33,15 @@ void setBufferData() {
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
 
+    // Specify vertex attribute pointer
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+
     // Use index buffer to specify the order of vertices
     GLuint ibo;
     glGenBuffers(1, &ibo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    // Specify vertex attribute pointer
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
 
     // Unbind the VBO and VAO
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -54,11 +54,24 @@ void drawTriangle(GLFWwindow* window) {
 
     glBindVertexArray(vao); // Bind VAO
     
-    glUseProgram(createShaderProgram());
+    unsigned int shader_program = createShaderProgram();
+    glUseProgram(shader_program);
+
+    // use uniform color
+    static float red = 0.0f;
+    static float increament = 0.5f;
+
+    if (red > 0)
+        increament = -0.5f;
+    else
+        increament = 0.5f;
+    red += increament;
+
+    int vertex_color_location = glGetUniformLocation(shader_program, "our_color");
+    glUniform4f(vertex_color_location, red, 0.5f, 0.5f, 1.0f);
     
     glClearError();
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-    // glDrawArrays(GL_TRIANGLES, 0, vertices.size());
     glCheckError("glDrawArrays", __FILE__, __LINE__);
 
     glBindVertexArray(0); // Unbind VAO
