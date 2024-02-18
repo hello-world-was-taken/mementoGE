@@ -8,11 +8,7 @@ int main()
     open_window();
 }
 
-void open_window() {
-    
-    /* Init GLFW */
-    if( !glfwInit() ) exit( EXIT_FAILURE );
-
+void setup_window_hints() {
     /* Asking for core profile. Should be after glfwInit and before creating a windo. Otherwise, it won't work.*/
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
@@ -21,6 +17,14 @@ void open_window() {
     std::cout << "Running on Mac" << std::endl;
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     #endif
+}
+
+void open_window() {
+    
+    /* Init GLFW */
+    if( !glfwInit() ) exit( EXIT_FAILURE );
+
+    setup_window_hints();
 
     GLFWwindow* window = glfwCreateWindow( 400, 400, "OpenGL Playaround", NULL, NULL );
     glfwMakeContextCurrent(window);

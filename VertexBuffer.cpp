@@ -1,16 +1,18 @@
+#include <GL/glew.h>
 #include "VertexBuffer.h"
 
+
 VertexBuffer::VertexBuffer(
-    unsigned int buffer_type, std::vector<Vertex> vertices, 
+    std::vector<Vertex> vertices, 
     unsigned int draw_type
     ){
     glGenBuffers(1, &this->m_id);
-    glBindBuffer(buffer_type, this->m_id);
-    glBufferData(buffer_type, vertices.size() * sizeof(Vertex), vertices.data(), draw_type);
+    glBindBuffer(GL_ARRAY_BUFFER, this->m_id);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), draw_type);
 }
 
 VertexBuffer::~VertexBuffer(){}
 
-void VertexBuffer::Bind(){}
+void VertexBuffer::bind() const {}
 
-void VertexBuffer::UnBind(){}
+void VertexBuffer::unbind() const{}
