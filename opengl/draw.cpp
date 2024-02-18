@@ -6,6 +6,7 @@
 #include "draw.h"
 #include "shader/create_shader.h"
 #include "../util/log_error.h"
+#include "../VertexBuffer.h"
 
 // Define vertices for a triangle
 std::vector<Vertex> vertices = {
@@ -29,9 +30,7 @@ void setBufferData() {
     glGenVertexArrays(1, &vao); // Generate VAO
     glBindVertexArray(vao); // Bind VAO
 
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+    VertexBuffer vb(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
 
     // Specify vertex attribute pointer
     glEnableVertexAttribArray(0);
