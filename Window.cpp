@@ -1,0 +1,78 @@
+#include "./Window.h"
+#include "opengl/draw.h"
+
+
+Window::Window(/* args */) {}
+
+
+Window::~Window() {}
+
+
+Window* Window::mp_window = nullptr;
+
+
+void Window::setUpWindowHints() const {
+    /* Asking for core profile. Should be after glfwInit and before creating a windo. Otherwise, it won't work.*/
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    #ifdef __APPLE__
+    std::cout << "Running on Mac" << std::endl;
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    #endif
+}
+
+
+void Window::initializeWindow() {
+    /* Init GLFW */
+    if( !glfwInit() ) exit( EXIT_FAILURE );
+
+    setUpWindowHints();
+
+    mp_glfw_window = glfwCreateWindow( m_width, m_height, mp_title, NULL, NULL );
+    glfwMakeContextCurrent(mp_glfw_window);
+    if (!mp_glfw_window)
+    {
+        glfwTerminate();
+        exit( EXIT_FAILURE );
+    }
+
+    // TODO: check if this affects our choice
+    // glfwSetWindowAspectRatio(window, 1, 1);
+    
+    /* Initialize Glew. Must be done after glfw is initialized!*/
+    GLenum res = glewInit();
+    if (res != GLEW_OK) {
+        fprintf(stderr, "Error: '%s'\n", glewGetErrorString(res));
+        return ;
+    }
+}
+
+
+void Window::mainLoop() const {
+    /* Main loop */
+    std::cout << "Drawing our triangle" << std::endl;
+    while (!glfwWindowShouldClose(mp_glfw_window))
+    {
+        drawTriangle(mp_glfw_window);
+        glfwPollEvents();
+    }
+
+    glfwTerminate();
+    exit( EXIT_SUCCESS );
+}
+
+
+Window* Window::getWindow() {
+    if (mp_window == nullptr) {
+        mp_window = new Window();
+    }
+
+    return mp_window;
+};
+
+
+void Window::run() {
+    initializeWindow();
+    mainLoop();
+}
