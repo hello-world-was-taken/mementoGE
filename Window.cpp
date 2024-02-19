@@ -1,10 +1,13 @@
 #include "./Window.h"
+#include "./MouseListener.h"
+#include "./KeyListener.h"
 #include "opengl/draw.h"
 
 
 Window::Window(/* args */) {}
 
 
+// TODO: Remove all the resources we used
 Window::~Window() {}
 
 
@@ -23,6 +26,14 @@ void Window::setUpWindowHints() const {
 }
 
 
+void Window::setUpCallBack() const {
+    glfwSetCursorPosCallback(mp_glfw_window, MouseListener::cursorPositionCallback);
+    glfwSetMouseButtonCallback(mp_glfw_window, MouseListener::mouseButtonCallback);
+    glfwSetScrollCallback(mp_glfw_window, MouseListener::scrollCallback);
+    glfwSetKeyCallback(mp_glfw_window, KeyListener::keyCallback);
+}
+
+
 void Window::initializeWindow() {
     /* Init GLFW */
     if( !glfwInit() ) exit( EXIT_FAILURE );
@@ -37,8 +48,7 @@ void Window::initializeWindow() {
         exit( EXIT_FAILURE );
     }
 
-    // TODO: check if this affects our choice
-    // glfwSetWindowAspectRatio(window, 1, 1);
+    setUpCallBack();
     
     /* Initialize Glew. Must be done after glfw is initialized!*/
     GLenum res = glewInit();

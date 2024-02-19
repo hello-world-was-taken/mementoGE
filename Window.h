@@ -15,6 +15,7 @@ private:
     void setUpWindowHints() const;
     void initializeWindow();
     void mainLoop() const;
+    void setUpCallBack() const;
 public:
     Window(/* args */);
     ~Window();
