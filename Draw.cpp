@@ -4,18 +4,20 @@
 #include <GLFW/glfw3.h>
 
 #include "Draw.h"
-#include "./CreateShader.h"
-#include "./util/log_error.h"
-#include "./VertexBuffer.h"
-#include "./Indexbuffer.h"
+#include "CreateShader.h"
+#include "util/log_error.h"
+#include "VertexBuffer.h"
+#include "Indexbuffer.h"
+#include "Texture.h"
 
 
 // Define vertices for a triangle
 std::vector<Vertex> vertices = {
-    { -0.5f,  0.5f, 0.0f }, // top left
-    { -0.5f, -0.5f, 0.0f }, // bottom left
-    {  0.5f, -0.5f, 0.0f }, // bottom right
-    {  0.5f,  0.5f, 0.0f }, // top right
+    // positions         // texture
+    { -0.5f,  0.5f, 0.0f , 0.0f, 1.0f}, // top left
+    { -0.5f, -0.5f, 0.0f , 0.0f, 0.0f}, // bottom left
+    {  0.5f, -0.5f, 0.0f , 1.0f, 0.0f}, // bottom right
+    {  0.5f,  0.5f, 0.0f , 1.0f, 1.0f}, // top right
 };
 
 // Define indices for the vertices
@@ -37,6 +39,10 @@ void setBufferData() {
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
 
+    // Specify texture attribute pointer
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texture_x));
+
     IndexBuffer ib(indices, 6, GL_STATIC_DRAW);
 }
 
@@ -50,17 +56,24 @@ void drawTriangle(GLFWwindow* window) {
     glUseProgram(shader_program);
 
     // use uniform color
-    static float red = 0.0f;
-    static float increament = 0.5f;
+    // static float red = 0.0f;
+    // static float increament = 0.5f;
 
-    if (red > 0)
-        increament = -0.5f;
-    else
-        increament = 0.5f;
-    red += increament;
+    // if (red > 0)
+    //     increament = -0.5f;
+    // else
+    //     increament = 0.5f;
+    // red += increament;
 
-    int vertex_color_location = glGetUniformLocation(shader_program, "our_color");
-    glUniform4f(vertex_color_location, red, 0.5f, 0.5f, 1.0f);
+    // int vertex_color_location = glGetUniformLocation(shader_program, "our_color");
+    // glUniform4f(vertex_color_location, red, 0.5f, 0.5f, 1.0f);
+
+    // use uniform texture
+    const char* texture_path = "../assets/texture/slice01_01.png";
+    Texture texture(texture_path);
+    texture.bind();
+    int texture_location = glGetUniformLocation(shader_program, "our_texture");
+    glUniform1i(texture_location, 0);
     
     glClearError();
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);

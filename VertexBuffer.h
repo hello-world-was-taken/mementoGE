@@ -1,6 +1,6 @@
 #include <vector>
 
-#include "./Draw.h"
+#include "Draw.h"
 
 
 class VertexBuffer {

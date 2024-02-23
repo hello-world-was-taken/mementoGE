@@ -7,7 +7,7 @@
 #include <vector>
 
 struct Vertex {
-    float x, y, z;
+    float x, y, z, texture_x, texture_y;
 };
 
 void setBufferData();

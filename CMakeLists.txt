@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD 11)
 add_subdirectory(${CMAKE_SOURCE_DIR}/lib/glfw)
 
 # since the imported libraries (glfw, glew) don't change, I don't think we need to add them here
-add_executable(${PROJECT_NAME} main.cpp Window.cpp Draw.cpp CreateShader.cpp util/log_error.cpp VertexBuffer.cpp IndexBuffer.cpp MouseListener.cpp KeyListener.cpp util/Time.cpp)
+add_executable(${PROJECT_NAME} main.cpp Window.cpp Draw.cpp CreateShader.cpp util/log_error.cpp VertexBuffer.cpp IndexBuffer.cpp MouseListener.cpp KeyListener.cpp util/Time.cpp lib/stb_image/stb_image.cpp Texture.cpp)
 
 # get a hold of the frameworks we'll need. These are already installed and come with OSX.
 find_library(OpenGL_FRAMEWORK OpenGL)
@@ -19,9 +19,10 @@ find_library(CoreVideo_FRAMEWORK CoreVideo)
 find_package(GLEW REQUIRED)
 
 # include directories for our libs (glfw, glew)
-target_include_directories(${PROJECT_NAME} 
+target_include_directories(${PROJECT_NAME}
     PUBLIC ${CMAKE_SOURCE_DIR}/lib/glfw/include
     PUBLIC ${CMAKE_SOURCE_DIR}/lib/glm
+    PUBLIC ${CMAKE_SOURCE_DIR}/lib
 )
 
 # linking directories for our libs (glfw, glew)

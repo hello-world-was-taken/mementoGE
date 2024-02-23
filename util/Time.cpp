@@ -1,5 +1,5 @@
 #include <chrono>
-#include "./Time.h"
+#include "Time.h"
 
 
 Time::Time(){}

@@ -1,8 +1,8 @@
-#include "./Window.h"
-#include "./MouseListener.h"
-#include "./KeyListener.h"
-#include "./Draw.h"
-#include "./util/Time.h"
+#include "Window.h"
+#include "MouseListener.h"
+#include "KeyListener.h"
+#include "Draw.h"
+#include "util/Time.h"
 
 
 Window::Window(/* args */) {}
