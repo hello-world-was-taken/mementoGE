@@ -47,3 +47,4 @@ build
 
 # exclude submodules
 lib
+.vscode

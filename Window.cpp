@@ -1,7 +1,8 @@
 #include "./Window.h"
 #include "./MouseListener.h"
 #include "./KeyListener.h"
-#include "opengl/draw.h"
+#include "./opengl/draw.h"
+#include "./util/Time.h"
 
 
 Window::Window(/* args */) {}
@@ -42,6 +43,7 @@ void Window::initializeWindow() {
 
     mp_glfw_window = glfwCreateWindow( m_width, m_height, mp_title, NULL, NULL );
     glfwMakeContextCurrent(mp_glfw_window);
+    glfwSwapInterval(1);
     if (!mp_glfw_window)
     {
         glfwTerminate();
@@ -60,12 +62,16 @@ void Window::initializeWindow() {
 
 
 void Window::mainLoop() const {
-    /* Main loop */
     std::cout << "Drawing our triangle" << std::endl;
+    
+    // Initializing frame time
+    Time::update();
     while (!glfwWindowShouldClose(mp_glfw_window))
     {
         drawTriangle(mp_glfw_window);
         glfwPollEvents();
+        Time::update();
+        std::cout << (1.0f / Time::deltaTime()) << " FPS" << std::endl;
     }
 
     glfwTerminate();
