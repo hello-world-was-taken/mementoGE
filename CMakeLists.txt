@@ -21,6 +21,7 @@ find_package(GLEW REQUIRED)
 # include directories for our libs (glfw, glew)
 target_include_directories(${PROJECT_NAME} 
     PUBLIC ${CMAKE_SOURCE_DIR}/lib/glfw/include
+    PUBLIC ${CMAKE_SOURCE_DIR}/lib/glm
 )
 
 # linking directories for our libs (glfw, glew)

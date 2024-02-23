@@ -46,5 +46,7 @@ _deps
 build
 
 # exclude submodules
-lib
 .vscode
+
+# exclude mac related file configs
+lib/.DS_Store
