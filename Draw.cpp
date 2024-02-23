@@ -80,6 +80,4 @@ void drawTriangle(GLFWwindow* window) {
     glCheckError("glDrawArrays", __FILE__, __LINE__);
 
     glBindVertexArray(0); // Unbind VAO
-
-    glfwSwapBuffers(window);
 }
