@@ -51,7 +51,7 @@ unsigned int createShaderProgram() {
     // Create a vertex shader
     GLuint vertex_shader_id = glCreateShader(GL_VERTEX_SHADER);
     // since cwd is the build directory, we need to go one level up to find the shader file
-    std::string vertex_shader_file_path = "../opengl/shader/vertex.shader";
+    std::string vertex_shader_file_path = "../assets/shader/vertex.shader";
     char* vertex_shader_source = parseShader(vertex_shader_file_path);
 
     glShaderSource(vertex_shader_id, 1, &vertex_shader_source, NULL);
@@ -62,7 +62,7 @@ unsigned int createShaderProgram() {
 
     // Create a fragment shader
     GLuint fragment_shader_id = glCreateShader(GL_FRAGMENT_SHADER);
-    std::string fragment_shader_file_path = "../opengl/shader/fragment.shader";
+    std::string fragment_shader_file_path = "../assets/shader/fragment.shader";
     char* fragment_shader_source = parseShader(fragment_shader_file_path);
     glShaderSource(fragment_shader_id, 1, &fragment_shader_source, NULL);
     glCompileShader(fragment_shader_id);

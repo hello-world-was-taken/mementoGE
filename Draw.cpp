@@ -3,11 +3,11 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include "draw.h"
-#include "shader/create_shader.h"
-#include "../util/log_error.h"
-#include "../VertexBuffer.h"
-#include "../Indexbuffer.h"
+#include "Draw.h"
+#include "./CreateShader.h"
+#include "./util/log_error.h"
+#include "./VertexBuffer.h"
+#include "./Indexbuffer.h"
 
 
 // Define vertices for a triangle

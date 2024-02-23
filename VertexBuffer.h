@@ -1,6 +1,6 @@
 #include <vector>
 
-#include "./opengl/draw.h"
+#include "./Draw.h"
 
 
 class VertexBuffer {

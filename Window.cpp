@@ -1,7 +1,7 @@
 #include "./Window.h"
 #include "./MouseListener.h"
 #include "./KeyListener.h"
-#include "./opengl/draw.h"
+#include "./Draw.h"
 #include "./util/Time.h"
 
 
