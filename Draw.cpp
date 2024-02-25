@@ -1,23 +1,14 @@
-#include <iostream>
-#include <vector>
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-
 #include "Draw.h"
-#include "CreateShader.h"
-#include "util/log_error.h"
-#include "VertexBuffer.h"
-#include "Indexbuffer.h"
-#include "Texture.h"
+
 
 
 // Define vertices for a triangle
 std::vector<Vertex> vertices = {
-    // positions         // texture
-    { -0.5f,  0.5f, 0.0f , 0.0f, 1.0f}, // top left
-    { -0.5f, -0.5f, 0.0f , 0.0f, 0.0f}, // bottom left
-    {  0.5f, -0.5f, 0.0f , 1.0f, 0.0f}, // bottom right
-    {  0.5f,  0.5f, 0.0f , 1.0f, 1.0f}, // top right
+    // positions                // texture
+    { -0.5f,  0.5f, 0.0f ,      0.0f, 1.0f}, // top left
+    { -0.5f, -0.5f, 0.0f ,      0.0f, 0.0f}, // bottom left
+    {  0.5f, -0.5f, 0.0f ,      1.0f, 0.0f}, // bottom right
+    {  0.5f,  0.5f, 0.0f ,      1.0f, 1.0f}, // top right
 };
 
 // Define indices for the vertices
@@ -34,14 +25,12 @@ void setBufferData() {
     glBindVertexArray(vao);
 
     VertexBuffer vb(vertices, GL_STATIC_DRAW);
-
-    // Specify vertex attribute pointer
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-
-    // Specify texture attribute pointer
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texture_x));
+    
+    vb.addAttribute(VertexAttribute(3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0));
+    vb.addAttribute(VertexAttribute(2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texture_x)));
+    
+    // Setting the vertex attribute pointers adds the VBO to the currently bound VAO
+    vb.setAttributePointers();
 
     IndexBuffer ib(indices, 6, GL_STATIC_DRAW);
 }
@@ -52,8 +41,8 @@ void drawTriangle(GLFWwindow* window) {
 
     glBindVertexArray(vao); // Bind VAO
     
-    unsigned int shader_program = createShaderProgram();
-    glUseProgram(shader_program);
+    Shader shader("../assets/shader/vertex.shader", "../assets/shader/fragment.shader");
+    shader.use();
 
     // use uniform color
     // static float red = 0.0f;
@@ -72,8 +61,8 @@ void drawTriangle(GLFWwindow* window) {
     const char* texture_path = "../assets/texture/slice01_01.png";
     Texture texture(texture_path);
     texture.bind();
-    int texture_location = glGetUniformLocation(shader_program, "our_texture");
-    glUniform1i(texture_location, 0);
+    
+    shader.setUniform1i("our_texture", 0);
     
     glClearError();
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
