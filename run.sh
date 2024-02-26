@@ -1,3 +1,3 @@
 #! /bin/sh
 
-cd build ; ./opengl_playground
+cd out ; ./opengl_playground

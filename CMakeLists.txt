@@ -36,7 +36,7 @@ target_include_directories(${PROJECT_NAME}
 
 # linking directories for our libs (glfw, glew)
 target_link_directories(${PROJECT_NAME}
-    PUBLIC ${CMAKE_SOURCE_DIR}/build/lib/glfw/src
+    PUBLIC ${CMAKE_SOURCE_DIR}/out/lib/glfw/src
 )
 
 # linking the actual binaries for our libs (glfw, glew)

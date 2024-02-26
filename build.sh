@@ -1,8 +1,8 @@
 #! /bin/sh
 
 # This script is used to run cmake and make for the project
-cmake -DGLFW_BUILD_DOCS=OFF -S . -B ./build
+cmake -DGLFW_BUILD_DOCS=OFF -S . -B ./out
 
 # Run make to build the project
-cd build
+cd out
 make

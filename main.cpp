@@ -1,6 +1,5 @@
 #include "Window.h"
 
-void open_window();
 
 int main()
 {
