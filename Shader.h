@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <GL/glew.h>
+#include <glm/glm.hpp>
 
 class Shader {
 private:
@@ -16,4 +17,6 @@ public:
     ~Shader();
     void use();
     void setUniform1i(const std::string &name, int value);
+    void setUniform1f(const std::string &name, float value);
+    void setUniform4fv(const std::string &name, glm::mat4 value);
 };

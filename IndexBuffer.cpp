@@ -16,7 +16,7 @@ IndexBuffer::IndexBuffer(
 
 // TODO: The destructor should be the VAO destructor is called not when the object is destroyed
 IndexBuffer::~IndexBuffer() {
-    std::cout << "calling IndexBuffer destructor" << std::endl;
+    // std::cout << "calling IndexBuffer destructor" << std::endl;
     // glDeleteBuffers(1, &this->m_id);
 }
 

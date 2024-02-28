@@ -12,7 +12,7 @@ VertexBuffer::VertexBuffer(
 
 
 VertexBuffer::~VertexBuffer(){
-    std::cout << "calling VertexBuffer destructor" << std::endl;
+    // std::cout << "calling VertexBuffer destructor" << std::endl;
     // glDeleteBuffers(1, &this->m_id);
 }
 

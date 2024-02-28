@@ -1,7 +1,6 @@
 #include "Draw.h"
 
 
-
 // Define vertices for a triangle
 std::vector<Vertex> vertices = {
     // positions                // texture
@@ -44,18 +43,20 @@ void drawTriangle(GLFWwindow* window) {
     Shader shader("../assets/shader/vertex.shader", "../assets/shader/fragment.shader");
     shader.use();
 
-    // use uniform color
-    // static float red = 0.0f;
-    // static float increament = 0.5f;
+    // move the texture object
+    static float u_offset = 0.0f;
 
-    // if (red > 0)
-    //     increament = -0.5f;
-    // else
-    //     increament = 0.5f;
-    // red += increament;
+    // listen for arrow key events
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+        u_offset += 0.01f;
+    }
 
-    // int vertex_color_location = glGetUniformLocation(shader_program, "our_color");
-    // glUniform4f(vertex_color_location, red, 0.5f, 0.5f, 1.0f);
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+        u_offset -= 0.01f;
+    }
+
+    glm::mat4 u_model_translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(u_offset, 0.0f, 0.0f));
+    shader.setUniform4fv("u_model_translation_matrix", u_model_translation_matrix);
 
     // use uniform texture
     const char* texture_path = "../assets/texture/slice01_01.png";
