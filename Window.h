@@ -15,8 +15,8 @@ class Window
 private:
     static Window *mp_window;
     GLFWwindow* mp_glfw_window = nullptr;
-    unsigned int m_width = 500;
-    unsigned int m_height = 500;
+    unsigned int m_width = 1920;
+    unsigned int m_height = 1080;
     const char *mp_title = "OpenGL Playground";
     
     void setupWindowHints() const;

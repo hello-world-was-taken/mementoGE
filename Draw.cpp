@@ -4,10 +4,10 @@
 // Define vertices for a triangle
 std::vector<Vertex> vertices = {
     // positions                // texture
-    { -0.5f,  0.5f, 0.0f ,      0.0f, 1.0f}, // top left
-    { -0.5f, -0.5f, 0.0f ,      0.0f, 0.0f}, // bottom left
-    {  0.5f, -0.5f, 0.0f ,      1.0f, 0.0f}, // bottom right
-    {  0.5f,  0.5f, 0.0f ,      1.0f, 1.0f}, // top right
+    {   0.0f, 100.0f, 0.0f ,      0.0f, 1.0f}, // top left
+    {   0.0f, 0.0f, 0.0f ,      0.0f, 0.0f}, // bottom left
+    { 100.0f, 0.0f, 0.0f ,      1.0f, 0.0f}, // bottom right
+    {  100.0f,  100.0f, 0.0f ,      1.0f, 1.0f}, // top right
 };
 
 // Define indices for the vertices
@@ -43,20 +43,33 @@ void drawTriangle(GLFWwindow* window) {
     Shader shader("../assets/shader/vertex.shader", "../assets/shader/fragment.shader");
     shader.use();
 
+    // Camera
+    float screen_width = (float) (32 * 16); // 16 tiles of 32 pixels
+    int screen_height = (float) (32 * 9); // 9 tiles of 32 pixels
+    Camera camera(screen_width, screen_height);
+
+    // set the view matrix
+    glm::mat4 u_view_matrix = camera.getViewMatrix();
+    shader.setUniform4fv("u_view_matrix", u_view_matrix);
+
+    // set the projection matrix
+    glm::mat4 u_projection_matrix = camera.getProjectionMatrix();
+    shader.setUniform4fv("u_projection_matrix", u_projection_matrix);
+
     // move the texture object
     static float u_offset = 0.0f;
 
     // listen for arrow key events
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-        u_offset += 0.01f;
+        u_offset += 1.0f;
     }
 
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-        u_offset -= 0.01f;
+        u_offset -= 1.0f;
     }
 
-    glm::mat4 u_model_translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(u_offset, 0.0f, 0.0f));
-    shader.setUniform4fv("u_model_translation_matrix", u_model_translation_matrix);
+    glm::mat4 u_model_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(u_offset, 0.0f, 0.0f));
+    shader.setUniform4fv("u_model_matrix", u_model_matrix);
 
     // use uniform texture
     const char* texture_path = "../assets/texture/slice01_01.png";

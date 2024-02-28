@@ -126,10 +126,12 @@ void Window::mainLoop() const {
     // Initializing frame time
     Time::update();
     setupImgui();
+
     while (!glfwWindowShouldClose(mp_glfw_window))
     {
         glfwPollEvents();
         showImguiDemo();
+
         drawTriangle(mp_glfw_window);
         
         // Rendering
