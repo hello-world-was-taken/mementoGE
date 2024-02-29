@@ -19,7 +19,13 @@ Camera::~Camera() {
 
 // TODO: How can we improve the view?
 void Camera::updateView() {
-    m_view = glm::translate(glm::mat4(1.0f), glm::vec3(300.0f, 0.0f, 0.0f));
+    glm::vec3 camera_front = glm::vec3(0.0f, 0.0f, -1.0f);
+    glm::vec3 camera_up = glm::vec3(0.0f, 1.0f, 0.0f);
+    m_view = glm::lookAt(
+            glm::vec3(m_position, 10.0f), 
+            glm::vec3(m_position, 0.0f) + camera_front, 
+            camera_up
+        );
 }
 
 
