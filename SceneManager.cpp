@@ -20,9 +20,7 @@ SceneManager::~SceneManager()
 
 void SceneManager::loadScene(const char *sceneName)
 {
-    std::cout << "Loading scene: " << sceneName << std::endl;
     activeScene = scenes->at(sceneName);
-    std::cout << "Scene Loaded" << sceneName << std::endl;
     activeScene->setBufferData();
     activeScene->draw(window);
 }
@@ -36,7 +34,5 @@ void SceneManager::unloadScene(const char *sceneName)
 
 void SceneManager::addScene(const char *sceneName, Scene *scene)
 {
-    std::cout << "Adding scene: " << sceneName << std::endl;
     (*scenes)[sceneName] = scene;
-    std::cout << "Scene Added" << sceneName << std::endl;
 }

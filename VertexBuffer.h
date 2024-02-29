@@ -2,7 +2,6 @@
 #define VERTEX_BUFFER_H
 
 #include <vector>
-#include "Draw.h"
 #include "Vertex.h"
 #include "VertexAttribute.h"
 
