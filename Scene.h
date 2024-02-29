@@ -14,6 +14,11 @@
 
 class Scene {
 private:
+    // Camera
+    float m_screen_width = (float)(32 * 16); // 16 tiles of 32 pixels
+    float m_screen_height = (float)(32 * 9);   // 9 tiles of 32 pixels
+    Camera m_camera = Camera(m_screen_width, m_screen_height);
+
     std::vector<Vertex> vertices = {
         // positions                // texture
         {  0.0f, 100.0f, 0.0f,      0.0f, 1.0f},   // top left

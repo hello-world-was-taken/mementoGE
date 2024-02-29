@@ -28,17 +28,12 @@ void Scene::draw(GLFWwindow *window)
     Shader shader("../assets/shader/vertex.shader", "../assets/shader/fragment.shader");
     shader.use();
 
-    // Camera
-    float screen_width = (float)(32 * 16); // 16 tiles of 32 pixels
-    int screen_height = (float)(32 * 9);   // 9 tiles of 32 pixels
-    Camera camera(screen_width, screen_height);
-
     // set the view matrix
-    glm::mat4 u_view_matrix = camera.getViewMatrix();
+    glm::mat4 u_view_matrix = m_camera.getViewMatrix();
     shader.setUniform4fv("u_view_matrix", u_view_matrix);
 
     // set the projection matrix
-    glm::mat4 u_projection_matrix = camera.getProjectionMatrix();
+    glm::mat4 u_projection_matrix = m_camera.getProjectionMatrix();
     shader.setUniform4fv("u_projection_matrix", u_projection_matrix);
 
     // move the texture object
