@@ -71,6 +71,9 @@ void drawTriangle(GLFWwindow* window) {
     glm::mat4 u_model_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(u_offset, 0.0f, 0.0f));
     shader.setUniform4fv("u_model_matrix", u_model_matrix);
 
+    // glm::mat4 u_model_matrix = glm::rotate(u_model_matrix, glm::radians(-30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    // shader.setUniform4fv("u_model_matrix", u_model_matrix);
+
     // use uniform texture
     const char* texture_path = "../assets/texture/slice01_01.png";
     Texture texture(texture_path);
