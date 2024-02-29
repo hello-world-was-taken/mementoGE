@@ -1,3 +1,8 @@
+#include <iostream>
+#include <vector>
+#include <GL/glew.h>
+
+
 class VertexAttribute
 {
 public:

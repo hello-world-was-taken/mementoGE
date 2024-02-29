@@ -8,12 +8,14 @@
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
+#include "SceneManager.h"
 
 
 class Window
 {
 private:
     static Window *mp_window;
+    SceneManager *mp_scene_manager;
     GLFWwindow* mp_glfw_window = nullptr;
     unsigned int m_width = 1920;
     unsigned int m_height = 1080;

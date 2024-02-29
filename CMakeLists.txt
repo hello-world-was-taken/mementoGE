@@ -10,9 +10,9 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/lib/glfw)
 
 # since the imported libraries (glfw, glew) don't change, I don't think we need to add them here
 add_executable(${PROJECT_NAME} 
-    main.cpp Window.cpp Draw.cpp CreateShader.cpp Texture.cpp 
+    main.cpp Window.cpp CreateShader.cpp Texture.cpp 
     IndexBuffer.cpp MouseListener.cpp KeyListener.cpp VertexBuffer.cpp
-    Shader.cpp Camera.cpp
+    Shader.cpp Camera.cpp Scene.cpp SceneManager.cpp
     util/log_error.cpp  util/Time.cpp lib/stb_image/stb_image.cpp
     lib/imgui/imgui.cpp lib/imgui/imgui_draw.cpp lib/imgui/imgui_widgets.cpp
     lib/imgui/imgui_tables.cpp lib/imgui/backends/imgui_impl_glfw.cpp 

@@ -5,7 +5,9 @@ Window::Window(/* args */) {}
 
 
 // TODO: Remove all the resources we used
-Window::~Window() {}
+Window::~Window() {
+    delete mp_scene_manager;
+}
 
 
 Window* Window::mp_window = nullptr;
@@ -101,6 +103,10 @@ void Window::initializeWindow() {
     setupWindowHints();
 
     mp_glfw_window = glfwCreateWindow( m_width, m_height, mp_title, NULL, NULL );
+
+    // initialize scene manager
+    mp_scene_manager = new SceneManager(mp_glfw_window);
+    
     glfwMakeContextCurrent(mp_glfw_window);
     glfwSwapInterval(1);
     if (!mp_glfw_window)
@@ -121,7 +127,7 @@ void Window::initializeWindow() {
 
 
 void Window::mainLoop() const {
-    std::cout << "Drawing our triangle" << std::endl;
+    std::cout << "Drawing our scene" << std::endl;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     // Initializing frame time
     Time::update();
@@ -132,8 +138,8 @@ void Window::mainLoop() const {
         glfwPollEvents();
         showImguiDemo();
 
-        drawTriangle(mp_glfw_window);
-        
+        mp_scene_manager->loadScene("triangle_scene");
+
         // Rendering
         ImGui::Render();
 
