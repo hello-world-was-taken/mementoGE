@@ -6,6 +6,8 @@ SceneManager::SceneManager(GLFWwindow *window)
     this->window = window;
     this->scenes = new std::map<const char *, Scene *>();
     this->addScene("triangle_scene", new Scene());
+    activeScene = scenes->at("triangle_scene");
+    this->getActiveScene()->addGameObject();
 }
 
 
@@ -35,4 +37,14 @@ void SceneManager::unloadScene(const char *sceneName)
 void SceneManager::addScene(const char *sceneName, Scene *scene)
 {
     (*scenes)[sceneName] = scene;
+}
+
+void SceneManager::removeScene(const char *sceneName)
+{
+    scenes->erase(sceneName);
+}
+
+Scene* SceneManager::getActiveScene()
+{
+    return activeScene;
 }

@@ -15,11 +15,11 @@ public:
     void loadScene(const char *sceneName);
     void unloadScene(const char *sceneName);
     void update();
-    void draw();
+    void start();
     void addScene(const char *sceneName, Scene *scene);
     void removeScene(const char *sceneName);
     void getScene(const char *sceneName);
-    void getActiveScene();
+    Scene* getActiveScene();
     void setActiveScene(const char *sceneName);
     void getSceneCount();
     void getSceneNames();
