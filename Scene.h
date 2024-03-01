@@ -2,6 +2,7 @@
 #include <vector>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <entt/entt.hpp>
 
 #include "util/log_error.h"
 #include "VertexBuffer.h"
@@ -11,9 +12,14 @@
 #include "glm/glm.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "Camera.h"
+#include "SpriteRenderer.h"
+#include "GameObject.h"
+
 
 class Scene {
 private:
+    entt::registry registry;
+    std::vector<GameObject> gameObjects;
     // Camera
     float m_screen_width = (float)(32 * 16); // 16 tiles of 32 pixels
     float m_screen_height = (float)(32 * 9);   // 9 tiles of 32 pixels
@@ -34,6 +40,7 @@ private:
 
     unsigned int vao; // New VAO variable
 public:
+    GameObject* addGameObject();
     void setBufferData();
     void draw(GLFWwindow *window);
 };

@@ -69,3 +69,11 @@ void Scene::draw(GLFWwindow *window)
 
     glBindVertexArray(0); // Unbind VAO
 }
+
+GameObject* Scene::addGameObject()
+{
+    GameObject *gameObject = new GameObject(registry);
+    gameObjects.push_back(*gameObject);
+    gameObject->addComponent<SpriteRenderer>();
+    return gameObject;
+}
