@@ -11,7 +11,6 @@ public:
     template <typename Component, typename... Args>
     void addComponent(Args &&...args)
     {
-        std::cout << "Adding component" << std::endl;
         registry.emplace<Component>(entity, std::forward<Args>(args)...);
     }
 
