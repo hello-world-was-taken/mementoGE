@@ -129,10 +129,9 @@ void Window::initializeWindow() {
 void Window::mainLoop() const {
     std::cout << "Drawing our scene" << std::endl;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-    // Initializing frame time
-    Time::update();
-    setupImgui();
 
+    setupImgui();
+    glfwSwapInterval(1);
     while (!glfwWindowShouldClose(mp_glfw_window))
     {
         glfwPollEvents();
@@ -145,7 +144,7 @@ void Window::mainLoop() const {
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         Time::update();
-        // std::cout << (1.0f / Time::deltaTime()) << " FPS" << std::endl;
+        // std::cout << (Time::deltaTime()) << " seconds" << std::endl;
         glfwSwapBuffers(mp_glfw_window);
     }
 
