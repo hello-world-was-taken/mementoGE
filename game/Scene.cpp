@@ -1,9 +1,24 @@
 #include "Scene.h"
 
+void Scene::start(GLFWwindow *window)
+{
+    setBufferData();
+    draw(window);
+}
+
+void Scene::update(float deltaTime, GLFWwindow *window)
+{
+    draw(window);
+    // for (auto &gameObject : gameObjects)
+    // {
+    //     // update game objects
+    // }
+}
 
 // Function to generate, bind and allocate to the vertex buffer object and vertex array object
 void Scene::setBufferData()
 {
+    // TODO: Vertex Array should have its own class in the engine
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
@@ -39,6 +54,7 @@ void Scene::draw(GLFWwindow *window)
     // move the texture object
     static float u_offset = 0.0f;
 
+    // TODO: we shouldn't be listening for arrow key events here
     // listen for arrow key events
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
     {
@@ -72,8 +88,8 @@ void Scene::draw(GLFWwindow *window)
 
 GameObject* Scene::addGameObject()
 {
-    GameObject *gameObject = new GameObject(registry);
+    GameObject *gameObject = new GameObject(m_registry);
     gameObjects.push_back(*gameObject);
-    gameObject->addComponent<SpriteRenderer>();
+    gameObject->addComponent<Transform>();  // every game object has a transform
     return gameObject;
 }

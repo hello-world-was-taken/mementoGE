@@ -12,17 +12,17 @@
 #include "engine/Camera.h"
 #include "engine/SpriteRenderer.h"
 #include "engine/GameObject.h"
+#include "engine/Transform.h"
 
 #include "glm/glm.hpp"
 #include "glm/ext/matrix_transform.hpp"
 
 class Scene {
 private:
-    entt::registry registry;
-    std::vector<GameObject> gameObjects;
-    // Camera
     float m_screen_width = (float)(32 * 16); // 16 tiles of 32 pixels
-    float m_screen_height = (float)(32 * 9);   // 9 tiles of 32 pixels
+    float m_screen_height = (float)(32 * 9); // 9 tiles of 32 pixels
+    entt::registry m_registry;
+    std::vector<GameObject> gameObjects;
     Camera m_camera = Camera(m_screen_width, m_screen_height);
 
     std::vector<Vertex> vertices = {
@@ -40,6 +40,8 @@ private:
 
     unsigned int vao; // New VAO variable
 public:
+    void start(GLFWwindow *window);
+    void update(float deltaTime, GLFWwindow *window);
     GameObject* addGameObject();
     void setBufferData();
     void draw(GLFWwindow *window);

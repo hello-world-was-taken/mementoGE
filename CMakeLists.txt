@@ -13,7 +13,7 @@ add_executable(${PROJECT_NAME}
     main.cpp Window.cpp 
     
     # engine files
-    engine/CreateShader.cpp engine/Texture.cpp 
+    engine/CreateShader.cpp engine/Texture.cpp engine/Transform.cpp
     engine/IndexBuffer.cpp engine/MouseListener.cpp engine/KeyListener.cpp 
     engine/VertexBuffer.cpp engine/Shader.cpp engine/Camera.cpp
     engine/SpriteRenderer.cpp engine/GameObject.cpp

@@ -11,11 +11,11 @@ private:
 public:
     SceneManager(GLFWwindow *window);
     ~SceneManager();
-    
+
+    void start();
+    void update(float deltaTime, GLFWwindow *window);
     void loadScene(const char *sceneName);
     void unloadScene(const char *sceneName);
-    void update();
-    void start();
     void addScene(const char *sceneName, Scene *scene);
     void removeScene(const char *sceneName);
     void getScene(const char *sceneName);

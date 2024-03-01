@@ -19,6 +19,16 @@ SceneManager::~SceneManager()
     }
 }
 
+void SceneManager::start()
+{
+    loadScene("triangle_scene");
+}
+
+void SceneManager::update(float deltaTime, GLFWwindow *window)
+{
+    activeScene->update(deltaTime, window);
+}
+
 
 void SceneManager::loadScene(const char *sceneName)
 {
