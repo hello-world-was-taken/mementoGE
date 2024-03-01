@@ -6,9 +6,6 @@
 
 RenderBatch::RenderBatch(Scene *scene) : m_scene(scene){
     generateIndexArray();
-    for (int i = 0; i < 12; i++) {
-        std::cout << indices[i] << ", "<< std::endl;
-    }
     generateVertexBuffer();
 }
 

@@ -16,7 +16,7 @@ add_executable(${PROJECT_NAME}
     engine/CreateShader.cpp engine/Texture.cpp engine/Transform.cpp
     engine/IndexBuffer.cpp engine/MouseListener.cpp engine/KeyListener.cpp 
     engine/VertexBuffer.cpp engine/Shader.cpp engine/Camera.cpp
-    engine/SpriteRenderer.cpp engine/GameObject.cpp
+    engine/SpriteRenderer.cpp engine/GameObject.cpp engine/RenderBatch.cpp
     
     # game files
     game/SceneManager.cpp game/Scene.cpp

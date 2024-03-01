@@ -33,8 +33,7 @@ void SceneManager::update(float deltaTime, GLFWwindow *window)
 void SceneManager::loadScene(const char *sceneName)
 {
     activeScene = scenes->at(sceneName);
-    activeScene->setBufferData();
-    activeScene->draw(window);
+    activeScene->start(window);
 }
 
 
