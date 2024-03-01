@@ -5,16 +5,16 @@
 #include <entt/entt.hpp>
 
 #include "util/log_error.h"
-#include "VertexBuffer.h"
-#include "Indexbuffer.h"
-#include "Texture.h"
-#include "Shader.h"
+#include "engine/VertexBuffer.h"
+#include "engine/Indexbuffer.h"
+#include "engine/Texture.h"
+#include "engine/Shader.h"
+#include "engine/Camera.h"
+#include "engine/SpriteRenderer.h"
+#include "engine/GameObject.h"
+
 #include "glm/glm.hpp"
 #include "glm/ext/matrix_transform.hpp"
-#include "Camera.h"
-#include "SpriteRenderer.h"
-#include "GameObject.h"
-
 
 class Scene {
 private:

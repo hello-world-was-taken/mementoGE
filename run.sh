@@ -1,3 +1,3 @@
 #! /bin/sh
 
-cd out ; ./opengl_playground
+cd out ; ./mementoGE
