@@ -1,3 +1,9 @@
+#pragma once
+#include <glm/glm.hpp>
+
 struct Vertex {
-    float x, y, z, texture_x, texture_y;
+    glm::vec3 position;
+    glm::vec4 color;
+    glm::vec2 texture;
+    float texIndex;
 };
