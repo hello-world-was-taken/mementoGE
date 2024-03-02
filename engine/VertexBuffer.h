@@ -1,5 +1,4 @@
-#ifndef VERTEX_BUFFER_H
-#define VERTEX_BUFFER_H
+#pragma once
 
 #include <vector>
 #include "Vertex.h"
@@ -22,5 +21,3 @@ public:
     void setAttributePointers() const;
     void updateBufferData(std::vector<Vertex> vertices);
 };
-
-#endif // VERTEX_BUFFER_H

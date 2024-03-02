@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string>
 
 char* parseShader(std::string&);

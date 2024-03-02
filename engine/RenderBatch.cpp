@@ -1,10 +1,10 @@
 #include "engine/RenderBatch.h"
-#include "game/Scene.h"
 #include <iostream>
 #include "util/log_error.h"
 #include <GL/glew.h>
 
-RenderBatch::RenderBatch(Scene *scene) : m_scene(scene){
+RenderBatch::RenderBatch(Camera *camera) : m_camera(camera)
+{
     generateIndexArray();
     generateVertexBuffer();
 }
@@ -38,11 +38,11 @@ void RenderBatch::render() {
     shader.use();
 
     // set the view matrix
-    glm::mat4 u_view_matrix = m_scene->getCamera()->getViewMatrix();
+    glm::mat4 u_view_matrix = m_camera->getViewMatrix();
     shader.setUniform4fv("u_view_matrix", u_view_matrix);
 
     // set the projection matrix
-    glm::mat4 u_projection_matrix = m_scene->getCamera()->getProjectionMatrix();
+    glm::mat4 u_projection_matrix = m_camera->getProjectionMatrix();
     shader.setUniform4fv("u_projection_matrix", u_projection_matrix);
 
     // set the model matrix

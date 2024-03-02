@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <vector>
 #include <GL/glew.h>
@@ -13,8 +15,8 @@
 
 #include "glm/glm.hpp"
 #include "glm/ext/matrix_transform.hpp"
+#include "engine/RenderBatch.h"
 
-class RenderBatch;
 class Scene {
 private:
     float m_screen_width = (float)(32 * 16); // 16 tiles of 32 pixels

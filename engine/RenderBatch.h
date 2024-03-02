@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vector>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -12,13 +14,12 @@
 #include "engine/Shader.h"
 #include "engine/Camera.h"
 #include "engine/Texture.h"
-
-class Scene;
+#include "engine/Camera.h"
 
 class RenderBatch
 {
 private:
-    Scene* m_scene;
+    Camera* m_camera;
     std::vector<Vertex> vertices;
     static const int BATCH_SIZE = 1000;  // 1000 QUADS
     static const int INDICES_PER_QUAD = 6;  // 6 indices per quad
@@ -27,7 +28,7 @@ private:
     VertexBuffer vb;
 
 public:
-    RenderBatch(Scene* scene);
+    RenderBatch(Camera *camera);
     ~RenderBatch();
 
     void render();

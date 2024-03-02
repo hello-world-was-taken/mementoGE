@@ -17,7 +17,7 @@ Scene::~Scene()
 
 void Scene::start(GLFWwindow *window)
 {
-    m_renderBatch = new RenderBatch(this);
+    m_renderBatch = new RenderBatch(&m_camera);
     m_renderBatch->render();
 }
 
