@@ -57,29 +57,28 @@ void RenderBatch::render()
 
 void RenderBatch::updateVertexBuffer()
 {
+    // update the vertex buffer
+    vertices.clear();
+
     for (auto &gameObject : *m_gameObjects)
     {
-        gameObject.getId();
         Transform transform = gameObject.getComponent<Transform>(); // every game object has a transform
         glm::mat4x4 transformMatrix = transform.getTransformMatrix();
         std::vector<glm::vec3> transformedQuad = transformQuad(transformMatrix);
 
+        // getting sprite renderer
         glm::vec4 color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
         std::vector<glm::vec2> textureCoordinates = {glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 0.0f), glm::vec2(1.0f, 1.0f)};
         float textureIndex = 0;
-
         if (gameObject.hasComponent<SpriteRenderer>())
         {
             SpriteRenderer spriteRenderer = gameObject.getComponent<SpriteRenderer>();
-            std::cout << "looping" << std::endl;
 
             color = spriteRenderer.getColor();
             textureCoordinates = spriteRenderer.getTextureCoordinates(); // TODO: do we need to retrieve this from the sprite renderer?
             textureIndex = 0;
         }
 
-        // update the vertex buffer
-        vertices.clear();
         for (int i = 0; i < transformedQuad.size(); i++)
         {
             vertices.push_back({transformedQuad[i], color, textureCoordinates[i], textureIndex});

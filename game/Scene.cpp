@@ -31,23 +31,25 @@ void Scene::update(float deltaTime, GLFWwindow *window)
 GameObject *Scene::addGameObject()
 {
     const char *texture_path = "../assets/texture/slice01_01.png";
-    Texture texture(texture_path);
-    texture.bind();
+    Texture *texture = new Texture(texture_path);
+    texture->bind();
 
     GameObject *gameObject = new GameObject(m_registry);
     gameObjects.push_back(*gameObject);
     gameObject->addComponent<Transform>(glm::vec3(0.0f, 0.0f, 0.0f)); // every game object has a transform
 
-    gameObject->addComponent<SpriteRenderer>(&texture);
+    gameObject->addComponent<SpriteRenderer>(texture);
+    delete texture;
 
-    // Texture texture2(texture_path);
-    // texture2.bind();
+    Texture *texture2 = new Texture(texture_path);
+    texture2->bind();
 
-    // GameObject *gameObject2 = new GameObject(m_registry);
-    // gameObjects.push_back(*gameObject2);
-    // gameObject2->addComponent<Transform>(glm::vec3(110.0f, 0.0f, 0.0f)); // every game object has a transform
+    GameObject *gameObject2 = new GameObject(m_registry);
+    gameObjects.push_back(*gameObject2);
+    gameObject2->addComponent<Transform>(glm::vec3(110.0f, 0.0f, 0.0f)); // every game object has a transform
 
-    // gameObject2->addComponent<SpriteRenderer>(&texture2);
+    gameObject2->addComponent<SpriteRenderer>(texture2);
+    delete texture2;
     return nullptr;
 }
 

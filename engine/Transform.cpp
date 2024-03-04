@@ -1,4 +1,5 @@
 #include "Transform.h"
+#include <iostream>
 
 Transform::Transform(glm::vec3 position)
 {
@@ -18,6 +19,7 @@ Transform::Transform(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale)
 
 Transform::~Transform()
 {
+    // std::cout << "Transform destructor called" << std::endl;
 }
 
 void Transform::setPosition(float x, float y, float z)
