@@ -7,7 +7,6 @@ SceneManager::SceneManager(GLFWwindow *window)
     this->scenes = new std::map<const char *, Scene *>();
     this->addScene("triangle_scene", new Scene());
     activeScene = scenes->at("triangle_scene");
-    this->getActiveScene()->addGameObject();
 }
 
 
@@ -22,6 +21,8 @@ SceneManager::~SceneManager()
 void SceneManager::start()
 {
     loadScene("triangle_scene");
+    activeScene->start(this->window);
+    this->getActiveScene()->addGameObject();
 }
 
 void SceneManager::update(float deltaTime, GLFWwindow *window)

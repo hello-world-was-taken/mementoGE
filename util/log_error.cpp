@@ -1,5 +1,4 @@
-#include <iostream>
-#include <GL/glew.h>
+#include "log_error.h"
 
 // TODO: We should update this to a MACRO
 void glClearError() {
@@ -14,4 +13,17 @@ bool glCheckError(const char* functionName, const char* file, int line) {
         return false;
     }
     return true;
+}
+
+void printPWD()
+{
+    char cwd[1024]; // Buffer to hold the current working directory
+    if (getcwd(cwd, sizeof(cwd)) != nullptr)
+    {
+        std::cout << "Current working directory: " << cwd << std::endl;
+    }
+    else
+    {
+        std::cerr << "Failed to get current working directory." << std::endl;
+    }
 }

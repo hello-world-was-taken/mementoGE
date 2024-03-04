@@ -35,6 +35,11 @@ public:
 
     void destroy();
 
+    void getId()
+    {
+        std::cout << "Entity ID: " << (u_int32_t)entity << std::endl;
+    }
+
 private:
     entt::entity entity;
     entt::registry &registry;
