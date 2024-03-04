@@ -2,6 +2,7 @@
 
 
 Texture::Texture(const char* texture_path) {
+    stbi_set_flip_vertically_on_load(true);
     m_texture_buffer = (char*)stbi_load(texture_path, &this->m_width, &this->m_height, &this->m_nrChannels, 0);
     if (!m_texture_buffer) {
         std::cout << "Failed to load texture" << std::endl;

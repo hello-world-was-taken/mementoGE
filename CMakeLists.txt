@@ -19,7 +19,7 @@ add_executable(${PROJECT_NAME}
     engine/SpriteRenderer.cpp engine/GameObject.cpp engine/RenderBatch.cpp
     
     # game files
-    game/SceneManager.cpp game/Scene.cpp
+    engine/SceneManager.cpp engine/Scene.cpp
     
     util/log_error.cpp  util/Time.cpp lib/stb_image/stb_image.cpp
     lib/imgui/imgui.cpp lib/imgui/imgui_draw.cpp lib/imgui/imgui_widgets.cpp
