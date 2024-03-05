@@ -15,6 +15,10 @@ Scene::~Scene()
 {
     std::cout << "Scene destructor called" << std::endl;
     delete m_renderBatch;
+    for (auto texture : m_textures)
+    {
+        delete texture;
+    }
 }
 
 void Scene::start(GLFWwindow *window)
@@ -30,8 +34,10 @@ void Scene::update(float deltaTime, GLFWwindow *window)
 
 GameObject *Scene::addGameObject()
 {
+    // TODO: Think about creating an asset pool for textrues
     const char *texture_path = "../assets/texture/slice01_01.png";
-    Texture *texture = new Texture(texture_path);
+    Texture *texture = new Texture(texture_path, 0.0f);
+    m_textures.push_back(texture);
     texture->bind();
 
     GameObject *gameObject = new GameObject(m_registry);
@@ -39,9 +45,10 @@ GameObject *Scene::addGameObject()
     gameObject->addComponent<Transform>(glm::vec3(0.0f, 0.0f, 0.0f)); // every game object has a transform
 
     gameObject->addComponent<SpriteRenderer>(texture);
-    delete texture;
 
-    Texture *texture2 = new Texture(texture_path);
+    const char *texture_path2 = "../assets/texture/sheet.png";
+    Texture *texture2 = new Texture(texture_path2, 1);
+    m_textures.push_back(texture2);
     texture2->bind();
 
     GameObject *gameObject2 = new GameObject(m_registry);
@@ -49,7 +56,6 @@ GameObject *Scene::addGameObject()
     gameObject2->addComponent<Transform>(glm::vec3(110.0f, 0.0f, 0.0f)); // every game object has a transform
 
     gameObject2->addComponent<SpriteRenderer>(texture2);
-    delete texture2;
     return nullptr;
 }
 

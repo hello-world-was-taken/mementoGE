@@ -10,10 +10,12 @@ private:
     int m_nrChannels = 4;  // 4 for png, 3 for jpg
     int m_width = 0;
     int m_height = 0;
+    int m_texture_unit;
     char* m_texture_buffer = nullptr;
 public:
-    Texture(const char* texture_path);
+    Texture(const char *texture_path, int texture_unit);
     ~Texture();
+    unsigned int getTextureUnit() const;
     void bind() const;
     void unbind() const;
 };

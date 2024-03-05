@@ -42,11 +42,11 @@ void RenderBatch::render()
     // shader.setUniform4fv("u_model_matrix", u_model_matrix);
 
     // use uniform texture
-    const char *texture_path = "../assets/texture/slice01_01.png";
-    Texture texture(texture_path);
-    texture.bind();
+    // const char *texture_path = "../assets/texture/slice01_01.png";
+    // Texture texture(texture_path);
+    // texture.bind();
 
-    shader.setUniform1i("our_texture", 0);
+    shader.setMultipleTextureUnits("textures", m_texture_units.data(), m_texture_units.size());
 
     glClearError();
     glDrawElements(GL_TRIANGLES, BATCH_SIZE * INDICES_PER_QUAD, GL_UNSIGNED_INT, nullptr);
@@ -76,7 +76,7 @@ void RenderBatch::updateVertexBuffer()
 
             color = spriteRenderer.getColor();
             textureCoordinates = spriteRenderer.getTextureCoordinates(); // TODO: do we need to retrieve this from the sprite renderer?
-            textureIndex = 0;
+            textureIndex = spriteRenderer.getTexture()->getTextureUnit();
         }
 
         for (int i = 0; i < transformedQuad.size(); i++)

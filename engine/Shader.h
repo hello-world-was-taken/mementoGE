@@ -20,4 +20,5 @@ public:
     void setUniform1i(const std::string &name, int value);
     void setUniform1f(const std::string &name, float value);
     void setUniform4fv(const std::string &name, glm::mat4 value);
+    void setMultipleTextureUnits(const std::string &name, int* texture_units, int size);
 };

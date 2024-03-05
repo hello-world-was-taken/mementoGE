@@ -36,6 +36,8 @@ private:
         {100.0f, 0.0f, 0.0f},    // bottom right
         {100.0f, 100.0f, 0.0f}}; // top right
 
+    std::vector<int> m_texture_units = {0, 1, 2, 3, 4, 5, 6, 7};
+
 public:
     RenderBatch(const Camera *camera, std::vector<GameObject> *m_gameObjects);
     ~RenderBatch();

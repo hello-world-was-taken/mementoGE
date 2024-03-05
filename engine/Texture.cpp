@@ -1,16 +1,17 @@
 #include "Texture.h"
 
-
-Texture::Texture(const char* texture_path) {
+Texture::Texture(const char *texture_path, int texture_unit) : m_texture_unit(texture_unit)
+{
     stbi_set_flip_vertically_on_load(true);
-    m_texture_buffer = (char*)stbi_load(texture_path, &this->m_width, &this->m_height, &this->m_nrChannels, 0);
-    if (!m_texture_buffer) {
+    m_texture_buffer = (char *)stbi_load(texture_path, &this->m_width, &this->m_height, &this->m_nrChannels, 0);
+    if (!m_texture_buffer)
+    {
         std::cout << "Failed to load texture" << std::endl;
         return;
     }
 
     glGenTextures(1, &this->m_id);
-    glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE0 + this->m_texture_unit);
     glBindTexture(GL_TEXTURE_2D, this->m_id);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -20,22 +21,31 @@ Texture::Texture(const char* texture_path) {
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, this->m_width, this->m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_texture_buffer);
 
-    if (m_texture_buffer) {
+    if (m_texture_buffer)
+    {
         stbi_image_free(m_texture_buffer);
     }
 
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-Texture::~Texture() {
+Texture::~Texture()
+{
     glDeleteTextures(1, &this->m_id);
 }
 
-void Texture::bind() const {
-    glActiveTexture(GL_TEXTURE0);
+unsigned int Texture::getTextureUnit() const
+{
+    return m_texture_unit;
+}
+
+void Texture::bind() const
+{
+    glActiveTexture(GL_TEXTURE0 + this->m_texture_unit);
     glBindTexture(GL_TEXTURE_2D, this->m_id);
 }
 
-void Texture::unbind() const{
-    glBindTexture(GL_TEXTURE_2D, 0);
+void Texture::unbind() const
+{
+    // glBindTexture(GL_TEXTURE_2D, 0);
 }

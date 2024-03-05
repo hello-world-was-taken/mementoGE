@@ -25,6 +25,7 @@ private:
     std::vector<GameObject> gameObjects;
     Camera m_camera = Camera(m_screen_width, m_screen_height);
     RenderBatch* m_renderBatch = nullptr;
+    std::vector<Texture*> m_textures;
 
 public:
     Scene();
