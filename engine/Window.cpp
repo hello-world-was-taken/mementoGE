@@ -1,11 +1,11 @@
 #include "Window.h"
 
-Window::Window(/* args */) {}
+
+Window::Window() {}
 
 // TODO: Remove all the resources we used
 Window::~Window()
 {
-    delete m_scene_manager;
 }
 
 Window *Window::m_window = nullptr;
@@ -105,9 +105,6 @@ void Window::initializeWindow()
 
     m_glfw_window = glfwCreateWindow(m_width, m_height, m_title, NULL, NULL);
 
-    // initialize scene manager
-    m_scene_manager = new SceneManager(m_glfw_window);
-
     glfwMakeContextCurrent(m_glfw_window);
     glfwSwapInterval(1);
     if (!m_glfw_window)
@@ -127,16 +124,15 @@ void Window::initializeWindow()
     }
 }
 
-void Window::mainLoop() const
+void Window::mainLoop()
 {
     std::cout << "Drawing our scene" << std::endl;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
     setupImgui();
     glfwSwapInterval(1);
-
     // start scene manager by loading the first scene
-    m_scene_manager->start();
+    m_sceneManager->start();
 
     while (!glfwWindowShouldClose(m_glfw_window))
     {
@@ -144,7 +140,7 @@ void Window::mainLoop() const
         showImguiDemo();
 
         // TODO: why have a static Time class if we are going to pass deltaTime to the update function?
-        m_scene_manager->update(Time::deltaTime(), m_glfw_window);
+        m_sceneManager->update(Time::deltaTime(), m_glfw_window);
 
         // Rendering
         ImGui::Render();
@@ -168,8 +164,21 @@ Window *Window::getWindow()
     return m_window;
 };
 
+void Window::addSceneManager(std::shared_ptr<SceneManager> sceneManager)
+{
+    m_sceneManager = sceneManager;
+}
+
+GLFWwindow* Window::getGlfwWindow()
+{
+    if (m_glfw_window == nullptr)
+    {
+        std::cout << "GLFW window is null" << std::endl;
+        return nullptr;
+    }
+    return m_glfw_window;
+}
 void Window::run()
 {
-    initializeWindow();
     mainLoop();
 }

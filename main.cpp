@@ -1,9 +1,9 @@
-#include "engine/Window.h"
+#include <iostream>
+#include "game/Application.h"
 
 
 int main()
 {
-    std::cout << "OpenGL Playaround " << std::endl;
-    Window* window = Window::getWindow();
-    window->run();
+    std::cout << "MementoGE" << std::endl;
+    run();
 }

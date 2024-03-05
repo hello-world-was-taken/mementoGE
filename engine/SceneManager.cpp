@@ -3,8 +3,8 @@
 SceneManager::SceneManager(GLFWwindow *window)
 {
     this->window = window;
-    this->addScene("triangle_scene", std::make_shared<Scene>());
-    activeScene = scenes.at("triangle_scene");
+    // this->addScene("triangle_scene", std::make_shared<Scene>());
+    // activeScene = scenes.at("triangle_scene");
 }
 
 SceneManager::~SceneManager()
@@ -14,9 +14,12 @@ SceneManager::~SceneManager()
 
 void SceneManager::start()
 {
-    loadScene("triangle_scene");
+    if (activeScene == nullptr)
+    {
+        std::cout << "No active scene found" << std::endl;
+        return;
+    }
     activeScene->start(this->window);
-    this->getActiveScene()->addGameObject();
 }
 
 void SceneManager::update(float deltaTime, GLFWwindow *window)
@@ -26,8 +29,16 @@ void SceneManager::update(float deltaTime, GLFWwindow *window)
 
 void SceneManager::loadScene(const char *sceneName)
 {
-    activeScene = scenes.at(sceneName);
-    activeScene->start(window);
+    auto it = scenes.find(sceneName);
+    if (it != scenes.end())
+    {
+        activeScene = it->second;
+        activeScene->start(window);
+    }
+    else
+    {
+        std::cout << "Scene not found: " << sceneName << std::endl;
+    }
 }
 
 void SceneManager::unloadScene(const char *sceneName)
@@ -38,6 +49,10 @@ void SceneManager::unloadScene(const char *sceneName)
 void SceneManager::addScene(const char *sceneName, std::shared_ptr<Scene> scene)
 {
     scenes[sceneName] = scene;
+    if (activeScene == nullptr)
+    {
+        activeScene = scenes[sceneName];
+    }
 }
 
 void SceneManager::removeScene(const char *sceneName)

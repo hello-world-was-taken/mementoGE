@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include "GL/glew.h"
 #include <GLFW/glfw3.h>
@@ -7,14 +9,15 @@
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
-#include "engine/SceneManager.h"
+#include "SceneManager.h"
 
+class SceneManager;
 class Window
 {
 private:
     static Window *m_window;
-    SceneManager *m_scene_manager;
-    GLFWwindow *m_glfw_window = nullptr;
+    std::shared_ptr<SceneManager> m_sceneManager;
+    GLFWwindow* m_glfw_window;
     unsigned int m_width = 1920;
     unsigned int m_height = 1080;
     const char *m_title = "OpenGL Playground";
@@ -22,14 +25,18 @@ private:
     void setupWindowHints() const;
     void setupImgui() const;
     void showImguiDemo() const;
-    void initializeWindow();
-    void mainLoop() const;
+    void mainLoop();
     void setupCallBack() const;
 
 public:
-    Window(/* args */);
+    Window();
     ~Window();
 
     static Window *getWindow();
+
+    // addSceneManager should be called before run
+    void addSceneManager(std::shared_ptr<SceneManager> sceneManager);
+    void initializeWindow();
+    GLFWwindow* getGlfwWindow();
     void run();
 };

@@ -35,6 +35,8 @@ public:
 
     void start(GLFWwindow *window);
     void update(float deltaTime, GLFWwindow *window);
-    GameObject* addGameObject();
+    std::shared_ptr<GameObject> addGameObject();
+    // TODO: think more about this
+    // void addTextureToGameObject(std::shared_ptr<GameObject> gameObject, std::shared_ptr<Texture> texture);
     Camera* getCamera();
 };

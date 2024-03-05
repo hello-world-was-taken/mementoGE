@@ -60,7 +60,6 @@ void RenderBatch::updateVertexBuffer()
 {
     // update the vertex buffer
     vertices.clear();
-    std::cout << "Here: " << m_gameObjects->size()<< std::endl;
 
     for (std::shared_ptr<GameObject> gameObject : *m_gameObjects)
     {

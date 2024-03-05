@@ -3,6 +3,7 @@
 #include <map>
 #include <memory>
 #include "Scene.h"
+#include "Window.h"
 
 class SceneManager
 {

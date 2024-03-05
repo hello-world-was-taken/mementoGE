@@ -17,9 +17,10 @@ add_executable(${PROJECT_NAME}
     engine/IndexBuffer.cpp engine/MouseListener.cpp engine/KeyListener.cpp 
     engine/VertexBuffer.cpp engine/Shader.cpp engine/Camera.cpp
     engine/SpriteRenderer.cpp engine/GameObject.cpp engine/RenderBatch.cpp
+    engine/SceneManager.cpp engine/Scene.cpp
     
     # game files
-    engine/SceneManager.cpp engine/Scene.cpp
+    game/Application.cpp
     
     util/log_error.cpp  util/Time.cpp lib/stb_image/stb_image.cpp
     lib/imgui/imgui.cpp lib/imgui/imgui_draw.cpp lib/imgui/imgui_widgets.cpp
