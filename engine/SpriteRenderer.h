@@ -11,16 +11,16 @@ private:
     const char *tag = "SpriteRenderer";
     std::vector<glm::vec2> textureCoordinates;  // 4 vertices, 2D
     glm::vec4 color;
-    Texture *texture;
+    std::shared_ptr<Texture> texture;
 
 public:
     SpriteRenderer(glm::vec4 color);
-    SpriteRenderer(Texture *texture);
+    SpriteRenderer(std::shared_ptr<Texture> texture);
     ~SpriteRenderer();
 
     void start();
     void update(float deltaTime);
     std::vector<glm::vec2> getTextureCoordinates();
-    Texture* getTexture();
+    std::shared_ptr<Texture> getTexture();
     glm::vec4 getColor();
 };

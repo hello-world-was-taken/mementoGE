@@ -1,14 +1,18 @@
 #pragma once
 #include <entt/entt.hpp>
 #include <iostream>
+#include <memory>
 
 class GameObject
 {
+private:
+    entt::entity entity;
+    entt::registry &registry;
+
 public:
     GameObject(entt::registry &registry);
     ~GameObject();
 
-    // TODO: read more about perfect forwarding
     template <typename Component, typename... Args>
     void addComponent(Args &&...args)
     {
@@ -35,12 +39,9 @@ public:
 
     void destroy();
 
+    // TODO: Debug function, remove later
     void getId()
     {
         std::cout << "Entity ID: " << (u_int32_t)entity << std::endl;
     }
-
-private:
-    entt::entity entity;
-    entt::registry &registry;
 };

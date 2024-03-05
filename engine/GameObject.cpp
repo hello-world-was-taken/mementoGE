@@ -7,8 +7,8 @@ GameObject::GameObject(entt::registry &registry) : registry(registry)
 
 GameObject::~GameObject()
 {
-    // std::cout << "Game Object destructor called" << std::endl;
-    // registry.destroy(entity);
+    std::cout << "Game Object destructor called" << std::endl;
+    registry.destroy(entity);
 }
 
 void GameObject::destroy()

@@ -5,6 +5,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <entt/entt.hpp>
+#include <memory>
 
 #include "util/log_error.h"
 #include "engine/Shader.h"
@@ -22,10 +23,11 @@ private:
     float m_screen_width = (float)(32 * 16); // 16 tiles of 32 pixels
     float m_screen_height = (float)(32 * 9); // 9 tiles of 32 pixels
     entt::registry m_registry;
-    std::vector<GameObject> gameObjects;
+    // TODO: use type alias to make this more readable
+    std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> m_gameObjects;
     Camera m_camera = Camera(m_screen_width, m_screen_height);
     RenderBatch* m_renderBatch = nullptr;
-    std::vector<Texture*> m_textures;
+    std::vector<std::shared_ptr<Texture>> m_textures;
 
 public:
     Scene();

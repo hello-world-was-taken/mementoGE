@@ -31,6 +31,7 @@ Texture::Texture(const char *texture_path, int texture_unit) : m_texture_unit(te
 
 Texture::~Texture()
 {
+    std::cout << "Texture destructor called" << std::endl;
     glDeleteTextures(1, &this->m_id);
 }
 

@@ -3,7 +3,7 @@
 #include "util/log_error.h"
 #include <GL/glew.h>
 
-RenderBatch::RenderBatch(const Camera *camera, std::vector<GameObject> *gameObjects) : m_camera(camera), m_gameObjects(gameObjects)
+RenderBatch::RenderBatch(const Camera *camera, std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> gameObjects) : m_camera(camera), m_gameObjects(gameObjects)
 {
     generateIndexArray();
     generateVertexBuffer();
@@ -11,6 +11,7 @@ RenderBatch::RenderBatch(const Camera *camera, std::vector<GameObject> *gameObje
 
 RenderBatch::~RenderBatch()
 {
+    std::cout << "RenderBatch destructor called" << std::endl;
     glDeleteVertexArrays(1, &this->vao);
 }
 
@@ -59,10 +60,12 @@ void RenderBatch::updateVertexBuffer()
 {
     // update the vertex buffer
     vertices.clear();
+    std::cout << "Here: " << m_gameObjects->size()<< std::endl;
 
-    for (auto &gameObject : *m_gameObjects)
+    for (std::shared_ptr<GameObject> gameObject : *m_gameObjects)
     {
-        Transform transform = gameObject.getComponent<Transform>(); // every game object has a transform
+
+        Transform transform = gameObject->getComponent<Transform>(); // every game object has a transform
         glm::mat4x4 transformMatrix = transform.getTransformMatrix();
         std::vector<glm::vec3> transformedQuad = transformQuad(transformMatrix);
 
@@ -70,13 +73,14 @@ void RenderBatch::updateVertexBuffer()
         glm::vec4 color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
         std::vector<glm::vec2> textureCoordinates = {glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 0.0f), glm::vec2(1.0f, 1.0f)};
         float textureIndex = 0;
-        if (gameObject.hasComponent<SpriteRenderer>())
+        if (gameObject->hasComponent<SpriteRenderer>())
         {
-            SpriteRenderer spriteRenderer = gameObject.getComponent<SpriteRenderer>();
+            SpriteRenderer spriteRenderer = gameObject->getComponent<SpriteRenderer>();
 
             color = spriteRenderer.getColor();
             textureCoordinates = spriteRenderer.getTextureCoordinates(); // TODO: do we need to retrieve this from the sprite renderer?
             textureIndex = spriteRenderer.getTexture()->getTextureUnit();
+            std::cout << "Texture index: " << textureIndex << std::endl;
         }
 
         for (int i = 0; i < transformedQuad.size(); i++)

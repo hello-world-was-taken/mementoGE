@@ -23,7 +23,7 @@ class RenderBatch
 {
 private:
     const Camera *m_camera;
-    std::vector<GameObject> *m_gameObjects;
+    std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> m_gameObjects;
     std::vector<Vertex> vertices;
     static const int BATCH_SIZE = 1000;    // 1000 QUADS
     static const int INDICES_PER_QUAD = 6; // 6 indices per quad
@@ -39,7 +39,7 @@ private:
     std::vector<int> m_texture_units = {0, 1, 2, 3, 4, 5, 6, 7};
 
 public:
-    RenderBatch(const Camera *camera, std::vector<GameObject> *m_gameObjects);
+    RenderBatch(const Camera *camera, std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> m_gameObjects);
     ~RenderBatch();
 
     void render();

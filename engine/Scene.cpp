@@ -15,15 +15,12 @@ Scene::~Scene()
 {
     std::cout << "Scene destructor called" << std::endl;
     delete m_renderBatch;
-    for (auto texture : m_textures)
-    {
-        delete texture;
-    }
 }
 
 void Scene::start(GLFWwindow *window)
 {
-    m_renderBatch = new RenderBatch(&m_camera, &gameObjects);
+    m_gameObjects =  std::make_shared<std::vector<std::shared_ptr<GameObject>>>();
+    m_renderBatch = new RenderBatch(&m_camera, m_gameObjects);
     m_renderBatch->render();
 }
 
@@ -36,23 +33,23 @@ GameObject *Scene::addGameObject()
 {
     // TODO: Think about creating an asset pool for textrues
     const char *texture_path = "../assets/texture/slice01_01.png";
-    Texture *texture = new Texture(texture_path, 0.0f);
+    std::shared_ptr<Texture> texture = std::make_shared<Texture>(texture_path, 0.0f);
     m_textures.push_back(texture);
     texture->bind();
 
-    GameObject *gameObject = new GameObject(m_registry);
-    gameObjects.push_back(*gameObject);
+    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>(m_registry);
+    m_gameObjects->push_back(gameObject);
     gameObject->addComponent<Transform>(glm::vec3(0.0f, 0.0f, 0.0f)); // every game object has a transform
 
     gameObject->addComponent<SpriteRenderer>(texture);
 
     const char *texture_path2 = "../assets/texture/sheet.png";
-    Texture *texture2 = new Texture(texture_path2, 1);
+    std::shared_ptr<Texture> texture2 = std::make_shared<Texture>(texture_path2, 1);
     m_textures.push_back(texture2);
     texture2->bind();
 
-    GameObject *gameObject2 = new GameObject(m_registry);
-    gameObjects.push_back(*gameObject2);
+    std::shared_ptr<GameObject> gameObject2 =  std::make_shared<GameObject>(m_registry);
+    m_gameObjects->push_back(gameObject2);
     gameObject2->addComponent<Transform>(glm::vec3(110.0f, 0.0f, 0.0f)); // every game object has a transform
 
     gameObject2->addComponent<SpriteRenderer>(texture2);

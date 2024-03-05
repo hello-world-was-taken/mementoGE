@@ -10,7 +10,7 @@ SpriteRenderer::SpriteRenderer(glm::vec4 color)
     this->textureCoordinates.push_back({1.0f, 1.0f}); // top right
 }
 
-SpriteRenderer::SpriteRenderer(Texture *texture)
+SpriteRenderer::SpriteRenderer(std::shared_ptr<Texture> texture)
 {
     this->color = {1.0f, 1.0f, 1.0f, 1.0f}; // white
     this->texture = texture;
@@ -39,7 +39,7 @@ std::vector<glm::vec2> SpriteRenderer::getTextureCoordinates()
     return this->textureCoordinates;
 }
 
-Texture *SpriteRenderer::getTexture()
+std::shared_ptr<Texture> SpriteRenderer::getTexture()
 {
     return this->texture;
 }

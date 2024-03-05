@@ -10,10 +10,10 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/lib/glfw)
 
 # since the imported libraries (glfw, glew) don't change, I don't think we need to add them here
 add_executable(${PROJECT_NAME} 
-    main.cpp Window.cpp 
+    main.cpp 
     
     # engine files
-    engine/CreateShader.cpp engine/Texture.cpp engine/Transform.cpp
+    engine/Window.cpp engine/Texture.cpp engine/Transform.cpp
     engine/IndexBuffer.cpp engine/MouseListener.cpp engine/KeyListener.cpp 
     engine/VertexBuffer.cpp engine/Shader.cpp engine/Camera.cpp
     engine/SpriteRenderer.cpp engine/GameObject.cpp engine/RenderBatch.cpp
