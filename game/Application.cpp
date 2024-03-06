@@ -22,7 +22,7 @@ void addGameObject(std::shared_ptr<Scene> scene)
     texture2->bind();
 
     std::shared_ptr<GameObject> gameObject2 = scene->addGameObject();
-    gameObject2->addComponent<Transform>(glm::vec3(110.0f, 0.0f, 0.0f)); // every game object has a transform
+    gameObject2->addComponent<Transform>(glm::vec3(110.0f, 200.0f, 0.0f)); // every game object has a transform
     gameObject2->addComponent<SpriteRenderer>(texture2);
 }
 

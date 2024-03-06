@@ -1,12 +1,13 @@
 #include "Camera.h"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
+#include <iostream>
 
 Camera::Camera(float width, float height) : m_width(width), m_height(height)
 {
     m_projection = glm::mat4(1.0f);
     m_view = glm::mat4(1.0f);
-    m_position = glm::vec2(0.0f);
+    m_position = glm::vec3(0.0f);
 
     updateView();
     updateProjection();
@@ -42,4 +43,10 @@ glm::mat4 Camera::getViewMatrix() const
 glm::mat4 Camera::getProjectionMatrix() const
 {
     return m_projection;
+}
+
+void Camera::update(float deltaTime, glm::vec2 translationVector)
+{
+    m_position = glm::vec3(m_position, 0.0f) + glm::vec3(translationVector, 0.0f);
+    updateView();
 }

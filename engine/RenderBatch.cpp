@@ -79,7 +79,6 @@ void RenderBatch::updateVertexBuffer()
             color = spriteRenderer.getColor();
             textureCoordinates = spriteRenderer.getTextureCoordinates(); // TODO: do we need to retrieve this from the sprite renderer?
             textureIndex = spriteRenderer.getTexture()->getTextureUnit();
-            std::cout << "Texture index: " << textureIndex << std::endl;
         }
 
         for (int i = 0; i < transformedQuad.size(); i++)

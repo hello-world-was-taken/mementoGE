@@ -16,7 +16,7 @@ public:
     Camera(float width, float height);
     ~Camera();
 
-    void update();
+    void update(float deltaTime, glm::vec2 translationVector);
     void setProjectionMatrix(float fov, float aspect_ratio, float near_plane, float far_plane);
     void setPosition(glm::vec2 position);
     void setRotation(glm::vec3 rotation);

@@ -1,6 +1,5 @@
 #include "Window.h"
 
-
 Window::Window() {}
 
 // TODO: Remove all the resources we used
@@ -139,13 +138,35 @@ void Window::mainLoop()
         glfwPollEvents();
         showImguiDemo();
 
-        // TODO: why have a static Time class if we are going to pass deltaTime to the update function?
+        if (KeyListener::isKeyPressed(GLFW_KEY_ESCAPE))
+        {
+            glfwSetWindowShouldClose(m_glfw_window, true);
+            std::cout << "Escape" << std::endl;
+        }
+        else if (KeyListener::isKeyPressed(GLFW_KEY_RIGHT))
+        {
+            std::cout << "Time delta: " << Time::deltaTime() << std::endl;
+            m_sceneManager->getActiveScene()->getCamera()->update(Time::deltaTime(), glm::vec3(-500.0f * Time::deltaTime(), 0.0f, 0.0f));
+        }
+        else if (KeyListener::isKeyPressed(GLFW_KEY_LEFT))
+        {
+            m_sceneManager->getActiveScene()->getCamera()->update(Time::deltaTime(), glm::vec3(500.0f * Time::deltaTime(), 0.0f, 0.0f));
+        }
+        else if (KeyListener::isKeyPressed(GLFW_KEY_DOWN))
+        {
+            m_sceneManager->getActiveScene()->getCamera()->update(Time::deltaTime(), glm::vec3(0.0f, 500.0f * Time::deltaTime(), 0.0f));
+        }
+        else if (KeyListener::isKeyPressed(GLFW_KEY_UP))
+        {
+            m_sceneManager->getActiveScene()->getCamera()->update(Time::deltaTime(), glm::vec3(0.0f, -500.0f * Time::deltaTime(), 0.0f));
+        }
         m_sceneManager->update(Time::deltaTime(), m_glfw_window);
 
         // Rendering
         ImGui::Render();
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        // TODO: why have a static Time class if we are going to pass deltaTime to the update function?
         Time::update();
         glfwSwapBuffers(m_glfw_window);
     }
@@ -169,7 +190,7 @@ void Window::addSceneManager(std::shared_ptr<SceneManager> sceneManager)
     m_sceneManager = sceneManager;
 }
 
-GLFWwindow* Window::getGlfwWindow()
+GLFWwindow *Window::getGlfwWindow()
 {
     if (m_glfw_window == nullptr)
     {
