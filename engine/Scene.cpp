@@ -29,9 +29,9 @@ void Scene::update(float deltaTime, GLFWwindow *window)
     m_renderBatch->render();
 }
 
-std::shared_ptr<GameObject> Scene::addGameObject()
+std::shared_ptr<GameObject> Scene::addGameObject(unsigned int width, unsigned int height)
 {
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>(m_registry);
+    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>(m_registry, width, height);
     m_gameObjects->push_back(gameObject);
 
     return gameObject;

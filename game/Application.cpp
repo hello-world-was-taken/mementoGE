@@ -10,20 +10,22 @@ void addGameObject(std::shared_ptr<Scene> scene)
 {
     // TODO: Think about creating an asset pool for textrues
     const char *texture_path = "../assets/texture/slice01_01.png";
-    std::shared_ptr<Texture> texture = std::make_shared<Texture>(texture_path, 0.0f);
+    std::shared_ptr<Texture> texture = std::make_shared<Texture>(texture_path, 0);
     texture->bind();
 
-    std::shared_ptr<GameObject> gameObject = scene->addGameObject();
+    std::shared_ptr<GameObject> gameObject = scene->addGameObject(70, 70);
+    // TODO: We shouldn't be using glm::vec3 directly. We should have a class that wraps glm::vec3
     gameObject->addComponent<Transform>(glm::vec3(0.0f, 0.0f, 0.0f)); // every game object has a transform
     gameObject->addComponent<SpriteRenderer>(texture);
 
-    const char *texture_path2 = "../assets/texture/sheet.png";
-    std::shared_ptr<Texture> texture2 = std::make_shared<Texture>(texture_path2, 1);
+    const char *texture_path2 = "../assets/texture/spritesheet_default.png";
+    std::shared_ptr<Texture> texture2 = std::make_shared<Texture>(texture_path2, 1, true);
+    // std::shared_ptr<Texture> texture2 = std::make_shared<Texture>(texture_path2, 1);
     texture2->bind();
 
-    std::shared_ptr<GameObject> gameObject2 = scene->addGameObject();
+    std::shared_ptr<GameObject> gameObject2 = scene->addGameObject(128, 64);
     gameObject2->addComponent<Transform>(glm::vec3(110.0f, 200.0f, 0.0f)); // every game object has a transform
-    gameObject2->addComponent<SpriteRenderer>(texture2);
+    gameObject2->addComponent<SpriteRenderer>(texture2, 128, 64, 0, 0);
 }
 
 void run() {

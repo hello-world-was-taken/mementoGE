@@ -145,7 +145,6 @@ void Window::mainLoop()
         }
         else if (KeyListener::isKeyPressed(GLFW_KEY_RIGHT))
         {
-            std::cout << "Time delta: " << Time::deltaTime() << std::endl;
             m_sceneManager->getActiveScene()->getCamera()->update(Time::deltaTime(), glm::vec3(-500.0f * Time::deltaTime(), 0.0f, 0.0f));
         }
         else if (KeyListener::isKeyPressed(GLFW_KEY_LEFT))

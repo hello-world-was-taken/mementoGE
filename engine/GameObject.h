@@ -2,15 +2,19 @@
 #include <entt/entt.hpp>
 #include <iostream>
 #include <memory>
+#include <vector>
+#include <glm/glm.hpp>
 
 class GameObject
 {
 private:
     entt::entity entity;
     entt::registry &registry;
+    unsigned int m_width = 0;
+    unsigned int m_height = 0;
 
 public:
-    GameObject(entt::registry &registry);
+    GameObject(entt::registry &registry, unsigned int width = 0, unsigned int height = 0);
     ~GameObject();
 
     template <typename Component, typename... Args>
@@ -38,6 +42,12 @@ public:
     }
 
     void destroy();
+
+    unsigned int getWidth();
+
+    unsigned int getHeight();
+
+    std::vector<glm::vec3> getQuad();
 
     // TODO: Debug function, remove later
     void getId()

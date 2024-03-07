@@ -1,6 +1,6 @@
 #include "Texture.h"
 
-Texture::Texture(const char *texture_path, int texture_unit) : m_texture_unit(texture_unit)
+Texture::Texture(const char *texture_path, int texture_unit, bool isTextureAtlas) : m_texture_unit(texture_unit), m_isTextureAtlas(isTextureAtlas)
 {
     stbi_set_flip_vertically_on_load(true);
     m_texture_buffer = (char *)stbi_load(texture_path, &this->m_width, &this->m_height, &this->m_nrChannels, 0);
@@ -38,6 +38,11 @@ Texture::~Texture()
 unsigned int Texture::getTextureUnit() const
 {
     return m_texture_unit;
+}
+
+bool Texture::isTextureAtlas() const
+{
+    return m_isTextureAtlas;
 }
 
 void Texture::bind() const

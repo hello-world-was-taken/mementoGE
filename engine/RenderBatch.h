@@ -30,11 +30,6 @@ private:
     unsigned int indices[BATCH_SIZE * INDICES_PER_QUAD];
     unsigned int vao;
     VertexBuffer vb;
-    std::vector<glm::vec3> m_quad = {
-        {0.0f, 100.0f, 0.0f},    // top left
-        {0.0f, 0.0f, 0.0f},      // bottom left
-        {100.0f, 0.0f, 0.0f},    // bottom right
-        {100.0f, 100.0f, 0.0f}}; // top right
 
     std::vector<int> m_texture_units = {0, 1, 2, 3, 4, 5, 6, 7};
 
@@ -48,5 +43,5 @@ public:
     void updateVertexBuffer();
     void generateVertexBuffer();
     void generateIndexArray();
-    std::vector<glm::vec3> transformQuad(glm::mat4x4 transformMatrix);
+    std::vector<glm::vec3> transformQuad(glm::mat4x4 transformMatrix, std::vector<glm::vec3> quad);
 };

@@ -37,16 +37,6 @@ void RenderBatch::render()
     glm::mat4 u_projection_matrix = m_camera->getProjectionMatrix();
     shader.setUniform4fv("u_projection_matrix", u_projection_matrix);
 
-    // TODO: we don't need to set the matrix/transform for each game object as we are calcuating it using the CPU
-    // set the model matrix
-    // glm::mat4 u_model_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-    // shader.setUniform4fv("u_model_matrix", u_model_matrix);
-
-    // use uniform texture
-    // const char *texture_path = "../assets/texture/slice01_01.png";
-    // Texture texture(texture_path);
-    // texture.bind();
-
     shader.setMultipleTextureUnits("textures", m_texture_units.data(), m_texture_units.size());
 
     glClearError();
@@ -66,7 +56,7 @@ void RenderBatch::updateVertexBuffer()
 
         Transform transform = gameObject->getComponent<Transform>(); // every game object has a transform
         glm::mat4x4 transformMatrix = transform.getTransformMatrix();
-        std::vector<glm::vec3> transformedQuad = transformQuad(transformMatrix);
+        std::vector<glm::vec3> transformedQuad = transformQuad(transformMatrix, gameObject->getQuad());
 
         // getting sprite renderer
         glm::vec4 color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -91,12 +81,12 @@ void RenderBatch::updateVertexBuffer()
     vb.updateBufferData(vertices);
 }
 
-std::vector<glm::vec3> RenderBatch::transformQuad(glm::mat4x4 transformMatrix)
+std::vector<glm::vec3> RenderBatch::transformQuad(glm::mat4x4 transformMatrix, std::vector<glm::vec3> quad)
 {
-    std::vector<glm::vec3> transformedQuad = m_quad;
-    for (int i = 0; i < m_quad.size(); i++)
+    std::vector<glm::vec3> transformedQuad = quad;
+    for (int i = 0; i < quad.size(); i++)
     {
-        transformedQuad[i] = transformMatrix * glm::vec4(m_quad[i], 1.0f);
+        transformedQuad[i] = transformMatrix * glm::vec4(quad[i], 1.0f);
     }
 
     return transformedQuad;
