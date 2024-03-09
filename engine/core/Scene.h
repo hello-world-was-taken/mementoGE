@@ -2,21 +2,20 @@
 
 #include <iostream>
 #include <vector>
+#include <memory>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <entt/entt.hpp>
-#include <memory>
+#include <glm/glm.hpp>
+#include <glm/ext/matrix_transform.hpp>
 
 #include "util/log_error.h"
-#include "engine/Shader.h"
-#include "engine/SpriteRenderer.h"
-#include "engine/GameObject.h"
-#include "engine/Transform.h"
-#include "engine/Camera.h"
-
-#include "glm/glm.hpp"
-#include "glm/ext/matrix_transform.hpp"
-#include "engine/RenderBatch.h"
+#include "engine/opengl/Shader.h"
+#include "engine/renderer/SpriteRenderer.h"
+#include "engine/core/GameObject.h"
+#include "engine/core/Transform.h"
+#include "engine/core/Camera.h"
+#include "engine/renderer/RenderBatch.h"
 
 class Scene {
 private:

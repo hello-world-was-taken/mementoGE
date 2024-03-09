@@ -12,17 +12,35 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/lib/glfw)
 add_executable(${PROJECT_NAME} 
     main.cpp 
     
-    # engine files
-    engine/Window.cpp engine/Texture.cpp engine/Transform.cpp
-    engine/IndexBuffer.cpp engine/MouseListener.cpp engine/KeyListener.cpp 
-    engine/VertexBuffer.cpp engine/Shader.cpp engine/Camera.cpp
-    engine/SpriteRenderer.cpp engine/GameObject.cpp engine/RenderBatch.cpp
-    engine/SceneManager.cpp engine/Scene.cpp
+    # core
+    engine/core/Window.cpp
+    engine/core/Transform.cpp
+    engine/core/MouseListener.cpp
+    engine/core/KeyListener.cpp 
+    engine/core/Camera.cpp
+    engine/core/GameObject.cpp 
+    engine/core/SceneManager.cpp
+    engine/core/Scene.cpp
+
+    # opengl
+    engine/opengl/Texture.cpp
+    engine/opengl/IndexBuffer.cpp
+    engine/opengl/VertexBuffer.cpp
+    engine/opengl/Shader.cpp
+
+    # renderer
+    engine/renderer/RenderBatch.cpp
+    engine/renderer/SpriteRenderer.cpp
+
+    # utils
+    util/log_error.cpp
+    util/Time.cpp
     
     # game files
     game/Application.cpp
     
-    util/log_error.cpp  util/Time.cpp lib/stb_image/stb_image.cpp
+    # third party
+    lib/stb_image/stb_image.cpp
     lib/imgui/imgui.cpp lib/imgui/imgui_draw.cpp lib/imgui/imgui_widgets.cpp
     lib/imgui/imgui_tables.cpp lib/imgui/backends/imgui_impl_glfw.cpp 
     lib/imgui/backends/imgui_impl_opengl3.cpp

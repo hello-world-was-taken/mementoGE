@@ -1,7 +1,8 @@
-#include "Camera.h"
-#include "glm/ext/matrix_clip_space.hpp"
-#include "glm/ext/matrix_transform.hpp"
 #include <iostream>
+#include <glm/ext/matrix_clip_space.hpp>
+#include <glm/ext/matrix_transform.hpp>
+
+#include "engine/core/Camera.h"
 
 Camera::Camera(float width, float height) : m_width(width), m_height(height)
 {

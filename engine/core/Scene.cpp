@@ -1,6 +1,7 @@
-#include "Scene.h"
-#include "engine/RenderBatch.h"
 #include <iostream>
+
+#include "engine/core/Scene.h"
+#include "engine/renderer/RenderBatch.h"
 
 Scene::Scene()
 {

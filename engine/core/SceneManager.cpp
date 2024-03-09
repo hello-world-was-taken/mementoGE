@@ -1,4 +1,4 @@
-#include "SceneManager.h"
+#include "engine/core/SceneManager.h"
 
 SceneManager::SceneManager(GLFWwindow *window)
 {

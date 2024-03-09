@@ -1,4 +1,4 @@
-#include "VertexBuffer.h"
+#include "engine/opengl/VertexBuffer.h"
 
 VertexBuffer::VertexBuffer(
     unsigned int bufferSize,

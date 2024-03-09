@@ -1,10 +1,9 @@
 #pragma once
 
 #include <vector>
-#include "Vertex.h"
-#include "VertexAttribute.h"
 
-
+#include "engine/opengl/Vertex.h"
+#include "engine/opengl/VertexAttribute.h"
 
 class VertexBuffer {
 

@@ -1,10 +1,11 @@
-#include "engine/Window.h"
-#include "engine/SceneManager.h"
-#include "engine/Scene.h"
 #include <memory>
+
 #include "Application.h"
-#include "engine/Texture.h"
-#include "engine/GameObject.h"
+#include "engine/opengl/Texture.h"  // TODO: anything out side of core should not be included here
+#include "engine/core/GameObject.h"
+#include "engine/core/Window.h"
+#include "engine/core/SceneManager.h"
+#include "engine/core/Scene.h"
 
 void addGameObject(std::shared_ptr<Scene> scene)
 {

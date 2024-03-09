@@ -1,4 +1,4 @@
-#include "Shader.h"
+#include "engine/opengl/Shader.h"
 
 Shader::Shader(const char* vertex_path, const char* fragment_path) {
     const char *vertex_source = parseShader(vertex_path);

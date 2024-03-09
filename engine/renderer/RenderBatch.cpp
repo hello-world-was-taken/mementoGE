@@ -1,7 +1,8 @@
-#include "engine/RenderBatch.h"
 #include <iostream>
-#include "util/log_error.h"
 #include <GL/glew.h>
+
+#include "engine/renderer/RenderBatch.h"
+#include "util/log_error.h"
 
 RenderBatch::RenderBatch(const Camera *camera, std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> gameObjects) : m_camera(camera), m_gameObjects(gameObjects)
 {

@@ -1,10 +1,10 @@
 #pragma once
 
 #include <iostream>
-#include <glm/glm.hpp>
 #include <vector>
+#include <glm/glm.hpp>
 
-#include "Texture.h"
+#include "engine/opengl/Texture.h"
 
 class SpriteRenderer
 {

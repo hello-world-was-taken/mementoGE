@@ -2,8 +2,9 @@
 
 #include <map>
 #include <memory>
-#include "Scene.h"
-#include "Window.h"
+
+#include "engine/core/Scene.h"
+#include "engine/core/Window.h"
 
 class SceneManager
 {

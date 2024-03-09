@@ -1,15 +1,16 @@
 #pragma once
 
 #include <iostream>
-#include "GL/glew.h"
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include "engine/MouseListener.h"
-#include "engine/KeyListener.h"
+#include <imgui.h>
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_opengl3.h>
+
 #include "util/Time.h"
-#include "imgui.h"
-#include "backends/imgui_impl_glfw.h"
-#include "backends/imgui_impl_opengl3.h"
-#include "SceneManager.h"
+#include "engine/core/MouseListener.h"
+#include "engine/core/KeyListener.h"
+#include "engine/core/SceneManager.h"
 
 class SceneManager;
 class Window

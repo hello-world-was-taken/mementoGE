@@ -1,4 +1,4 @@
-#include "GameObject.h"
+#include "engine/core/GameObject.h"
 
 GameObject::GameObject(entt::registry &registry, unsigned int width, unsigned int height) : registry(registry)
 {
