@@ -121,12 +121,15 @@ void Window::initializeWindow()
         fprintf(stderr, "Error: '%s'\n", glewGetErrorString(res));
         return;
     }
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void Window::mainLoop()
 {
     std::cout << "Drawing our scene" << std::endl;
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    ImVec4 clear_color = ImVec4(0.5f, 0.5f, 0.5f, 1.00f);
 
     setupImgui();
     glfwSwapInterval(1);
@@ -137,6 +140,7 @@ void Window::mainLoop()
     {
         glfwPollEvents();
         showImguiDemo();
+        glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
 
         if (KeyListener::isKeyPressed(GLFW_KEY_ESCAPE))
         {

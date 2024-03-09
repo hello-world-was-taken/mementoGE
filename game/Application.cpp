@@ -18,14 +18,14 @@ void addGameObject(std::shared_ptr<Scene> scene)
     gameObject->addComponent<Transform>(glm::vec3(0.0f, 0.0f, 0.0f)); // every game object has a transform
     gameObject->addComponent<SpriteRenderer>(texture);
 
-    const char *texture_path2 = "../assets/texture/spritesheet_default.png";
+    const char *texture_path2 = "../assets/texture/spritesheet_retina.png";
     std::shared_ptr<Texture> texture2 = std::make_shared<Texture>(texture_path2, 1, true);
     // std::shared_ptr<Texture> texture2 = std::make_shared<Texture>(texture_path2, 1);
     texture2->bind();
 
     std::shared_ptr<GameObject> gameObject2 = scene->addGameObject(128, 64);
     gameObject2->addComponent<Transform>(glm::vec3(110.0f, 200.0f, 0.0f)); // every game object has a transform
-    gameObject2->addComponent<SpriteRenderer>(texture2, 128, 64, 0, 0);
+    gameObject2->addComponent<SpriteRenderer>(texture2, 256, 128, 0, 0);
 }
 
 void run() {
