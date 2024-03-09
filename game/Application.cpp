@@ -1,11 +1,13 @@
 #include <memory>
 
 #include "Application.h"
-#include "engine/opengl/Texture.h"  // TODO: anything out side of core should not be included here
+#include "engine/opengl/Texture.h" // TODO: anything out side of core should not be included here
 #include "engine/core/GameObject.h"
 #include "engine/core/Window.h"
 #include "engine/core/SceneManager.h"
 #include "engine/core/Scene.h"
+#include "game/MouseListener.h" // TODO: this should be abstracted away by core engine module
+#include "game/KeyListener.h"   // TODO: this should be abstracted away by core engine module
 
 void addGameObject(std::shared_ptr<Scene> scene)
 {
@@ -29,23 +31,51 @@ void addGameObject(std::shared_ptr<Scene> scene)
     gameObject2->addComponent<SpriteRenderer>(texture2, 256, 128, 0, 0);
 }
 
-void run() {
+void eventHandler(GLFWwindow* glfw_window, SceneManager* sceneManager)
+{
+    if (KeyListener::isKeyPressed(GLFW_KEY_ESCAPE))
+    {
+        glfwSetWindowShouldClose(glfw_window, true);
+        std::cout << "Escape" << std::endl;
+    }
+    else if (KeyListener::isKeyPressed(GLFW_KEY_RIGHT))
+    {
+        sceneManager->getActiveScene()->getCamera()->update(Time::deltaTime(), glm::vec3(-500.0f * Time::deltaTime(), 0.0f, 0.0f));
+    }
+    else if (KeyListener::isKeyPressed(GLFW_KEY_LEFT))
+    {
+        sceneManager->getActiveScene()->getCamera()->update(Time::deltaTime(), glm::vec3(500.0f * Time::deltaTime(), 0.0f, 0.0f));
+    }
+    else if (KeyListener::isKeyPressed(GLFW_KEY_DOWN))
+    {
+        sceneManager->getActiveScene()->getCamera()->update(Time::deltaTime(), glm::vec3(0.0f, 500.0f * Time::deltaTime(), 0.0f));
+    }
+    else if (KeyListener::isKeyPressed(GLFW_KEY_UP))
+    {
+        sceneManager->getActiveScene()->getCamera()->update(Time::deltaTime(), glm::vec3(0.0f, -500.0f * Time::deltaTime(), 0.0f));
+    }
+}
+
+void run()
+{
     // Create a window
     Window *window = Window::getWindow();
     window->initializeWindow();
+    window->setupCallBack(
+        MouseListener::cursorPositionCallback,
+        MouseListener::mouseButtonCallback,
+        MouseListener::scrollCallback,
+        KeyListener::keyCallback);
 
     // Create a scene manager
-    // TODO: whoever is creating a game shouldn't have to worry about glfwWindow
-    //       needs to be designed better.
-    std::shared_ptr<SceneManager> scene_manager = std::make_shared<SceneManager>(window->getGlfwWindow());
+    std::shared_ptr<SceneManager> scene_manager = std::make_shared<SceneManager>(window);
 
-    // Add the scene manager to the window. This should be called before run
-    window->addSceneManager(scene_manager);
-    
     // Create a scene. We need at least one scene to start the game
     std::shared_ptr<Scene> scene = std::make_shared<Scene>();
-    scene_manager->addScene("triangle_scene",scene);
+    scene_manager->setEventHandler(eventHandler);
+    scene_manager->addScene("triangle_scene", scene);
     addGameObject(scene);
-    // Start the main loop
-    window->run();
+    
+    // Start the game loop
+    scene_manager->gameLoop();
 }

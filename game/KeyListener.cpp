@@ -1,4 +1,9 @@
-#include "engine/core/KeyListener.h"
+/*  TODO:
+    Should implement a dedicated Event System to handle key events
+    and make it available via mementoGE core api.
+*/
+
+#include "game/KeyListener.h"
 
 KeyListener::KeyListener(){};
 

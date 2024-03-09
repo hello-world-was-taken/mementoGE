@@ -15,12 +15,11 @@ add_executable(${PROJECT_NAME}
     # core
     engine/core/Window.cpp
     engine/core/Transform.cpp
-    engine/core/MouseListener.cpp
-    engine/core/KeyListener.cpp 
     engine/core/Camera.cpp
     engine/core/GameObject.cpp 
     engine/core/SceneManager.cpp
     engine/core/Scene.cpp
+    engine/core/ImGuiWrapper.cpp
 
     # opengl
     engine/opengl/Texture.cpp
@@ -38,6 +37,8 @@ add_executable(${PROJECT_NAME}
     
     # game files
     game/Application.cpp
+    game/MouseListener.cpp
+    game/KeyListener.cpp 
     
     # third party
     lib/stb_image/stb_image.cpp

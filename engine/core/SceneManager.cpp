@@ -1,10 +1,11 @@
 #include "engine/core/SceneManager.h"
+#include "engine/core/ImGuiWrapper.h"
 
-SceneManager::SceneManager(GLFWwindow *window)
+SceneManager::SceneManager(Window *m_window)
 {
-    this->window = window;
+    this->m_window = m_window;
     // this->addScene("triangle_scene", std::make_shared<Scene>());
-    // activeScene = scenes.at("triangle_scene");
+    // m_activeScene = m_scenes.at("triangle_scene");
 }
 
 SceneManager::~SceneManager()
@@ -14,26 +15,68 @@ SceneManager::~SceneManager()
 
 void SceneManager::start()
 {
-    if (activeScene == nullptr)
+    if (m_activeScene == nullptr)
     {
-        std::cout << "No active scene found" << std::endl;
+        std::cout << "No active m_scene found" << std::endl;
         return;
     }
-    activeScene->start(this->window);
+    m_activeScene->start(this->m_window->getGlfwWindow());
 }
 
-void SceneManager::update(float deltaTime, GLFWwindow *window)
+void SceneManager::update(float deltaTime)
 {
-    activeScene->update(deltaTime, window);
+    if (m_activeScene == nullptr)
+    {
+        std::cout << "No active m_scene found" << std::endl;
+        return;
+    }
+    m_eventHandlerFunction(m_window->getGlfwWindow(), this);
+    m_activeScene->update(deltaTime, m_window->getGlfwWindow());
+}
+
+void SceneManager::gameLoop()
+{
+    std::cout << "Drawing our scene" << std::endl;
+    ImVec4 clear_color = ImVec4(0.5f, 0.5f, 0.5f, 1.00f);
+
+    setupImgui(m_window->getGlfwWindow());
+    glfwSwapInterval(1);
+    // start scene manager by loading the first scene
+    this->start();
+
+    while (!glfwWindowShouldClose(m_window->getGlfwWindow()))
+    {
+        glfwPollEvents();
+        showImguiDemo();
+        glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
+
+        this->update(Time::deltaTime());
+
+        // Rendering
+        ImGui::Render();
+
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        // TODO: why have a static Time class if we are going to pass deltaTime to the update function?
+        Time::update();
+        glfwSwapBuffers(m_window->getGlfwWindow());
+    }
+
+    glfwTerminate();
+    exit(EXIT_SUCCESS);
+}
+
+void SceneManager::setEventHandler(EventHandlerFunction eventHandler)
+{
+    m_eventHandlerFunction = eventHandler;
 }
 
 void SceneManager::loadScene(const char *sceneName)
 {
-    auto it = scenes.find(sceneName);
-    if (it != scenes.end())
+    auto it = m_scenes.find(sceneName);
+    if (it != m_scenes.end())
     {
-        activeScene = it->second;
-        activeScene->start(window);
+        m_activeScene = it->second;
+        m_activeScene->start(m_window->getGlfwWindow());
     }
     else
     {
@@ -43,24 +86,24 @@ void SceneManager::loadScene(const char *sceneName)
 
 void SceneManager::unloadScene(const char *sceneName)
 {
-    activeScene = nullptr;
+    m_activeScene = nullptr;
 }
 
-void SceneManager::addScene(const char *sceneName, std::shared_ptr<Scene> scene)
+void SceneManager::addScene(const char *sceneName, std::shared_ptr<Scene> m_scene)
 {
-    scenes[sceneName] = scene;
-    if (activeScene == nullptr)
+    m_scenes[sceneName] = m_scene;
+    if (m_activeScene == nullptr)
     {
-        activeScene = scenes[sceneName];
+        m_activeScene = m_scenes[sceneName];
     }
 }
 
 void SceneManager::removeScene(const char *sceneName)
 {
-    scenes.erase(sceneName);
+    m_scenes.erase(sceneName);
 }
 
 std::shared_ptr<Scene> SceneManager::getActiveScene()
 {
-    return activeScene;
+    return m_activeScene;
 }

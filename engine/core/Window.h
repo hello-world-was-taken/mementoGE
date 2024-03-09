@@ -8,26 +8,17 @@
 #include <backends/imgui_impl_opengl3.h>
 
 #include "util/Time.h"
-#include "engine/core/MouseListener.h"
-#include "engine/core/KeyListener.h"
-#include "engine/core/SceneManager.h"
 
-class SceneManager;
 class Window
 {
 private:
     static Window *m_window;
-    std::shared_ptr<SceneManager> m_sceneManager;
-    GLFWwindow* m_glfw_window;
+    GLFWwindow *m_glfw_window;
     unsigned int m_width = 1920;
     unsigned int m_height = 1080;
     const char *m_title = "OpenGL Playground";
 
     void setupWindowHints() const;
-    void setupImgui() const;
-    void showImguiDemo() const;
-    void mainLoop();
-    void setupCallBack() const;
 
 public:
     Window();
@@ -35,9 +26,11 @@ public:
 
     static Window *getWindow();
 
-    // addSceneManager should be called before run
-    void addSceneManager(std::shared_ptr<SceneManager> sceneManager);
     void initializeWindow();
-    GLFWwindow* getGlfwWindow();
-    void run();
+    void setupCallBack(
+        GLFWcursorposfun cursorPosCallback,
+        GLFWmousebuttonfun mouseButtonCallback,
+        GLFWscrollfun scrollCallback,
+        GLFWkeyfun keyCallback) const;
+    GLFWwindow *getGlfwWindow();
 };

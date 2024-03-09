@@ -2,23 +2,33 @@
 
 #include <map>
 #include <memory>
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 
 #include "engine/core/Scene.h"
 #include "engine/core/Window.h"
 
+class SceneManager;
+
+// NOTE: A function type that returs void and takes glfw window and scene manager as argument.
+using EventHandlerFunction = void (*)(GLFWwindow *, SceneManager *);
+
 class SceneManager
 {
 private:
-    std::map<const char *, std::shared_ptr<Scene>> scenes;
-    std::shared_ptr<Scene> activeScene;
-    GLFWwindow *window;
+    std::map<const char *, std::shared_ptr<Scene>> m_scenes;
+    std::shared_ptr<Scene> m_activeScene;
+    Window *m_window;
+    EventHandlerFunction m_eventHandlerFunction;
 
 public:
-    SceneManager(GLFWwindow *window);
+    SceneManager(Window *window);
     ~SceneManager();
 
     void start();
-    void update(float deltaTime, GLFWwindow *window);
+    void update(float deltaTime);
+    void gameLoop();
+    void setEventHandler(EventHandlerFunction eventHandler);
     void loadScene(const char *sceneName);
     void unloadScene(const char *sceneName);
     void addScene(const char *sceneName, std::shared_ptr<Scene> scene);

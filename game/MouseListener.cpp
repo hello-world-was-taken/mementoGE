@@ -1,4 +1,9 @@
-#include "engine/core/MouseListener.h"
+/*  TODO:
+    Should implement a dedicated Event System to handle mouse events
+    and make it available via mementoGE core api.
+*/
+
+#include "game/MouseListener.h"
 
 MouseListener::MouseListener() {}
 
