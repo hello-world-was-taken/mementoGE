@@ -21,7 +21,7 @@ public:
     void translate(float x, float y, float z);
     void rotate(float x, float y, float z);
     void scale(float x, float y, float z);
-    glm::vec3 getPosition();
+    glm::vec3* getPosition();
     glm::vec3 getRotation();
     glm::vec3 getScale();
     glm::mat4x4 getTransformMatrix();

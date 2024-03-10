@@ -8,6 +8,7 @@
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <glm/ext/matrix_transform.hpp>
+#include <imgui.h>
 
 #include "util/log_error.h"
 #include "engine/opengl/Shader.h"
@@ -27,6 +28,7 @@ private:
     Camera m_camera = Camera(m_screen_width, m_screen_height);
     RenderBatch* m_renderBatch = nullptr;
     std::vector<std::shared_ptr<Texture>> m_textures;
+    GameObject* m_activeGameObject = nullptr;
 
 public:
     Scene();
@@ -38,4 +40,5 @@ public:
     // TODO: think more about this
     // void addTextureToGameObject(std::shared_ptr<GameObject> gameObject, std::shared_ptr<Texture> texture);
     Camera* getCamera();
+    void renderActiveGameObjectPropsImGui();
 };

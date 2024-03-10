@@ -10,7 +10,7 @@ Scene::Scene()
     // RenderBatch construction to the start.
     // TODO: Investigate this further
     // m_renderBatch = new RenderBatch(this);
-    m_gameObjects =  std::make_shared<std::vector<std::shared_ptr<GameObject>>>();
+    m_gameObjects = std::make_shared<std::vector<std::shared_ptr<GameObject>>>();
 }
 
 Scene::~Scene()
@@ -28,12 +28,16 @@ void Scene::start(GLFWwindow *window)
 void Scene::update(float deltaTime, GLFWwindow *window)
 {
     m_renderBatch->render();
+    this->renderActiveGameObjectPropsImGui();
 }
 
 std::shared_ptr<GameObject> Scene::addGameObject(unsigned int width, unsigned int height)
 {
     std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>(m_registry, width, height);
     m_gameObjects->push_back(gameObject);
+
+    // Set the latest game object as the active game object
+    m_activeGameObject = gameObject.get();
 
     return gameObject;
 }
@@ -47,4 +51,27 @@ std::shared_ptr<GameObject> Scene::addGameObject(unsigned int width, unsigned in
 Camera *Scene::getCamera()
 {
     return &m_camera;
+}
+
+void Scene::renderActiveGameObjectPropsImGui()
+{
+    if (m_activeGameObject == nullptr)
+    {
+        return;
+    }
+    ImGui::Begin("Properties");
+    
+    ImGui::Text("Size");
+    int& width = m_activeGameObject->getWidth();
+    int& height = m_activeGameObject->getHeight();
+    ImGui::DragInt("Width", &width);
+    ImGui::DragInt("Height", &height);
+    ImGui::Separator();
+    
+    ImGui::Text("Transform");
+    Transform& transform = m_activeGameObject->getComponent<Transform>();
+    ImGui::DragFloat("x", &transform.getPosition()->x);
+    ImGui::DragFloat("y", &transform.getPosition()->y);
+    ImGui::DragFloat("z", &transform.getPosition()->z);
+    ImGui::End();
 }

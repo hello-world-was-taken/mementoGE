@@ -36,7 +36,6 @@ void SceneManager::update(float deltaTime)
 
 void SceneManager::gameLoop()
 {
-    std::cout << "Drawing our scene" << std::endl;
     ImVec4 clear_color = ImVec4(0.5f, 0.5f, 0.5f, 1.00f);
 
     ImGuiWrapper::setupImgui(m_window->getGlfwWindow());

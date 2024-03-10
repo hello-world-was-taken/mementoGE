@@ -13,8 +13,8 @@ class GameObject
 private:
     entt::entity entity;
     entt::registry &registry;
-    unsigned int m_width = 0;
-    unsigned int m_height = 0;
+    int m_width = 0;
+    int m_height = 0;
 
 public:
     GameObject(entt::registry &registry, unsigned int width = 0, unsigned int height = 0);
@@ -53,9 +53,9 @@ public:
 
     void destroy();
 
-    unsigned int getWidth();
+    int& getWidth();
 
-    unsigned int getHeight();
+    int& getHeight();
 
     std::vector<glm::vec3> getQuad();
 

@@ -18,12 +18,12 @@ void GameObject::destroy()
     registry.destroy(entity);
 }
 
-unsigned int GameObject::getWidth()
+int& GameObject::getWidth()
 {
     return m_width;
 }
 
-unsigned int GameObject::getHeight()
+int& GameObject::getHeight()
 {
     return m_height;
 }
