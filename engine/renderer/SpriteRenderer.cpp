@@ -1,20 +1,14 @@
 #include "SpriteRenderer.h"
 
-SpriteRenderer::SpriteRenderer(glm::vec4 color, unsigned int spriteWidth, unsigned int spriteHeight, unsigned int xIndex, unsigned int yIndex)
+SpriteRenderer::SpriteRenderer(glm::vec4 color)
 {
     this->color = color;
-    this->texture = nullptr;
-    this->m_spriteWidth = spriteWidth;
-    this->m_spriteHeight = spriteHeight;
-    this->m_xIndex = xIndex;
-    this->m_yIndex = yIndex;
 
     initializeTextureCoordinate();
 }
 
 SpriteRenderer::SpriteRenderer(std::shared_ptr<Texture> texture, unsigned int spriteWidth, unsigned int spriteHeight, unsigned int xIndex, unsigned int yIndex)
 {
-    this->color = {1.0f, 1.0f, 1.0f, 1.0f}; // white
     this->texture = texture;
     this->m_spriteWidth = spriteWidth;
     this->m_spriteHeight = spriteHeight;

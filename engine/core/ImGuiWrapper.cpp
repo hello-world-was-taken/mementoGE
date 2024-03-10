@@ -5,7 +5,7 @@
 
 #include "engine/core/ImGuiWrapper.h"
 
-void setupImgui(GLFWwindow *glfw_window)
+void ImGuiWrapper::setupImgui(GLFWwindow *glfw_window)
 {
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -26,7 +26,7 @@ void setupImgui(GLFWwindow *glfw_window)
     ImGui_ImplOpenGL3_Init(glsl_version);
 }
 
-void showImguiDemo()
+void ImGuiWrapper::showImguiDemo()
 {
     // Start the Dear ImGui frame
     ImGui_ImplOpenGL3_NewFrame();

@@ -5,6 +5,8 @@
 #include <vector>
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
+#include <typeinfo>
+#include <type_traits>
 
 class GameObject
 {
@@ -33,6 +35,13 @@ public:
     template <typename Component>
     Component &getComponent()
     {
+        if (!hasComponent<Component>())
+        {
+            // TODO: Use the demangled name of the type using -> abi::__cxa_demangle from cxxabi.h
+            //       after setting up a proper logging system.
+            std::cerr << "ERROR: Component " << typeid(Component).name() << " does not exist for the Game Object" << std::endl;
+            throw std::runtime_error("Component does not exist");
+        }
         return registry.get<Component>(entity);
     }
 

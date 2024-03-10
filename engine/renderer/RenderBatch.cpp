@@ -4,7 +4,10 @@
 #include "engine/renderer/RenderBatch.h"
 #include "util/log_error.h"
 
-RenderBatch::RenderBatch(const Camera *camera, std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> gameObjects) : m_camera(camera), m_gameObjects(gameObjects)
+RenderBatch::RenderBatch(
+    const Camera *camera,
+    std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> gameObjects)
+    : m_camera(camera), m_gameObjects(gameObjects)
 {
     generateIndexArray();
     generateVertexBuffer();
@@ -49,32 +52,28 @@ void RenderBatch::render()
 
 void RenderBatch::updateVertexBuffer()
 {
-    // update the vertex buffer
+    // clear the vertices vector
     vertices.clear();
 
     for (std::shared_ptr<GameObject> gameObject : *m_gameObjects)
     {
 
-        Transform transform = gameObject->getComponent<Transform>(); // every game object has a transform
+        Transform transform = gameObject->getComponent<Transform>();
+
         glm::mat4x4 transformMatrix = transform.getTransformMatrix();
         std::vector<glm::vec3> transformedQuad = transformQuad(transformMatrix, gameObject->getQuad());
 
-        // getting sprite renderer
-        glm::vec4 color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-        std::vector<glm::vec2> textureCoordinates = {glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 0.0f), glm::vec2(1.0f, 1.0f)};
-        float textureIndex = 0;
         if (gameObject->hasComponent<SpriteRenderer>())
         {
             SpriteRenderer spriteRenderer = gameObject->getComponent<SpriteRenderer>();
 
-            color = spriteRenderer.getColor();
-            textureCoordinates = spriteRenderer.getTextureCoordinates(); // TODO: do we need to retrieve this from the sprite renderer?
-            textureIndex = spriteRenderer.getTexture()->getTextureUnit();
-        }
-
-        for (int i = 0; i < transformedQuad.size(); i++)
-        {
-            vertices.push_back({transformedQuad[i], color, textureCoordinates[i], textureIndex});
+            for (int i = 0; i < transformedQuad.size(); i++)
+            {
+                vertices.push_back({transformedQuad[i],
+                                    spriteRenderer.getColor(),
+                                    spriteRenderer.getTextureCoordinates()[i], // TODO: do we need to retrieve this from the sprite renderer?
+                                    (float)spriteRenderer.getTexture()->getTextureUnit()});
+            }
         }
     }
 

@@ -39,7 +39,7 @@ void SceneManager::gameLoop()
     std::cout << "Drawing our scene" << std::endl;
     ImVec4 clear_color = ImVec4(0.5f, 0.5f, 0.5f, 1.00f);
 
-    setupImgui(m_window->getGlfwWindow());
+    ImGuiWrapper::setupImgui(m_window->getGlfwWindow());
     glfwSwapInterval(1);
     // start scene manager by loading the first scene
     this->start();
@@ -47,7 +47,7 @@ void SceneManager::gameLoop()
     while (!glfwWindowShouldClose(m_window->getGlfwWindow()))
     {
         glfwPollEvents();
-        showImguiDemo();
+        ImGuiWrapper::showImguiDemo();
         glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
 
         this->update(Time::deltaTime());

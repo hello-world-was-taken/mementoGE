@@ -23,14 +23,18 @@ void addGameObject(std::shared_ptr<Scene> scene)
 
     const char *texture_path2 = "../assets/texture/spritesheet_retina.png";
     std::shared_ptr<Texture> texture2 = std::make_shared<Texture>(texture_path2, 1, true);
-    // std::shared_ptr<Texture> texture2 = std::make_shared<Texture>(texture_path2, 1);
     texture2->bind();
 
-    std::shared_ptr<GameObject> gameObject2 = scene->addGameObject(128, 64);
-    gameObject2->addComponent<Transform>(glm::vec3(110.0f, 200.0f, 0.0f)); // every game object has a transform
+    std::shared_ptr<GameObject> gameObject2 = scene->addGameObject(64, 32);
+    gameObject2->addComponent<Transform>(glm::vec3(110.0f, 200.0f, 0.0f));
     gameObject2->addComponent<SpriteRenderer>(texture2, 256, 128, 0, 0);
+
+    std::shared_ptr<GameObject> gameObject3 = scene->addGameObject(64, 32);
+    gameObject3->addComponent<Transform>(glm::vec3(110.0f, 100.0f, 0.0f));
+    gameObject3->addComponent<SpriteRenderer>(texture2, 128, 118, 2, 0);
 }
 
+// TODO: glfw_window should be abstracted away by core engine module
 void eventHandler(GLFWwindow* glfw_window, SceneManager* sceneManager)
 {
     if (KeyListener::isKeyPressed(GLFW_KEY_ESCAPE))

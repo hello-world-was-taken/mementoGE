@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <glm/ext/matrix_transform.hpp>
 
+// every game object has a transform
 class Transform
 {
 private:
