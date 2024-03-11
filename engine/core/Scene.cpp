@@ -42,6 +42,11 @@ std::shared_ptr<GameObject> Scene::addGameObject(unsigned int width, unsigned in
     return gameObject;
 }
 
+std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> Scene::getGameObjects()
+{
+    return m_gameObjects;
+}
+
 // void Scene::addTextureToGameObject(std::shared_ptr<GameObject> gameObject, std::shared_ptr<Texture> texture)
 // {
 //     gameObject->addComponent<SpriteRenderer>(texture);
@@ -60,16 +65,16 @@ void Scene::renderActiveGameObjectPropsImGui()
         return;
     }
     ImGui::Begin("Properties");
-    
+
     ImGui::Text("Size");
-    int& width = m_activeGameObject->getWidth();
-    int& height = m_activeGameObject->getHeight();
+    int &width = m_activeGameObject->getWidth();
+    int &height = m_activeGameObject->getHeight();
     ImGui::DragInt("Width", &width);
     ImGui::DragInt("Height", &height);
     ImGui::Separator();
-    
+
     ImGui::Text("Transform");
-    Transform& transform = m_activeGameObject->getComponent<Transform>();
+    Transform &transform = m_activeGameObject->getComponent<Transform>();
     ImGui::DragFloat("x", &transform.getPosition()->x);
     ImGui::DragFloat("y", &transform.getPosition()->y);
     ImGui::DragFloat("z", &transform.getPosition()->z);

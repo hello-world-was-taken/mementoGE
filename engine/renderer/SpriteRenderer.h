@@ -10,7 +10,7 @@ class SpriteRenderer
 {
 private:
     const char *tag = "SpriteRenderer";
-    std::vector<glm::vec2> textureCoordinates; // 4 vertices, 2D
+    std::vector<glm::vec2> textureCoordinates;  // 4 vertices, 2D
     glm::vec4 color = {1.0f, 1.0f, 1.0f, 1.0f}; // white
     std::shared_ptr<Texture> texture = nullptr;
     unsigned int m_spriteHeight = 0;
@@ -20,7 +20,12 @@ private:
 
 public:
     SpriteRenderer(glm::vec4 color);
-    SpriteRenderer(std::shared_ptr<Texture> texture, unsigned int spriteWidth = 0, unsigned int spriteHeight = 0, unsigned int xIndex = 0, unsigned int yIndex = 0);
+    SpriteRenderer(
+        std::shared_ptr<Texture> texture,
+        unsigned int spriteWidth = 0,
+        unsigned int spriteHeight = 0,
+        unsigned int xIndex = 0,
+        unsigned int yIndex = 0);
     ~SpriteRenderer();
 
     void start();
@@ -29,4 +34,8 @@ public:
     std::vector<glm::vec2> getTextureCoordinates();
     std::shared_ptr<Texture> getTexture();
     glm::vec4 getColor();
+    unsigned int getSpriteWidth();
+    unsigned int getSpriteHeight();
+    unsigned int getXIndex();
+    unsigned int getYIndex();
 };

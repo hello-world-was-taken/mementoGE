@@ -79,6 +79,9 @@ void run()
     scene_manager->setEventHandler(eventHandler);
     scene_manager->addScene("triangle_scene", scene);
     addGameObject(scene);
+
+    // deserialize scene if we had any saved state
+    scene_manager->deserialize();
     
     // Start the game loop
     scene_manager->gameLoop();

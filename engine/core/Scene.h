@@ -18,7 +18,8 @@
 #include "engine/core/Camera.h"
 #include "engine/renderer/RenderBatch.h"
 
-class Scene {
+class Scene
+{
 private:
     float m_screen_width = (float)(32 * 16); // 16 tiles of 32 pixels
     float m_screen_height = (float)(32 * 9); // 9 tiles of 32 pixels
@@ -26,9 +27,9 @@ private:
     // TODO: use type alias to make this more readable
     std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> m_gameObjects;
     Camera m_camera = Camera(m_screen_width, m_screen_height);
-    RenderBatch* m_renderBatch = nullptr;
+    RenderBatch *m_renderBatch = nullptr;
     std::vector<std::shared_ptr<Texture>> m_textures;
-    GameObject* m_activeGameObject = nullptr;
+    GameObject *m_activeGameObject = nullptr;
 
 public:
     Scene();
@@ -37,8 +38,9 @@ public:
     void start(GLFWwindow *window);
     void update(float deltaTime, GLFWwindow *window);
     std::shared_ptr<GameObject> addGameObject(unsigned int width, unsigned int height);
+    std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> getGameObjects();
     // TODO: think more about this
     // void addTextureToGameObject(std::shared_ptr<GameObject> gameObject, std::shared_ptr<Texture> texture);
-    Camera* getCamera();
+    Camera *getCamera();
     void renderActiveGameObjectPropsImGui();
 };

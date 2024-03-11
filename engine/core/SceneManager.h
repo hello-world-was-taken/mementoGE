@@ -16,7 +16,7 @@ using EventHandlerFunction = void (*)(GLFWwindow *, SceneManager *);
 class SceneManager
 {
 private:
-    std::map<const char *, std::shared_ptr<Scene>> m_scenes;
+    std::map<std::string, std::shared_ptr<Scene>> m_scenes;
     std::shared_ptr<Scene> m_activeScene;
     Window *m_window;
     EventHandlerFunction m_eventHandlerFunction;
@@ -36,6 +36,6 @@ public:
     void getScene(const char *sceneName);
     std::shared_ptr<Scene> getActiveScene();
     void setActiveScene(const char *sceneName);
-    void getSceneCount();
-    void getSceneNames();
+    void serialize();
+    void deserialize();
 };

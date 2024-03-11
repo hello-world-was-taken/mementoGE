@@ -14,8 +14,12 @@ private:
     int m_texture_unit = 0; // The texture slot in the shader. Default is 0 meaning use the color set.
     char* m_texture_buffer = nullptr;
     bool m_isTextureAtlas = false;
+    std::string m_texture_path;
 public:
-    Texture(const char *texture_path, int texture_unit, bool isTextureAtlas = false);
+    Texture(
+        const char *texture_path,
+        int texture_unit,
+        bool isTextureAtlas = false);
     ~Texture();
     unsigned int getTextureUnit() const;
     bool isTextureAtlas() const;
@@ -23,4 +27,5 @@ public:
     void unbind() const;
     int getWidth() const { return m_width; }
     int getHeight() const { return m_height; }
+    std::string getFilePath() const { return m_texture_path; }
 };

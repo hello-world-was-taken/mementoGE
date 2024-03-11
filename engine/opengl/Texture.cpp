@@ -1,7 +1,12 @@
 #include "engine/opengl/Texture.h"
 
-Texture::Texture(const char *texture_path, int texture_unit, bool isTextureAtlas) : m_texture_unit(texture_unit), m_isTextureAtlas(isTextureAtlas)
+Texture::Texture(
+    const char *texture_path,
+    int texture_unit,
+    bool isTextureAtlas)
+    : m_texture_unit(texture_unit), m_isTextureAtlas(isTextureAtlas)
 {
+    this->m_texture_path = texture_path;
     stbi_set_flip_vertically_on_load(true);
     m_texture_buffer = (char *)stbi_load(texture_path, &this->m_width, &this->m_height, &this->m_nrChannels, 0);
     if (!m_texture_buffer)

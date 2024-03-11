@@ -1,0 +1,91 @@
+triangle_scene:
+  GameObject0:
+    Width: 70
+    Height: 70
+    Transform:
+      Position:
+        - 0
+        - 0
+        - 0
+      Rotation:
+        - 0
+        - 0
+        - 0
+      Scale:
+        - 1
+        - 1
+        - 1
+    SpriteRenderer:
+      spriteWidth: 0
+      spriteHeight: 0
+      xIndex: 0
+      yIndex: 0
+      Color:
+        - 1
+        - 1
+        - 1
+        - 1
+      Texture:
+        FilePath: ../assets/texture/slice01_01.png
+        isTextureAtlas: false
+        TextureUnit: 0
+  GameObject1:
+    Width: 64
+    Height: 32
+    Transform:
+      Position:
+        - 110
+        - 200
+        - 0
+      Rotation:
+        - 0
+        - 0
+        - 0
+      Scale:
+        - 1
+        - 1
+        - 1
+    SpriteRenderer:
+      spriteWidth: 256
+      spriteHeight: 128
+      xIndex: 0
+      yIndex: 0
+      Color:
+        - 1
+        - 1
+        - 1
+        - 1
+      Texture:
+        FilePath: ../assets/texture/spritesheet_retina.png
+        isTextureAtlas: true
+        TextureUnit: 1
+  GameObject2:
+    Width: 16
+    Height: 12
+    Transform:
+      Position:
+        - 44
+        - 73
+        - 0
+      Rotation:
+        - 0
+        - 0
+        - 0
+      Scale:
+        - 1
+        - 1
+        - 1
+    SpriteRenderer:
+      spriteWidth: 128
+      spriteHeight: 118
+      xIndex: 2
+      yIndex: 0
+      Color:
+        - 1
+        - 1
+        - 1
+        - 1
+      Texture:
+        FilePath: ../assets/texture/spritesheet_retina.png
+        isTextureAtlas: true
+        TextureUnit: 1

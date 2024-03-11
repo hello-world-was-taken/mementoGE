@@ -77,3 +77,23 @@ glm::vec4 SpriteRenderer::getColor()
 {
     return this->color;
 }
+
+unsigned int SpriteRenderer::getSpriteWidth()
+{
+    return this->m_spriteWidth;
+}
+
+unsigned int SpriteRenderer::getSpriteHeight()
+{
+    return this->m_spriteHeight;
+}
+
+unsigned int SpriteRenderer::getXIndex()
+{
+    return this->m_xIndex;
+}
+
+unsigned int SpriteRenderer::getYIndex()
+{
+    return this->m_yIndex;
+}

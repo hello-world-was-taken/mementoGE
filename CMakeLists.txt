@@ -5,8 +5,11 @@ project(mementoGE)
 # Set C++ standard to C++17
 set(CMAKE_CXX_STANDARD 17)
 
-# add external libraries (glfw) as a submodule. We have to build glew manually, because it doesn't have CMakeLists.text. Therefore, we need to build it manually by running the Makefile it contains.
+# Subdirectories are libraries we build along with our project.
+# If they were found in the system, we wouldn't need to add them here.
+# Additionally, if they were header only, we wouldn't need to add them here
 add_subdirectory(${CMAKE_SOURCE_DIR}/lib/glfw)
+add_subdirectory(${CMAKE_SOURCE_DIR}/lib/yaml-cpp)
 
 # since the imported libraries (glfw, glew) don't change, I don't think we need to add them here
 add_executable(${PROJECT_NAME} 
@@ -64,15 +67,21 @@ target_include_directories(${PROJECT_NAME}
     PUBLIC ${CMAKE_SOURCE_DIR}/lib/yaml-cpp/include
 )
 
-# linking directories for our libs (glfw, glew)
+# In addition to the system libraries, for the ones we built along with our project,
+# we need to add the directories where the binaries are.
+# For header only libraries, we wouldn't need to do this.
+# This adds additional path to the linker. It doesn't link the libraries.
 target_link_directories(${PROJECT_NAME}
     PUBLIC ${CMAKE_SOURCE_DIR}/out/lib/glfw/src
+    PUBLIC ${CMAKE_SOURCE_DIR}/out/lib/yaml-cpp
 )
 
-# linking the actual binaries for our libs (glfw, glew)
+# link the libraries we built as well as the system libraries.
+# Here, we are actually linking the libraries.
 target_link_libraries(${PROJECT_NAME}
     # 'glfw3' won't work. It should be just 'glfw'
     glfw
+    yaml-cpp
     GLEW::glew  # For this one, I installed to the the system.
     ${OpenGL_FRAMEWORK}
     ${Cocoa_FRAMEWORK}

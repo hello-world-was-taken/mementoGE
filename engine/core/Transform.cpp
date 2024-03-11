@@ -53,19 +53,19 @@ void Transform::scale(float x, float y, float z)
     m_scale += glm::vec3(x, y, z);
 }
 
-glm::vec3* Transform::getPosition()
+glm::vec3 *Transform::getPosition()
 {
     return &m_position;
 }
 
-    glm::vec3 Transform::getRotation()
+glm::vec3 *Transform::getRotation()
 {
-    return m_rotation;
+    return &m_rotation;
 }
 
-glm::vec3 Transform::getScale()
+glm::vec3 *Transform::getScale()
 {
-    return m_scale;
+    return &m_scale;
 }
 
 glm::mat4x4 Transform::getTransformMatrix()
