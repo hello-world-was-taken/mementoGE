@@ -61,6 +61,7 @@ target_include_directories(${PROJECT_NAME}
     PUBLIC ${CMAKE_SOURCE_DIR}/lib/glm
     PUBLIC ${CMAKE_SOURCE_DIR}/lib/imgui
     PUBLIC ${CMAKE_SOURCE_DIR}/lib/glfw/include
+    PUBLIC ${CMAKE_SOURCE_DIR}/lib/yaml-cpp/include
 )
 
 # linking directories for our libs (glfw, glew)
