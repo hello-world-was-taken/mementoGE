@@ -8,6 +8,8 @@ Window::~Window()
 }
 
 Window *Window::m_window = nullptr;
+float Window::m_width = 1024;
+float Window::m_height = 536;
 
 void Window::setupWindowHints() const
 {
@@ -28,9 +30,9 @@ void Window::setupCallBack(
     GLFWkeyfun keyCallback) const
 {
     glfwSetCursorPosCallback(m_glfw_window, cursorPositionCallback);
-    glfwSetMouseButtonCallback(m_glfw_window,mouseButtonCallback);
+    glfwSetMouseButtonCallback(m_glfw_window, mouseButtonCallback);
     glfwSetScrollCallback(m_glfw_window, scrollCallback);
-    glfwSetKeyCallback(m_glfw_window,keyCallback);
+    glfwSetKeyCallback(m_glfw_window, keyCallback);
 }
 
 void Window::initializeWindow()
@@ -42,9 +44,13 @@ void Window::initializeWindow()
     setupWindowHints();
 
     m_glfw_window = glfwCreateWindow(m_width, m_height, m_title, NULL, NULL);
-
+    // TODO: This isn't doing anything right now.
+    updateViewPort();
+    
     glfwMakeContextCurrent(m_glfw_window);
+    glfwSetFramebufferSizeCallback(m_glfw_window, frameBufferSizeResizeCallback);
     glfwSwapInterval(1);
+    
     if (!m_glfw_window)
     {
         glfwTerminate();
@@ -81,4 +87,29 @@ GLFWwindow *Window::getGlfwWindow()
         return nullptr;
     }
     return m_glfw_window;
+}
+
+void Window::frameBufferSizeResizeCallback(GLFWwindow *window, int width, int height)
+{
+    glViewport(0, 0, width, height);
+}
+
+/*
+    On high DPI displays and Retina Displays, the framebuffer size may be different from the window size. The code below retrieves the size, in pixels, of the framebuffer of the specified window.
+    Therefore when we map our frustum to the screen with our field of view, we use the framebuffer size. If you wish to retrieve the size of the window in screen coordinates, see glfwGetWindowSize.
+
+    Initially when the window is created, glViewPort is set to the size of the window. This shouldn't be
+    the case, as mentioned above, we should set the viewport to the framebuffer size. This is why we should
+    call this function once after the window is created.
+
+    As for when it is resized, Window::frameBufferSizeResizeCallback will update the view port to the new
+    framebuffer size.
+
+    https://www.glfw.org/docs/3.3/window_guide.html#window_fbsize
+*/
+void Window::updateViewPort()
+{
+    int vpSize[2];
+    glfwGetFramebufferSize(m_window->getGlfwWindow(), &vpSize[0], &vpSize[1]);
+    glViewport(0, 0, vpSize[0], vpSize[1]);
 }

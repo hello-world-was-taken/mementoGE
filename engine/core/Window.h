@@ -14,11 +14,13 @@ class Window
 private:
     static Window *m_window;
     GLFWwindow *m_glfw_window;
-    unsigned int m_width = 1920;
-    unsigned int m_height = 1080;
     const char *m_title = "OpenGL Playground";
 
     void setupWindowHints() const;
+
+public:
+    static float m_width;
+    static float m_height;
 
 public:
     Window();
@@ -33,4 +35,6 @@ public:
         GLFWscrollfun scrollCallback,
         GLFWkeyfun keyCallback) const;
     GLFWwindow *getGlfwWindow();
+    static void frameBufferSizeResizeCallback(GLFWwindow *window, int width, int height);
+    static void updateViewPort();
 };

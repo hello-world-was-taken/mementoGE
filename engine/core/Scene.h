@@ -21,8 +21,8 @@
 class Scene
 {
 private:
-    float m_screen_width = (float)(32 * 16); // 16 tiles of 32 pixels
-    float m_screen_height = (float)(32 * 9); // 9 tiles of 32 pixels
+    float m_screen_width = 32.0f * 16.0f; // 16 tiles of 32 pixels = 512 pixels
+    float m_screen_height = 32.0f * 9.0f; // 9 tiles of 32 pixels = 288 pixels
     entt::registry m_registry;
     // TODO: use type alias to make this more readable
     std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> m_gameObjects;

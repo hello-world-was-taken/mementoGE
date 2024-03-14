@@ -29,6 +29,7 @@ void Camera::updateView()
         camera_up);
 }
 
+// TODO: Rather than using the fixed camera width and height for projection matrix, use the frambuffer width and height which gets adjusted during window resize. So that our texture doesn't get stretched or squashed while resizing.
 void Camera::updateProjection()
 {
     m_projection = glm::ortho(

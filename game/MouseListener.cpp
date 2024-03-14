@@ -27,14 +27,12 @@ void MouseListener::mouseButtonCallback(GLFWwindow *window, int button, int acti
     //       or what if the user is using a mouse with multiple buttons like the gaming ones.
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
     {
-        std::cout << "Left mouse button pressed" << std::endl;
 
         MouseListener *listener = getListener();
         listener->m_is_left_mouse_clicked = true;
     }
     else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
     {
-        std::cout << "Left mouse button released" << std::endl;
 
         MouseListener *listener = getListener();
         listener->m_is_left_mouse_clicked = false;
@@ -50,8 +48,8 @@ void MouseListener::cursorPositionCallback(GLFWwindow *window, double x_pos, dou
         double x_offset = x_pos - listener->m_lastX;
         double y_offset = listener->m_lastY - y_pos; // Reversed since y-coordinates go from bottom to top
 
-        std::cout << "Mouse dragged: xOffset = " << x_offset << ", yOffset = " << y_offset << std::endl;
-
+        std::cout << "X position: " << x_pos << " "
+                  << "Y position: " << y_pos << std::endl;
         listener->m_lastX = x_pos;
         listener->m_lastY = y_pos;
         listener->m_is_dragging = true;
@@ -67,5 +65,4 @@ void MouseListener::cursorPositionCallback(GLFWwindow *window, double x_pos, dou
 
 void MouseListener::scrollCallback(GLFWwindow *window, double x_offset, double y_offset)
 {
-    std::cout << "Scrolled: xoffset = " << x_offset << ", yoffset = " << y_offset << std::endl;
 }
