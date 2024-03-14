@@ -13,20 +13,31 @@ private:
     std::vector<glm::vec2> textureCoordinates;  // 4 vertices, 2D
     glm::vec4 color = {1.0f, 1.0f, 1.0f, 1.0f}; // white
     std::shared_ptr<Texture> texture = nullptr;
-    unsigned int m_spriteHeight = 0;
-    unsigned int m_spriteWidth = 0;
-    unsigned int m_xIndex = 0;
-    unsigned int m_yIndex = 0;
+
+    // By default, we assume the subTextureSize is enough to cover our current sprite.
+    // So, m_spriteWidth and m_spriteHeight are set to 1. For the cases, where our current
+    // subTexture spans more than that, we can set these values accordingly.
+    unsigned int m_subTextureSpanX = 1;
+    unsigned int m_subTextureSpanY = 1;
+
+    // The size of one sprite in a sprite sheet. Assumed to be a square.
+    unsigned int m_subTextureSize = 100;
+
+    // The index are counted by taking bottom left corner of the spritesheet as the origin.
+    unsigned int m_subTextureIndexX = 0;
+    unsigned int m_subTextureIndexY = 0;
 
 public:
     SpriteRenderer(glm::vec4 color);
     SpriteRenderer(
         std::shared_ptr<Texture> texture,
-        unsigned int spriteWidth = 0,
-        unsigned int spriteHeight = 0,
-        unsigned int xIndex = 0,
-        unsigned int yIndex = 0);
-    ~SpriteRenderer();
+        unsigned int subTextureSpanX = 1,
+        unsigned int subTextureSpanY = 1,
+        unsigned int subTextureSize = 100,
+        unsigned int subTextureIndexX = 0,
+        unsigned int subTextureIndexY = 0);
+
+        ~SpriteRenderer();
 
     void start();
     void update(float deltaTime);
@@ -34,8 +45,9 @@ public:
     std::vector<glm::vec2> getTextureCoordinates();
     std::shared_ptr<Texture> getTexture();
     glm::vec4 getColor();
-    unsigned int getSpriteWidth();
-    unsigned int getSpriteHeight();
-    unsigned int getXIndex();
-    unsigned int getYIndex();
+    unsigned int getSubTextureSpanX();
+    unsigned int getSubTextureSpanY();
+    unsigned int getSubTextureSize();
+    unsigned int getSubTextureIndexX();
+    unsigned int getSubTextureIndexY();
 };

@@ -33,8 +33,7 @@ void RenderBatch::render()
     glClear(GL_COLOR_BUFFER_BIT);
 
     // TODO: We shouldn't me creating a new shader every frame
-    // Shader shader("../assets/shader/vertex.shader", "../assets/shader/fragment.shader");
-    std::shared_ptr<Shader> shader = Resource::getShaderProgram("vertex.shader", "fragment.shader");
+    std::shared_ptr<Shader> shader = Resource::getShaderProgram("../assets/shader/vertex.shader", "../assets/shader/fragment.shader");
     shader.get()->use();
 
     // set the view matrix

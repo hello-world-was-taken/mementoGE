@@ -22,11 +22,9 @@ namespace Resource
         return textureUnit;
     }
 
-    std::shared_ptr<Shader> getShaderProgram(std::string vertexShader, std::string fragmentShader)
+    std::shared_ptr<Shader> getShaderProgram(std::string vertexShaderPath, std::string fragmentShaderPath)
     {
         std::shared_ptr<std::map<std::string, std::shared_ptr<Shader>>> shaders = getShadersMap();
-        std::string vertexShaderPath = "../assets/shader/" + vertexShader;
-        std::string fragmentShaderPath = "../assets/shader/" + fragmentShader;
         std::string fullShaderPath = vertexShaderPath + fragmentShaderPath;
 
         if (shaders.get()->find(fullShaderPath) == shaders.get()->end())
@@ -41,23 +39,21 @@ namespace Resource
         }
     }
 
-    std::shared_ptr<Texture> getTexture(std::string textureName, bool isSpriteSheet)
+    std::shared_ptr<Texture> getTexture(std::string texturePath, bool isSpriteSheet)
     {
         std::shared_ptr<std::map<std::string, std::shared_ptr<Texture>>> textures = getTexturesMap();
         unsigned int &textureUnit = getTextureUnit();
 
-        std::string fullTexturePath = "../assets/texture/" + textureName;
-
-        if (textures.get()->find(fullTexturePath) == textures.get()->end())
+        if (textures.get()->find(texturePath) == textures.get()->end())
         {
-            std::shared_ptr<Texture> texture = std::make_shared<Texture>(fullTexturePath.c_str(), textureUnit, isSpriteSheet);
+            std::shared_ptr<Texture> texture = std::make_shared<Texture>(texturePath.c_str(), textureUnit, isSpriteSheet);
             textureUnit++;
-            (*textures.get())[fullTexturePath] = texture;
+            (*textures.get())[texturePath] = texture;
             return texture;
         }
         else
         {
-            return (*textures.get())[fullTexturePath];
+            return (*textures.get())[texturePath];
         }
     }
 }

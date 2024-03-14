@@ -1,7 +1,7 @@
-triangle_scene:
+default_scene:
   GameObject0:
-    Width: 70
-    Height: 70
+    Width: 32
+    Height: 32
     Transform:
       Position:
         - 0
@@ -16,10 +16,11 @@ triangle_scene:
         - 1
         - 1
     SpriteRenderer:
-      spriteWidth: 0
-      spriteHeight: 0
-      xIndex: 0
-      yIndex: 0
+      subTextureSpanX: 1
+      subTextureSpanY: 1
+      subTextureSize: 100
+      subTextureIndexX: 0
+      subTextureIndexY: 0
       Color:
         - 1
         - 1
@@ -28,10 +29,9 @@ triangle_scene:
       Texture:
         FilePath: ../assets/texture/slice01_01.png
         isTextureAtlas: false
-        TextureUnit: 0
   GameObject1:
-    Width: 64
-    Height: 32
+    Width: 32
+    Height: 16
     Transform:
       Position:
         - 110
@@ -46,10 +46,11 @@ triangle_scene:
         - 1
         - 1
     SpriteRenderer:
-      spriteWidth: 256
-      spriteHeight: 128
-      xIndex: 0
-      yIndex: 0
+      subTextureSpanX: 2
+      subTextureSpanY: 1
+      subTextureSize: 128
+      subTextureIndexX: 0
+      subTextureIndexY: 10
       Color:
         - 1
         - 1
@@ -58,14 +59,13 @@ triangle_scene:
       Texture:
         FilePath: ../assets/texture/spritesheet_retina.png
         isTextureAtlas: true
-        TextureUnit: 1
   GameObject2:
-    Width: 16
-    Height: 12
+    Width: 32
+    Height: 16
     Transform:
       Position:
-        - 44
-        - 73
+        - 110
+        - 100
         - 0
       Rotation:
         - 0
@@ -76,10 +76,11 @@ triangle_scene:
         - 1
         - 1
     SpriteRenderer:
-      spriteWidth: 128
-      spriteHeight: 118
-      xIndex: 2
-      yIndex: 0
+      subTextureSpanX: 1
+      subTextureSpanY: 1
+      subTextureSize: 128
+      subTextureIndexX: 2
+      subTextureIndexY: 10
       Color:
         - 1
         - 1
@@ -88,4 +89,33 @@ triangle_scene:
       Texture:
         FilePath: ../assets/texture/spritesheet_retina.png
         isTextureAtlas: true
-        TextureUnit: 1
+  GameObject3:
+    Width: 32
+    Height: 16
+    Transform:
+      Position:
+        - 50
+        - 50
+        - 0
+      Rotation:
+        - 0
+        - 0
+        - 0
+      Scale:
+        - 1
+        - 1
+        - 1
+    SpriteRenderer:
+      subTextureSpanX: 1
+      subTextureSpanY: 1
+      subTextureSize: 128
+      subTextureIndexX: 2
+      subTextureIndexY: 10
+      Color:
+        - 1
+        - 1
+        - 1
+        - 1
+      Texture:
+        FilePath: ../assets/texture/spritesheet_retina.png
+        isTextureAtlas: true

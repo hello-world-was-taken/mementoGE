@@ -7,13 +7,20 @@ SpriteRenderer::SpriteRenderer(glm::vec4 color)
     initializeTextureCoordinate();
 }
 
-SpriteRenderer::SpriteRenderer(std::shared_ptr<Texture> texture, unsigned int spriteWidth, unsigned int spriteHeight, unsigned int xIndex, unsigned int yIndex)
+SpriteRenderer::SpriteRenderer(
+    std::shared_ptr<Texture> texture,
+    unsigned int subTextureSpanX,
+    unsigned int subTextureSpanY,
+    unsigned int subTextureSize,
+    unsigned int subTextureIndexX,
+    unsigned int subTextureIndexY)
 {
     this->texture = texture;
-    this->m_spriteWidth = spriteWidth;
-    this->m_spriteHeight = spriteHeight;
-    this->m_xIndex = xIndex;
-    this->m_yIndex = yIndex;
+    this->m_subTextureSpanX = subTextureSpanX;
+    this->m_subTextureSpanY = subTextureSpanY;
+    this->m_subTextureSize = subTextureSize;
+    this->m_subTextureIndexX = subTextureIndexX;
+    this->m_subTextureIndexY = subTextureIndexY;
 
     initializeTextureCoordinate();
 }
@@ -26,14 +33,18 @@ void SpriteRenderer::initializeTextureCoordinate()
 {
     if (texture->isTextureAtlas())
     {
-        this->textureCoordinates.push_back({float(m_spriteWidth * m_xIndex) / float(this->texture->getWidth()),
-                                            1 - float((m_spriteHeight * m_yIndex)) / float(this->texture->getHeight())}); // top left
-        this->textureCoordinates.push_back({float(m_spriteWidth * m_xIndex) / float(this->texture->getWidth()),
-                                            1 - float(m_spriteHeight * (m_yIndex + 1)) / float(this->texture->getHeight())}); // bottom left
-        this->textureCoordinates.push_back({float(m_spriteWidth * (m_xIndex + 1)) / float(this->texture->getWidth()),
-                                            1 - float(m_spriteHeight * (m_yIndex + 1)) / float(this->texture->getHeight())}); // bottom right
-        this->textureCoordinates.push_back({float(m_spriteWidth * (m_xIndex + 1)) / float(this->texture->getWidth()),
-                                            1 - float(m_spriteHeight * m_yIndex) / float(this->texture->getHeight())}); // top right
+        this->textureCoordinates
+            .push_back({float(m_subTextureSize * m_subTextureIndexX) / float(this->texture->getWidth()),
+                        float((m_subTextureSize * (m_subTextureIndexY + m_subTextureSpanY))) / float(this->texture->getHeight())}); // top left
+        this->textureCoordinates
+            .push_back({float(m_subTextureSize * m_subTextureIndexX) / float(this->texture->getWidth()),
+                        float(m_subTextureSize * m_subTextureIndexY) / float(this->texture->getHeight())}); // bottom left
+        this->textureCoordinates
+            .push_back({float(m_subTextureSize * (m_subTextureIndexX + m_subTextureSpanX)) / float(this->texture->getWidth()),
+                        float(m_subTextureSize * (m_subTextureIndexY)) / float(this->texture->getHeight())}); // bottom right
+        this->textureCoordinates
+            .push_back({float(m_subTextureSize * (m_subTextureIndexX + m_subTextureSpanX)) / float(this->texture->getWidth()),
+                        float(m_subTextureSize * (m_subTextureIndexY + m_subTextureSpanY)) / float(this->texture->getHeight())}); // top right
     }
     else
     {
@@ -41,11 +52,6 @@ void SpriteRenderer::initializeTextureCoordinate()
         this->textureCoordinates.push_back({0.0f, 0.0f}); // bottom left
         this->textureCoordinates.push_back({1.0f, 0.0f}); // bottom right
         this->textureCoordinates.push_back({1.0f, 1.0f}); // top right
-    }
-
-    for (int i = 0; i < this->textureCoordinates.size(); i++)
-    {
-        std::cout << " - " << this->textureCoordinates[i].x << ", " << this->textureCoordinates[i].y << std::endl;
     }
 }
 
@@ -78,22 +84,27 @@ glm::vec4 SpriteRenderer::getColor()
     return this->color;
 }
 
-unsigned int SpriteRenderer::getSpriteWidth()
+unsigned int SpriteRenderer::getSubTextureSpanX()
 {
-    return this->m_spriteWidth;
+    return this->m_subTextureSpanX;
 }
 
-unsigned int SpriteRenderer::getSpriteHeight()
+unsigned int SpriteRenderer::getSubTextureSpanY()
 {
-    return this->m_spriteHeight;
+    return this->m_subTextureSpanY;
 }
 
-unsigned int SpriteRenderer::getXIndex()
+unsigned int SpriteRenderer::getSubTextureSize()
 {
-    return this->m_xIndex;
+    return this->m_subTextureSize;
 }
 
-unsigned int SpriteRenderer::getYIndex()
+unsigned int SpriteRenderer::getSubTextureIndexX()
 {
-    return this->m_yIndex;
+    return this->m_subTextureIndexX;
+}
+
+unsigned int SpriteRenderer::getSubTextureIndexY()
+{
+    return this->m_subTextureIndexY;
 }

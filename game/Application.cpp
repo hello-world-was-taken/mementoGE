@@ -13,28 +13,32 @@
 void addGameObject(std::shared_ptr<Scene> scene)
 {
     // TODO: Think about creating an asset pool for textrues
-    std::shared_ptr<Texture> texture = Resource::getTexture("slice01_01.png", false);
+    std::shared_ptr<Texture> texture = Resource::getTexture("../assets/texture/slice01_01.png", false);
     texture->bind();
 
     std::shared_ptr<GameObject> gameObject = scene->addGameObject(32, 32);
     // TODO: We shouldn't be using glm::vec3 directly. We should have a class that wraps glm::vec3
-    gameObject->addComponent<Transform>(glm::vec3(0.0f, 0.0f, 0.0f)); // every game object has a transform
+    // Grass Tile
+    gameObject->addComponent<Transform>(glm::vec3(0.0f, 0.0f, 0.0f));
     gameObject->addComponent<SpriteRenderer>(texture);
 
-    std::shared_ptr<Texture> texture2 = Resource::getTexture("spritesheet_retina.png", true);
+    std::shared_ptr<Texture> texture2 = Resource::getTexture("../assets/texture/spritesheet_retina.png", true);
     texture2->bind();
 
+    // Cloud
     std::shared_ptr<GameObject> gameObject2 = scene->addGameObject(32, 16);
     gameObject2->addComponent<Transform>(glm::vec3(110.0f, 200.0f, 0.0f));
-    gameObject2->addComponent<SpriteRenderer>(texture2, 256, 128, 0, 0);
+    gameObject2->addComponent<SpriteRenderer>(texture2, 2, 1, 128, 0, 10);
 
+    // Dialog box
     std::shared_ptr<GameObject> gameObject3 = scene->addGameObject(32, 16);
     gameObject3->addComponent<Transform>(glm::vec3(110.0f, 100.0f, 0.0f));
-    gameObject3->addComponent<SpriteRenderer>(texture2, 128, 118, 2, 0);
+    gameObject3->addComponent<SpriteRenderer>(texture2, 1, 1, 128, 2, 10);
 
+    // Dialog box
     std::shared_ptr<GameObject> gameObject4 = scene->addGameObject(32, 16);
     gameObject4->addComponent<Transform>(glm::vec3(50.0f, 50.0f, 0.0f));
-    gameObject4->addComponent<SpriteRenderer>(texture2, 128, 118, 2, 0);
+    gameObject4->addComponent<SpriteRenderer>(texture2, 1, 1, 128, 2, 10);
 }
 
 // TODO: glfw_window should be abstracted away by core engine module
