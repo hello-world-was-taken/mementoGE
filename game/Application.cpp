@@ -8,30 +8,33 @@
 #include "engine/core/Scene.h"
 #include "game/MouseListener.h" // TODO: this should be abstracted away by core engine module
 #include "game/KeyListener.h"   // TODO: this should be abstracted away by core engine module
+#include "engine/core/Resource.h"
 
 void addGameObject(std::shared_ptr<Scene> scene)
 {
     // TODO: Think about creating an asset pool for textrues
-    const char *texture_path = "../assets/texture/slice01_01.png";
-    std::shared_ptr<Texture> texture = std::make_shared<Texture>(texture_path, 0);
+    std::shared_ptr<Texture> texture = Resource::getTexture("slice01_01.png", false);
     texture->bind();
 
-    std::shared_ptr<GameObject> gameObject = scene->addGameObject(70, 70);
+    std::shared_ptr<GameObject> gameObject = scene->addGameObject(32, 32);
     // TODO: We shouldn't be using glm::vec3 directly. We should have a class that wraps glm::vec3
     gameObject->addComponent<Transform>(glm::vec3(0.0f, 0.0f, 0.0f)); // every game object has a transform
     gameObject->addComponent<SpriteRenderer>(texture);
 
-    const char *texture_path2 = "../assets/texture/spritesheet_retina.png";
-    std::shared_ptr<Texture> texture2 = std::make_shared<Texture>(texture_path2, 1, true);
+    std::shared_ptr<Texture> texture2 = Resource::getTexture("spritesheet_retina.png", true);
     texture2->bind();
 
-    std::shared_ptr<GameObject> gameObject2 = scene->addGameObject(64, 32);
+    std::shared_ptr<GameObject> gameObject2 = scene->addGameObject(32, 16);
     gameObject2->addComponent<Transform>(glm::vec3(110.0f, 200.0f, 0.0f));
     gameObject2->addComponent<SpriteRenderer>(texture2, 256, 128, 0, 0);
 
-    std::shared_ptr<GameObject> gameObject3 = scene->addGameObject(64, 32);
+    std::shared_ptr<GameObject> gameObject3 = scene->addGameObject(32, 16);
     gameObject3->addComponent<Transform>(glm::vec3(110.0f, 100.0f, 0.0f));
     gameObject3->addComponent<SpriteRenderer>(texture2, 128, 118, 2, 0);
+
+    std::shared_ptr<GameObject> gameObject4 = scene->addGameObject(32, 16);
+    gameObject4->addComponent<Transform>(glm::vec3(50.0f, 50.0f, 0.0f));
+    gameObject4->addComponent<SpriteRenderer>(texture2, 128, 118, 2, 0);
 }
 
 // TODO: glfw_window should be abstracted away by core engine module
@@ -77,7 +80,7 @@ void run()
     // Create a scene. We need at least one scene to start the game
     std::shared_ptr<Scene> scene = std::make_shared<Scene>();
     scene_manager->setEventHandler(eventHandler);
-    scene_manager->addScene("triangle_scene", scene);
+    scene_manager->addScene("default_scene", scene);
     addGameObject(scene);
 
     // deserialize scene if we had any saved state

@@ -1,7 +1,9 @@
 #include <iostream>
 #include <GL/glew.h>
+#include <memory>
 
 #include "engine/renderer/RenderBatch.h"
+#include "engine/core/Resource.h"
 #include "util/log_error.h"
 
 RenderBatch::RenderBatch(
@@ -31,18 +33,19 @@ void RenderBatch::render()
     glClear(GL_COLOR_BUFFER_BIT);
 
     // TODO: We shouldn't me creating a new shader every frame
-    Shader shader("../assets/shader/vertex.shader", "../assets/shader/fragment.shader");
-    shader.use();
+    // Shader shader("../assets/shader/vertex.shader", "../assets/shader/fragment.shader");
+    std::shared_ptr<Shader> shader = Resource::getShaderProgram("vertex.shader", "fragment.shader");
+    shader.get()->use();
 
     // set the view matrix
     glm::mat4 u_view_matrix = m_camera->getViewMatrix();
-    shader.setUniform4fv("u_view_matrix", u_view_matrix);
+    shader.get()->setUniform4fv("u_view_matrix", u_view_matrix);
 
     // set the projection matrix
     glm::mat4 u_projection_matrix = m_camera->getProjectionMatrix();
-    shader.setUniform4fv("u_projection_matrix", u_projection_matrix);
+    shader.get()->setUniform4fv("u_projection_matrix", u_projection_matrix);
 
-    shader.setMultipleTextureUnits("textures", m_texture_units.data(), m_texture_units.size());
+    shader.get()->setMultipleTextureUnits("textures", m_texture_units.data(), m_texture_units.size());
 
     glClearError();
     glDrawElements(GL_TRIANGLES, BATCH_SIZE * INDICES_PER_QUAD, GL_UNSIGNED_INT, nullptr);
