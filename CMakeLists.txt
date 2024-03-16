@@ -24,6 +24,8 @@ add_executable(${PROJECT_NAME}
     engine/core/Scene.cpp
     engine/core/ImGuiWrapper.cpp
     engine/core/Resource.cpp
+    engine/core/Sprite.cpp
+    engine/core/SpriteSheet.cpp
 
     # opengl
     engine/opengl/Texture.cpp
