@@ -3,6 +3,7 @@
 #include "engine/core/SceneManager.h"
 #include "engine/core/ImGuiWrapper.h"
 #include "engine/core/Resource.h"
+#include "engine/core/Sprite.h"
 
 SceneManager::SceneManager(Window *m_window)
 {
@@ -107,6 +108,16 @@ void SceneManager::removeScene(const char *sceneName)
     m_scenes.erase(sceneName);
 }
 
+void SceneManager::renderTextureResourcesImGui()
+{
+    for (auto &[texturePath, texture] : *Resource::getTexturesMap().get())
+    {
+        ImGui::Text("Sprites");
+        ImVec2 windowPos = ImGui::GetWindowPos();
+        ImVec2 windowSize = ImGui::GetWindowSize();
+    }
+}
+
 std::shared_ptr<Scene> SceneManager::getActiveScene()
 {
     return m_activeScene;
@@ -135,68 +146,18 @@ void SceneManager::serialize()
             out << YAML::Value << gameObject.get()->getHeight();
 
             // TRANSFORM COMPONENT
-            out << YAML::Key << "Transform";
-            out << YAML::Value << YAML::BeginMap;
+            if (gameObject->hasComponent<Transform>())
+            {
+                Transform &transform = gameObject->getComponent<Transform>();
+                transform.serialize(out);
+            }
 
-            out << YAML::Key << "Position";
-            out << YAML::Value << YAML::BeginSeq;
-            out << gameObject.get()->getComponent<Transform>().getPosition()->x;
-            out << gameObject.get()->getComponent<Transform>().getPosition()->y;
-            out << gameObject.get()->getComponent<Transform>().getPosition()->z;
-            out << YAML::EndSeq;
-
-            out << YAML::Key << "Rotation";
-            out << YAML::Value << YAML::BeginSeq;
-            out << gameObject->getComponent<Transform>().getRotation()->x;
-            out << gameObject->getComponent<Transform>().getRotation()->y;
-            out << gameObject->getComponent<Transform>().getRotation()->z;
-            out << YAML::EndSeq;
-
-            out << YAML::Key << "Scale";
-            out << YAML::Value << YAML::BeginSeq;
-            out << gameObject->getComponent<Transform>().getScale()->x;
-            out << gameObject->getComponent<Transform>().getScale()->y;
-            out << gameObject->getComponent<Transform>().getScale()->z;
-            out << YAML::EndSeq;
-
-            out << YAML::EndMap;
-
-            // SPRITE RENDERER COMPONENT
-            // TODO: not all game objects will have a sprite renderer
-            out << YAML::Key << "SpriteRenderer";
-            out << YAML::Value << YAML::BeginMap;
-
-            out << YAML::Key << "subTextureSpanX";
-            out << YAML::Value << gameObject->getComponent<SpriteRenderer>().getSubTextureSpanX();
-            out << YAML::Key << "subTextureSpanY";
-            out << YAML::Value << gameObject->getComponent<SpriteRenderer>().getSubTextureSpanY();
-
-            out << YAML::Key << "subTextureSize";
-            out << YAML::Value << gameObject->getComponent<SpriteRenderer>().getSubTextureSize();
-
-            out << YAML::Key << "subTextureIndexX";
-            out << YAML::Value << gameObject->getComponent<SpriteRenderer>().getSubTextureIndexX();
-            out << YAML::Key << "subTextureIndexY";
-            out << YAML::Value << gameObject->getComponent<SpriteRenderer>().getSubTextureIndexY();
-
-            // TODO: some sprites might not have a texture only color and vise versa
-            out << YAML::Key << "Color";
-            out << YAML::Value << YAML::BeginSeq;
-            out << gameObject->getComponent<SpriteRenderer>().getColor().r;
-            out << gameObject->getComponent<SpriteRenderer>().getColor().g;
-            out << gameObject->getComponent<SpriteRenderer>().getColor().b;
-            out << gameObject->getComponent<SpriteRenderer>().getColor().a;
-            out << YAML::EndSeq;
-
-            out << YAML::Key << "Texture";
-            out << YAML::Value << YAML::BeginMap;
-
-            out << YAML::Key << "FilePath";
-            out << YAML::Value << gameObject->getComponent<SpriteRenderer>().getTexture()->getFilePath();
-            out << YAML::Key << "isTextureAtlas";
-            out << YAML::Value << gameObject->getComponent<SpriteRenderer>().getTexture()->isTextureAtlas();
-            out << YAML::EndMap;
-            out << YAML::EndMap;
+            // SPRITE COMPONENT
+            if (gameObject->hasComponent<Sprite>())
+            {
+                Sprite &sprite = gameObject->getComponent<Sprite>();
+                sprite.serialize(out);
+            }
 
             out << YAML::EndMap;
             count++;
@@ -206,7 +167,7 @@ void SceneManager::serialize()
     }
 
     out << YAML::EndMap;
-    std::ofstream file("../game/scene.yaml");
+    std::ofstream file("../game/scene.yaml", std::ios::out | std::ios::trunc);
     file << out.c_str();
 
     std::cout << "Serialized scene to scene.yaml" << std::endl;
@@ -222,6 +183,7 @@ void SceneManager::deserialize()
         std::cout << "scene.yaml does not exist" << std::endl;
         return;
     }
+
     YAML::Node scene = YAML::LoadFile("../game/scene.yaml");
     for (auto it = scene.begin(); it != scene.end(); ++it) // why ++it instead of it++?
     {
@@ -229,43 +191,20 @@ void SceneManager::deserialize()
         std::shared_ptr<Scene> newScene = std::make_shared<Scene>();
         m_scenes[sceneName] = newScene;
         m_activeScene = m_scenes[sceneName]; // TODO: have some sort of active scene flag
-        std::cout << "gameObject is a map: " << it->second.IsMap() << std::endl;
-        for (auto gameObject : it->second)
+
+        for (auto serializedGameObject : it->second)
         {
-            unsigned int width = gameObject.second["Width"].as<unsigned int>();
-            unsigned int height = gameObject.second["Height"].as<unsigned int>();
+            unsigned int width = serializedGameObject.second["Width"].as<unsigned int>();
+            unsigned int height = serializedGameObject.second["Height"].as<unsigned int>();
 
             std::shared_ptr<GameObject> newGameObject = m_activeScene->addGameObject(width, height);
             // Deserialize Transform Component
             newGameObject->addComponent<Transform>(glm::vec3(0.0f, 0.0f, 0.0f));
-            newGameObject->getComponent<Transform>().setPosition(
-                gameObject.second["Transform"]["Position"][0].as<float>(),
-                gameObject.second["Transform"]["Position"][1].as<float>(),
-                gameObject.second["Transform"]["Position"][2].as<float>());
-            newGameObject->getComponent<Transform>().setRotation(
-                gameObject.second["Transform"]["Rotation"][0].as<float>(),
-                gameObject.second["Transform"]["Rotation"][1].as<float>(),
-                gameObject.second["Transform"]["Rotation"][2].as<float>());
-            newGameObject->getComponent<Transform>().setScale(
-                gameObject.second["Transform"]["Scale"][0].as<float>(),
-                gameObject.second["Transform"]["Scale"][1].as<float>(),
-                gameObject.second["Transform"]["Scale"][2].as<float>());
+            newGameObject->getComponent<Transform>().deserialize(serializedGameObject.second);
 
-            // Deserialize Sprite Renderer Component
-            // First create a texture
-            std::shared_ptr<Texture>
-                texture = Resource::getTexture(
-                    gameObject.second["SpriteRenderer"]["Texture"]["FilePath"].as<std::string>().c_str(),
-                    gameObject.second["SpriteRenderer"]["Texture"]["isTextureAtlas"].as<bool>());
-            texture->bind();
-
-            newGameObject->addComponent<SpriteRenderer>(
-                texture,
-                gameObject.second["SpriteRenderer"]["subTextureSpanX"].as<unsigned int>(),
-                gameObject.second["SpriteRenderer"]["subTextureSpanY"].as<unsigned int>(),
-                gameObject.second["SpriteRenderer"]["subTextureSize"].as<unsigned int>(),
-                gameObject.second["SpriteRenderer"]["subTextureIndexX"].as<unsigned int>(),
-                gameObject.second["SpriteRenderer"]["subTextureIndexY"].as<unsigned int>());
+            // Deserialize Sprite Component
+            newGameObject->addComponent<Sprite>();
+            newGameObject->getComponent<Sprite>().deserialize(serializedGameObject.second);
         }
     }
     std::cout << "Deserialized scene from scene.yaml" << std::endl;

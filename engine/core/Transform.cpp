@@ -1,4 +1,5 @@
 #include <iostream>
+#include <yaml-cpp/yaml.h>
 
 #include "engine/core/Transform.h"
 
@@ -77,4 +78,48 @@ glm::mat4x4 Transform::getTransformMatrix()
     transformMatrix = glm::rotate(transformMatrix, glm::radians(m_rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
     transformMatrix = glm::scale(transformMatrix, m_scale);
     return transformMatrix;
+}
+
+void Transform::serialize(YAML::Emitter &out)
+{
+    out << YAML::Key << "Transform";
+    out << YAML::Value << YAML::BeginMap;
+
+    out << YAML::Key << "Position";
+    out << YAML::Value << YAML::BeginSeq;
+    out << m_position.x;
+    out << m_position.y;
+    out << m_position.z;
+    out << YAML::EndSeq;
+
+    out << YAML::Key << "Rotation";
+    out << YAML::Value << YAML::BeginSeq;
+    out << m_rotation.x;
+    out << m_rotation.y;
+    out << m_rotation.z;
+    out << YAML::EndSeq;
+
+    out << YAML::Key << "Scale";
+    out << YAML::Value << YAML::BeginSeq;
+    out << m_scale.x;
+    out << m_scale.y;
+    out << m_scale.z;
+    out << YAML::EndSeq;
+
+    out << YAML::EndMap;
+}
+
+void Transform::deserialize(const YAML::Node &in)
+{
+    m_position.x = in["Transform"]["Position"][0].as<float>();
+    m_position.y = in["Transform"]["Position"][1].as<float>();
+    m_position.z = in["Transform"]["Position"][2].as<float>();
+
+    m_rotation.x = in["Transform"]["Rotation"][0].as<float>();
+    m_rotation.y = in["Transform"]["Rotation"][1].as<float>();
+    m_rotation.z = in["Transform"]["Rotation"][2].as<float>();
+
+    m_scale.x = in["Transform"]["Scale"][0].as<float>();
+    m_scale.y = in["Transform"]["Scale"][1].as<float>();
+    m_scale.z = in["Transform"]["Scale"][2].as<float>();
 }

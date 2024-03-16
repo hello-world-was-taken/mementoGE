@@ -3,6 +3,7 @@
 #include <iostream>
 #include <GL/glew.h>
 #include <stb_image/stb_image.h>
+#include <yaml-cpp/yaml.h>
 
 class Texture
 {
@@ -20,7 +21,9 @@ public:
         const char *texture_path,
         int texture_unit,
         bool isTextureAtlas = false);
+    Texture();  // TODO: should only be used for serialization
     ~Texture();
+    unsigned int getId() const;
     unsigned int getTextureUnit() const;
     bool isTextureAtlas() const;
     void bind() const;
@@ -28,4 +31,8 @@ public:
     int getWidth() const { return m_width; }
     int getHeight() const { return m_height; }
     std::string getFilePath() const { return m_texture_path; }
+
+    // TODO: Should I even have this here? Since it is an abstraction of OpenGL.
+    void serialize(YAML::Emitter &out);
+    void deserialize(const YAML::Node &in);
 };

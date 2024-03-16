@@ -3,6 +3,7 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include <memory>
+#include <yaml-cpp/yaml.h>
 
 #include "engine/opengl/Texture.h"
 
@@ -17,7 +18,7 @@ private:
         {1.0f, 1.0f}, // top right
     };
     
-    glm::vec4 color = {1.0f, 1.0f, 1.0f, 1.0f}; // white
+    glm::vec4 m_color = {1.0f, 1.0f, 1.0f, 1.0f}; // white
 
     // TODO: a sprite could just be a color as well
 public:
@@ -30,9 +31,13 @@ public:
         unsigned int subTextureSize,
         unsigned int subTextureIndexX,
         unsigned int subTextureIndexY);
+    Sprite(); // TODO: Should only be used for serialization
     ~Sprite();
 
     std::vector<glm::vec2> getTextureCoordinates();
     std::shared_ptr<Texture> getTexture();
     glm::vec4 getColor();
+
+    void serialize(YAML::Emitter &out);
+    void deserialize(const YAML::Node &in);
 };

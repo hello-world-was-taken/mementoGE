@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/ext/matrix_transform.hpp>
+#include <yaml-cpp/yaml.h>
 
 // every game object has a transform
 class Transform
@@ -25,4 +26,7 @@ public:
     glm::vec3 *getRotation();
     glm::vec3 *getScale();
     glm::mat4x4 getTransformMatrix();
+
+    void serialize(YAML::Emitter &out);
+    void deserialize(const YAML::Node &in);
 };

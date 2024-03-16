@@ -4,6 +4,7 @@
 
 #include "engine/renderer/RenderBatch.h"
 #include "engine/core/Resource.h"
+#include "engine/core/Sprite.h"
 #include "util/log_error.h"
 
 RenderBatch::RenderBatch(
@@ -66,16 +67,16 @@ void RenderBatch::updateVertexBuffer()
         glm::mat4x4 transformMatrix = transform.getTransformMatrix();
         std::vector<glm::vec3> transformedQuad = transformQuad(transformMatrix, gameObject->getQuad());
 
-        if (gameObject->hasComponent<SpriteRenderer>())
+        if (gameObject->hasComponent<Sprite>())
         {
-            SpriteRenderer spriteRenderer = gameObject->getComponent<SpriteRenderer>();
+            Sprite sprite = gameObject->getComponent<Sprite>();
 
             for (int i = 0; i < transformedQuad.size(); i++)
             {
                 vertices.push_back({transformedQuad[i],
-                                    spriteRenderer.getColor(),
-                                    spriteRenderer.getTextureCoordinates()[i], // TODO: do we need to retrieve this from the sprite renderer?
-                                    (float)spriteRenderer.getTexture()->getTextureUnit()});
+                                    sprite.getColor(),
+                                    sprite.getTextureCoordinates()[i], // TODO: do we need to retrieve this from the sprite renderer?
+                                    (float)sprite.getTexture()->getTextureUnit()});
             }
         }
     }

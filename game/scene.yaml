@@ -15,12 +15,20 @@ default_scene:
         - 1
         - 1
         - 1
-    SpriteRenderer:
-      subTextureSpanX: 1
-      subTextureSpanY: 1
-      subTextureSize: 100
-      subTextureIndexX: 0
-      subTextureIndexY: 0
+    Sprite:
+      textureCoordinates:
+        -
+          - 0
+          - 1
+        -
+          - 0
+          - 0
+        -
+          - 1
+          - 0
+        -
+          - 1
+          - 1
       Color:
         - 1
         - 1
@@ -45,12 +53,20 @@ default_scene:
         - 1
         - 1
         - 1
-    SpriteRenderer:
-      subTextureSpanX: 2
-      subTextureSpanY: 1
-      subTextureSize: 128
-      subTextureIndexX: 0
-      subTextureIndexY: 10
+    Sprite:
+      textureCoordinates:
+        -
+          - 0
+          - 1
+        -
+          - 0
+          - 0.909090936
+        -
+          - 0.181818187
+          - 0.909090936
+        -
+          - 0.181818187
+          - 1
       Color:
         - 1
         - 1
@@ -75,12 +91,20 @@ default_scene:
         - 1
         - 1
         - 1
-    SpriteRenderer:
-      subTextureSpanX: 1
-      subTextureSpanY: 1
-      subTextureSize: 128
-      subTextureIndexX: 2
-      subTextureIndexY: 10
+    Sprite:
+      textureCoordinates:
+        -
+          - 0.181818187
+          - 1
+        -
+          - 0.181818187
+          - 0.909090936
+        -
+          - 0.272727281
+          - 0.909090936
+        -
+          - 0.272727281
+          - 1
       Color:
         - 1
         - 1
@@ -105,12 +129,20 @@ default_scene:
         - 1
         - 1
         - 1
-    SpriteRenderer:
-      subTextureSpanX: 1
-      subTextureSpanY: 1
-      subTextureSize: 128
-      subTextureIndexX: 2
-      subTextureIndexY: 10
+    Sprite:
+      textureCoordinates:
+        -
+          - 0.181818187
+          - 1
+        -
+          - 0.181818187
+          - 0.909090936
+        -
+          - 0.272727281
+          - 0.909090936
+        -
+          - 0.272727281
+          - 1
       Color:
         - 1
         - 1

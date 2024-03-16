@@ -12,7 +12,6 @@
 
 #include "util/log_error.h"
 #include "engine/opengl/Shader.h"
-#include "engine/renderer/SpriteRenderer.h"
 #include "engine/core/GameObject.h"
 #include "engine/core/Transform.h"
 #include "engine/core/Camera.h"

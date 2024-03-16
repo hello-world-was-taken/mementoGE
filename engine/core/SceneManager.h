@@ -33,6 +33,7 @@ public:
     void unloadScene(const char *sceneName);
     void addScene(const char *sceneName, std::shared_ptr<Scene> scene);
     void removeScene(const char *sceneName);
+    void renderTextureResourcesImGui();
     void getScene(const char *sceneName);
     std::shared_ptr<Scene> getActiveScene();
     void setActiveScene(const char *sceneName);

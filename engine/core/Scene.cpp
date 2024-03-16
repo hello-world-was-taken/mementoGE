@@ -49,7 +49,7 @@ std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> Scene::getGameObjects(
 
 // void Scene::addTextureToGameObject(std::shared_ptr<GameObject> gameObject, std::shared_ptr<Texture> texture)
 // {
-//     gameObject->addComponent<SpriteRenderer>(texture);
+//     gameObject->addComponent<Sprite>(texture);
 //     m_textures.push_back(texture);
 // }
 

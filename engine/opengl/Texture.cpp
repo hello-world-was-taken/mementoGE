@@ -1,3 +1,5 @@
+#include <yaml-cpp/yaml.h>
+
 #include "engine/opengl/Texture.h"
 
 Texture::Texture(
@@ -40,6 +42,11 @@ Texture::~Texture()
     glDeleteTextures(1, &this->m_id);
 }
 
+unsigned int Texture::getId() const
+{
+    return m_id;
+}
+
 unsigned int Texture::getTextureUnit() const
 {
     return m_texture_unit;
@@ -59,4 +66,23 @@ void Texture::bind() const
 void Texture::unbind() const
 {
     // glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+// TODO: Add other properties to serialize
+void Texture::serialize(YAML::Emitter &out)
+{
+    out << YAML::Key << "Texture";
+    out << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << "FilePath";
+    out << YAML::Value << m_texture_path;
+    out << YAML::Key << "isTextureAtlas";
+    out << YAML::Value << m_isTextureAtlas;
+    out << YAML::EndMap;
+}
+
+// TODO: Right now we are not using this as we need to register it to resources
+void Texture::deserialize(const YAML::Node &in)
+{
+    std::string filePath = in["Texture"]["FilePath"].as<std::string>();
+    bool isTextureAtlas = in["Texture"]["isTextureAtlas"].as<bool>();
 }

@@ -16,7 +16,6 @@
 #include "engine/core/Camera.h"
 #include "engine/core/GameObject.h"
 #include "engine/core/Transform.h"
-#include "engine/renderer/SpriteRenderer.h"
 
 class RenderBatch
 {

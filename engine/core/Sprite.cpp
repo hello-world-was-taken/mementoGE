@@ -1,4 +1,5 @@
 #include "engine/core/Sprite.h"
+#include "engine/core/Resource.h"
 
 Sprite::Sprite(
     std::shared_ptr<Texture> texture)
@@ -44,6 +45,10 @@ Sprite::Sprite(
     }
 }
 
+Sprite::Sprite()
+{
+}
+
 Sprite::~Sprite()
 {
 }
@@ -60,5 +65,54 @@ std::shared_ptr<Texture> Sprite::getTexture()
 
 glm::vec4 Sprite::getColor()
 {
-    return color;
+    return m_color;
+}
+
+void Sprite::serialize(YAML::Emitter &out)
+{
+    out << YAML::Key << "Sprite";
+    out << YAML::Value << YAML::BeginMap;
+
+    out << YAML::Key << "textureCoordinates";
+    out << YAML::Value << YAML::BeginSeq;
+    for (auto &coord : m_textureCoordinates)
+    {
+        out << YAML::BeginSeq;
+        out << coord.x;
+        out << coord.y;
+        out << YAML::EndSeq;
+    }
+    out << YAML::EndSeq;
+
+    // TODO: some sprites might not have a texture only color and vise versa
+    out << YAML::Key << "Color";
+    out << YAML::Value << YAML::BeginSeq;
+    out << m_color.r;
+    out << m_color.g;
+    out << m_color.b;
+    out << m_color.a;
+    out << YAML::EndSeq;
+
+    m_texture->serialize(out);
+    out << YAML::EndMap;
+}
+
+void Sprite::deserialize(const YAML::Node &in)
+{
+    m_textureCoordinates.clear();
+    auto textureCoordinates = in["Sprite"]["textureCoordinates"];
+    for (std::size_t i = 0; i < textureCoordinates.size(); i++)
+    {
+        m_textureCoordinates.push_back({textureCoordinates[i][0].as<float>(), textureCoordinates[i][1].as<float>()});
+    }
+    std::cout << "deserializing transform" << std::endl;
+
+    auto color = in["Sprite"]["Color"];
+    m_color = {color[0].as<float>(), color[1].as<float>(), color[2].as<float>(), color[3].as<float>()};
+
+    auto texture = in["Sprite"]["Texture"];
+    std::string filePath = texture["FilePath"].as<std::string>();
+    bool isTextureAtlas = texture["isTextureAtlas"].as<bool>();
+    m_texture = Resource::getTexture(filePath, isTextureAtlas);
+    m_texture.get()->bind();
 }
