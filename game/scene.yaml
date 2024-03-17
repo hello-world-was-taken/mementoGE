@@ -151,3 +151,41 @@ default_scene:
       Texture:
         FilePath: ../assets/texture/spritesheet_retina.png
         isTextureAtlas: true
+  GameObject4:
+    Width: 32
+    Height: 16
+    Transform:
+      Position:
+        - 110
+        - 130
+        - 0
+      Rotation:
+        - 0
+        - 0
+        - 0
+      Scale:
+        - 1
+        - 1
+        - 1
+    Sprite:
+      textureCoordinates:
+        -
+          - 0
+          - 0.0909090936
+        -
+          - 0
+          - 0
+        -
+          - 0.0909090936
+          - 0
+        -
+          - 0.0909090936
+          - 0.0909090936
+      Color:
+        - 1
+        - 1
+        - 1
+        - 1
+      Texture:
+        FilePath: ../assets/texture/spritesheet_retina.png
+        isTextureAtlas: true

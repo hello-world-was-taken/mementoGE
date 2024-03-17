@@ -13,6 +13,9 @@ private:
     std::shared_ptr<Texture> m_texture;
     std::vector<Sprite> m_sprites;
 
+private:
+    void initializeSprites();
+
 public:
     SpriteSheet(
         std::shared_ptr<Texture> texture,
@@ -20,5 +23,6 @@ public:
         unsigned int m_subTextureGap);
     ~SpriteSheet();
 
-    void initializeSprites();
+    unsigned int getSubTextureSize();
+    std::vector<Sprite> getSprites();
 };

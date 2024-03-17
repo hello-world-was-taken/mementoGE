@@ -40,3 +40,13 @@ void SpriteSheet::initializeSprites()
         }
     }
 }
+
+unsigned int SpriteSheet::getSubTextureSize()
+{
+    return m_subTextureSize;
+}
+
+std::vector<Sprite> SpriteSheet::getSprites()
+{
+    return m_sprites;
+}

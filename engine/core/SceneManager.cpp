@@ -1,9 +1,11 @@
 #include <yaml-cpp/yaml.h>
+#include <imgui.h>
 
 #include "engine/core/SceneManager.h"
 #include "engine/core/ImGuiWrapper.h"
 #include "engine/core/Resource.h"
 #include "engine/core/Sprite.h"
+#include "engine/core/SpriteSheet.h"
 
 SceneManager::SceneManager(Window *m_window)
 {
@@ -54,6 +56,7 @@ void SceneManager::gameLoop()
         glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
 
         this->update(Time::deltaTime());
+        this->renderTextureResourcesImGui();
 
         // Rendering
         ImGui::Render();
@@ -110,11 +113,48 @@ void SceneManager::removeScene(const char *sceneName)
 
 void SceneManager::renderTextureResourcesImGui()
 {
-    for (auto &[texturePath, texture] : *Resource::getTexturesMap().get())
+    // TODO: use this as a dummy sprite to render the texture resources change it later on.
+    std::shared_ptr<Texture> texture2 = Resource::getTexture("../assets/texture/spritesheet_retina.png", true);
+    texture2->bind();
+    SpriteSheet spriteSheet = SpriteSheet(texture2, 128, 0);
+    ImGui::Text("Sprites");
+    ImVec2 windowPos = ImGui::GetWindowPos();
+    ImVec2 windowSize = ImGui::GetWindowSize();
+
+    float windowX2 = windowPos.x + windowSize.x;
+    int id = 0;
+    for (Sprite sprite : spriteSheet.getSprites())
     {
-        ImGui::Text("Sprites");
-        ImVec2 windowPos = ImGui::GetWindowPos();
-        ImVec2 windowSize = ImGui::GetWindowSize();
+        float spriteWidth = spriteSheet.getSubTextureSize();
+        float spriteHeight = spriteSheet.getSubTextureSize();
+        std::vector<glm::vec2> textureCoordinates = sprite.getTextureCoordinates();
+        ImTextureID texId = (ImTextureID)(uintptr_t)texture2->getId();
+
+        // TODO: Add sprite IDs and use those to identify which sprite was clicked
+        ImGui::PushID(id);
+        if (ImGui::ImageButton(
+                "",
+                texId,
+                ImVec2(spriteWidth, spriteHeight),
+                ImVec2(textureCoordinates[0].x,
+                       textureCoordinates[0].y), // uv0 = top-left
+                ImVec2(textureCoordinates[2].x,
+                       textureCoordinates[2].y), // uv1 = bottom-right
+                ImVec4(0.0f, 0.0f, 0.0f, 1.0f),
+                ImVec4(1.0f, 1.0f, 1.0f, 1.0f)))
+        {
+            std::cout << "Button " << id << " clicked" << std::endl;
+        }
+        ImGui::PopID();
+
+        ImVec2 lastSpritePosition = ImGui::GetItemRectMax();
+        float lastSpriteX2 = lastSpritePosition.x;
+        float nextButtonX2 = lastSpriteX2 + spriteWidth;
+        if (id + 1 < spriteSheet.getSprites().size() && nextButtonX2 < windowX2)
+        {
+            ImGui::SameLine();
+        }
+        id++;
     }
 }
 

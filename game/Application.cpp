@@ -40,6 +40,12 @@ void addGameObject(std::shared_ptr<Scene> scene)
     std::shared_ptr<GameObject> gameObject4 = scene->addGameObject(32, 16);
     gameObject4->addComponent<Transform>(glm::vec3(50.0f, 50.0f, 0.0f));
     gameObject4->addComponent<Sprite>(texture2, 1, 1, 128, 2, 10);
+
+    // Number 4
+    std::cout << "Number 4" << std::endl;
+    std::shared_ptr<GameObject> gameObject5 = scene->addGameObject(32, 16);
+    gameObject5->addComponent<Transform>(glm::vec3(110.0f, 130.0f, 0.0f));
+    gameObject5->addComponent<Sprite>(texture2, 1, 1, 128, 0, 0);
 }
 
 // TODO: glfw_window should be abstracted away by core engine module
