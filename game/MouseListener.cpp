@@ -3,6 +3,7 @@
     and make it available via mementoGE core api.
 */
 
+#include "engine/core/Window.h"
 #include "game/MouseListener.h"
 
 MouseListener::MouseListener() {}
@@ -50,6 +51,7 @@ void MouseListener::cursorPositionCallback(GLFWwindow *window, double x_pos, dou
 
         std::cout << "X position: " << x_pos << " "
                   << "Y position: " << y_pos << std::endl;
+
         listener->m_lastX = x_pos;
         listener->m_lastY = y_pos;
         listener->m_is_dragging = true;
@@ -65,4 +67,29 @@ void MouseListener::cursorPositionCallback(GLFWwindow *window, double x_pos, dou
 
 void MouseListener::scrollCallback(GLFWwindow *window, double x_offset, double y_offset)
 {
+}
+
+glm::vec2 MouseListener::getWorldCoordinates(std::shared_ptr<Camera> camera)
+{
+    MouseListener *listener = getListener();
+    glm::mat4 inverseViewMatrix = glm::inverse(camera->getViewMatrix());
+    glm::mat4 inverseProjectionMatrix = glm::inverse(camera->getProjectionMatrix());
+
+    float screenCoordsX = listener->m_lastX;
+    float screenCoordsY = listener->m_lastY;
+
+    // TODO: Not sure if Window::m_width and Window::m_height get updated on window resize.
+    // normalized values are between -1 and 1
+    float normalizedX = ((screenCoordsX / Window::m_width) * 2.0f) - 1.0f;
+    // Inverted Y because OpenGL uses bottom-left as origin
+    float normalizedY = 1.0f - ((screenCoordsY / Window::m_height) * 2.0f);
+    
+
+    // TODO: The z values are not correct and should be taken from the projection matrix
+    glm::vec4 clipCoords = glm::vec4(normalizedX, normalizedY, -1.0f, 1.0f);
+    glm::vec4 viewCoords = inverseProjectionMatrix * clipCoords;
+    viewCoords = glm::vec4(viewCoords.x, viewCoords.y, -1.0f, 0.0f);
+    glm::vec4 worldCoords = inverseViewMatrix * viewCoords;
+
+    return glm::vec2(worldCoords.x, worldCoords.y);
 }

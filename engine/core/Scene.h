@@ -25,7 +25,7 @@ private:
     entt::registry m_registry;
     // TODO: use type alias to make this more readable
     std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> m_gameObjects;
-    Camera m_camera = Camera(m_screen_width, m_screen_height);
+    std::shared_ptr<Camera> m_camera = std::make_shared<Camera>(m_screen_width, m_screen_height);
     RenderBatch *m_renderBatch = nullptr;
     std::vector<std::shared_ptr<Texture>> m_textures;
     GameObject *m_activeGameObject = nullptr;
@@ -40,6 +40,6 @@ public:
     std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> getGameObjects();
     // TODO: think more about this
     // void addTextureToGameObject(std::shared_ptr<GameObject> gameObject, std::shared_ptr<Texture> texture);
-    Camera *getCamera();
+    std::shared_ptr<Camera> getCamera();
     void renderActiveGameObjectPropsImGui();
 };

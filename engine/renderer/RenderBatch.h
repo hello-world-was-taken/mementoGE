@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/ext/matrix_transform.hpp>
+#include <memory>
 
 #include "util/log_error.h"
 #include "engine/opengl/Vertex.h"
@@ -20,7 +21,7 @@
 class RenderBatch
 {
 private:
-    const Camera *m_camera;
+    const std::shared_ptr<Camera> m_camera;
     std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> m_gameObjects;
     std::vector<Vertex> vertices;
     static const int BATCH_SIZE = 1000;    // 1000 QUADS
@@ -32,7 +33,7 @@ private:
     std::vector<int> m_texture_units = {0, 1, 2, 3, 4, 5, 6, 7};
 
 public:
-    RenderBatch(const Camera *camera, std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> m_gameObjects);
+    RenderBatch(const std::shared_ptr<Camera> camera, std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> m_gameObjects);
     ~RenderBatch();
 
     void render();

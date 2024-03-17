@@ -8,7 +8,7 @@
 #include "util/log_error.h"
 
 RenderBatch::RenderBatch(
-    const Camera *camera,
+    const std::shared_ptr<Camera> camera,
     std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> gameObjects)
     : m_camera(camera), m_gameObjects(gameObjects)
 {

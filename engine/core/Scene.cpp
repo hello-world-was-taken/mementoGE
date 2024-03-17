@@ -2,6 +2,7 @@
 
 #include "engine/core/Scene.h"
 #include "engine/renderer/RenderBatch.h"
+#include "game/MouseListener.h"  // TODO: Game specific things shouldn't be here.
 
 Scene::Scene()
 {
@@ -21,7 +22,7 @@ Scene::~Scene()
 
 void Scene::start(GLFWwindow *window)
 {
-    m_renderBatch = new RenderBatch(&m_camera, m_gameObjects);
+    m_renderBatch = new RenderBatch(m_camera, m_gameObjects);
     m_renderBatch->render();
 }
 
@@ -29,6 +30,8 @@ void Scene::update(float deltaTime, GLFWwindow *window)
 {
     m_renderBatch->render();
     this->renderActiveGameObjectPropsImGui();
+    MouseListener *listener = MouseListener::getListener();
+    listener->getWorldCoordinates(m_camera);
 }
 
 std::shared_ptr<GameObject> Scene::addGameObject(unsigned int width, unsigned int height)
@@ -53,9 +56,9 @@ std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> Scene::getGameObjects(
 //     m_textures.push_back(texture);
 // }
 
-Camera *Scene::getCamera()
+std::shared_ptr<Camera> Scene::getCamera()
 {
-    return &m_camera;
+    return m_camera;
 }
 
 void Scene::renderActiveGameObjectPropsImGui()
