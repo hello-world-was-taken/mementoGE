@@ -1,5 +1,6 @@
 #include <yaml-cpp/yaml.h>
 #include <imgui.h>
+#include <filesystem>
 
 #include "engine/core/SceneManager.h"
 #include "engine/core/ImGuiWrapper.h"

@@ -53,13 +53,6 @@ add_executable(${PROJECT_NAME}
     lib/imgui/backends/imgui_impl_opengl3.cpp
 )
 
-# get a hold of the frameworks we'll need. These are already installed and come with OSX.
-find_library(OpenGL_FRAMEWORK OpenGL)
-find_library(Cocoa_FRAMEWORK Cocoa)
-find_library(IOKit_FRAMEWORK IOKit)
-find_library(CoreVideo_FRAMEWORK CoreVideo)
-find_package(GLEW REQUIRED)
-
 # include directories for our libs (glfw, glew)
 target_include_directories(${PROJECT_NAME}
     PUBLIC ${CMAKE_SOURCE_DIR}/
@@ -85,9 +78,40 @@ target_link_libraries(${PROJECT_NAME}
     # 'glfw3' won't work. It should be just 'glfw'
     glfw
     yaml-cpp
-    GLEW::glew  # For this one, I installed to the the system.
-    ${OpenGL_FRAMEWORK}
-    ${Cocoa_FRAMEWORK}
-    ${IOKit_FRAMEWORK}
-    ${CoreVideo_FRAMEWORK}
+    GLEW::glew  # For this one, I installed it to the the system.
 )
+
+# Configure for Unix/Linux
+if(UNIX AND NOT APPLE)
+    find_package(OpenGL REQUIRED)
+    find_package(GLEW REQUIRED)
+
+    target_link_libraries(${PROJECT_NAME}
+        ${OPENGL_LIBRARIES}
+    )
+endif()
+
+# Configure for Windows. Haven't run it on windows yet.
+if(WIN32)
+    # Specific settings for Windows
+    target_link_libraries(${PROJECT_NAME}
+        opengl32 # Link against OpenGL on Windows
+        # If we want to run on windows, we may need to add other windown speicific libraries
+    )
+endif()
+
+# Configure for MacOs
+if(APPLE)
+    find_library(OpenGL_FRAMEWORK OpenGL)
+    find_library(Cocoa_FRAMEWORK Cocoa)
+    find_library(IOKit_FRAMEWORK IOKit)
+    find_library(CoreVideo_FRAMEWORK CoreVideo)
+    find_package(GLEW REQUIRED)
+
+    target_link_libraries(${PROJECT_NAME}
+        ${OpenGL_FRAMEWORK}
+        ${Cocoa_FRAMEWORK}
+        ${IOKit_FRAMEWORK}
+        ${CoreVideo_FRAMEWORK}
+    )
+endif()
