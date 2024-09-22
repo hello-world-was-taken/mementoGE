@@ -12,14 +12,14 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/lib/glfw)
 add_subdirectory(${CMAKE_SOURCE_DIR}/lib/yaml-cpp)
 
 # since the imported libraries (glfw, glew) don't change, I don't think we need to add them here
-add_executable(${PROJECT_NAME} 
-    main.cpp 
-    
+add_executable(${PROJECT_NAME}
+    main.cpp
+
     # core
     engine/core/Window.cpp
     engine/core/Transform.cpp
     engine/core/Camera.cpp
-    engine/core/GameObject.cpp 
+    engine/core/GameObject.cpp
     engine/core/SceneManager.cpp
     engine/core/Scene.cpp
     engine/core/ImGuiWrapper.cpp
@@ -40,16 +40,16 @@ add_executable(${PROJECT_NAME}
     # utils
     util/log_error.cpp
     util/Time.cpp
-    
+
     # game files
     game/Application.cpp
     game/MouseListener.cpp
-    game/KeyListener.cpp 
-    
+    game/KeyListener.cpp
+
     # third party
     lib/stb_image/stb_image.cpp
     lib/imgui/imgui.cpp lib/imgui/imgui_draw.cpp lib/imgui/imgui_widgets.cpp
-    lib/imgui/imgui_tables.cpp lib/imgui/backends/imgui_impl_glfw.cpp 
+    lib/imgui/imgui_tables.cpp lib/imgui/backends/imgui_impl_glfw.cpp
     lib/imgui/backends/imgui_impl_opengl3.cpp
 )
 
@@ -62,6 +62,13 @@ target_include_directories(${PROJECT_NAME}
     PUBLIC ${CMAKE_SOURCE_DIR}/lib/glfw/include
     PUBLIC ${CMAKE_SOURCE_DIR}/lib/yaml-cpp/include
 )
+# For glew, I used homebrew to install it. So, I need to add the path to the include directory.
+# I tried to add the if condition inside the target_include_directories above, but it didn't work.
+if(APPLE)
+    target_include_directories(${PROJECT_NAME}
+        PUBLIC /opt/homebrew/Cellar/glew/2.2.0_1/include
+    )
+endif()
 
 # In addition to the system libraries, for the ones we built along with our project,
 # we need to add the directories where the binaries are.
