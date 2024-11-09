@@ -1,4 +1,7 @@
 #include <yaml-cpp/yaml.h>
+#include <stb_image/stb_image.h>
+#include <GL/glew.h>
+#include <iostream>
 
 #include "engine/opengl/Texture.h"
 

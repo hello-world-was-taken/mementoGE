@@ -1,4 +1,8 @@
 #include <cstring>
+#include <GL/glew.h>
+#include <fstream>
+#include <iostream>
+
 #include "engine/opengl/Shader.h"
 
 Shader::Shader(const char* vertex_path, const char* fragment_path) {
@@ -63,7 +67,7 @@ char* Shader::parseShader(const std::string& filePath) {
     // Dynamically allocate memory for the C-style string
     char* shader_cstr = new char[shader.length() + 1];
     std::strcpy(shader_cstr, shader.c_str());
-    
+
     return shader_cstr;
 };
 

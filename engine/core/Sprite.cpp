@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "engine/core/Sprite.h"
 #include "engine/core/Resource.h"
 
