@@ -69,7 +69,7 @@ void MouseListener::scrollCallback(GLFWwindow *window, double x_offset, double y
 {
 }
 
-glm::vec2 MouseListener::getWorldCoordinates(std::shared_ptr<Camera> camera)
+glm::vec2 MouseListener::getWorldCoordinates(GLFWwindow *window, std::shared_ptr<Camera> camera)
 {
     MouseListener *listener = getListener();
     glm::mat4 inverseViewMatrix = glm::inverse(camera->getViewMatrix());
@@ -80,10 +80,11 @@ glm::vec2 MouseListener::getWorldCoordinates(std::shared_ptr<Camera> camera)
 
     // TODO: Not sure if Window::m_width and Window::m_height get updated on window resize.
     // normalized values are between -1 and 1
-    float normalizedX = ((screenCoordsX / Window::m_width) * 2.0f) - 1.0f;
+    // TODO: The values (WIDTH AND HEIGHT) are hardcoded and should be taken from the window class
+    float normalizedX = ((screenCoordsX / 800) * 2.0f) - 1.0f;
     // Inverted Y because OpenGL uses bottom-left as origin
-    float normalizedY = 1.0f - ((screenCoordsY / Window::m_height) * 2.0f);
-    
+    float normalizedY = 1.0f - ((screenCoordsY / 600) * 2.0f);
+
 
     // TODO: The z values are not correct and should be taken from the projection matrix
     glm::vec4 clipCoords = glm::vec4(normalizedX, normalizedY, -1.0f, 1.0f);

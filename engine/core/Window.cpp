@@ -1,15 +1,54 @@
 #include "engine/core/Window.h"
 
-Window::Window() {}
+Window::Window(float width, float height)
+    : m_width(width), m_height(height)
+{
+    /* Init GLFW */
+    if (!glfwInit())
+        exit(EXIT_FAILURE);
+
+    setupWindowHints();
+
+    m_glfw_window = glfwCreateWindow(m_width, m_height, m_title, NULL, NULL);
+    // TODO: This isn't doing anything right now.
+    updateViewPort();
+
+    glfwMakeContextCurrent(m_glfw_window);
+    glfwSetFramebufferSizeCallback(m_glfw_window, frameBufferSizeResizeCallback);
+    glfwSwapInterval(1);
+
+    if (!m_glfw_window)
+    {
+        glfwTerminate();
+        exit(EXIT_FAILURE);
+    }
+
+    /* Initialize Glew. Must be done after glfw is initialized!*/
+    GLenum res = glewInit();
+    if (res != GLEW_OK)
+    {
+        fprintf(stderr, "Error: '%s'\n", glewGetErrorString(res));
+        return;
+    }
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+}
 
 // TODO: Remove all the resources we used
 Window::~Window()
 {
 }
 
-Window *Window::m_window = nullptr;
-float Window::m_width = 1024;
-float Window::m_height = 536;
+float Window::getWidth() const
+{
+    return m_width;
+}
+
+float Window::getHeight() const
+{
+    return m_height;
+}
 
 void Window::setupWindowHints() const
 {
@@ -37,47 +76,7 @@ void Window::setupCallBack(
 
 void Window::initializeWindow()
 {
-    /* Init GLFW */
-    if (!glfwInit())
-        exit(EXIT_FAILURE);
-
-    setupWindowHints();
-
-    m_glfw_window = glfwCreateWindow(m_width, m_height, m_title, NULL, NULL);
-    // TODO: This isn't doing anything right now.
-    updateViewPort();
-    
-    glfwMakeContextCurrent(m_glfw_window);
-    glfwSetFramebufferSizeCallback(m_glfw_window, frameBufferSizeResizeCallback);
-    glfwSwapInterval(1);
-    
-    if (!m_glfw_window)
-    {
-        glfwTerminate();
-        exit(EXIT_FAILURE);
-    }
-
-    /* Initialize Glew. Must be done after glfw is initialized!*/
-    GLenum res = glewInit();
-    if (res != GLEW_OK)
-    {
-        fprintf(stderr, "Error: '%s'\n", glewGetErrorString(res));
-        return;
-    }
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 }
-
-Window *Window::getWindow()
-{
-    if (m_window == nullptr)
-    {
-        m_window = new Window();
-    }
-
-    return m_window;
-};
 
 GLFWwindow *Window::getGlfwWindow()
 {
@@ -110,6 +109,6 @@ void Window::frameBufferSizeResizeCallback(GLFWwindow *window, int width, int he
 void Window::updateViewPort()
 {
     int vpSize[2];
-    glfwGetFramebufferSize(m_window->getGlfwWindow(), &vpSize[0], &vpSize[1]);
+    glfwGetFramebufferSize(getGlfwWindow(), &vpSize[0], &vpSize[1]);
     glViewport(0, 0, vpSize[0], vpSize[1]);
 }

@@ -49,7 +49,7 @@ void addGameObject(std::shared_ptr<Scene> scene)
 }
 
 // TODO: glfw_window should be abstracted away by core engine module
-void eventHandler(GLFWwindow* glfw_window, SceneManager* sceneManager)
+void eventHandler(GLFWwindow *glfw_window, SceneManager *sceneManager)
 {
     if (KeyListener::isKeyPressed(GLFW_KEY_ESCAPE))
     {
@@ -74,29 +74,51 @@ void eventHandler(GLFWwindow* glfw_window, SceneManager* sceneManager)
     }
 }
 
-void run()
+Application::Application()
+    : m_window(800, 600),
+      m_scene_manager(&m_window)
 {
-    // Create a window
-    Window *window = Window::getWindow();
-    window->initializeWindow();
-    window->setupCallBack(
+}
+
+Application::~Application()
+{
+}
+
+void Application::setup()
+{
+}
+
+void Application::run()
+{
+    setup();
+    update();
+    render();
+
+    m_window.setupCallBack(
         MouseListener::cursorPositionCallback,
         MouseListener::mouseButtonCallback,
         MouseListener::scrollCallback,
         KeyListener::keyCallback);
 
     // Create a scene manager
-    std::shared_ptr<SceneManager> scene_manager = std::make_shared<SceneManager>(window);
 
     // Create a scene. We need at least one scene to start the game
     std::shared_ptr<Scene> scene = std::make_shared<Scene>();
-    scene_manager->setEventHandler(eventHandler);
-    scene_manager->addScene("default_scene", scene);
+    m_scene_manager.setEventHandler(eventHandler);
+    m_scene_manager.addScene("default_scene", scene);
     addGameObject(scene);
 
     // deserialize scene if we had any saved state
-    scene_manager->deserialize();
-    
+    m_scene_manager.deserialize();
+
     // Start the game loop
-    scene_manager->gameLoop();
+    m_scene_manager.gameLoop();
+}
+
+void Application::update()
+{
+}
+
+void Application::render()
+{
 }

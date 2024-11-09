@@ -31,7 +31,7 @@ void Scene::update(float deltaTime, GLFWwindow *window)
     m_renderBatch->render();
     this->renderActiveGameObjectPropsImGui();
     MouseListener *listener = MouseListener::getListener();
-    listener->getWorldCoordinates(m_camera);
+    listener->getWorldCoordinates(window, m_camera);
 }
 
 std::shared_ptr<GameObject> Scene::addGameObject(unsigned int width, unsigned int height)

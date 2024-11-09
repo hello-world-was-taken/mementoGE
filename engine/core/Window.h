@@ -11,30 +11,25 @@
 
 class Window
 {
+public:
+    Window(float m_width = 800, float m_height = 600);
+    ~Window();
+
+    void initializeWindow();
+    void setupCallBack(GLFWcursorposfun cursorPosCallback, GLFWmousebuttonfun mouseButtonCallback, GLFWscrollfun scrollCallback, GLFWkeyfun keyCallback) const;
+    GLFWwindow *getGlfwWindow();
+    static void frameBufferSizeResizeCallback(GLFWwindow *window, int width, int height);
+    void updateViewPort();
+    float getWidth() const;
+    float getHeight() const;
+
+public:
+    float m_width;
+    float m_height;
+
 private:
-    static Window *m_window;
     GLFWwindow *m_glfw_window;
     const char *m_title = "OpenGL Playground";
 
     void setupWindowHints() const;
-
-public:
-    static float m_width;
-    static float m_height;
-
-public:
-    Window();
-    ~Window();
-
-    static Window *getWindow();
-
-    void initializeWindow();
-    void setupCallBack(
-        GLFWcursorposfun cursorPosCallback,
-        GLFWmousebuttonfun mouseButtonCallback,
-        GLFWscrollfun scrollCallback,
-        GLFWkeyfun keyCallback) const;
-    GLFWwindow *getGlfwWindow();
-    static void frameBufferSizeResizeCallback(GLFWwindow *window, int width, int height);
-    static void updateViewPort();
 };
