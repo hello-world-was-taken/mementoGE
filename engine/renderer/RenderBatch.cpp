@@ -19,14 +19,16 @@ RenderBatch::RenderBatch(
 RenderBatch::~RenderBatch()
 {
     std::cout << "RenderBatch destructor called" << std::endl;
-    glDeleteVertexArrays(1, &this->vao);
+    glDeleteVertexArrays(1, &this->m_vao);
+    delete mp_vb;
+    delete mp_ib;
 }
 
 void RenderBatch::render()
 {
-    glBindVertexArray(vao); // Bind VAO
+    glBindVertexArray(m_vao); // Bind VAO
 
-    vb.bind();
+    mp_vb->bind();
 
     // repopulate the vertices with the new data
     updateVertexBuffer();
@@ -57,7 +59,7 @@ void RenderBatch::render()
 void RenderBatch::updateVertexBuffer()
 {
     // clear the vertices vector
-    vertices.clear();
+    m_vertices.clear();
 
     for (std::shared_ptr<GameObject> gameObject : *m_gameObjects)
     {
@@ -73,7 +75,7 @@ void RenderBatch::updateVertexBuffer()
 
             for (int i = 0; i < transformedQuad.size(); i++)
             {
-                vertices.push_back({transformedQuad[i],
+                m_vertices.push_back({transformedQuad[i],
                                     sprite.getColor(),
                                     sprite.getTextureCoordinates()[i], // TODO: do we need to retrieve this from the sprite renderer?
                                     (float)sprite.getTexture()->getTextureUnit()});
@@ -82,7 +84,7 @@ void RenderBatch::updateVertexBuffer()
     }
 
     // update the vertex buffer
-    vb.updateBufferData(vertices);
+    mp_vb->updateBufferData(m_vertices);
 }
 
 std::vector<glm::vec3> RenderBatch::transformQuad(glm::mat4x4 transformMatrix, std::vector<glm::vec3> quad)
@@ -96,6 +98,7 @@ std::vector<glm::vec3> RenderBatch::transformQuad(glm::mat4x4 transformMatrix, s
     return transformedQuad;
 }
 
+// TODO: why is this function creating an index buffer?
 void RenderBatch::generateVertexBuffer()
 {
     // 1000 Quads * 4 vertices per quad * sizeof(Vertex)
@@ -103,21 +106,21 @@ void RenderBatch::generateVertexBuffer()
     glClearError();
     if (glGenVertexArrays == NULL)
     {
-        std::cout << "Something is wrong" << &vao << std::endl;
+        std::cout << "Something is wrong" << &m_vao << std::endl;
     }
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-    vb = VertexBuffer(bufferSize, GL_DYNAMIC_DRAW);
+    glGenVertexArrays(1, &m_vao);
+    glBindVertexArray(m_vao);
+    mp_vb = new VertexBuffer(bufferSize, GL_DYNAMIC_DRAW);
 
-    vb.addAttribute(VertexAttribute(3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0));
-    vb.addAttribute(VertexAttribute(4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, color)));
-    vb.addAttribute(VertexAttribute(2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, texture)));
-    vb.addAttribute(VertexAttribute(1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, texIndex)));
+    mp_vb->addAttribute(VertexAttribute(3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0));
+    mp_vb->addAttribute(VertexAttribute(4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, color)));
+    mp_vb->addAttribute(VertexAttribute(2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, texture)));
+    mp_vb->addAttribute(VertexAttribute(1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, texIndex)));
 
     // Setting the vertex attribute pointers adds the VBO to the currently bound VAO
-    vb.setAttributePointers();
+    mp_vb->setAttributePointers();
 
-    IndexBuffer ib(indices, BATCH_SIZE * INDICES_PER_QUAD, GL_STATIC_DRAW);
+    mp_ib = new IndexBuffer{m_indices, BATCH_SIZE * INDICES_PER_QUAD, GL_STATIC_DRAW};
 }
 
 void RenderBatch::generateIndexArray()
@@ -130,11 +133,11 @@ void RenderBatch::generateIndexArray()
 
     for (int i = 0; i < BATCH_SIZE; i++)
     {
-        indices[i * 6] = i * 4;
-        indices[i * 6 + 1] = i * 4 + 1;
-        indices[i * 6 + 2] = i * 4 + 2;
-        indices[i * 6 + 3] = i * 4;
-        indices[i * 6 + 4] = i * 4 + 3;
-        indices[i * 6 + 5] = i * 4 + 2;
+        m_indices[i * 6] = i * 4;
+        m_indices[i * 6 + 1] = i * 4 + 1;
+        m_indices[i * 6 + 2] = i * 4 + 2;
+        m_indices[i * 6 + 3] = i * 4;
+        m_indices[i * 6 + 4] = i * 4 + 3;
+        m_indices[i * 6 + 5] = i * 4 + 2;
     }
 }

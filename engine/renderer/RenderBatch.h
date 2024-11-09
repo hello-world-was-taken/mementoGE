@@ -23,12 +23,14 @@ class RenderBatch
 private:
     const std::shared_ptr<Camera> m_camera;
     std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> m_gameObjects;
-    std::vector<Vertex> vertices;
+    std::vector<Vertex> m_vertices;
     static const int BATCH_SIZE = 1000;    // 1000 QUADS
     static const int INDICES_PER_QUAD = 6; // 6 indices per quad
-    unsigned int indices[BATCH_SIZE * INDICES_PER_QUAD];
-    unsigned int vao;
-    VertexBuffer vb;
+    unsigned int m_indices[BATCH_SIZE * INDICES_PER_QUAD];
+    unsigned int m_vao;
+    VertexBuffer *mp_vb;
+    // TODO: use shared_ptr
+    IndexBuffer *mp_ib;
 
     std::vector<int> m_texture_units = {0, 1, 2, 3, 4, 5, 6, 7};
 
