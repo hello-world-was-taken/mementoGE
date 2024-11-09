@@ -20,6 +20,10 @@ RenderBatch::~RenderBatch()
 {
     std::cout << "RenderBatch destructor called" << std::endl;
     glDeleteVertexArrays(1, &this->m_vao);
+
+    mp_vb->unbind();
+    mp_ib->unbind();
+
     delete mp_vb;
     delete mp_ib;
 }
@@ -111,6 +115,7 @@ void RenderBatch::generateVertexBuffer()
     glGenVertexArrays(1, &m_vao);
     glBindVertexArray(m_vao);
     mp_vb = new VertexBuffer(bufferSize, GL_DYNAMIC_DRAW);
+    mp_vb->bind();
 
     mp_vb->addAttribute(VertexAttribute(3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0));
     mp_vb->addAttribute(VertexAttribute(4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, color)));
@@ -121,6 +126,7 @@ void RenderBatch::generateVertexBuffer()
     mp_vb->setAttributePointers();
 
     mp_ib = new IndexBuffer{m_indices, BATCH_SIZE * INDICES_PER_QUAD, GL_STATIC_DRAW};
+    mp_ib->bind();
 }
 
 void RenderBatch::generateIndexArray()

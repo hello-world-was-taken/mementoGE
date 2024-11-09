@@ -11,6 +11,7 @@ IndexBuffer::IndexBuffer(
     glGenBuffers(1, &this->m_id);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->m_id);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, length * sizeof(indices), indices, draw_type);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 // TODO: The destructor should be the VAO destructor is called not when the object is destroyed

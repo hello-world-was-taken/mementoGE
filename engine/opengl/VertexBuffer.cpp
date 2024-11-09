@@ -9,6 +9,7 @@ VertexBuffer::VertexBuffer(
     glGenBuffers(1, &this->m_id);
     glBindBuffer(GL_ARRAY_BUFFER, this->m_id);
     glBufferData(GL_ARRAY_BUFFER, buffer_size, nullptr, draw_type);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 VertexBuffer::~VertexBuffer()
