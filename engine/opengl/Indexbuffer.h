@@ -9,5 +9,5 @@ public:
     void unbind() const;
 
 private:
-    unsigned int m_id;
+    unsigned int m_id = 0;
 };

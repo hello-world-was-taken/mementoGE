@@ -9,7 +9,7 @@ class VertexBuffer
 {
 public:
     VertexBuffer() = default;
-    VertexBuffer(unsigned int bufferSize, unsigned int draw_type);
+    VertexBuffer(unsigned int buffer_size, unsigned int draw_type);
     ~VertexBuffer();
     void bind() const;
     void unbind() const;

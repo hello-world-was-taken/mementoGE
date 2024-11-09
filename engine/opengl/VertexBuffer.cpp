@@ -1,12 +1,12 @@
 #include "engine/opengl/VertexBuffer.h"
 
 VertexBuffer::VertexBuffer(
-    unsigned int bufferSize,
+    unsigned int buffer_size,
     unsigned int draw_type)
 {
     glGenBuffers(1, &this->m_id);
     glBindBuffer(GL_ARRAY_BUFFER, this->m_id);
-    glBufferData(GL_ARRAY_BUFFER, bufferSize, nullptr, draw_type);
+    glBufferData(GL_ARRAY_BUFFER, buffer_size, nullptr, draw_type);
 }
 
 VertexBuffer::~VertexBuffer()

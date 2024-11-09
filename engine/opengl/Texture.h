@@ -14,13 +14,13 @@ private:
     int m_height = 0;
     int m_texture_unit = 0; // The texture slot in the shader. Default is 0 meaning use the color set.
     char* m_texture_buffer = nullptr;
-    bool m_isTextureAtlas = false;
+    bool m_is_texture_atlas = false;
     std::string m_texture_path;
 public:
     Texture(
         const char *texture_path,
         int texture_unit,
-        bool isTextureAtlas = false);
+        bool is_texture_atlas = false);
     Texture();  // TODO: should only be used for serialization
     ~Texture();
     unsigned int getId() const;

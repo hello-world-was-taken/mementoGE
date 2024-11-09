@@ -2,11 +2,9 @@
 
 #include "engine/opengl/Texture.h"
 
-Texture::Texture(
-    const char *texture_path,
-    int texture_unit,
-    bool isTextureAtlas)
-    : m_texture_unit(texture_unit), m_isTextureAtlas(isTextureAtlas)
+Texture::Texture(const char *texture_path, int texture_unit, bool isTextureAtlas)
+    : m_texture_unit(texture_unit),
+      m_is_texture_atlas(isTextureAtlas)
 {
     this->m_texture_path = texture_path;
     stbi_set_flip_vertically_on_load(true);
@@ -54,7 +52,7 @@ unsigned int Texture::getTextureUnit() const
 
 bool Texture::isTextureAtlas() const
 {
-    return m_isTextureAtlas;
+    return m_is_texture_atlas;
 }
 
 void Texture::bind() const
@@ -76,7 +74,7 @@ void Texture::serialize(YAML::Emitter &out)
     out << YAML::Key << "FilePath";
     out << YAML::Value << m_texture_path;
     out << YAML::Key << "isTextureAtlas";
-    out << YAML::Value << m_isTextureAtlas;
+    out << YAML::Value << m_is_texture_atlas;
     out << YAML::EndMap;
 }
 
