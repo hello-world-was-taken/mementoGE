@@ -15,12 +15,6 @@ using EventHandlerFunction = void (*)(GLFWwindow *, SceneManager *);
 
 class SceneManager
 {
-private:
-    std::map<std::string, std::shared_ptr<Scene>> m_scenes;
-    std::shared_ptr<Scene> m_activeScene;
-    Window *m_window;
-    EventHandlerFunction m_eventHandlerFunction;
-
 public:
     SceneManager(Window *window);
     ~SceneManager();
@@ -31,12 +25,18 @@ public:
     void setEventHandler(EventHandlerFunction eventHandler);
     void loadScene(const char *sceneName);
     void unloadScene(const char *sceneName);
-    void addScene(const char *sceneName, std::shared_ptr<Scene> scene);
+    void addScene(const char *sceneName, Scene &scene);
     void removeScene(const char *sceneName);
     void renderTextureResourcesImGui();
     void getScene(const char *sceneName);
-    std::shared_ptr<Scene> getActiveScene();
+    Scene *getActiveScene();
     void setActiveScene(const char *sceneName);
     void serialize();
     void deserialize();
+
+private:
+    std::map<std::string, Scene> m_scenes;
+    Scene *m_activeScene = nullptr;
+    Window *m_window = nullptr;
+    EventHandlerFunction m_eventHandlerFunction;
 };

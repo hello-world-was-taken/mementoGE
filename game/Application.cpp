@@ -11,13 +11,14 @@
 #include "engine/core/Resource.h"
 #include "engine/core/Sprite.h"
 
-void addGameObject(std::shared_ptr<Scene> scene)
+void addGameObject(Scene* scene)
 {
-    // TODO: Think about creating an asset pool for textrues
+    // TODO: Think about creating an asset pool for textures
     std::shared_ptr<Texture> texture = Resource::getTexture("../assets/texture/slice01_01.png", false);
     texture->bind();
-
+    std::cout << "---------------------";
     std::shared_ptr<GameObject> gameObject = scene->addGameObject(32, 32);
+    std::cout << "Adding a scene with name: " << std::endl;
     // TODO: We shouldn't be using glm::vec3 directly. We should have a class that wraps glm::vec3
     // Grass Tile
     gameObject->addComponent<Transform>(glm::vec3(0.0f, 0.0f, 0.0f));
@@ -75,8 +76,8 @@ void eventHandler(GLFWwindow *glfw_window, SceneManager *sceneManager)
 }
 
 Application::Application()
-    : m_window(800, 600),
-      m_scene_manager(&m_window)
+    : m_window{800, 600},
+      m_scene_manager{&m_window}
 {
 }
 
@@ -100,13 +101,12 @@ void Application::run()
         MouseListener::scrollCallback,
         KeyListener::keyCallback);
 
-    // Create a scene manager
-
     // Create a scene. We need at least one scene to start the game
-    std::shared_ptr<Scene> scene = std::make_shared<Scene>();
+    Scene scene;
     m_scene_manager.setEventHandler(eventHandler);
     m_scene_manager.addScene("default_scene", scene);
-    addGameObject(scene);
+    m_scene_manager.start();
+    addGameObject(m_scene_manager.getActiveScene());
 
     // deserialize scene if we had any saved state
     m_scene_manager.deserialize();

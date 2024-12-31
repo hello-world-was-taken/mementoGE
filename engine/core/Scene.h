@@ -19,6 +19,23 @@
 
 class Scene
 {
+public:
+    Scene();
+    ~Scene();
+    // We can't use a copy constructor because entt::registry is not copyable
+    Scene(const Scene &other) = delete;        // copy constructor
+    Scene(Scene &&other) = default;            // move constructor
+    Scene &operator=(Scene &&other) = default; // move assignment operator
+
+    void start(GLFWwindow *window);
+    void update(float deltaTime, GLFWwindow *window);
+    std::shared_ptr<GameObject> addGameObject(unsigned int width, unsigned int height);
+    std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> getGameObjects();
+    // TODO: think more about this
+    // void addTextureToGameObject(std::shared_ptr<GameObject> gameObject, std::shared_ptr<Texture> texture);
+    std::shared_ptr<Camera> getCamera();
+    void renderActiveGameObjectPropsImGui();
+
 private:
     float m_screen_width = 32.0f * 16.0f; // 16 tiles of 32 pixels = 512 pixels
     float m_screen_height = 32.0f * 9.0f; // 9 tiles of 32 pixels = 288 pixels
@@ -29,17 +46,4 @@ private:
     RenderBatch *m_renderBatch = nullptr;
     std::vector<std::shared_ptr<Texture>> m_textures;
     GameObject *m_activeGameObject = nullptr;
-
-public:
-    Scene();
-    ~Scene();
-
-    void start(GLFWwindow *window);
-    void update(float deltaTime, GLFWwindow *window);
-    std::shared_ptr<GameObject> addGameObject(unsigned int width, unsigned int height);
-    std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> getGameObjects();
-    // TODO: think more about this
-    // void addTextureToGameObject(std::shared_ptr<GameObject> gameObject, std::shared_ptr<Texture> texture);
-    std::shared_ptr<Camera> getCamera();
-    void renderActiveGameObjectPropsImGui();
 };

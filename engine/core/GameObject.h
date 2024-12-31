@@ -11,8 +11,8 @@
 class GameObject
 {
 private:
-    entt::entity entity;
-    entt::registry &registry;
+    entt::entity m_entity;
+    entt::registry &m_registry;
     int m_width = 0;
     int m_height = 0;
 
@@ -23,13 +23,13 @@ public:
     template <typename Component, typename... Args>
     void addComponent(Args &&...args)
     {
-        registry.emplace<Component>(entity, std::forward<Args>(args)...);
+        m_registry.emplace<Component>(m_entity, std::forward<Args>(args)...);
     }
 
     template <typename Component>
     bool hasComponent() const
     {
-        return registry.all_of<Component>(entity);
+        return m_registry.all_of<Component>(m_entity);
     }
 
     template <typename Component>
@@ -42,13 +42,13 @@ public:
             std::cerr << "ERROR: Component " << typeid(Component).name() << " does not exist for the Game Object" << std::endl;
             throw std::runtime_error("Component does not exist");
         }
-        return registry.get<Component>(entity);
+        return m_registry.get<Component>(m_entity);
     }
 
     template <typename Component>
     void removeComponent()
     {
-        registry.remove<Component>(entity);
+        m_registry.remove<Component>(m_entity);
     }
 
     void destroy();
@@ -62,6 +62,6 @@ public:
     // TODO: Debug function, remove later
     void getId()
     {
-        std::cout << "Entity ID: " << (u_int32_t)entity << std::endl;
+        std::cout << "Entity ID: " << (u_int32_t)m_entity << std::endl;
     }
 };

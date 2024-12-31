@@ -84,7 +84,7 @@ void SceneManager::loadScene(const char *sceneName)
     auto it = m_scenes.find(sceneName);
     if (it != m_scenes.end())
     {
-        m_activeScene = it->second;
+        m_activeScene = &(it->second);
         m_activeScene->start(m_window->getGlfwWindow());
     }
     else
@@ -98,13 +98,14 @@ void SceneManager::unloadScene(const char *sceneName)
     m_activeScene = nullptr;
 }
 
-void SceneManager::addScene(const char *sceneName, std::shared_ptr<Scene> m_scene)
+void SceneManager::addScene(const char *sceneName, Scene &scene)
 {
-    m_scenes[sceneName] = m_scene;
+    std::cout << "Adding a scene with name: " << sceneName << std::endl;
+    m_scenes[sceneName] = std::move(scene);
     // TODO: shouldn't the active scene be set to the latest scene added?
     if (m_activeScene == nullptr)
     {
-        m_activeScene = m_scenes[sceneName];
+        m_activeScene = &(m_scenes[sceneName]);
     }
 }
 
@@ -160,7 +161,7 @@ void SceneManager::renderTextureResourcesImGui()
     }
 }
 
-std::shared_ptr<Scene> SceneManager::getActiveScene()
+Scene* SceneManager::getActiveScene()
 {
     return m_activeScene;
 }
@@ -177,7 +178,7 @@ void SceneManager::serialize()
         out << YAML::Value << YAML::BeginMap;
 
         int count = 0; // TESTING: remove this
-        for (auto gameObject : *scene.get()->getGameObjects().get())
+        for (auto gameObject : *scene.getGameObjects().get())
         {
             std::string gameObjectName = "GameObject" + std::to_string(count);
             out << YAML::Key << gameObjectName;
@@ -230,9 +231,8 @@ void SceneManager::deserialize()
     for (auto it = scene.begin(); it != scene.end(); ++it) // why ++it instead of it++?
     {
         std::string sceneName = it->first.as<std::string>();
-        std::shared_ptr<Scene> newScene = std::make_shared<Scene>();
-        m_scenes[sceneName] = newScene;
-        m_activeScene = m_scenes[sceneName]; // TODO: have some sort of active scene flag
+        m_scenes[sceneName] = Scene();
+        m_activeScene = &(m_scenes[sceneName]); // TODO: have some sort of active scene flag
 
         for (auto serializedGameObject : it->second)
         {

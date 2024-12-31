@@ -1,8 +1,9 @@
 #include <iostream>
+#include <entt/entt.hpp>
 
 #include "engine/core/Scene.h"
 #include "engine/renderer/RenderBatch.h"
-#include "game/MouseListener.h"  // TODO: Game specific things shouldn't be here.
+#include "game/MouseListener.h" // TODO: Game specific things shouldn't be here.
 
 Scene::Scene()
 {
@@ -12,6 +13,7 @@ Scene::Scene()
     // TODO: Investigate this further
     // m_renderBatch = new RenderBatch(this);
     m_gameObjects = std::make_shared<std::vector<std::shared_ptr<GameObject>>>();
+    std::cout << "Scene constructor called" << std::endl;
 }
 
 Scene::~Scene()
@@ -36,9 +38,11 @@ void Scene::update(float deltaTime, GLFWwindow *window)
 
 std::shared_ptr<GameObject> Scene::addGameObject(unsigned int width, unsigned int height)
 {
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>(m_registry, width, height);
+    std::shared_ptr<GameObject>
+        gameObject = std::make_shared<GameObject>(m_registry, width, height);
     m_gameObjects->push_back(gameObject);
 
+    std::cout << "Adding a scene with name ----- 3: " << std::endl;
     // Set the latest game object as the active game object
     m_activeGameObject = gameObject.get();
 

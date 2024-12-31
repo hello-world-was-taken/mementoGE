@@ -1,8 +1,8 @@
 #include "engine/core/GameObject.h"
 
-GameObject::GameObject(entt::registry &registry, unsigned int width, unsigned int height) : registry(registry)
+GameObject::GameObject(entt::registry &registry, unsigned int width, unsigned int height) : m_registry(registry)
 {
-    entity = registry.create();
+    m_entity = m_registry.create();
     m_width = width;
     m_height = height;
 }
@@ -10,20 +10,20 @@ GameObject::GameObject(entt::registry &registry, unsigned int width, unsigned in
 GameObject::~GameObject()
 {
     std::cout << "Game Object destructor called" << std::endl;
-    registry.destroy(entity);
+    m_registry.destroy(m_entity);
 }
 
 void GameObject::destroy()
 {
-    registry.destroy(entity);
+    m_registry.destroy(m_entity);
 }
 
-int& GameObject::getWidth()
+int &GameObject::getWidth()
 {
     return m_width;
 }
 
-int& GameObject::getHeight()
+int &GameObject::getHeight()
 {
     return m_height;
 }
