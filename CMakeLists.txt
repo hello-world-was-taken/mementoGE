@@ -31,6 +31,7 @@ add_executable(${PROJECT_NAME}
     engine/opengl/Texture.cpp
     engine/opengl/IndexBuffer.cpp
     engine/opengl/VertexBuffer.cpp
+    engine/opengl/VertexArray.cpp
     engine/opengl/Shader.cpp
 
     # renderer

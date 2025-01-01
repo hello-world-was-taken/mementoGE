@@ -2,6 +2,9 @@
 #include <GL/glew.h>
 #include <memory>
 
+#include "engine/opengl/Vertex.h"
+#include "engine/opengl/VertexBuffer.h"
+#include "engine/opengl/VertexAttribute.h"
 #include "engine/renderer/RenderBatch.h"
 #include "engine/core/Resource.h"
 #include "engine/core/Sprite.h"
@@ -19,19 +22,19 @@ RenderBatch::RenderBatch(
 RenderBatch::~RenderBatch()
 {
     std::cout << "RenderBatch destructor called" << std::endl;
-    glDeleteVertexArrays(1, &this->m_vao);
 
     mp_vb->unbind();
     mp_ib->unbind();
+    mp_vao->unbind();
 
     delete mp_vb;
     delete mp_ib;
+    delete mp_vao;
 }
 
 void RenderBatch::render()
 {
-    glBindVertexArray(m_vao); // Bind VAO
-
+    mp_vao->bind();
     mp_vb->bind();
 
     // repopulate the vertices with the new data
@@ -80,9 +83,9 @@ void RenderBatch::updateVertexBuffer()
             for (int i = 0; i < transformedQuad.size(); i++)
             {
                 m_vertices.push_back({transformedQuad[i],
-                                    sprite.getColor(),
-                                    sprite.getTextureCoordinates()[i], // TODO: do we need to retrieve this from the sprite renderer?
-                                    (float)sprite.getTexture()->getTextureUnit()});
+                                      sprite.getColor(),
+                                      sprite.getTextureCoordinates()[i], // TODO: do we need to retrieve this from the sprite renderer?
+                                      (float)sprite.getTexture()->getTextureUnit()});
             }
         }
     }
@@ -108,22 +111,16 @@ void RenderBatch::generateVertexBuffer()
     // 1000 Quads * 4 vertices per quad * sizeof(Vertex)
     unsigned int bufferSize = 1000 * 4 * sizeof(Vertex);
     glClearError();
-    if (glGenVertexArrays == NULL)
-    {
-        std::cout << "Something is wrong" << &m_vao << std::endl;
-    }
-    glGenVertexArrays(1, &m_vao);
-    glBindVertexArray(m_vao);
+
+    mp_vao = new VertexArray();
+    mp_vao->attachVertexAttribute(VertexAttribute{3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0});
+    mp_vao->attachVertexAttribute(VertexAttribute{4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, color)});
+    mp_vao->attachVertexAttribute(VertexAttribute{2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, texture)});
+    mp_vao->attachVertexAttribute(VertexAttribute{1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, texIndex)});
+    mp_vao->bind();
+
     mp_vb = new VertexBuffer(bufferSize, GL_DYNAMIC_DRAW);
     mp_vb->bind();
-
-    mp_vb->addAttribute(VertexAttribute(3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0));
-    mp_vb->addAttribute(VertexAttribute(4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, color)));
-    mp_vb->addAttribute(VertexAttribute(2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, texture)));
-    mp_vb->addAttribute(VertexAttribute(1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, texIndex)));
-
-    // Setting the vertex attribute pointers adds the VBO to the currently bound VAO
-    mp_vb->setAttributePointers();
 
     mp_ib = new IndexBuffer{m_indices, BATCH_SIZE * INDICES_PER_QUAD, GL_STATIC_DRAW};
     mp_ib->bind();

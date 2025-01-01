@@ -13,8 +13,6 @@ public:
     ~VertexBuffer();
     void bind() const;
     void unbind() const;
-    void addAttribute(VertexAttribute vertex_attribute);
-    void setAttributePointers() const;
     void updateBufferData(std::vector<Vertex> vertices);
 
 private:

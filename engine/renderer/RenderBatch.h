@@ -9,6 +9,7 @@
 
 #include "util/log_error.h"
 #include "engine/opengl/Vertex.h"
+#include "engine/opengl/VertexArray.h"
 #include "engine/opengl/VertexBuffer.h"
 #include "engine/opengl/Indexbuffer.h"
 #include "engine/opengl/Shader.h"
@@ -18,22 +19,10 @@
 #include "engine/core/GameObject.h"
 #include "engine/core/Transform.h"
 
+// TODO: Once the engine adds support for Vulkan, common batch
+// rendering logic needs to be abstracted.
 class RenderBatch
 {
-private:
-    const std::shared_ptr<Camera> m_camera;
-    std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> m_gameObjects;
-    std::vector<Vertex> m_vertices;
-    static const int BATCH_SIZE = 1000;    // 1000 QUADS
-    static const int INDICES_PER_QUAD = 6; // 6 indices per quad
-    unsigned int m_indices[BATCH_SIZE * INDICES_PER_QUAD];
-    unsigned int m_vao;
-    VertexBuffer *mp_vb;
-    // TODO: use shared_ptr
-    IndexBuffer *mp_ib;
-
-    std::vector<int> m_texture_units = {0, 1, 2, 3, 4, 5, 6, 7};
-
 public:
     RenderBatch(const std::shared_ptr<Camera> camera, std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> m_gameObjects);
     ~RenderBatch();
@@ -45,4 +34,18 @@ public:
     void generateVertexBuffer();
     void generateIndexArray();
     std::vector<glm::vec3> transformQuad(glm::mat4x4 transformMatrix, std::vector<glm::vec3> quad);
+
+private:
+    const std::shared_ptr<Camera> m_camera;
+    std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> m_gameObjects;
+    std::vector<Vertex> m_vertices;
+    static const int BATCH_SIZE = 1000;    // 1000 QUADS
+    static const int INDICES_PER_QUAD = 6; // 6 indices per quad
+    unsigned int m_indices[BATCH_SIZE * INDICES_PER_QUAD];
+    // TODO: use smart pointer
+    VertexArray *mp_vao;
+    VertexBuffer *mp_vb;
+    IndexBuffer *mp_ib;
+
+    std::vector<int> m_texture_units = {0, 1, 2, 3, 4, 5, 6, 7};
 };
