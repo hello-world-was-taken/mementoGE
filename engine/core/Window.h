@@ -8,7 +8,8 @@
 #include <backends/imgui_impl_opengl3.h>
 
 #include "util/Time.h"
-#include <engine/core/MouseListener.h>
+#include "engine/core/MouseListener.h"
+#include "engine/core/KeyListener.h"
 
 // TODO: Window should not have an api that exposes internal
 // libraries it uses like GLFW. The user should be able to
@@ -17,11 +18,12 @@
 class Window
 {
 public:
-    Window(MouseListener listener, float m_width = 800, float m_height = 600);
+    // TODO: MouseListener and KeyListener should be extracted away to an EventHandler System.
+    Window(MouseListener mouselistener, KeyListener keyListener, float m_width = 800, float m_height = 600);
     ~Window();
 
     void initializeWindow();
-    void setupCallBack(GLFWkeyfun keyCallback) const;
+    void setupCallBack() const;
     GLFWwindow *getGlfwWindow();
     static void frameBufferSizeResizeCallback(GLFWwindow *window, int width, int height);
     void updateViewPort();
@@ -32,6 +34,7 @@ public:
     float m_width;
     float m_height;
     MouseListener m_mouse_listener;
+    KeyListener mKeyListener;
 
     private : GLFWwindow *m_glfw_window;
     const char *m_title = "OpenGL Playground";

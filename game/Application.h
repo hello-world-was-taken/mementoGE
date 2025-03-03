@@ -1,5 +1,7 @@
 #include "engine/core/Window.h"
 #include "engine/core/SceneManager.h"
+#include "engine/core/MouseListener.h"
+#include "engine/core/KeyListener.h"
 
 // TODO: should the name of the class be changed to Game?
 class Application
@@ -20,7 +22,10 @@ public:
     void destroy();
 
 private:
-    Window m_window;
-    SceneManager m_scene_manager;
-    MouseListener m_listener;
+    Window mWindow;
+    SceneManager mSceneManager;
+    // TODO: what is the advantage of having these here?
+    // Even after being extracted to Event Handling system, do we need it here?
+    MouseListener mMouseListener;
+    KeyListener mKeyListener;
 };

@@ -3,7 +3,7 @@
     and make it available via mementoGE core api.
 */
 
-#include "game/KeyListener.h"
+#include "engine/core/KeyListener.h"
 
 KeyListener::KeyListener(){};
 

@@ -6,8 +6,6 @@
 #include "engine/core/Window.h"
 #include "engine/core/SceneManager.h"
 #include "engine/core/Scene.h"
-#include "engine/core/MouseListener.h" // TODO: this should be abstracted away by core engine module
-#include "game/KeyListener.h"   // TODO: this should be abstracted away by core engine module
 #include "engine/core/Resource.h"
 #include "engine/core/Sprite.h"
 
@@ -76,10 +74,11 @@ void eventHandler(GLFWwindow *glfw_window, SceneManager *sceneManager)
 }
 
 Application::Application()
-    : m_listener{},
+    : mMouseListener{},
+      mKeyListener{},
       // TODO: listener should be passed as a reference
-      m_window{m_listener, 800, 600},
-      m_scene_manager{&m_window}
+      mWindow{mMouseListener, mKeyListener, 800, 600},
+      mSceneManager{&mWindow}
 {
 }
 
@@ -91,15 +90,15 @@ void Application::setup()
 {
     // Create a scene. We need at least one scene to start the game
     Scene scene;
-    m_scene_manager.setEventHandler(eventHandler);
-    m_scene_manager.addScene("default_scene", scene);
-    m_scene_manager.start();
+    mSceneManager.setEventHandler(eventHandler);
+    mSceneManager.addScene("default_scene", scene);
+    mSceneManager.start();
 
     // TODO: this should be in the level editor class and not in the game
-    addGameObject(m_scene_manager.getActiveScene());
+    addGameObject(mSceneManager.getActiveScene());
 
     // deserialize scene if we had any saved state
-    m_scene_manager.deserialize();
+    mSceneManager.deserialize();
 }
 
 void Application::start()
@@ -110,12 +109,12 @@ void Application::start()
     render();
 
     // Start the game loop
-    m_scene_manager.gameLoop();
+    mSceneManager.gameLoop();
 }
 
 void Application::processInput()
 {
-    m_window.setupCallBack(KeyListener::keyCallback);
+    mWindow.setupCallBack();
 }
 
 void Application::update()

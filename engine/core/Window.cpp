@@ -1,8 +1,8 @@
 #include "engine/core/Window.h"
 #include "engine/core/MouseListener.h"
 
-Window::Window(MouseListener listener, float width, float height)
-    : m_width(width), m_height(height), m_mouse_listener(listener)
+Window::Window(MouseListener listener, KeyListener keyListener, float width, float height)
+    : m_width(width), m_height(height), m_mouse_listener(listener), mKeyListener(keyListener)
 {
     /* Init GLFW */
     if (!glfwInit())
@@ -63,12 +63,12 @@ void Window::setupWindowHints() const
 #endif
 }
 
-void Window::setupCallBack(GLFWkeyfun keyCallback) const
+void Window::setupCallBack() const
 {
     glfwSetCursorPosCallback(m_glfw_window, m_mouse_listener.cursorPositionCallback);
     glfwSetMouseButtonCallback(m_glfw_window, m_mouse_listener.mouseButtonCallback);
     glfwSetScrollCallback(m_glfw_window, m_mouse_listener.scrollCallback);
-    glfwSetKeyCallback(m_glfw_window, keyCallback);
+    glfwSetKeyCallback(m_glfw_window, mKeyListener.keyCallback);
 }
 
 void Window::initializeWindow()
