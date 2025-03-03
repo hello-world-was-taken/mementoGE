@@ -8,12 +8,19 @@ public:
     Application();
     ~Application();
 
-    void run();
+    /**
+     * @brief start is the entry point of our app/game
+     * will process userinput, update our state and render.
+     */
+    void start();
     void setup();
+    void processInput();
     void update();
     void render();
+    void destroy();
 
 private:
     Window m_window;
     SceneManager m_scene_manager;
+    MouseListener m_listener;
 };

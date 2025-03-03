@@ -27,7 +27,7 @@ public:
     Scene(Scene &&other) = default;            // move constructor
     Scene &operator=(Scene &&other) = default; // move assignment operator
 
-    void start(GLFWwindow *window);
+    void start();
     void update(float deltaTime, GLFWwindow *window);
     std::shared_ptr<GameObject> addGameObject(unsigned int width, unsigned int height);
     std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> getGameObjects();

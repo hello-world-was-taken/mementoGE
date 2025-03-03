@@ -28,7 +28,7 @@ void SceneManager::start()
         std::cout << "No active m_scene found" << std::endl;
         return;
     }
-    m_activeScene->start(this->m_window->getGlfwWindow());
+    m_activeScene->start();
 }
 
 void SceneManager::update(float deltaTime)
@@ -85,7 +85,7 @@ void SceneManager::loadScene(const char *sceneName)
     if (it != m_scenes.end())
     {
         m_activeScene = &(it->second);
-        m_activeScene->start(m_window->getGlfwWindow());
+        m_activeScene->start();
     }
     else
     {

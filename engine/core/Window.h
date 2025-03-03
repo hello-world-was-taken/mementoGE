@@ -8,15 +8,20 @@
 #include <backends/imgui_impl_opengl3.h>
 
 #include "util/Time.h"
+#include <engine/core/MouseListener.h>
 
+// TODO: Window should not have an api that exposes internal
+// libraries it uses like GLFW. The user should be able to
+// implement their own version of Window and use it without
+// changine outside interaction.
 class Window
 {
 public:
-    Window(float m_width = 800, float m_height = 600);
+    Window(MouseListener listener, float m_width = 800, float m_height = 600);
     ~Window();
 
     void initializeWindow();
-    void setupCallBack(GLFWcursorposfun cursorPosCallback, GLFWmousebuttonfun mouseButtonCallback, GLFWscrollfun scrollCallback, GLFWkeyfun keyCallback) const;
+    void setupCallBack(GLFWkeyfun keyCallback) const;
     GLFWwindow *getGlfwWindow();
     static void frameBufferSizeResizeCallback(GLFWwindow *window, int width, int height);
     void updateViewPort();
@@ -26,9 +31,9 @@ public:
 public:
     float m_width;
     float m_height;
+    MouseListener m_mouse_listener;
 
-private:
-    GLFWwindow *m_glfw_window;
+    private : GLFWwindow *m_glfw_window;
     const char *m_title = "OpenGL Playground";
 
     void setupWindowHints() const;

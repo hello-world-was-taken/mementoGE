@@ -4,7 +4,7 @@
 */
 
 #include "engine/core/Window.h"
-#include "game/MouseListener.h"
+#include "engine/core/MouseListener.h"
 
 MouseListener::MouseListener() {}
 
@@ -69,7 +69,7 @@ void MouseListener::scrollCallback(GLFWwindow *window, double x_offset, double y
 {
 }
 
-glm::vec2 MouseListener::getWorldCoordinates(GLFWwindow *window, std::shared_ptr<Camera> camera)
+glm::vec2 MouseListener::getWorldCoordinates(std::shared_ptr<Camera> camera)
 {
     MouseListener *listener = getListener();
     glm::mat4 inverseViewMatrix = glm::inverse(camera->getViewMatrix());

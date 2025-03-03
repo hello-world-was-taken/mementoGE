@@ -6,12 +6,12 @@
 #include "engine/core/Window.h"
 #include "engine/core/SceneManager.h"
 #include "engine/core/Scene.h"
-#include "game/MouseListener.h" // TODO: this should be abstracted away by core engine module
+#include "engine/core/MouseListener.h" // TODO: this should be abstracted away by core engine module
 #include "game/KeyListener.h"   // TODO: this should be abstracted away by core engine module
 #include "engine/core/Resource.h"
 #include "engine/core/Sprite.h"
 
-void addGameObject(Scene* scene)
+void addGameObject(Scene *scene)
 {
     // TODO: Think about creating an asset pool for textures
     std::shared_ptr<Texture> texture = Resource::getTexture("../assets/texture/slice01_01.png", false);
@@ -76,7 +76,9 @@ void eventHandler(GLFWwindow *glfw_window, SceneManager *sceneManager)
 }
 
 Application::Application()
-    : m_window{800, 600},
+    : m_listener{},
+      // TODO: listener should be passed as a reference
+      m_window{m_listener, 800, 600},
       m_scene_manager{&m_window}
 {
 }
@@ -87,32 +89,33 @@ Application::~Application()
 
 void Application::setup()
 {
-}
-
-void Application::run()
-{
-    setup();
-    update();
-    render();
-
-    m_window.setupCallBack(
-        MouseListener::cursorPositionCallback,
-        MouseListener::mouseButtonCallback,
-        MouseListener::scrollCallback,
-        KeyListener::keyCallback);
-
     // Create a scene. We need at least one scene to start the game
     Scene scene;
     m_scene_manager.setEventHandler(eventHandler);
     m_scene_manager.addScene("default_scene", scene);
     m_scene_manager.start();
+
+    // TODO: this should be in the level editor class and not in the game
     addGameObject(m_scene_manager.getActiveScene());
 
     // deserialize scene if we had any saved state
     m_scene_manager.deserialize();
+}
+
+void Application::start()
+{
+    setup();
+    processInput();
+    update();
+    render();
 
     // Start the game loop
     m_scene_manager.gameLoop();
+}
+
+void Application::processInput()
+{
+    m_window.setupCallBack(KeyListener::keyCallback);
 }
 
 void Application::update()
@@ -120,5 +123,9 @@ void Application::update()
 }
 
 void Application::render()
+{
+}
+
+void Application::destroy()
 {
 }

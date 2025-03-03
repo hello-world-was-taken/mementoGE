@@ -26,6 +26,7 @@ add_executable(${PROJECT_NAME}
     engine/core/Resource.cpp
     engine/core/Sprite.cpp
     engine/core/SpriteSheet.cpp
+    engine/core/MouseListener.cpp
 
     # opengl
     engine/opengl/Texture.cpp
@@ -44,7 +45,6 @@ add_executable(${PROJECT_NAME}
 
     # game files
     game/Application.cpp
-    game/MouseListener.cpp
     game/KeyListener.cpp
 
     # third party

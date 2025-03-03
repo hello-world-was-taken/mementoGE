@@ -1,7 +1,8 @@
 #include "engine/core/Window.h"
+#include "engine/core/MouseListener.h"
 
-Window::Window(float width, float height)
-    : m_width(width), m_height(height)
+Window::Window(MouseListener listener, float width, float height)
+    : m_width(width), m_height(height), m_mouse_listener(listener)
 {
     /* Init GLFW */
     if (!glfwInit())
@@ -52,7 +53,7 @@ float Window::getHeight() const
 
 void Window::setupWindowHints() const
 {
-    /* Asking for core profile. Should be after glfwInit and before creating a windo. Otherwise, it won't work.*/
+    // Asking for core profile. Should be after glfwInit and before creating a window. Otherwise, it won't work.
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -62,15 +63,11 @@ void Window::setupWindowHints() const
 #endif
 }
 
-void Window::setupCallBack(
-    GLFWcursorposfun cursorPositionCallback,
-    GLFWmousebuttonfun mouseButtonCallback,
-    GLFWscrollfun scrollCallback,
-    GLFWkeyfun keyCallback) const
+void Window::setupCallBack(GLFWkeyfun keyCallback) const
 {
-    glfwSetCursorPosCallback(m_glfw_window, cursorPositionCallback);
-    glfwSetMouseButtonCallback(m_glfw_window, mouseButtonCallback);
-    glfwSetScrollCallback(m_glfw_window, scrollCallback);
+    glfwSetCursorPosCallback(m_glfw_window, m_mouse_listener.cursorPositionCallback);
+    glfwSetMouseButtonCallback(m_glfw_window, m_mouse_listener.mouseButtonCallback);
+    glfwSetScrollCallback(m_glfw_window, m_mouse_listener.scrollCallback);
     glfwSetKeyCallback(m_glfw_window, keyCallback);
 }
 
