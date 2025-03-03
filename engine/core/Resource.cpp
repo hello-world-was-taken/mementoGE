@@ -1,4 +1,4 @@
-#include "engine/core/Resource.h"
+#include "core/Resource.h"
 
 namespace Resource
 {

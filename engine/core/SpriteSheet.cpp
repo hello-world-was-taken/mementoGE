@@ -1,4 +1,4 @@
-#include "engine/core/SpriteSheet.h"
+#include "core/SpriteSheet.h"
 
 SpriteSheet::SpriteSheet(
     std::shared_ptr<Texture> texture,

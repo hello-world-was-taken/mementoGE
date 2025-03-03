@@ -2,12 +2,12 @@
 #include <GL/glew.h>
 #include <memory>
 
-#include "engine/opengl/Vertex.h"
-#include "engine/opengl/VertexBuffer.h"
-#include "engine/opengl/VertexAttribute.h"
-#include "engine/renderer/RenderBatch.h"
-#include "engine/core/Resource.h"
-#include "engine/core/Sprite.h"
+#include "opengl/Vertex.h"
+#include "opengl/VertexBuffer.h"
+#include "opengl/VertexAttribute.h"
+#include "renderer/RenderBatch.h"
+#include "core/Resource.h"
+#include "core/Sprite.h"
 #include "util/log_error.h"
 
 RenderBatch::RenderBatch(

@@ -1,7 +1,7 @@
 #include <memory>
 
-#include "engine/opengl/Texture.h"
-#include "engine/core/Sprite.h"
+#include "opengl/Texture.h"
+#include "core/Sprite.h"
 
 class SpriteSheet
 {

@@ -3,11 +3,11 @@
     and make it available via mementoGE core api.
 */
 
-#include "engine/core/KeyListener.h"
+#include "core/KeyListener.h"
 
-KeyListener::KeyListener(){};
+KeyListener::KeyListener() {};
 
-KeyListener::~KeyListener(){};
+KeyListener::~KeyListener() {};
 
 KeyListener *KeyListener::m_key_listener = nullptr;
 

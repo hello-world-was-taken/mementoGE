@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/opengl/VertexAttribute.h"
+#include "opengl/VertexAttribute.h"
 
 class VertexArray
 {
@@ -10,6 +10,7 @@ public:
     void bind() const;
     void unbind() const;
     void attachVertexAttribute(VertexAttribute vertex_attribute);
+
 private:
     void applyAttributePointers() const;
 

@@ -8,16 +8,16 @@
 #include <memory>
 
 #include "util/log_error.h"
-#include "engine/opengl/Vertex.h"
-#include "engine/opengl/VertexArray.h"
-#include "engine/opengl/VertexBuffer.h"
-#include "engine/opengl/Indexbuffer.h"
-#include "engine/opengl/Shader.h"
-#include "engine/opengl/Texture.h"
-#include "engine/core/Camera.h"
-#include "engine/core/Camera.h"
-#include "engine/core/GameObject.h"
-#include "engine/core/Transform.h"
+#include "opengl/Vertex.h"
+#include "opengl/VertexArray.h"
+#include "opengl/VertexBuffer.h"
+#include "opengl/Indexbuffer.h"
+#include "opengl/Shader.h"
+#include "opengl/Texture.h"
+#include "core/Camera.h"
+#include "core/Camera.h"
+#include "core/GameObject.h"
+#include "core/Transform.h"
 
 // TODO: Once the engine adds support for Vulkan, common batch
 // rendering logic needs to be abstracted.

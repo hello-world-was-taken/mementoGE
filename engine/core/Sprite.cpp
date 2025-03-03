@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include "engine/core/Sprite.h"
-#include "engine/core/Resource.h"
+#include "core/Sprite.h"
+#include "core/Resource.h"
 
 Sprite::Sprite(
     std::shared_ptr<Texture> texture)

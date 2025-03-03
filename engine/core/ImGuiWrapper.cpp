@@ -3,7 +3,7 @@
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
 
-#include "engine/core/ImGuiWrapper.h"
+#include "core/ImGuiWrapper.h"
 
 void ImGuiWrapper::setupImgui(GLFWwindow *glfw_window)
 {
@@ -14,7 +14,7 @@ void ImGuiWrapper::setupImgui(GLFWwindow *glfw_window)
     (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     // TODO: for now
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();

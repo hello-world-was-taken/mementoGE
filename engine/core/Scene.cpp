@@ -1,9 +1,9 @@
 #include <iostream>
 #include <entt/entt.hpp>
 
-#include "engine/core/Scene.h"
-#include "engine/renderer/RenderBatch.h"
-#include "engine/core/MouseListener.h" // TODO: Game specific things shouldn't be here.
+#include "core/Scene.h"
+#include "renderer/RenderBatch.h"
+#include "core/MouseListener.h" // TODO: Game specific things shouldn't be here.
 
 Scene::Scene()
 {

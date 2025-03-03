@@ -5,7 +5,7 @@
 #include <glm/glm.hpp>
 #include <memory>
 
-#include "engine/core/Camera.h"
+#include "core/Camera.h"
 
 class MouseListener
 {

@@ -8,8 +8,8 @@
 #include <backends/imgui_impl_opengl3.h>
 
 #include "util/Time.h"
-#include "engine/core/MouseListener.h"
-#include "engine/core/KeyListener.h"
+#include "core/MouseListener.h"
+#include "core/KeyListener.h"
 
 // TODO: Window should not have an api that exposes internal
 // libraries it uses like GLFW. The user should be able to
@@ -36,7 +36,8 @@ public:
     MouseListener m_mouse_listener;
     KeyListener mKeyListener;
 
-    private : GLFWwindow *m_glfw_window;
+private:
+    GLFWwindow *m_glfw_window;
     const char *m_title = "OpenGL Playground";
 
     void setupWindowHints() const;

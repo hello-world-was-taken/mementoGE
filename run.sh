@@ -1,3 +1,3 @@
 #! /bin/sh
 
-cd out ; ./mementoGE
+cd out ; ./myGame

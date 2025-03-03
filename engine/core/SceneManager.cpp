@@ -3,11 +3,11 @@
 #include <filesystem>
 #include <fstream>
 
-#include "engine/core/SceneManager.h"
-#include "engine/core/ImGuiWrapper.h"
-#include "engine/core/Resource.h"
-#include "engine/core/Sprite.h"
-#include "engine/core/SpriteSheet.h"
+#include "core/SceneManager.h"
+#include "core/ImGuiWrapper.h"
+#include "core/Resource.h"
+#include "core/Sprite.h"
+#include "core/SpriteSheet.h"
 
 SceneManager::SceneManager(Window *m_window)
 {
@@ -161,7 +161,7 @@ void SceneManager::renderTextureResourcesImGui()
     }
 }
 
-Scene* SceneManager::getActiveScene()
+Scene *SceneManager::getActiveScene()
 {
     return m_activeScene;
 }

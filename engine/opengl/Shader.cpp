@@ -3,9 +3,10 @@
 #include <fstream>
 #include <iostream>
 
-#include "engine/opengl/Shader.h"
+#include "opengl/Shader.h"
 
-Shader::Shader(const char* vertex_path, const char* fragment_path) {
+Shader::Shader(const char *vertex_path, const char *fragment_path)
+{
     const char *vertex_source = parseShader(vertex_path);
     const char *fragment_source = parseShader(fragment_path);
 
@@ -37,54 +38,58 @@ Shader::Shader(const char* vertex_path, const char* fragment_path) {
     delete[] fragment_source;
 }
 
-
-Shader::~Shader() {
+Shader::~Shader()
+{
     glDeleteProgram(this->m_id);
 }
 
-
-void Shader::use() {
+void Shader::use()
+{
     glUseProgram(this->m_id);
 }
 
-
 // TODO: use sstream to read the file
-char* Shader::parseShader(const std::string& filePath) {
+char *Shader::parseShader(const std::string &filePath)
+{
     std::ifstream stream(filePath);
     std::string line;
     std::string shader;
 
-    if (!stream.is_open()) {
+    if (!stream.is_open())
+    {
         std::cout << "Could not open the file " << filePath << std::endl;
         return NULL;
     }
 
-    while (getline(stream, line)) {
+    while (getline(stream, line))
+    {
         shader += line + "\n";
     }
 
     stream.close();
     // Dynamically allocate memory for the C-style string
-    char* shader_cstr = new char[shader.length() + 1];
+    char *shader_cstr = new char[shader.length() + 1];
     std::strcpy(shader_cstr, shader.c_str());
 
     return shader_cstr;
 };
 
-
-void Shader::checkShaderCompileErrors(unsigned int shader_id, const char* shader_type) {
+void Shader::checkShaderCompileErrors(unsigned int shader_id, const char *shader_type)
+{
     int result;
     glGetShaderiv(shader_id, GL_COMPILE_STATUS, &result);
 
-    if (result != GL_FALSE) {
+    if (result != GL_FALSE)
+    {
         return;
     }
 
     int info_log_length;
     glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &info_log_length);
 
-    if (info_log_length > 0) {
-        char* shader_error_message = new char[info_log_length + 1];
+    if (info_log_length > 0)
+    {
+        char *shader_error_message = new char[info_log_length + 1];
         glGetShaderInfoLog(shader_id, info_log_length, NULL, shader_error_message);
         std::cout << "ERROR::SHADER_COMPILATION_ERROR of type: " << shader_type << std::endl;
         std::cout << shader_error_message << std::endl;
@@ -92,27 +97,28 @@ void Shader::checkShaderCompileErrors(unsigned int shader_id, const char* shader
     }
 };
 
-
-int Shader::getUniformLocation(const std::string &name) {
+int Shader::getUniformLocation(const std::string &name)
+{
     return glGetUniformLocation(this->m_id, name.c_str());
 }
 
-
-void Shader::setUniform1i(const std::string &name, int value) {
+void Shader::setUniform1i(const std::string &name, int value)
+{
     glUniform1i(getUniformLocation(name), value);
 }
 
-
-void Shader::setUniform1f(const std::string &name, float value) {
+void Shader::setUniform1f(const std::string &name, float value)
+{
     glUniform1f(getUniformLocation(name), value);
 }
 
-
-void Shader::setUniform4fv(const std::string &name, glm::mat4 value) {
+void Shader::setUniform4fv(const std::string &name, glm::mat4 value)
+{
     // we could have also used glm::value_ptr(value) instead of value[0][0]
     glUniformMatrix4fv(getUniformLocation(name), 1, GL_FALSE, &value[0][0]);
 }
 
-void Shader::setMultipleTextureUnits(const std::string &name, int* texture_units, int size) {
+void Shader::setMultipleTextureUnits(const std::string &name, int *texture_units, int size)
+{
     glUniform1iv(getUniformLocation(name), size, texture_units);
 }

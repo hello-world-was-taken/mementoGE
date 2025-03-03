@@ -5,8 +5,8 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include "engine/core/Scene.h"
-#include "engine/core/Window.h"
+#include "core/Scene.h"
+#include "core/Window.h"
 
 class SceneManager;
 

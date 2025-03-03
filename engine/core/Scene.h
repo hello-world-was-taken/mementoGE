@@ -11,11 +11,11 @@
 #include <imgui.h>
 
 #include "util/log_error.h"
-#include "engine/opengl/Shader.h"
-#include "engine/core/GameObject.h"
-#include "engine/core/Transform.h"
-#include "engine/core/Camera.h"
-#include "engine/renderer/RenderBatch.h"
+#include "opengl/Shader.h"
+#include "core/GameObject.h"
+#include "core/Transform.h"
+#include "core/Camera.h"
+#include "renderer/RenderBatch.h"
 
 class Scene
 {

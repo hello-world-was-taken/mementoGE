@@ -3,8 +3,8 @@
     and make it available via mementoGE core api.
 */
 
-#include "engine/core/Window.h"
-#include "engine/core/MouseListener.h"
+#include "core/Window.h"
+#include "core/MouseListener.h"
 
 MouseListener::MouseListener() {}
 
@@ -84,7 +84,6 @@ glm::vec2 MouseListener::getWorldCoordinates(std::shared_ptr<Camera> camera)
     float normalizedX = ((screenCoordsX / 800) * 2.0f) - 1.0f;
     // Inverted Y because OpenGL uses bottom-left as origin
     float normalizedY = 1.0f - ((screenCoordsY / 600) * 2.0f);
-
 
     // TODO: The z values are not correct and should be taken from the projection matrix
     glm::vec4 clipCoords = glm::vec4(normalizedX, normalizedY, -1.0f, 1.0f);

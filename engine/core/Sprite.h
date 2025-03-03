@@ -5,7 +5,7 @@
 #include <memory>
 #include <yaml-cpp/yaml.h>
 
-#include "engine/opengl/Texture.h"
+#include "opengl/Texture.h"
 
 class Sprite
 {
@@ -17,7 +17,7 @@ private:
         {1.0f, 0.0f}, // bottom right
         {1.0f, 1.0f}, // top right
     };
-    
+
     glm::vec4 m_color = {1.0f, 1.0f, 1.0f, 1.0f}; // white
 
     // TODO: a sprite could just be a color as well

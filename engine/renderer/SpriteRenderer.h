@@ -4,7 +4,7 @@
 #include <vector>
 #include <glm/glm.hpp>
 
-#include "engine/opengl/Texture.h"
+#include "opengl/Texture.h"
 
 class SpriteRenderer
 {
@@ -37,7 +37,7 @@ public:
         unsigned int subTextureIndexX = 0,
         unsigned int subTextureIndexY = 0);
 
-        ~SpriteRenderer();
+    ~SpriteRenderer();
 
     void start();
     void update(float deltaTime);

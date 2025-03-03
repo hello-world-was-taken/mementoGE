@@ -4,8 +4,8 @@
 #include <map>
 #include <memory>
 
-#include "engine/opengl/Texture.h"
-#include "engine/opengl/Shader.h"
+#include "opengl/Texture.h"
+#include "opengl/Shader.h"
 
 namespace Resource
 {
