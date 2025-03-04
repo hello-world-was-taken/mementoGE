@@ -9,11 +9,10 @@
 #include "core/Sprite.h"
 #include "core/SpriteSheet.h"
 
-SceneManager::SceneManager(Window *m_window)
+SceneManager::SceneManager(Window *window, const EventHandler &eventHandler)
+    : m_window{window},
+      mEventHandler{eventHandler}
 {
-    this->m_window = m_window;
-    // this->addScene("triangle_scene", std::make_shared<Scene>());
-    // m_activeScene = m_scenes.at("triangle_scene");
 }
 
 SceneManager::~SceneManager()
@@ -38,7 +37,7 @@ void SceneManager::update(float deltaTime)
         std::cout << "No active m_scene found" << std::endl;
         return;
     }
-    m_eventHandlerFunction(m_window->getGlfwWindow(), this);
+    m_eventHandlerFunction(*m_window, this, mEventHandler);
     m_activeScene->update(deltaTime, m_window->getGlfwWindow());
 }
 

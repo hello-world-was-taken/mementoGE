@@ -8,6 +8,8 @@
 #include "engine/core/Scene.h"
 #include "engine/core/Resource.h"
 #include "engine/core/Sprite.h"
+#include "engine/core/EventHandler.h"
+#include "engine/core/Event.h"
 
 void addGameObject(Scene *scene)
 {
@@ -47,29 +49,38 @@ void addGameObject(Scene *scene)
     gameObject5->addComponent<Sprite>(texture2, 1, 1, 128, 0, 0);
 }
 
-// TODO: glfw_window should be abstracted away by core engine module
-void eventHandler(GLFWwindow *glfw_window, SceneManager *sceneManager)
+void eventHandler2(Window &window, SceneManager *sceneManager, const EventHandler &eventHandler)
 {
-    if (KeyListener::isKeyPressed(GLFW_KEY_ESCAPE))
+    if (eventHandler.hasActiveEvent())
     {
-        glfwSetWindowShouldClose(glfw_window, true);
-        std::cout << "Escape" << std::endl;
-    }
-    else if (KeyListener::isKeyPressed(GLFW_KEY_RIGHT))
-    {
-        sceneManager->getActiveScene()->getCamera()->update(Time::deltaTime(), glm::vec3(-500.0f * Time::deltaTime(), 0.0f, 0.0f));
-    }
-    else if (KeyListener::isKeyPressed(GLFW_KEY_LEFT))
-    {
-        sceneManager->getActiveScene()->getCamera()->update(Time::deltaTime(), glm::vec3(500.0f * Time::deltaTime(), 0.0f, 0.0f));
-    }
-    else if (KeyListener::isKeyPressed(GLFW_KEY_DOWN))
-    {
-        sceneManager->getActiveScene()->getCamera()->update(Time::deltaTime(), glm::vec3(0.0f, 500.0f * Time::deltaTime(), 0.0f));
-    }
-    else if (KeyListener::isKeyPressed(GLFW_KEY_UP))
-    {
-        sceneManager->getActiveScene()->getCamera()->update(Time::deltaTime(), glm::vec3(0.0f, -500.0f * Time::deltaTime(), 0.0f));
+        Event e = eventHandler.getCurrentEvent();
+
+        if (e.getEventType() == EventType::Key)
+        {
+            KeyType keyType = e.getKeyType();
+
+            if (keyType == KeyType::Escape)
+            {
+                window.closeWindow();
+                std::cout << "Escape" << std::endl;
+            }
+            else if (keyType == KeyType::RightArrow)
+            {
+                sceneManager->getActiveScene()->getCamera()->update(Time::deltaTime(), glm::vec3(-500.0f * Time::deltaTime(), 0.0f, 0.0f));
+            }
+            else if (keyType == KeyType::LeftArrow)
+            {
+                sceneManager->getActiveScene()->getCamera()->update(Time::deltaTime(), glm::vec3(500.0f * Time::deltaTime(), 0.0f, 0.0f));
+            }
+            else if (keyType == KeyType::DownArrow)
+            {
+                sceneManager->getActiveScene()->getCamera()->update(Time::deltaTime(), glm::vec3(0.0f, 500.0f * Time::deltaTime(), 0.0f));
+            }
+            else if (keyType == KeyType::UpArrow)
+            {
+                sceneManager->getActiveScene()->getCamera()->update(Time::deltaTime(), glm::vec3(0.0f, -500.0f * Time::deltaTime(), 0.0f));
+            }
+        }
     }
 }
 
@@ -78,7 +89,7 @@ Application::Application()
       mKeyListener{},
       // TODO: listener should be passed as a reference
       mWindow{mMouseListener, mKeyListener, 800, 600},
-      mSceneManager{&mWindow}
+      mSceneManager{&mWindow, mEventHandler}
 {
 }
 
@@ -90,7 +101,7 @@ void Application::setup()
 {
     // Create a scene. We need at least one scene to start the game
     Scene scene;
-    mSceneManager.setEventHandler(eventHandler);
+    mSceneManager.setEventHandler(eventHandler2);
     mSceneManager.addScene("default_scene", scene);
     mSceneManager.start();
 
@@ -114,7 +125,7 @@ void Application::start()
 
 void Application::processInput()
 {
-    mWindow.setupCallBack();
+    mWindow.setupCallBack(mEventHandler);
 }
 
 void Application::update()

@@ -1,6 +1,7 @@
 #include "core/Window.h"
 #include "core/MouseListener.h"
 #include "core/KeyListener.h"
+#include "core/EventHandler.h"
 
 Window::Window(MouseListener listener, KeyListener keyListener, float width, float height)
     : m_width(width), m_height(height), m_mouse_listener(listener), mKeyListener(keyListener)
@@ -64,12 +65,12 @@ void Window::setupWindowHints() const
 #endif
 }
 
-void Window::setupCallBack() const
+void Window::setupCallBack(const EventHandler &eventHandler) const
 {
     glfwSetCursorPosCallback(m_glfw_window, m_mouse_listener.cursorPositionCallback);
     glfwSetMouseButtonCallback(m_glfw_window, m_mouse_listener.mouseButtonCallback);
     glfwSetScrollCallback(m_glfw_window, m_mouse_listener.scrollCallback);
-    glfwSetKeyCallback(m_glfw_window, mKeyListener.keyCallback);
+    glfwSetKeyCallback(m_glfw_window, eventHandler.glfwKeyCallBack);
 }
 
 void Window::initializeWindow()
@@ -109,4 +110,9 @@ void Window::updateViewPort()
     int vpSize[2];
     glfwGetFramebufferSize(getGlfwWindow(), &vpSize[0], &vpSize[1]);
     glViewport(0, 0, vpSize[0], vpSize[1]);
+}
+
+void Window::closeWindow()
+{
+    glfwSetWindowShouldClose(m_glfw_window, true);
 }

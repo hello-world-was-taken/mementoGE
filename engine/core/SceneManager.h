@@ -7,16 +7,17 @@
 
 #include "core/Scene.h"
 #include "core/Window.h"
+#include "core/EventHandler.h"
 
 class SceneManager;
 
 // NOTE: A function type that returs void and takes glfw window and scene manager as argument.
-using EventHandlerFunction = void (*)(GLFWwindow *, SceneManager *);
+using EventHandlerFunction = void (*)(Window &, SceneManager *, const EventHandler &);
 
 class SceneManager
 {
 public:
-    SceneManager(Window *window);
+    SceneManager(Window *window, const EventHandler &eventHandler);
     ~SceneManager();
 
     void start();
@@ -38,5 +39,6 @@ private:
     std::map<std::string, Scene> m_scenes;
     Scene *m_activeScene = nullptr;
     Window *m_window = nullptr;
+    const EventHandler &mEventHandler;
     EventHandlerFunction m_eventHandlerFunction;
 };

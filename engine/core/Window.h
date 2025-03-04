@@ -10,6 +10,7 @@
 #include "util/Time.h"
 #include "core/MouseListener.h"
 #include "core/KeyListener.h"
+#include "core/EventHandler.h"
 
 // TODO: Window should not have an api that exposes internal
 // libraries it uses like GLFW. The user should be able to
@@ -23,12 +24,13 @@ public:
     ~Window();
 
     void initializeWindow();
-    void setupCallBack() const;
+    void setupCallBack(const EventHandler &eventHandler) const;
     GLFWwindow *getGlfwWindow();
     static void frameBufferSizeResizeCallback(GLFWwindow *window, int width, int height);
     void updateViewPort();
     float getWidth() const;
     float getHeight() const;
+    void closeWindow();
 
 public:
     float m_width;

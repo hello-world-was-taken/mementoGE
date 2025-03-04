@@ -4,6 +4,7 @@
 */
 
 #include "core/KeyListener.h"
+#include "core/Event.h"
 
 KeyListener::KeyListener() {};
 
@@ -34,10 +35,12 @@ void KeyListener::keyCallback(GLFWwindow *window, int key, int scancode, int act
     {
         if (action == GLFW_PRESS)
         {
+            Event("LeftKey", EventType::MouseLeftClick, true);
             leftKeyPressed = true;
         }
         else if (action == GLFW_RELEASE)
         {
+            Event("LeftKey", EventType::MouseLeftClick, false);
             leftKeyPressed = false;
         }
     }
@@ -45,10 +48,12 @@ void KeyListener::keyCallback(GLFWwindow *window, int key, int scancode, int act
     {
         if (action == GLFW_PRESS)
         {
+            Event("RightKey", EventType::MouseRightClick, true);
             rightKeyPressed = true;
         }
         else if (action == GLFW_RELEASE)
         {
+            Event("RightKey", EventType::MouseRightClick, false);
             rightKeyPressed = false;
         }
     }
@@ -56,10 +61,12 @@ void KeyListener::keyCallback(GLFWwindow *window, int key, int scancode, int act
     {
         if (action == GLFW_PRESS)
         {
+            Event("UpArrowKey", EventType::Key, true, KeyType::UpArrow);
             upKeyPressed = true;
         }
         else if (action == GLFW_RELEASE)
         {
+            Event("UpArrowKey", EventType::Key, false, KeyType::UpArrow);
             upKeyPressed = false;
         }
     }
@@ -67,10 +74,12 @@ void KeyListener::keyCallback(GLFWwindow *window, int key, int scancode, int act
     {
         if (action == GLFW_PRESS)
         {
+            Event("DownArrowKey", EventType::Key, false, KeyType::DownArrow);
             downKeyPressed = true;
         }
         else if (action == GLFW_RELEASE)
         {
+            Event("DownArrowKey", EventType::Key, false, KeyType::DownArrow);
             downKeyPressed = false;
         }
     }
@@ -78,10 +87,12 @@ void KeyListener::keyCallback(GLFWwindow *window, int key, int scancode, int act
     {
         if (action == GLFW_PRESS)
         {
+            Event("EscapeKey", EventType::Key, true, KeyType::Escape);
             escapeKeyPressed = true;
         }
         else if (action == GLFW_RELEASE)
         {
+            Event("EscapeKey", EventType::Key, false, KeyType::Escape);
             escapeKeyPressed = false;
         }
     }
@@ -110,4 +121,9 @@ bool KeyListener::isKeyPressed(int key)
         return escapeKeyPressed;
     }
     return false;
+}
+
+bool KeyListener::hasActiveEvent()
+{
+    return mHasActiveEvent;
 }

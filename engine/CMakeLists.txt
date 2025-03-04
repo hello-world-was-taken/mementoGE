@@ -24,6 +24,8 @@ add_library(${PROJECT_NAME} STATIC
     core/SpriteSheet.cpp
     core/MouseListener.cpp
     core/KeyListener.cpp
+    core/Event.cpp
+    core/EventHandler.cpp
 
     # opengl
     opengl/Texture.cpp
