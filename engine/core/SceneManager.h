@@ -23,8 +23,26 @@ public:
     void start();
     void update(float deltaTime);
     void gameLoop();
+
+    /**
+     * Add a new game object to active scene
+     */
+    bool addGameObject(int x, int y);
+
+    /**
+     * Add game object components to active scene's
+     * active game object
+     */
+    template <typename Component, typename... Args>
+    bool addComponent(Args &&...args)
+    {
+        m_activeScene->getActiveGameObject().addComponent<Component>(std::forward<Args>(args)...);
+    }
+
+    GameObject& getActiveGameObject() const;
     void setEventHandler(EventHandlerFunction eventHandler);
     void loadScene(const char *sceneName);
+    // TODO: what should we do when we unload a scene?
     void unloadScene(const char *sceneName);
     void addScene(const char *sceneName, Scene &scene);
     void removeScene(const char *sceneName);

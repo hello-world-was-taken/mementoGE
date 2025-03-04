@@ -11,44 +11,6 @@
 #include "engine/core/EventHandler.h"
 #include "engine/core/Event.h"
 
-void addGameObject(Scene *scene)
-{
-    // TODO: Think about creating an asset pool for textures
-    std::shared_ptr<Texture> texture = Resource::getTexture("../assets/texture/slice01_01.png", false);
-    texture->bind();
-    std::cout << "---------------------";
-    std::shared_ptr<GameObject> gameObject = scene->addGameObject(32, 32);
-    std::cout << "Adding a scene with name: " << std::endl;
-    // TODO: We shouldn't be using glm::vec3 directly. We should have a class that wraps glm::vec3
-    // Grass Tile
-    gameObject->addComponent<Transform>(glm::vec3(0.0f, 0.0f, 0.0f));
-    gameObject->addComponent<Sprite>(texture);
-
-    std::shared_ptr<Texture> texture2 = Resource::getTexture("../assets/texture/spritesheet_retina.png", true);
-    texture2->bind();
-
-    // Cloud
-    std::shared_ptr<GameObject> gameObject2 = scene->addGameObject(32, 16);
-    gameObject2->addComponent<Transform>(glm::vec3(110.0f, 200.0f, 0.0f));
-    gameObject2->addComponent<Sprite>(texture2, 2, 1, 128, 0, 10);
-
-    // Dialog box
-    std::shared_ptr<GameObject> gameObject3 = scene->addGameObject(32, 16);
-    gameObject3->addComponent<Transform>(glm::vec3(110.0f, 100.0f, 0.0f));
-    gameObject3->addComponent<Sprite>(texture2, 1, 1, 128, 2, 10);
-
-    // Dialog box
-    std::shared_ptr<GameObject> gameObject4 = scene->addGameObject(32, 16);
-    gameObject4->addComponent<Transform>(glm::vec3(50.0f, 50.0f, 0.0f));
-    gameObject4->addComponent<Sprite>(texture2, 1, 1, 128, 2, 10);
-
-    // Number 4
-    std::cout << "Number 4" << std::endl;
-    std::shared_ptr<GameObject> gameObject5 = scene->addGameObject(32, 16);
-    gameObject5->addComponent<Transform>(glm::vec3(110.0f, 130.0f, 0.0f));
-    gameObject5->addComponent<Sprite>(texture2, 1, 1, 128, 0, 0);
-}
-
 void eventHandler2(Window &window, SceneManager *sceneManager, const EventHandler &eventHandler)
 {
     if (eventHandler.hasActiveEvent())
@@ -105,8 +67,16 @@ void Application::setup()
     mSceneManager.addScene("default_scene", scene);
     mSceneManager.start();
 
-    // TODO: this should be in the level editor class and not in the game
-    addGameObject(mSceneManager.getActiveScene());
+    std::shared_ptr<Texture> texture = Resource::getTexture("../assets/texture/slice01_01.png", false);
+    texture->bind();
+
+    mSceneManager.getActiveScene()->addGameObject(32, 32);
+    GameObject& activeGameObject = mSceneManager.getActiveGameObject();
+
+    // TODO: We shouldn't be using glm::vec3 directly. We should have a class that wraps glm::vec3
+    // Grass Tile
+    activeGameObject.addComponent<Transform>(glm::vec3(0.0f, 0.0f, 0.0f));
+    activeGameObject.addComponent<Sprite>(texture);
 
     // deserialize scene if we had any saved state
     mSceneManager.deserialize();

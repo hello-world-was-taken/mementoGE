@@ -1,7 +1,7 @@
 #include <iostream>
 #include <GL/glew.h>
 
-#include "opengl/Indexbuffer.h"
+#include "Indexbuffer.h"
 
 IndexBuffer::IndexBuffer(
     const unsigned int *indices,

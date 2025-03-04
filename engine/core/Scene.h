@@ -35,6 +35,7 @@ public:
     // void addTextureToGameObject(std::shared_ptr<GameObject> gameObject, std::shared_ptr<Texture> texture);
     std::shared_ptr<Camera> getCamera();
     void renderActiveGameObjectPropsImGui();
+    GameObject& getActiveGameObject();
 
 private:
     float m_screen_width = 32.0f * 16.0f; // 16 tiles of 32 pixels = 512 pixels

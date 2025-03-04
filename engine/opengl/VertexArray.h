@@ -1,6 +1,6 @@
 #pragma once
 
-#include "opengl/VertexAttribute.h"
+#include "VertexAttribute.h"
 
 class VertexArray
 {

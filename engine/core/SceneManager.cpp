@@ -73,6 +73,16 @@ void SceneManager::gameLoop()
     exit(EXIT_SUCCESS);
 }
 
+bool SceneManager::addGameObject(int x, int y)
+{
+    m_activeScene->addGameObject(x, y);
+    return true; // TODO: improve later
+}
+
+GameObject& SceneManager::getActiveGameObject() const {
+    return m_activeScene->getActiveGameObject();
+}
+
 void SceneManager::setEventHandler(EventHandlerFunction eventHandler)
 {
     m_eventHandlerFunction = eventHandler;

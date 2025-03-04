@@ -3,7 +3,7 @@
 #include <fstream>
 #include <iostream>
 
-#include "opengl/Shader.h"
+#include "Shader.h"
 
 Shader::Shader(const char *vertex_path, const char *fragment_path)
 {

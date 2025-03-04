@@ -87,3 +87,8 @@ void Scene::renderActiveGameObjectPropsImGui()
     ImGui::DragFloat("z", &transform.getPosition()->z);
     ImGui::End();
 }
+
+//TODO: If no game object is present, it should throw
+GameObject& Scene::getActiveGameObject() {
+    return *m_activeGameObject;
+}

@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include "opengl/Vertex.h"
-#include "opengl/VertexAttribute.h"
+#include "Vertex.h"
+#include "VertexAttribute.h"
 
 class VertexBuffer
 {

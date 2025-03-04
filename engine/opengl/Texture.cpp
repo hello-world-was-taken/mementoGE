@@ -3,7 +3,7 @@
 #include <GL/glew.h>
 #include <iostream>
 
-#include "opengl/Texture.h"
+#include "Texture.h"
 
 Texture::Texture(const char *texture_path, int texture_unit, bool isTextureAtlas)
     : m_texture_unit(texture_unit),
