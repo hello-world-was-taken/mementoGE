@@ -23,7 +23,7 @@ private:
     // TODO: a sprite could just be a color as well
 public:
     Sprite(
-        std::shared_ptr<Texture> texture);
+        std::string&& texturePath);
     Sprite(
         std::shared_ptr<Texture> texture,
         unsigned int subTextureSpanX,

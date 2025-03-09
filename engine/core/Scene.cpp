@@ -24,6 +24,8 @@ Scene::~Scene()
 
 void Scene::start()
 {
+    // TODO: can we pass the user character here and update that as the camera moves as well?
+    // Camera moves right -> user moves right and environment moves left
     m_renderBatch = new RenderBatch(m_camera, m_gameObjects);
     m_renderBatch->render();
 }

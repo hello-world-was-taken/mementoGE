@@ -5,6 +5,12 @@
 #include "Vertex.h"
 #include "VertexAttribute.h"
 
+/*
+* VBOs handles the creation of memory on the GPU. This abstraction will create
+* a memory of certain size as well us the draw type - triangle, line and so on.
+* OpenGL is a state machine. So it operates on the currently bound VBO. We can
+* bind multiple VBOs at the same time as long as they are different buffer types.
+*/
 class VertexBuffer
 {
 public:

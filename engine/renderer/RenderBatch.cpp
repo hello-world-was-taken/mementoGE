@@ -42,7 +42,7 @@ void RenderBatch::render()
 
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // TODO: We shouldn't me creating a new shader every frame
+    // TODO: We shouldn't be creating a new shader every frame
     std::shared_ptr<Shader> shader = Resource::getShaderProgram("../assets/shader/vertex.shader", "../assets/shader/fragment.shader");
     shader.get()->use();
 

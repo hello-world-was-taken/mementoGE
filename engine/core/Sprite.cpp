@@ -4,9 +4,9 @@
 #include "core/Resource.h"
 
 Sprite::Sprite(
-    std::shared_ptr<Texture> texture)
+    std::string&& texturePath)
 {
-    m_texture = texture;
+    m_texture = Resource::getTexture(texturePath, false);
 }
 
 // subTextureSpanX: The span of the subtexture in the x direction.

@@ -49,11 +49,11 @@ namespace Resource
             std::shared_ptr<Texture> texture = std::make_shared<Texture>(texturePath.c_str(), textureUnit, isSpriteSheet);
             textureUnit++;
             (*textures.get())[texturePath] = texture;
+            // bind texture
+            texture->bind();
             return texture;
         }
-        else
-        {
-            return (*textures.get())[texturePath];
-        }
+
+        return (*textures.get())[texturePath];
     }
 }

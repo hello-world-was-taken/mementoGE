@@ -1,7 +1,6 @@
 #include <memory>
 
 #include "Application.h"
-#include "engine/opengl/Texture.h" // TODO: anything out side of core should not be included here
 #include "engine/core/GameObject.h"
 #include "engine/core/Window.h"
 #include "engine/core/SceneManager.h"
@@ -67,16 +66,13 @@ void Application::setup()
     mSceneManager.addScene("default_scene", scene);
     mSceneManager.start();
 
-    std::shared_ptr<Texture> texture = Resource::getTexture("../assets/texture/slice01_01.png", false);
-    texture->bind();
-
     mSceneManager.getActiveScene()->addGameObject(32, 32);
     GameObject& activeGameObject = mSceneManager.getActiveGameObject();
 
     // TODO: We shouldn't be using glm::vec3 directly. We should have a class that wraps glm::vec3
     // Grass Tile
     activeGameObject.addComponent<Transform>(glm::vec3(0.0f, 0.0f, 0.0f));
-    activeGameObject.addComponent<Sprite>(texture);
+    activeGameObject.addComponent<Sprite>("../assets/texture/slice01_01.png");
 
     // deserialize scene if we had any saved state
     mSceneManager.deserialize();
