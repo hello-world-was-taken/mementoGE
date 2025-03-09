@@ -1,13 +1,19 @@
+#include <string>
+
 #include "core/SpriteSheet.h"
+#include "core/Resource.h"
 
 SpriteSheet::SpriteSheet(
-    std::shared_ptr<Texture> texture,
+    std::string &&texturePath,
+    bool isTextureAtlas,
     unsigned int subTextureSize,
-    unsigned int m_subTextureGap)
+    unsigned int subTextureGap)
+: mTexturePath{texturePath}
+, mIsTextureAtlas{isTextureAtlas}
+, m_subTextureSize{subTextureSize}
+, m_subTextureGap{subTextureGap}
 {
-    m_texture = texture;
-    m_subTextureSize = subTextureSize;
-    m_subTextureGap = m_subTextureGap;
+    m_texture = Resource::getTexture(texturePath, isTextureAtlas);
     m_sprites = std::vector<Sprite>();
 
     initializeSprites();
@@ -31,7 +37,8 @@ void SpriteSheet::initializeSprites()
         for (unsigned int x = 0; x < maxHorizontalSpriteCount; x++)
         {
             m_sprites.push_back(Sprite(
-                m_texture,
+                mTexturePath.c_str(), // TODO: copying to c_str, since Sprite is moving the texture path name
+                mIsTextureAtlas,
                 1,
                 1,
                 m_subTextureSize,
@@ -49,4 +56,9 @@ unsigned int SpriteSheet::getSubTextureSize()
 std::vector<Sprite> SpriteSheet::getSprites()
 {
     return m_sprites;
+}
+
+std::shared_ptr<Texture> SpriteSheet::getTexture()
+{
+    return m_texture;
 }

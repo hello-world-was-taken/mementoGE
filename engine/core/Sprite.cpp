@@ -4,39 +4,44 @@
 #include "core/Resource.h"
 
 Sprite::Sprite(
-    std::string&& texturePath)
+    std::string &&texturePath, bool isTextureAtlas)
 {
-    m_texture = Resource::getTexture(texturePath, false);
+    m_texture = Resource::getTexture(texturePath, isTextureAtlas);
 }
 
-// subTextureSpanX: The span of the subtexture in the x direction.
-// subTextureSpanY: The span of the subtexture in the y direction.
-// subTextureSize: The size of the subtexture. Assumed to be a square.
-// subTextureIndexX: The index of the subtexture in the x direction where the origin is the bottom left corner.
-// subTextureIndexY: The index of the subtexture in the y direction where the origin is the bottom left corner.
+/**
+ * @param subTextureSpanX : The span of the subtexture in the X direction.
+ *                          Multiplied by @param subTextureSize to get real width.
+ * @param subTextureSpanY : The span of the subtexture in the Y direction.
+ *                          Multiplied by @param subTextureSize to get real height.
+ * @param subTextureSize: The size of the subtexture. Assumed to be a square.
+ * @param subTextureIndexX: The index of the subtexture in the X direction where the origin is the bottom left corner.
+ * @param subTextureIndexY: The index of the subtexture in the Y direction where the origin is the bottom left corner.
+ */
 Sprite::Sprite(
-    std::shared_ptr<Texture> texture,
+    std::string &&texturePath,
+    bool isTextureAtlas,
     unsigned int subTextureSpanX,
     unsigned int subTextureSpanY,
     unsigned int subTextureSize,
     unsigned int subTextureIndexX,
     unsigned int subTextureIndexY)
 {
-    m_texture = texture;
+    m_texture = Resource::getTexture(texturePath, isTextureAtlas);
 
-    if (texture->isTextureAtlas())
+    if (m_texture->isTextureAtlas())
     {
-        glm::vec2 topLeft = {float(subTextureSize * subTextureIndexX) / float(texture->getWidth()),
-                             float((subTextureSize * (subTextureIndexY + subTextureSpanY))) / float(texture->getHeight())};
+        glm::vec2 topLeft = {float(subTextureSize * subTextureIndexX) / float(m_texture->getWidth()),
+                             float((subTextureSize * (subTextureIndexY + subTextureSpanY))) / float(m_texture->getHeight())};
 
-        glm::vec2 bottomLeft = {float(subTextureSize * subTextureIndexX) / float(texture->getWidth()),
-                                float(subTextureSize * subTextureIndexY) / float(texture->getHeight())};
+        glm::vec2 bottomLeft = {float(subTextureSize * subTextureIndexX) / float(m_texture->getWidth()),
+                                float(subTextureSize * subTextureIndexY) / float(m_texture->getHeight())};
 
-        glm::vec2 bottomRight = {float(subTextureSize * (subTextureIndexX + subTextureSpanX)) / float(texture->getWidth()),
-                                 float(subTextureSize * (subTextureIndexY)) / float(texture->getHeight())};
+        glm::vec2 bottomRight = {float(subTextureSize * (subTextureIndexX + subTextureSpanX)) / float(m_texture->getWidth()),
+                                 float(subTextureSize * (subTextureIndexY)) / float(m_texture->getHeight())};
 
-        glm::vec2 topRight = {float(subTextureSize * (subTextureIndexX + subTextureSpanX)) / float(texture->getWidth()),
-                              float(subTextureSize * (subTextureIndexY + subTextureSpanY)) / float(texture->getHeight())};
+        glm::vec2 topRight = {float(subTextureSize * (subTextureIndexX + subTextureSpanX)) / float(m_texture->getWidth()),
+                              float(subTextureSize * (subTextureIndexY + subTextureSpanY)) / float(m_texture->getHeight())};
 
         m_textureCoordinates = {
             topLeft,

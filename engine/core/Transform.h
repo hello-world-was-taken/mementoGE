@@ -8,6 +8,7 @@
 class Transform
 {
 private:
+    // The position of the object on the screen
     glm::vec3 m_position;
     glm::vec3 m_scale;
     glm::vec3 m_rotation;

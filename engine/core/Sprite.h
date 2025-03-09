@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <string>
 #include <glm/glm.hpp>
 #include <memory>
 #include <yaml-cpp/yaml.h>
@@ -22,10 +23,13 @@ private:
 
     // TODO: a sprite could just be a color as well
 public:
+    // TODO: We don't need the two constructors. The first one is just a specialized version
+    // of the second one. We can get away with default values.
     Sprite(
-        std::string&& texturePath);
+        std::string &&texturePath, bool isTextureAtlas);
     Sprite(
-        std::shared_ptr<Texture> texture,
+        std::string &&texturePath,
+        bool isTextureAtlas,
         unsigned int subTextureSpanX,
         unsigned int subTextureSpanY,
         unsigned int subTextureSize,

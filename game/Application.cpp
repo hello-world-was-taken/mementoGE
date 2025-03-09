@@ -66,13 +66,21 @@ void Application::setup()
     mSceneManager.addScene("default_scene", scene);
     mSceneManager.start();
 
+    // GAME OBJECT 1 Tile
     mSceneManager.getActiveScene()->addGameObject(32, 32);
     GameObject& activeGameObject = mSceneManager.getActiveGameObject();
 
     // TODO: We shouldn't be using glm::vec3 directly. We should have a class that wraps glm::vec3
     // Grass Tile
     activeGameObject.addComponent<Transform>(glm::vec3(0.0f, 0.0f, 0.0f));
-    activeGameObject.addComponent<Sprite>("../assets/texture/slice01_01.png");
+    activeGameObject.addComponent<Sprite>("../assets/texture/slice01_01.png", false);
+
+    // GAME OBJECT 2 Cloud
+    mSceneManager.getActiveScene()->addGameObject(32, 16);
+    GameObject &could = mSceneManager.getActiveGameObject();
+
+    could.addComponent<Transform>(glm::vec3(110.0f, 200.0f, 0.0f));
+    could.addComponent<Sprite>("../assets/texture/spritesheet_retina.png", true, 2, 1, 128, 0, 10);
 
     // deserialize scene if we had any saved state
     mSceneManager.deserialize();

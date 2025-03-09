@@ -126,10 +126,9 @@ void SceneManager::removeScene(const char *sceneName)
 void SceneManager::renderTextureResourcesImGui()
 {
     // TODO: use this as a dummy sprite to render the texture resources change it later on.
-    std::shared_ptr<Texture> texture2 = Resource::getTexture("../assets/texture/spritesheet_retina.png", true);
-    texture2->bind();
-    SpriteSheet spriteSheet = SpriteSheet(texture2, 128, 0);
+    SpriteSheet spriteSheet = SpriteSheet("../assets/texture/spritesheet_retina.png", true, 128, 0);
     ImGui::Text("Sprites");
+    std::shared_ptr<Texture> spriteSheetTexture = spriteSheet.getTexture();
     ImVec2 windowPos = ImGui::GetWindowPos();
     ImVec2 windowSize = ImGui::GetWindowSize();
 
@@ -140,7 +139,7 @@ void SceneManager::renderTextureResourcesImGui()
         float spriteWidth = spriteSheet.getSubTextureSize();
         float spriteHeight = spriteSheet.getSubTextureSize();
         std::vector<glm::vec2> textureCoordinates = sprite.getTextureCoordinates();
-        ImTextureID texId = (ImTextureID)(uintptr_t)texture2->getId();
+        ImTextureID texId = (ImTextureID)(uintptr_t)spriteSheetTexture->getId();
 
         // TODO: Add sprite IDs and use those to identify which sprite was clicked
         ImGui::PushID(id);
