@@ -27,19 +27,23 @@ void eventHandler2(Window &window, SceneManager *sceneManager, const EventHandle
             }
             else if (keyType == KeyType::RightArrow)
             {
-                sceneManager->getActiveScene()->getCamera()->update(Time::deltaTime(), glm::vec3(-500.0f * Time::deltaTime(), 0.0f, 0.0f));
+                // sceneManager->getActiveScene()->getCamera()->update(Time::deltaTime(), glm::vec3(-500.0f * Time::deltaTime(), 0.0f, 0.0f));
+                sceneManager->getActiveGameObject().getComponent<Transform>().translate(-500.0f * Time::deltaTime(), 0.0f, 0.0f);
             }
             else if (keyType == KeyType::LeftArrow)
             {
-                sceneManager->getActiveScene()->getCamera()->update(Time::deltaTime(), glm::vec3(500.0f * Time::deltaTime(), 0.0f, 0.0f));
+                // sceneManager->getActiveScene()->getCamera()->update(Time::deltaTime(), glm::vec3(500.0f * Time::deltaTime(), 0.0f, 0.0f));
+                sceneManager->getActiveGameObject().getComponent<Transform>().translate(500.0f * Time::deltaTime(), 0.0f, 0.0f);
             }
             else if (keyType == KeyType::DownArrow)
             {
-                sceneManager->getActiveScene()->getCamera()->update(Time::deltaTime(), glm::vec3(0.0f, 500.0f * Time::deltaTime(), 0.0f));
+                // sceneManager->getActiveScene()->getCamera()->update(Time::deltaTime(), glm::vec3(0.0f, 500.0f * Time::deltaTime(), 0.0f));
+                sceneManager->getActiveGameObject().getComponent<Transform>().translate(0.0f, 500.0f * Time::deltaTime(), 0.0f);
             }
             else if (keyType == KeyType::UpArrow)
             {
-                sceneManager->getActiveScene()->getCamera()->update(Time::deltaTime(), glm::vec3(0.0f, -500.0f * Time::deltaTime(), 0.0f));
+                // sceneManager->getActiveScene()->getCamera()->update(Time::deltaTime(), glm::vec3(0.0f, -500.0f * Time::deltaTime(), 0.0f));
+                sceneManager->getActiveGameObject().getComponent<Transform>().translate(0.0f, -500.0f * Time::deltaTime(), 0.0f);
             }
         }
     }
@@ -66,9 +70,10 @@ void Application::setup()
     mSceneManager.addScene("default_scene", scene);
     mSceneManager.start();
 
-    // GAME OBJECT 1 Tile
+    // GAME OBJECT 1 Tile: Player character
     mSceneManager.getActiveScene()->addGameObject(32, 32);
-    GameObject& activeGameObject = mSceneManager.getActiveGameObject();
+    GameObject &activeGameObject = mSceneManager.getActiveGameObject();
+    mPlayerCharacter = &activeGameObject;
 
     // TODO: We shouldn't be using glm::vec3 directly. We should have a class that wraps glm::vec3
     // Grass Tile
@@ -81,6 +86,10 @@ void Application::setup()
 
     could.addComponent<Transform>(glm::vec3(110.0f, 200.0f, 0.0f));
     could.addComponent<Sprite>("../assets/texture/spritesheet_retina.png", true, 2, 1, 128, 0, 10);
+
+    // TODO: when we have a serialized scene, this gets overriden.
+    // Meaning the active gameObject will no longer be our playerCharacter. Fix it.
+    mSceneManager.getActiveScene()->setActiveGameObject(mPlayerCharacter);
 
     // deserialize scene if we had any saved state
     mSceneManager.deserialize();

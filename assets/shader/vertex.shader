@@ -12,6 +12,8 @@ out vec2 v_texture_coordinate;
 out float v_tex_index;
 
 void main() {
+    // We can think of 'vec4(position, 1.0)' as the model_matrix, since we are passing in the
+    // world coordinates of sprites in our implementation.
     gl_Position = u_projection_matrix * u_view_matrix  * vec4(position, 1.0);
     v_texture_coordinate = texture_coordinate;
     v_tex_index = tex_index;

@@ -36,6 +36,7 @@ public:
     std::shared_ptr<Camera> getCamera();
     void renderActiveGameObjectPropsImGui();
     GameObject& getActiveGameObject();
+    bool setActiveGameObject(GameObject* gameObject);
 
 private:
     float m_screen_width = 32.0f * 16.0f; // 16 tiles of 32 pixels = 512 pixels

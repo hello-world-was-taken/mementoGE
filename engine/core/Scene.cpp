@@ -91,6 +91,14 @@ void Scene::renderActiveGameObjectPropsImGui()
 }
 
 //TODO: If no game object is present, it should throw
-GameObject& Scene::getActiveGameObject() {
+GameObject& Scene::getActiveGameObject()
+{
     return *m_activeGameObject;
+}
+
+// TODO: what if the game object is not part of this scene?
+bool Scene::setActiveGameObject(GameObject* gameObject)
+{
+    m_activeGameObject = gameObject;
+    return true;
 }

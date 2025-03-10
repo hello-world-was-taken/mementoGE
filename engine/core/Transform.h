@@ -12,6 +12,7 @@ private:
     glm::vec3 m_position;
     glm::vec3 m_scale;
     glm::vec3 m_rotation;
+    glm::mat4x4 mTransformMatrix = glm::mat4(1.0f);
 
 public:
     Transform(glm::vec3 position);

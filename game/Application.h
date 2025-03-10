@@ -31,4 +31,5 @@ private:
     KeyListener mKeyListener;
     // TODO: can we improve this?
     EventHandler mEventHandler{};
+    GameObject* mPlayerCharacter = nullptr;
 };

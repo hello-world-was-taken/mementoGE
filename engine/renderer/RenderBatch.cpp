@@ -42,7 +42,6 @@ void RenderBatch::render()
 
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // TODO: We shouldn't be creating a new shader every frame
     std::shared_ptr<Shader> shader = Resource::getShaderProgram("../assets/shader/vertex.shader", "../assets/shader/fragment.shader");
     shader.get()->use();
 
@@ -73,6 +72,8 @@ void RenderBatch::updateVertexBuffer()
 
         Transform transform = gameObject->getComponent<Transform>();
 
+        // This is actually the model matrix of the game object. And gameObject->getQuad() gives me the local
+        // coordinate of my game object
         glm::mat4x4 transformMatrix = transform.getTransformMatrix();
         std::vector<glm::vec3> transformedQuad = transformQuad(transformMatrix, gameObject->getQuad());
 
@@ -94,6 +95,8 @@ void RenderBatch::updateVertexBuffer()
     mp_vb->updateBufferData(m_vertices);
 }
 
+// TODO: shouldn't this be done in the GPU? It shouldn't matter that much for 2D, but as a principle.
+// Also is it possible to do that if we want to draw the batch in a single draw call?
 std::vector<glm::vec3> RenderBatch::transformQuad(glm::mat4x4 transformMatrix, std::vector<glm::vec3> quad)
 {
     std::vector<glm::vec3> transformedQuad = quad;
