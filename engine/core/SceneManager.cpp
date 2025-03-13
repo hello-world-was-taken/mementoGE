@@ -38,6 +38,7 @@ void SceneManager::update(float deltaTime)
         return;
     }
     m_eventHandlerFunction(*m_window, this, mEventHandler);
+
     m_activeScene->update(deltaTime, m_window->getGlfwWindow());
 }
 
@@ -73,13 +74,8 @@ void SceneManager::gameLoop()
     exit(EXIT_SUCCESS);
 }
 
-bool SceneManager::addGameObject(int x, int y)
+GameObject &SceneManager::getActiveGameObject() const
 {
-    m_activeScene->addGameObject(x, y);
-    return true; // TODO: improve later
-}
-
-GameObject& SceneManager::getActiveGameObject() const {
     return m_activeScene->getActiveGameObject();
 }
 
@@ -107,14 +103,13 @@ void SceneManager::unloadScene(const char *sceneName)
     m_activeScene = nullptr;
 }
 
-void SceneManager::addScene(const char *sceneName, Scene &scene)
+void SceneManager::addScene(const char *sceneName, Scene &&scene)
 {
-    std::cout << "Adding a scene with name: " << sceneName << std::endl;
-    m_scenes[sceneName] = std::move(scene);
+    m_scenes.insert({sceneName, std::move(scene)});
     // TODO: shouldn't the active scene be set to the latest scene added?
     if (m_activeScene == nullptr)
     {
-        m_activeScene = &(m_scenes[sceneName]);
+        m_activeScene = &(m_scenes.find(sceneName)->second);
     }
 }
 
@@ -184,34 +179,12 @@ void SceneManager::serialize()
     {
         out << YAML::Key << sceneName;
         out << YAML::Value << YAML::BeginMap;
+        out << YAML::Key << "Game Objects";
+        out << YAML::Value << YAML::BeginMap;
 
-        int count = 0; // TESTING: remove this
-        for (auto gameObject : *scene.getGameObjects().get())
+        for (GameObject &gameObject : scene.getGameObjects())
         {
-            std::string gameObjectName = "GameObject" + std::to_string(count);
-            out << YAML::Key << gameObjectName;
-            out << YAML::Value << YAML::BeginMap;
-            out << YAML::Key << "Width";
-            out << YAML::Value << gameObject.get()->getWidth();
-            out << YAML::Key << "Height";
-            out << YAML::Value << gameObject.get()->getHeight();
-
-            // TRANSFORM COMPONENT
-            if (gameObject->hasComponent<Transform>())
-            {
-                Transform &transform = gameObject->getComponent<Transform>();
-                transform.serialize(out);
-            }
-
-            // SPRITE COMPONENT
-            if (gameObject->hasComponent<Sprite>())
-            {
-                Sprite &sprite = gameObject->getComponent<Sprite>();
-                sprite.serialize(out);
-            }
-
-            out << YAML::EndMap;
-            count++;
+            gameObject.serialize(out);
         }
 
         out << YAML::EndMap;
@@ -235,27 +208,14 @@ void SceneManager::deserialize()
         return;
     }
 
-    YAML::Node scene = YAML::LoadFile("../game/scene.yaml");
-    for (auto it = scene.begin(); it != scene.end(); ++it) // why ++it instead of it++?
-    {
-        std::string sceneName = it->first.as<std::string>();
-        m_scenes[sceneName] = Scene();
-        m_activeScene = &(m_scenes[sceneName]); // TODO: have some sort of active scene flag
+    // TODO: We are assuming we'll always have a single scene. fix.
+    YAML::Node serializedScene = YAML::LoadFile("../game/scene.yaml");
+    Scene scene = Scene{std::move(serializedScene)};
 
-        for (auto serializedGameObject : it->second)
-        {
-            unsigned int width = serializedGameObject.second["Width"].as<unsigned int>();
-            unsigned int height = serializedGameObject.second["Height"].as<unsigned int>();
+    m_scenes.insert_or_assign("default_scene", std::move(scene));
+    // TODO: map.find() returns iterator end if the value is not present. Fix it.
+    // TODO: active scene should be handled better.
+    m_activeScene = &(m_scenes.find("default_scene")->second);
 
-            std::shared_ptr<GameObject> newGameObject = m_activeScene->addGameObject(width, height);
-            // Deserialize Transform Component
-            newGameObject->addComponent<Transform>(glm::vec3(0.0f, 0.0f, 0.0f));
-            newGameObject->getComponent<Transform>().deserialize(serializedGameObject.second);
-
-            // Deserialize Sprite Component
-            newGameObject->addComponent<Sprite>();
-            newGameObject->getComponent<Sprite>().deserialize(serializedGameObject.second);
-        }
-    }
     std::cout << "Deserialized scene from scene.yaml" << std::endl;
 }

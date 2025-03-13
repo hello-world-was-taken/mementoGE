@@ -64,35 +64,31 @@ Application::~Application()
 
 void Application::setup()
 {
-    // Create a scene. We need at least one scene to start the game
-    Scene scene;
-    mSceneManager.setEventHandler(eventHandler2);
-    mSceneManager.addScene("default_scene", scene);
-    mSceneManager.start();
-
-    // GAME OBJECT 1 Tile: Player character
-    mSceneManager.getActiveScene()->addGameObject(32, 32);
-    GameObject &activeGameObject = mSceneManager.getActiveGameObject();
-    mPlayerCharacter = &activeGameObject;
-
-    // TODO: We shouldn't be using glm::vec3 directly. We should have a class that wraps glm::vec3
-    // Grass Tile
-    activeGameObject.addComponent<Transform>(glm::vec3(0.0f, 0.0f, 0.0f));
-    activeGameObject.addComponent<Sprite>("../assets/texture/slice01_01.png", false);
-
-    // GAME OBJECT 2 Cloud
-    mSceneManager.getActiveScene()->addGameObject(32, 16);
-    GameObject &could = mSceneManager.getActiveGameObject();
-
-    could.addComponent<Transform>(glm::vec3(110.0f, 200.0f, 0.0f));
-    could.addComponent<Sprite>("../assets/texture/spritesheet_retina.png", true, 2, 1, 128, 0, 10);
-
-    // TODO: when we have a serialized scene, this gets overriden.
-    // Meaning the active gameObject will no longer be our playerCharacter. Fix it.
-    mSceneManager.getActiveScene()->setActiveGameObject(mPlayerCharacter);
-
-    // deserialize scene if we had any saved state
     mSceneManager.deserialize();
+    mSceneManager.setEventHandler(eventHandler2);
+    // mSceneManager.addScene("default_scene", Scene{"default_scene_original"});
+    // mSceneManager.start();
+
+    // // GAME OBJECT 1 Tile: Player character
+    // mSceneManager.getActiveScene()->addGameObject(32, 32, "tile");
+    // GameObject &activeGameObject = mSceneManager.getActiveGameObject();
+    // mPlayerCharacter = &activeGameObject;
+
+    // // TODO: We shouldn't be using glm::vec3 directly. We should have a class that wraps glm::vec3
+    // // Grass Tile
+    // activeGameObject.addComponent<Transform>(glm::vec3(0.0f, 0.0f, 0.0f));
+    // activeGameObject.addComponent<Sprite>("../assets/texture/slice01_01.png", false);
+
+    // // GAME OBJECT 2 Cloud
+    // mSceneManager.getActiveScene()->addGameObject(32, 16, "cloud");
+    // GameObject &could = mSceneManager.getActiveGameObject();
+
+    // could.addComponent<Transform>(glm::vec3(110.0f, 200.0f, 0.0f));
+    // could.addComponent<Sprite>("../assets/texture/spritesheet_retina.png", true, 2, 1, 128, 0, 10);
+
+    // TODO: MAKE SURE ACTIVE GAME OBJECT IS PLAYER WHEN DESERIALIZING
+    // deserialize scene if we had any saved state
+    // mSceneManager.deserialize();
 }
 
 void Application::start()

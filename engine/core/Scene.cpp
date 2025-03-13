@@ -1,24 +1,91 @@
 #include <iostream>
+#include <string>
 #include <entt/entt.hpp>
+#include <yaml-cpp/yaml.h>
 
 #include "core/Scene.h"
 #include "renderer/RenderBatch.h"
 #include "core/MouseListener.h" // TODO: Game specific things shouldn't be here.
 
-Scene::Scene()
+Scene::Scene(std::string &&tag)
+    : mTag{tag}
 {
     // NOTE: When trying to construct RenderBatch here, it was causing a segfault. I think it was because
     // the OpenGL context was not yet created which resulted in glGenVertexArrays == NULL. So, I moved the
     // RenderBatch construction to the start.
     // TODO: Investigate this further
     // m_renderBatch = new RenderBatch(this);
-    m_gameObjects = std::make_shared<std::vector<std::shared_ptr<GameObject>>>();
-    std::cout << "Scene constructor called" << std::endl;
+}
+
+Scene::Scene(const YAML::Node &&serializedScene)
+: m_registry{}
+{
+    // Deserializing
+    for (YAML::const_iterator it = serializedScene.begin(); it != serializedScene.end(); ++it)
+    {
+        mTag = it->first.as<std::string>();
+
+        YAML::Node gameObjects = it->second["Game Objects"];
+
+        for (YAML::const_iterator it = gameObjects.begin(); it != gameObjects.end(); ++it)
+        {
+            GameObject gameObj{m_registry, it->second};
+            m_gameObjects.push_back(std::move(gameObj));
+        }
+
+        // TODO: FIX THIS!
+        m_activeGameObject = &m_gameObjects.back();
+    }
+}
+
+Scene::Scene(Scene &&other)
+    : m_registry{std::move(other.m_registry)}
+{
+    m_screen_height = other.m_screen_height;
+    m_screen_width = other.m_screen_width;
+    m_camera = std::move(other.m_camera);
+    m_renderBatch = other.m_renderBatch;
+    m_textures = std::move(other.m_textures);
+    mTag = std::move(other.mTag);
+
+    for (GameObject &g : other.m_gameObjects)
+    {
+        g.updateEntityReference(m_registry);
+        m_gameObjects.push_back(std::move(g));
+    }
+
+    // setting other pointer variables to null_ptr
+    other.m_renderBatch = nullptr;
+    other.m_activeGameObject = nullptr;
+    other.m_registry = NULL;
+
+    // TODO: DO THIS IN A BETTER WAY
+    if (m_gameObjects.size())
+        m_activeGameObject = &m_gameObjects.back();
+}
+
+Scene &Scene::operator=(Scene &&other)
+{
+    m_screen_height = other.m_screen_height;
+    m_screen_width = other.m_screen_width;
+    m_registry = std::move(other.m_registry);
+    m_gameObjects = std::move(other.m_gameObjects);
+    m_camera = std::move(other.m_camera);
+    m_renderBatch = other.m_renderBatch;
+    m_textures = std::move(other.m_textures);
+    m_activeGameObject = other.m_activeGameObject;
+    mTag = std::move(other.mTag);
+
+    // setting other pointer variables to null_ptr
+    other.m_renderBatch = nullptr;
+    other.m_activeGameObject = nullptr;
+
+    return *this;
 }
 
 Scene::~Scene()
 {
-    std::cout << "Scene destructor called" << std::endl;
+    std::cout << "Scene destructor called: " << mTag << std::endl;
     delete m_renderBatch;
 }
 
@@ -34,33 +101,26 @@ void Scene::update(float deltaTime, GLFWwindow *window)
 {
     m_renderBatch->render();
     this->renderActiveGameObjectPropsImGui();
+
     MouseListener *listener = MouseListener::getListener();
     listener->getWorldCoordinates(m_camera);
 }
 
-std::shared_ptr<GameObject> Scene::addGameObject(unsigned int width, unsigned int height)
+GameObject &Scene::addGameObject(unsigned int width, unsigned int height, std::string &&tag)
 {
-    std::shared_ptr<GameObject>
-        gameObject = std::make_shared<GameObject>(m_registry, width, height);
-    m_gameObjects->push_back(gameObject);
+    m_gameObjects.push_back(GameObject{m_registry, std::move(tag), width, height});
 
-    std::cout << "Adding a scene with name ----- 3: " << std::endl;
     // Set the latest game object as the active game object
-    m_activeGameObject = gameObject.get();
+    // TODO: FIX THIS
+    m_activeGameObject = &m_gameObjects.back();
 
-    return gameObject;
+    return m_gameObjects[0];
 }
 
-std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> Scene::getGameObjects()
+std::vector<GameObject> &Scene::getGameObjects()
 {
     return m_gameObjects;
 }
-
-// void Scene::addTextureToGameObject(std::shared_ptr<GameObject> gameObject, std::shared_ptr<Texture> texture)
-// {
-//     gameObject->addComponent<Sprite>(texture);
-//     m_textures.push_back(texture);
-// }
 
 std::shared_ptr<Camera> Scene::getCamera()
 {
@@ -76,8 +136,8 @@ void Scene::renderActiveGameObjectPropsImGui()
     ImGui::Begin("Properties");
 
     ImGui::Text("Size");
-    int &width = m_activeGameObject->getWidth();
-    int &height = m_activeGameObject->getHeight();
+    int width = m_activeGameObject->getWidth();
+    int height = m_activeGameObject->getHeight();
     ImGui::DragInt("Width", &width);
     ImGui::DragInt("Height", &height);
     ImGui::Separator();
@@ -90,15 +150,40 @@ void Scene::renderActiveGameObjectPropsImGui()
     ImGui::End();
 }
 
-//TODO: If no game object is present, it should throw
-GameObject& Scene::getActiveGameObject()
+// TODO: If no game object is present, it should throw
+GameObject &Scene::getActiveGameObject()
 {
     return *m_activeGameObject;
 }
 
 // TODO: what if the game object is not part of this scene?
-bool Scene::setActiveGameObject(GameObject* gameObject)
+bool Scene::setActiveGameObject(GameObject *gameObject)
 {
     m_activeGameObject = gameObject;
+    return true;
+}
+
+const std::string &Scene::getTag() const
+{
+    return mTag;
+}
+
+bool Scene::serialize(YAML::Emitter &out)
+{
+    out << YAML::Key << mTag;
+    out << YAML::Value << YAML::BeginMap;
+
+    out << YAML::Key << "Game Objects";
+    out << YAML::Value << YAML::BeginMap;
+
+    for (GameObject &gameObject : m_gameObjects)
+    {
+        gameObject.serialize(out);
+    }
+
+    out << YAML::EndMap;
+    out << YAML::EndMap;
+
+    // TODO: Do we need this to return bool?
     return true;
 }

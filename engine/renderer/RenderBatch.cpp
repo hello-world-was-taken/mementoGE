@@ -12,7 +12,7 @@
 
 RenderBatch::RenderBatch(
     const std::shared_ptr<Camera> camera,
-    std::shared_ptr<std::vector<std::shared_ptr<GameObject>>> gameObjects)
+    std::vector<GameObject> &gameObjects)
     : m_camera(camera), m_gameObjects(gameObjects)
 {
     generateIndexArray();
@@ -39,7 +39,6 @@ void RenderBatch::render()
 
     // repopulate the vertices with the new data
     updateVertexBuffer();
-
     glClear(GL_COLOR_BUFFER_BIT);
 
     std::shared_ptr<Shader> shader = Resource::getShaderProgram("../assets/shader/vertex.shader", "../assets/shader/fragment.shader");
@@ -67,19 +66,19 @@ void RenderBatch::updateVertexBuffer()
     // clear the vertices vector
     m_vertices.clear();
 
-    for (std::shared_ptr<GameObject> gameObject : *m_gameObjects)
+    for (GameObject &gameObject : m_gameObjects)
     {
 
-        Transform transform = gameObject->getComponent<Transform>();
+        Transform transform = gameObject.getComponent<Transform>();
 
         // This is actually the model matrix of the game object. And gameObject->getQuad() gives me the local
         // coordinate of my game object
         glm::mat4x4 transformMatrix = transform.getTransformMatrix();
-        std::vector<glm::vec3> transformedQuad = transformQuad(transformMatrix, gameObject->getQuad());
+        std::vector<glm::vec3> transformedQuad = transformQuad(transformMatrix, gameObject.getQuad());
 
-        if (gameObject->hasComponent<Sprite>())
+        if (gameObject.hasComponent<Sprite>())
         {
-            Sprite sprite = gameObject->getComponent<Sprite>();
+            Sprite sprite = gameObject.getComponent<Sprite>();
 
             for (int i = 0; i < transformedQuad.size(); i++)
             {
