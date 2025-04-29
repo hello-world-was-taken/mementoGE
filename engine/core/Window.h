@@ -9,7 +9,6 @@
 
 #include "util/Time.h"
 #include "core/MouseListener.h"
-#include "core/KeyListener.h"
 #include "core/EventHandler.h"
 
 // TODO: Window should not have an api that exposes internal
@@ -19,12 +18,12 @@
 class Window
 {
 public:
-    // TODO: MouseListener and KeyListener should be extracted away to an EventHandler System.
-    Window(MouseListener mouselistener, KeyListener keyListener, float m_width = 800, float m_height = 600);
+    // TODO: MouseListener be extracted away to the EventHandler System.
+    Window(MouseListener mouselistener, EventHandler &eventHandler, float m_width = 800, float m_height = 600);
     ~Window();
 
     void initializeWindow();
-    void setupCallBack(const EventHandler &eventHandler) const;
+    void setupCallBack() const;
     GLFWwindow *getGlfwWindow();
     static void frameBufferSizeResizeCallback(GLFWwindow *window, int width, int height);
     void updateViewPort();
@@ -36,7 +35,7 @@ public:
     float m_width;
     float m_height;
     MouseListener m_mouse_listener;
-    KeyListener mKeyListener;
+    EventHandler mEventHandler;
 
 private:
     GLFWwindow *m_glfw_window;

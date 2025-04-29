@@ -24,7 +24,6 @@ add_library(${PROJECT_NAME} STATIC
     core/Sprite.cpp
     core/SpriteSheet.cpp
     core/MouseListener.cpp
-    core/KeyListener.cpp
     core/Event.cpp
     core/EventHandler.cpp
 

@@ -47,9 +47,8 @@ void eventHandler2(Window &window, SceneManager *sceneManager, const EventHandle
 
 Application::Application()
     : mMouseListener{},
-      mKeyListener{},
       // TODO: listener should be passed as a reference
-      mWindow{mMouseListener, mKeyListener, 800, 600},
+      mWindow{mMouseListener, mEventHandler, 800, 600},
       mSceneManager{&mWindow, mEventHandler}
 {
 }
@@ -77,7 +76,7 @@ void Application::start()
 
 void Application::processInput()
 {
-    mWindow.setupCallBack(mEventHandler);
+    mWindow.setupCallBack();
 }
 
 void Application::update()

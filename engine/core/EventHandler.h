@@ -4,6 +4,7 @@
 
 #include "core/Event.h"
 
+// TODO: handle mouse events here as well
 class EventHandler
 {
 public:
