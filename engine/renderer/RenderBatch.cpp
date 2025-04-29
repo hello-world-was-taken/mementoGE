@@ -73,8 +73,8 @@ void RenderBatch::updateVertexBuffer()
 
         // This is actually the model matrix of the game object. And gameObject->getQuad() gives me the local
         // coordinate of my game object
-        glm::mat4x4 transformMatrix = transform.getTransformMatrix();
-        std::vector<glm::vec3> transformedQuad = transformQuad(transformMatrix, gameObject.getQuad());
+        glm::mat4x4 modelMatrix = transform.getModelMatrix();
+        std::vector<glm::vec3> transformedQuad = transformQuad(modelMatrix, gameObject.getQuad());
 
         if (gameObject.hasComponent<Sprite>())
         {
@@ -96,12 +96,12 @@ void RenderBatch::updateVertexBuffer()
 
 // TODO: shouldn't this be done in the GPU? It shouldn't matter that much for 2D, but as a principle.
 // Also is it possible to do that if we want to draw the batch in a single draw call?
-std::vector<glm::vec3> RenderBatch::transformQuad(glm::mat4x4 transformMatrix, std::vector<glm::vec3> quad)
+std::vector<glm::vec3> RenderBatch::transformQuad(glm::mat4x4 modelMatrix, std::vector<glm::vec3> quad)
 {
     std::vector<glm::vec3> transformedQuad = quad;
     for (int i = 0; i < quad.size(); i++)
     {
-        transformedQuad[i] = transformMatrix * glm::vec4(quad[i], 1.0f);
+        transformedQuad[i] = modelMatrix * glm::vec4(quad[i], 1.0f);
     }
 
     return transformedQuad;

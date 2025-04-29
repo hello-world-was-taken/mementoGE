@@ -12,7 +12,7 @@ private:
     glm::vec3 m_position;
     glm::vec3 m_scale;
     glm::vec3 m_rotation;
-    glm::mat4x4 mTransformMatrix = glm::mat4(1.0f);
+    glm::mat4x4 mModelMatrix = glm::mat4(1.0f);
 
 public:
     Transform(glm::vec3 position);
@@ -27,7 +27,7 @@ public:
     glm::vec3 *getPosition();
     glm::vec3 *getRotation();
     glm::vec3 *getScale();
-    glm::mat4x4 getTransformMatrix();
+    glm::mat4x4 getModelMatrix();
 
     void serialize(YAML::Emitter &out);
     void deserialize(const YAML::Node &in);

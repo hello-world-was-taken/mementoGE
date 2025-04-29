@@ -68,14 +68,14 @@ glm::vec3 *Transform::getScale()
     return &m_scale;
 }
 
-glm::mat4x4 Transform::getTransformMatrix()
+glm::mat4x4 Transform::getModelMatrix()
 {
-    mTransformMatrix = glm::translate(mTransformMatrix, m_position);
-    mTransformMatrix = glm::rotate(mTransformMatrix, glm::radians(m_rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-    mTransformMatrix = glm::rotate(mTransformMatrix, glm::radians(m_rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-    mTransformMatrix = glm::rotate(mTransformMatrix, glm::radians(m_rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-    mTransformMatrix = glm::scale(mTransformMatrix, m_scale);
-    return mTransformMatrix;
+    mModelMatrix = glm::translate(mModelMatrix, m_position);
+    mModelMatrix = glm::rotate(mModelMatrix, glm::radians(m_rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+    mModelMatrix = glm::rotate(mModelMatrix, glm::radians(m_rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+    mModelMatrix = glm::rotate(mModelMatrix, glm::radians(m_rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+    mModelMatrix = glm::scale(mModelMatrix, m_scale);
+    return mModelMatrix;
 }
 
 void Transform::serialize(YAML::Emitter &out)
