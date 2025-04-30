@@ -8,6 +8,7 @@
 #include "core/Scene.h"
 #include "core/Window.h"
 #include "core/EventHandler.h"
+#include "core/MouseActionController.h"
 
 class SceneManager;
 
@@ -44,4 +45,5 @@ private:
     Window *m_window = nullptr;
     const EventHandler &mEventHandler;
     EventHandlerFunction m_eventHandlerFunction;
+    MouseActionController mMouseActionController;
 };

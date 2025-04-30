@@ -24,11 +24,12 @@ MouseListener *MouseListener::getListener()
 
 void MouseListener::mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
-    ImGuiIO &io = ImGui::GetIO();
-    if (io.WantCaptureMouse)
-    {
-        return;
-    }
+    // ImGuiIO &io = ImGui::GetIO();
+    // if (io.WantCaptureMouse && !ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+    // {
+    //     return;
+    // }
+
     // TODO: what if the user clicks on multiple buttons?
     //       or what if the user is using a mouse with multiple buttons like the gaming ones.
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
@@ -49,6 +50,12 @@ void MouseListener::mouseButtonCallback(GLFWwindow *window, int button, int acti
 void MouseListener::cursorPositionCallback(GLFWwindow *window, double x_pos, double y_pos)
 {
     MouseListener *listener = getListener();
+    ImGuiIO &io = ImGui::GetIO();
+    if (io.WantCaptureMouse && !ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+    {
+        return;
+    }
+
     if (listener->m_is_left_mouse_clicked)
     {
         double x_offset = x_pos - listener->m_lastX;
@@ -63,6 +70,8 @@ void MouseListener::cursorPositionCallback(GLFWwindow *window, double x_pos, dou
     }
     else
     {
+        // std::cout << "X position: " << x_pos << " "
+        //           << "Y position: " << y_pos << std::endl;
         // Update last cursor position even when not dragging
         listener->m_lastX = x_pos;
         listener->m_lastY = y_pos;
@@ -97,4 +106,14 @@ glm::vec2 MouseListener::getWorldCoordinates(std::shared_ptr<Camera> camera)
     glm::vec4 worldCoords = inverseViewMatrix * viewCoords;
 
     return glm::vec2(worldCoords.x, worldCoords.y);
+}
+
+bool MouseListener::isLeftMouseClicked()
+{
+    return m_is_left_mouse_clicked;
+}
+
+bool MouseListener::isDragging()
+{
+    return m_is_dragging;
 }

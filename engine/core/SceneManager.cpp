@@ -8,6 +8,7 @@
 #include "core/Resource.h"
 #include "core/Sprite.h"
 #include "core/SpriteSheet.h"
+#include "core/GameObject.h"
 
 SceneManager::SceneManager(Window *window, const EventHandler &eventHandler)
     : m_window{window},
@@ -59,6 +60,7 @@ void SceneManager::gameLoop()
 
         this->update(Time::deltaTime());
         this->renderTextureResourcesImGui();
+        mMouseActionController.Update(getActiveScene()->getCamera());
 
         // Rendering
         ImGui::Render();
@@ -150,11 +152,12 @@ void SceneManager::renderTextureResourcesImGui()
                 ImVec4(1.0f, 1.0f, 1.0f, 1.0f)))
         {
             Scene *activeScene = getActiveScene();
-            activeScene->addGameObject(16, 16, "_new");
+            activeScene->addGameObject(32, 32, "_new");
             activeScene->getActiveGameObject().addComponent<Sprite>(
                 "../assets/texture/spritesheet_retina.png",
                 true,
                 sprite.getTextureCoordinates());
+            mMouseActionController.SetActiveObject(activeScene->getActiveGameObject());
         }
         ImGui::PopID();
 

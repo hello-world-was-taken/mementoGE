@@ -25,4 +25,6 @@ public:
     static void cursorPositionCallback(GLFWwindow *window, double x_pos, double y_pos);
     static void scrollCallback(GLFWwindow *window, double x_offset, double y_offset);
     glm::vec2 getWorldCoordinates(std::shared_ptr<Camera> camera);
+    bool isLeftMouseClicked();
+    bool isDragging();
 };
