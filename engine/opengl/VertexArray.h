@@ -26,9 +26,6 @@ public:
     void attachVertexAttribute(VertexAttribute vertex_attribute);
 
 private:
-    void setAttributePointers() const;
-
-private:
     unsigned int m_id;
-    std::vector<VertexAttribute> m_vertex_attributes;
+    unsigned int m_vertex_attributes_idx;
 };

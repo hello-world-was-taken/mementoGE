@@ -45,7 +45,7 @@ void SceneManager::update(float deltaTime)
 
 void SceneManager::gameLoop()
 {
-    ImVec4 clear_color = ImVec4(0.5f, 0.5f, 0.5f, 1.00f);
+    ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
 
     ImGuiWrapper::setupImgui(m_window->getGlfwWindow());
     glfwSwapInterval(1);

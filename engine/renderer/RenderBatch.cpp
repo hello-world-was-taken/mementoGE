@@ -35,11 +35,9 @@ RenderBatch::~RenderBatch()
 void RenderBatch::render()
 {
     mp_vao->bind();
-    mp_vb->bind();
 
     // repopulate the vertices with the new data
     updateVertexBuffer();
-    glClear(GL_COLOR_BUFFER_BIT);
 
     std::shared_ptr<Shader> shader = Resource::getShaderProgram("../assets/shader/vertex.shader", "../assets/shader/fragment.shader");
     shader.get()->use();
@@ -56,9 +54,9 @@ void RenderBatch::render()
 
     glClearError();
     glDrawElements(GL_TRIANGLES, BATCH_SIZE * INDICES_PER_QUAD, GL_UNSIGNED_INT, nullptr);
-    glCheckError("glDrawArrays", __FILE__, __LINE__);
+    glCheckError("glDrawTriangles", __FILE__, __LINE__);
 
-    glBindVertexArray(0); // Unbind VAO
+    mp_vao->unbind();
 }
 
 void RenderBatch::updateVertexBuffer()
@@ -115,17 +113,22 @@ void RenderBatch::generateVertexBuffer()
     glClearError();
 
     mp_vao = new VertexArray();
-    mp_vao->attachVertexAttribute(VertexAttribute{3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0});
-    mp_vao->attachVertexAttribute(VertexAttribute{4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, color)});
-    mp_vao->attachVertexAttribute(VertexAttribute{2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, texture)});
-    mp_vao->attachVertexAttribute(VertexAttribute{1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, texIndex)});
     mp_vao->bind();
 
     mp_vb = new VertexBuffer(bufferSize, GL_DYNAMIC_DRAW);
     mp_vb->bind();
 
+    mp_vao->attachVertexAttribute(VertexAttribute{3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0});
+    mp_vao->attachVertexAttribute(VertexAttribute{4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, color)});
+    mp_vao->attachVertexAttribute(VertexAttribute{2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, texture)});
+    mp_vao->attachVertexAttribute(VertexAttribute{1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, texIndex)});
+
     mp_ib = new IndexBuffer{m_indices, BATCH_SIZE * INDICES_PER_QUAD, GL_STATIC_DRAW};
     mp_ib->bind();
+
+    // Once we associate vbo and ibo with the vao, we should only unbound the vao
+    // to not break the association.
+    mp_vao->unbind();
 }
 
 void RenderBatch::generateIndexArray()

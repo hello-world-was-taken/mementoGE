@@ -31,6 +31,7 @@ add_library(${PROJECT_NAME} STATIC
     # renderer
     renderer/RenderBatch.cpp
     renderer/SpriteRenderer.cpp
+    renderer/GridRenderer.cpp
 
     # utils
     util/log_error.cpp

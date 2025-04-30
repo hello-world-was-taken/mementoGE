@@ -18,6 +18,7 @@
 #include "core/Transform.h"
 #include "core/Camera.h"
 #include "renderer/RenderBatch.h"
+#include "renderer/GridRenderer.h"
 
 class Scene
 {
@@ -52,6 +53,7 @@ private:
     std::vector<GameObject> m_gameObjects;
     std::shared_ptr<Camera> m_camera = std::make_shared<Camera>(m_screen_width, m_screen_height);
     RenderBatch *m_renderBatch = nullptr;
+    GridRenderer mGridRenderer{static_cast<int>(m_screen_width), static_cast<int>(m_screen_height), 32}; // TODO: improve it
     std::vector<std::shared_ptr<Texture>> m_textures;
     GameObject *m_activeGameObject = nullptr;
     std::string mTag;
