@@ -8,6 +8,7 @@
 GameObject::GameObject(entt::registry &registry, std::string &&tag, unsigned int width, unsigned int height) : m_registry{&registry}, mTag{tag}, m_width{width}, m_height{height}
 {
     m_entity = m_registry->create();
+    addComponent<Transform>(glm::vec3(0.0f, 0.0f, 0.0f));
 }
 
 GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGameObject) : m_registry{&registry}
@@ -50,7 +51,7 @@ GameObject &GameObject::operator=(GameObject &&other)
 
 GameObject::~GameObject()
 {
-    std::cout << "Game Object destructor called" << std::endl;
+    std::cout << "Game Object destructor called: " << mTag << std::endl;
     // m_registry.destroy(m_entity);
 }
 

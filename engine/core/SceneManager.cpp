@@ -149,7 +149,12 @@ void SceneManager::renderTextureResourcesImGui()
                 ImVec4(0.0f, 0.0f, 0.0f, 1.0f),
                 ImVec4(1.0f, 1.0f, 1.0f, 1.0f)))
         {
-            std::cout << "Button " << id << " clicked" << std::endl;
+            Scene *activeScene = getActiveScene();
+            activeScene->addGameObject(16, 16, "_new");
+            activeScene->getActiveGameObject().addComponent<Sprite>(
+                "../assets/texture/spritesheet_retina.png",
+                true,
+                sprite.getTextureCoordinates());
         }
         ImGui::PopID();
 

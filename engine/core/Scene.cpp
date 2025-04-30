@@ -109,12 +109,12 @@ void Scene::update(float deltaTime, GLFWwindow *window)
 GameObject &Scene::addGameObject(unsigned int width, unsigned int height, std::string &&tag)
 {
     m_gameObjects.push_back(GameObject{m_registry, std::move(tag), width, height});
-
-    // Set the latest game object as the active game object
     // TODO: FIX THIS
+    // Since m_gameObjects is a vector, m_activeGameObject may point
+    // to invalid address when our vector gets resized.
+    // Better to use idx of the active game object
     m_activeGameObject = &m_gameObjects.back();
-
-    return m_gameObjects[0];
+    return m_gameObjects.back();
 }
 
 std::vector<GameObject> &Scene::getGameObjects()
@@ -129,21 +129,21 @@ std::shared_ptr<Camera> Scene::getCamera()
 
 void Scene::renderActiveGameObjectPropsImGui()
 {
-    if (m_activeGameObject == nullptr)
+    if (m_gameObjects.size() == 0)
     {
         return;
     }
     ImGui::Begin("Properties");
 
     ImGui::Text("Size");
-    int width = m_activeGameObject->getWidth();
-    int height = m_activeGameObject->getHeight();
+    int width = getActiveGameObject().getWidth();
+    int height = getActiveGameObject().getHeight();
     ImGui::DragInt("Width", &width);
     ImGui::DragInt("Height", &height);
     ImGui::Separator();
 
     ImGui::Text("Transform");
-    Transform &transform = m_activeGameObject->getComponent<Transform>();
+    Transform &transform = getActiveGameObject().getComponent<Transform>();
     ImGui::DragFloat("x", &transform.getPosition()->x);
     ImGui::DragFloat("y", &transform.getPosition()->y);
     ImGui::DragFloat("z", &transform.getPosition()->z);
@@ -153,7 +153,8 @@ void Scene::renderActiveGameObjectPropsImGui()
 // TODO: If no game object is present, it should throw
 GameObject &Scene::getActiveGameObject()
 {
-    return *m_activeGameObject;
+    // return *m_activeGameObject;
+    return m_gameObjects.back();
 }
 
 // TODO: what if the game object is not part of this scene?

@@ -52,6 +52,14 @@ Sprite::Sprite(
     }
 }
 
+Sprite::Sprite(
+    std::string &&texturePath,
+    bool isTextureAtlas,
+    std::vector<glm::vec2> textureCoordinates)
+: m_textureCoordinates{textureCoordinates},
+  m_texture{Resource::getTexture(texturePath, isTextureAtlas)}
+{
+}
 Sprite::Sprite()
 {
 }
@@ -112,7 +120,6 @@ void Sprite::deserialize(const YAML::Node &in)
     {
         m_textureCoordinates.push_back({textureCoordinates[i][0].as<float>(), textureCoordinates[i][1].as<float>()});
     }
-    std::cout << "deserializing transform" << std::endl;
 
     auto color = in["Sprite"]["Color"];
     m_color = {color[0].as<float>(), color[1].as<float>(), color[2].as<float>(), color[3].as<float>()};

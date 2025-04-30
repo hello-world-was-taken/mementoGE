@@ -24,6 +24,11 @@ MouseListener *MouseListener::getListener()
 
 void MouseListener::mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
+    ImGuiIO &io = ImGui::GetIO();
+    if (io.WantCaptureMouse)
+    {
+        return;
+    }
     // TODO: what if the user clicks on multiple buttons?
     //       or what if the user is using a mouse with multiple buttons like the gaming ones.
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)

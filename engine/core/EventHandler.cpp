@@ -1,4 +1,5 @@
 #include <iostream>
+#include <imgui.h>
 
 #include "core/EventHandler.h"
 
@@ -16,6 +17,11 @@ Event EventHandler::mCurrentEvent = Event("", EventType::None, false);
 
 void EventHandler::glfwKeyCallBack(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
+    ImGuiIO &io = ImGui::GetIO();
+    if (io.WantCaptureKeyboard)
+    {
+        return;
+    }
     // TODO: can we handle this in a better way?
     if (action == GLFW_PRESS)
     {

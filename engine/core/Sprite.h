@@ -35,6 +35,10 @@ public:
         unsigned int subTextureSize,
         unsigned int subTextureIndexX,
         unsigned int subTextureIndexY);
+    Sprite(
+        std::string &&texturePath,
+        bool isTextureAtlas,
+        std::vector<glm::vec2> textureCoordinates);
     Sprite(); // TODO: Should only be used for serialization
     ~Sprite();
 
