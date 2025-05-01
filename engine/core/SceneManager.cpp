@@ -13,6 +13,7 @@
 
 SceneManager::SceneManager(Window *window, const EventHandler &eventHandler)
     : m_window{window},
+      mFrameBuffer{window->getGlfwWindow()},
       mEventHandler{eventHandler}
 {
 }
@@ -39,7 +40,9 @@ void SceneManager::start()
     // window size. Since we don't use the actual window size, we'll
     // pass -1.
     m_window->frameBufferSizeResizeCallback(m_window->getGlfwWindow(), -1, -1);
+    mFrameBuffer.bind();
     m_activeScene->start();
+    mFrameBuffer.unbind();
 }
 
 void SceneManager::update(float deltaTime)
@@ -66,17 +69,41 @@ void SceneManager::gameLoop()
     while (!glfwWindowShouldClose(m_window->getGlfwWindow()))
     {
         glfwPollEvents();
-        ImGuiWrapper::showImguiDemo();
+
+        mFrameBuffer.bind();
+
+        // clear screen
         glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        ImGuiWrapper::beginDockspace();
+        ImGuiWrapper::showImguiDemo();
+        this->renderTextureResourcesImGui();
 
         this->update(Time::deltaTime());
-        this->renderTextureResourcesImGui();
+        this->renderGameWorld();
+
+        mFrameBuffer.unbind();
+
         mMouseActionController.Update(getActiveScene()->getCamera(), getActiveScene()->getGameObjects());
 
-        // Rendering
+        // End imgui frame and render
         ImGui::Render();
-
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        {
+            GLFWwindow *backup_current_context = glfwGetCurrentContext();
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+            glfwMakeContextCurrent(backup_current_context);
+        }
+
         // TODO: why have a static Time class if we are going to pass deltaTime to the update function?
         Time::update();
         glfwSwapBuffers(m_window->getGlfwWindow());
@@ -135,7 +162,7 @@ void SceneManager::renderTextureResourcesImGui()
 {
     // TODO: use this as a dummy sprite to render the texture resources change it later on.
     SpriteSheet spriteSheet = SpriteSheet("../assets/texture/spritesheet_retina.png", true, 128, 0);
-    ImGui::Text("Sprites");
+    ImGui::Begin("Sprites");
     std::shared_ptr<Texture> spriteSheetTexture = spriteSheet.getTexture();
     ImVec2 windowPos = ImGui::GetWindowPos();
     ImVec2 windowSize = ImGui::GetWindowSize();
@@ -144,8 +171,8 @@ void SceneManager::renderTextureResourcesImGui()
     int id = 0;
     for (Sprite sprite : spriteSheet.getSprites())
     {
-        float spriteWidth = spriteSheet.getSubTextureSize();
-        float spriteHeight = spriteSheet.getSubTextureSize();
+        float imgButtonWidth = 32;
+        float imgButtonHeight = 32;
         std::vector<glm::vec2> textureCoordinates = sprite.getTextureCoordinates();
         ImTextureID texId = (ImTextureID)(uintptr_t)spriteSheetTexture->getId();
 
@@ -154,7 +181,7 @@ void SceneManager::renderTextureResourcesImGui()
         if (ImGui::ImageButton(
                 "",
                 texId,
-                ImVec2(spriteWidth, spriteHeight),
+                ImVec2(imgButtonWidth, imgButtonHeight),
                 ImVec2(textureCoordinates[0].x,
                        textureCoordinates[0].y), // uv0 = top-left
                 ImVec2(textureCoordinates[2].x,
@@ -174,13 +201,54 @@ void SceneManager::renderTextureResourcesImGui()
 
         ImVec2 lastSpritePosition = ImGui::GetItemRectMax();
         float lastSpriteX2 = lastSpritePosition.x;
-        float nextButtonX2 = lastSpriteX2 + spriteWidth;
+        float nextButtonX2 = lastSpriteX2 + imgButtonWidth;
         if (id + 1 < spriteSheet.getSprites().size() && nextButtonX2 < windowX2)
         {
             ImGui::SameLine();
         }
         id++;
     }
+
+    ImGui::End();
+}
+
+void SceneManager::renderGameWorld()
+{
+    ImGui::Begin("Game World");
+
+    // The custom frame buffer we are using is the
+    // same as glfwGetFramebufferSize, so we can use it
+    // to calculate the aspect ratio for the ImGui image
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(m_window->getGlfwWindow(), &fbWidth, &fbHeight);
+    float scale = 1.0f;
+    float renderWidth = fbWidth * scale;
+    float renderHeight = fbHeight * scale;
+    float aspectRatio = renderWidth / renderHeight;
+
+    // Inside ImGui window
+    ImVec2 contentSize = ImGui::GetContentRegionAvail();
+    float contentAspect = contentSize.x / contentSize.y;
+
+    ImVec2 imgSize;
+    if (contentAspect > aspectRatio)
+    {
+        // ImGui Window is wider than framebuffer -> pad width
+        imgSize.y = contentSize.y;
+        imgSize.x = imgSize.y * aspectRatio;
+    }
+    else
+    {
+        // ImGui Window is taller than framebuffer -> pad height
+        imgSize.x = contentSize.x;
+        imgSize.y = imgSize.x / aspectRatio;
+    }
+
+    // Render framebuffer texture (off-screen rendered texture)
+    unsigned int framebufferTexture = mFrameBuffer.getColorTexture();
+    ImGui::Image(framebufferTexture, imgSize, ImVec2{0, 1}, ImVec2{1, 0});
+
+    ImGui::End();
 }
 
 Scene *SceneManager::getActiveScene()

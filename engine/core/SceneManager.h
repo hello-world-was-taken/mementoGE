@@ -9,6 +9,7 @@
 #include "core/Window.h"
 #include "core/EventHandler.h"
 #include "core/MouseActionController.h"
+#include "opengl/FrameBuffer.h"
 
 class SceneManager;
 
@@ -33,6 +34,7 @@ public:
     void addScene(const char *sceneName, Scene &&scene);
     void removeScene(const char *sceneName);
     void renderTextureResourcesImGui();
+    void renderGameWorld();
     void getScene(const char *sceneName);
     Scene *getActiveScene();
     void setActiveScene(const char *sceneName);
@@ -43,6 +45,7 @@ private:
     std::map<std::string, Scene> m_scenes;
     Scene *m_activeScene = nullptr;
     Window *m_window = nullptr;
+    FrameBuffer mFrameBuffer;
     const EventHandler &mEventHandler;
     EventHandlerFunction m_eventHandlerFunction;
     MouseActionController mMouseActionController;

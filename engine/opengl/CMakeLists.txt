@@ -13,6 +13,7 @@ add_library(${PROJECT_NAME} STATIC
     VertexBuffer.cpp
     VertexArray.cpp
     Shader.cpp
+    FrameBuffer.cpp
 )
 
 target_link_directories(${PROJECT_NAME}

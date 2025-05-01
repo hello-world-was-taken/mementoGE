@@ -100,13 +100,6 @@ void Window::frameBufferSizeResizeCallback(GLFWwindow *window, int width, int he
     Camera *cam = static_cast<Camera *>(glfwGetWindowUserPointer(window));
     if (cam != nullptr)
     {
-        int winW, winH, fbW, fbH;
-        glfwGetWindowSize(window, &winW, &winH);
-        glfwGetFramebufferSize(window, &fbW, &fbH);
-
-        std::cout << "Window Size: " << winW << "x" << winH << "\n";
-        std::cout << "Framebuffer Size: " << fbW << "x" << fbH << "\n";
-
         cam->onWindowResize(fbWidth, fbHeight);
     }
 }
@@ -123,6 +116,8 @@ void Window::frameBufferSizeResizeCallback(GLFWwindow *window, int width, int he
     framebuffer size.
 
     https://www.glfw.org/docs/3.3/window_guide.html#window_fbsize
+
+    NOTE: we are now using our own framebuffer to render to with imgui docking. For now the glfwGetFramebufferSize is the same as our custom frame buffer size it is okay.
 */
 void Window::updateViewPort()
 {
