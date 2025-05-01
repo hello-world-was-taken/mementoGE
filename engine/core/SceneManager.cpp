@@ -71,7 +71,7 @@ void SceneManager::gameLoop()
 
         this->update(Time::deltaTime());
         this->renderTextureResourcesImGui();
-        mMouseActionController.Update(getActiveScene()->getCamera());
+        mMouseActionController.Update(getActiveScene()->getCamera(), getActiveScene()->getGameObjects());
 
         // Rendering
         ImGui::Render();

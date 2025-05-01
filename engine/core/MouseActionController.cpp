@@ -12,13 +12,26 @@ void MouseActionController::SetActiveObject(GameObject &object)
     activeObject = &object;
 }
 
-void MouseActionController::Update(std::shared_ptr<Camera> camera)
+void MouseActionController::Update(std::shared_ptr<Camera> camera, std::vector<GameObject> &gameObjects)
 {
-    if (!activeObject)
-        return;
-
     MouseListener *mouse = MouseListener::getListener();
     glm::vec2 mouseWorldPos = mouse->getWorldCoordinates(camera);
+
+    if (!activeObject)
+    {
+        if (mouse->isLeftMouseClicked())
+        {
+            for (GameObject &obj : gameObjects)
+            {
+                if (obj.containsPoint(mouseWorldPos))
+                {
+                    SetActiveObject(obj);
+                    break;
+                }
+            }
+        }
+        return;
+    }
 
     // Assume grid size is equal to the object's width.
     // TODO: is there a scenario where we would want to change this?

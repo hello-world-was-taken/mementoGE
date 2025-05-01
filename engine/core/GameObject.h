@@ -32,7 +32,7 @@ public:
     }
 
     template <typename Component>
-    Component &getComponent()
+    Component &getComponent() const
     {
         if (!hasComponent<Component>())
         {
@@ -59,7 +59,11 @@ public:
     const std::string &getTag() const;
 
     // TODO: why are we returning a copy here?
-    std::vector<glm::vec3> getQuad();
+    std::vector<glm::vec3> getQuad() const;
+    std::vector<glm::vec3> getWorldCoordinateQuad() const;
+
+    // mouse press detection
+    bool containsPoint(glm::vec2 worldPoint) const;
 
     // TODO: Debug function, remove later
     void getId() const

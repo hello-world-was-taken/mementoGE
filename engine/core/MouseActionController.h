@@ -11,7 +11,9 @@ public:
     MouseActionController();
 
     void SetActiveObject(GameObject& object);
-    void Update(std::shared_ptr<Camera> camera); // camera required for world-space conversion
+    // camera required for world-space conversion
+    // game object required for selection detection
+    void Update(std::shared_ptr<Camera> camera, std::vector<GameObject> &gameObjects);
 
 private:
     GameObject* activeObject;

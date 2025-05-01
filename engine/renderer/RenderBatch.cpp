@@ -69,10 +69,8 @@ void RenderBatch::updateVertexBuffer()
 
         Transform transform = gameObject.getComponent<Transform>();
 
-        // This is actually the model matrix of the game object. And gameObject->getQuad() gives me the local
-        // coordinate of my game object
-        glm::mat4x4 modelMatrix = transform.getModelMatrix();
-        std::vector<glm::vec3> transformedQuad = transformQuad(modelMatrix, gameObject.getQuad());
+        // The world coordinate is model matrix * local quad.
+        std::vector<glm::vec3> transformedQuad = gameObject.getWorldCoordinateQuad();
 
         if (gameObject.hasComponent<Sprite>())
         {
@@ -90,19 +88,6 @@ void RenderBatch::updateVertexBuffer()
 
     // update the vertex buffer
     mp_vb->updateBufferData(m_vertices);
-}
-
-// TODO: shouldn't this be done in the GPU? It shouldn't matter that much for 2D, but as a principle.
-// Also is it possible to do that if we want to draw the batch in a single draw call?
-std::vector<glm::vec3> RenderBatch::transformQuad(glm::mat4x4 modelMatrix, std::vector<glm::vec3> quad)
-{
-    std::vector<glm::vec3> transformedQuad = quad;
-    for (int i = 0; i < quad.size(); i++)
-    {
-        transformedQuad[i] = modelMatrix * glm::vec4(quad[i], 1.0f);
-    }
-
-    return transformedQuad;
 }
 
 // TODO: why is this function creating an index buffer?

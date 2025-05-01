@@ -75,7 +75,7 @@ const std::string &GameObject::getTag() const
     return mTag;
 }
 
-std::vector<glm::vec3> GameObject::getQuad()
+std::vector<glm::vec3> GameObject::getQuad() const
 {
     return std::vector<glm::vec3>({{0.0f, 1.0f * m_height, 0.0f},             // top left
                                    {0.0f, 0.0f, 0.0f},                        // bottom left
@@ -83,9 +83,34 @@ std::vector<glm::vec3> GameObject::getQuad()
                                    {1.0f * m_width, 1.0f * m_height, 0.0f}}); // top right
 }
 
+// TODO: shouldn't this be done in the GPU? It shouldn't matter that much for 2D, but as a principle.
+// Also is it possible to do that if we want to draw the batch in a single draw call?
+std::vector<glm::vec3> GameObject::getWorldCoordinateQuad() const
+{
+    Transform transform = getComponent<Transform>();
+    glm::mat4x4 modelMatrix = transform.getModelMatrix();
+    std::vector<glm::vec3> quad = getQuad();
+    std::vector<glm::vec3> transformedQuad = quad;
+    for (int i = 0; i < quad.size(); i++)
+    {
+        transformedQuad[i] = modelMatrix * glm::vec4(quad[i], 1.0f);
+    }
+
+    return transformedQuad;
+}
+
 void GameObject::updateEntityReference(entt::registry &registry)
 {
     m_registry = &registry;
+}
+
+// TODO: we can update this to use spatial grid or quadtree as an optimization
+bool GameObject::containsPoint(glm::vec2 worldPoint) const
+{
+    std::vector<glm::vec3> worldQuad = getWorldCoordinateQuad();
+    glm::vec2 topLeft = worldQuad[0];
+    return topLeft.x <= worldPoint.x && worldPoint.x <= topLeft.x + m_width &&
+           topLeft.y >= worldPoint.y && worldPoint.y >= topLeft.y - m_height;
 }
 
 bool GameObject::serialize(YAML::Emitter &out)
