@@ -9,6 +9,7 @@
 #include "core/Sprite.h"
 #include "core/SpriteSheet.h"
 #include "core/GameObject.h"
+#include "core/Camera.h"
 
 SceneManager::SceneManager(Window *window, const EventHandler &eventHandler)
     : m_window{window},
@@ -28,6 +29,16 @@ void SceneManager::start()
         std::cout << "No active m_scene found" << std::endl;
         return;
     }
+    // TODO: improve the it to avoid such a gymnastics
+    std::shared_ptr<Camera> camera = m_activeScene->getCamera();
+    m_window->setUserData(camera.get());
+
+    // TODO: Improve this
+    // Before starting the scene we mock a window resize, since our
+    // camera is not instantiated with framebuffer rather just the
+    // window size. Since we don't use the actual window size, we'll
+    // pass -1.
+    m_window->frameBufferSizeResizeCallback(m_window->getGlfwWindow(), -1, -1);
     m_activeScene->start();
 }
 

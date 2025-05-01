@@ -1,6 +1,7 @@
 #include "core/Window.h"
 #include "core/MouseListener.h"
 #include "core/EventHandler.h"
+#include "core/Camera.h"
 
 Window::Window(MouseListener listener, EventHandler &eventHandler, float width, float height)
     : m_width(width), m_height(height), m_mouse_listener(listener), mEventHandler(eventHandler)
@@ -58,6 +59,8 @@ void Window::setupWindowHints() const
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    // to avoid Letterboxing since we are using a virtual aspect ratio
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
@@ -87,7 +90,25 @@ GLFWwindow *Window::getGlfwWindow()
 
 void Window::frameBufferSizeResizeCallback(GLFWwindow *window, int width, int height)
 {
-    glViewport(0, 0, width, height);
+    // using framebuffer size instead of window size
+    // because of the difference in window size and actual
+    // pixels for high DPI devices like mac retina dispaly.
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+    glViewport(0, 0, fbWidth, fbHeight);
+
+    Camera *cam = static_cast<Camera *>(glfwGetWindowUserPointer(window));
+    if (cam != nullptr)
+    {
+        int winW, winH, fbW, fbH;
+        glfwGetWindowSize(window, &winW, &winH);
+        glfwGetFramebufferSize(window, &fbW, &fbH);
+
+        std::cout << "Window Size: " << winW << "x" << winH << "\n";
+        std::cout << "Framebuffer Size: " << fbW << "x" << fbH << "\n";
+
+        cam->onWindowResize(fbWidth, fbHeight);
+    }
 }
 
 /*
@@ -113,4 +134,11 @@ void Window::updateViewPort()
 void Window::closeWindow()
 {
     glfwSetWindowShouldClose(m_glfw_window, true);
+}
+
+// Set pointers to the camera object, so that we'll be able
+// to use it inside glfw callback functions like resizing.
+void Window::setUserData(Camera *c)
+{
+    glfwSetWindowUserPointer(m_glfw_window, c);
 }

@@ -48,7 +48,8 @@ void eventHandler2(Window &window, SceneManager *sceneManager, const EventHandle
 Application::Application()
     : mMouseListener{},
       // TODO: listener should be passed as a reference
-      mWindow{mMouseListener, mEventHandler, 800, 600},
+      // using 16:9 for window size to match our virtual screen setup
+      mWindow{mMouseListener, mEventHandler, 1280, 720},
       mSceneManager{&mWindow, mEventHandler}
 {
 }

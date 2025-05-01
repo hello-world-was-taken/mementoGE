@@ -11,7 +11,9 @@ Camera::Camera(float width, float height) : m_width(width), m_height(height)
     m_position = glm::vec3(0.0f);
 
     updateView();
-    updateProjection();
+    // TODO: this is not using the framebuffer when we
+    // instantiate it in the scene
+    updateProjection(width, height);
 }
 
 Camera::~Camera()
@@ -29,12 +31,35 @@ void Camera::updateView()
         camera_up);
 }
 
-// TODO: Rather than using the fixed camera width and height for projection matrix, use the framebuffer width and height which gets adjusted during window resize. So that our texture doesn't get stretched or squashed while resizing.
-void Camera::updateProjection()
+// using virtual aspect ratio to avoid squishing and stretching
+void Camera::updateProjection(float fbWidth, float fbHeight)
 {
+    float aspectFramebuffer = fbWidth / fbHeight;
+    float aspectVirtual = m_width / m_height;
+
+    float newWidth = m_width;
+    float newHeight = m_height;
+
+    if (aspectFramebuffer > aspectVirtual)
+    {
+        // Framebuffer is wider than virtual
+        newWidth = m_height * aspectFramebuffer;
+    }
+    else
+    {
+        // Framebuffer is taller than virtual
+        newHeight = m_width / aspectFramebuffer;
+    }
+
     m_projection = glm::ortho(
-        0.0f, m_width,
-        0.0f, m_height, -100.0f, 100.0f); // -1 to 1 in depth (near and far planes)
+        0.0f, newWidth,
+        0.0f, newHeight,
+        -100.0f, 100.0f);
+}
+
+void Camera::onWindowResize(int framebufferWidth, int framebufferHeight)
+{
+    updateProjection(static_cast<float>(framebufferWidth), static_cast<float>(framebufferHeight));
 }
 
 glm::mat4 Camera::getViewMatrix() const

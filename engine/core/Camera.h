@@ -2,6 +2,8 @@
 
 #include <glm/glm.hpp>
 
+#include "core/Camera.h"
+
 
 class Camera {
 private:
@@ -11,7 +13,7 @@ private:
     glm::mat4 m_view;
     glm::vec2 m_position;  // 2D camera position
 
-    void updateProjection();
+    void updateProjection(float newWidth, float newHeight);
     void updateView();
 public:
     Camera(float width, float height);
@@ -23,6 +25,7 @@ public:
     void setRotation(glm::vec3 rotation);
     void move(glm::vec3 direction);
     void rotate(glm::vec3 rotation);
+    void onWindowResize(int framebufferWidth, int framebufferHeight);
     glm::mat4 getViewMatrix() const;
     glm::mat4 getProjectionMatrix() const;
     glm::vec3 getPosition();
