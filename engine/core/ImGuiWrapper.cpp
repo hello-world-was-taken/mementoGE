@@ -12,6 +12,7 @@ void ImGuiWrapper::setupImgui(GLFWwindow *glfw_window)
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
     (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     // TODO: for now
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
@@ -70,3 +71,20 @@ void ImGuiWrapper::showImguiDemo()
         ImGui::End();
     }
 }
+
+/**
+ * @brief
+ * [submodule "lib/glfw"]
+    path = lib/glfw
+    url = https://github.com/glfw/glfw.git
+[submodule "lib/glm"]
+    path = lib/glm
+    url = https://github.com/g-truc/glm.git
+[submodule "lib/imgui"]
+    path = lib/imgui
+    url = https://github.com/ocornut/imgui.git
+[submodule "lib/yaml-cpp"]
+    path = lib/yaml-cpp
+    url = https://github.com/jbeder/yaml-cpp.git
+ *
+ */
