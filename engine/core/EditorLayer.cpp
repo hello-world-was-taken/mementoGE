@@ -16,7 +16,6 @@ namespace fs = std::filesystem;
 
 EditorLayer::EditorLayer(Window &window, const EventHandler &eventHandler)
     : m_editorCamera{std::make_shared<Camera>(m_viewportWidth, m_viewportHeight)},
-      m_mouseListener{MouseListener::getListener()},
       m_window{window},
       m_eventHandler{eventHandler}
 {
@@ -70,7 +69,7 @@ void EditorLayer::onUpdate(float deltaTime)
     m_currentScene->update(Time::deltaTime(), m_window.getGlfwWindow());
 
     handleEvents();
-    m_mouseActionController.Update(m_currentScene->getCamera(), m_currentScene->getGameObjects());
+    m_mouseActionController.Update(m_currentScene->getCamera(), m_currentScene->getGameObjects(), m_upperLeft, m_previewAreaSize, m_viewportWidth, m_viewportHeight, m_window.getGlfwWindow());
 
     onImGuiRender();
     m_frameBuffer.unbind();
@@ -88,6 +87,7 @@ void EditorLayer::onImGuiRender()
     renderSelectedTexSheetPanel();
     renderTextureListPanel();
     renderPerformancePanel();
+    ImGui::ShowMetricsWindow();
 }
 
 void EditorLayer::renderSceneViewport()
@@ -118,6 +118,9 @@ void EditorLayer::renderSceneViewport()
     // Render framebuffer texture (off-screen rendered texture)
     unsigned int framebufferTexture = m_frameBuffer.getColorTexture();
     ImGui::Image(framebufferTexture, imgSize, ImVec2{0, 1}, ImVec2{1, 0});
+
+    m_upperLeft = ImGui::GetItemRectMin();
+    m_previewAreaSize = ImGui::GetItemRectSize();
 
     ImGui::End();
 }

@@ -98,8 +98,7 @@ void Scene::update(float deltaTime, GLFWwindow *window)
 {
     m_renderBatch->render();
 
-    MouseListener *listener = MouseListener::getListener();
-    listener->getWorldCoordinates(m_camera);
+    MouseListener *listener = MouseListener::get();
 }
 
 GameObject &Scene::addGameObject(unsigned int width, unsigned int height, std::string &&tag)

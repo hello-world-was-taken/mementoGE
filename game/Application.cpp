@@ -4,6 +4,7 @@
 #include "Application.h"
 #include "engine/core/GameObject.h"
 #include "engine/core/Window.h"
+#include "engine/core/MouseListener.h"
 #include "engine/core/SceneManager.h"
 #include "engine/core/Scene.h"
 #include "engine/core/Resource.h"
@@ -14,10 +15,8 @@
 #include "util/Time.h"
 
 Application::Application(bool editorMode)
-    : mMouseListener{},
-      // TODO: listener should be passed as a reference
-      // using 16:9 for window size to match our virtual screen setup
-      mWindow{mMouseListener, mEventHandler, 1280, 720},
+    : // using 16:9 for window size to match our virtual screen setup
+      mWindow{ mEventHandler, 1280, 720},
       mSceneManager{&mWindow, mEventHandler},
       m_editorMode{editorMode},
       m_editorLayer{mWindow, mEventHandler}
@@ -72,6 +71,10 @@ void Application::update()
             ImGui::NewFrame();
 
             m_editorLayer.onUpdate(Time::deltaTime());
+
+            // The order matters. Putting it here so that our mouseDelta doesn't get wipped
+            // before we process it in mouseActionController
+            MouseListener::get()->beginFrame();
 
             // can we neatly wrap this in a function
             // End frame and render

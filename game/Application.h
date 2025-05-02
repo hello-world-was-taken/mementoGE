@@ -1,6 +1,5 @@
 #include "engine/core/Window.h"
 #include "engine/core/SceneManager.h"
-#include "engine/core/MouseListener.h"
 #include "engine/core/EventHandler.h"
 #include "engine/core/EditorLayer.h"
 
@@ -23,7 +22,6 @@ public:
     void destroy();
 
 private:
-    MouseListener mMouseListener;
     EventHandler mEventHandler{};
     Window mWindow;
     SceneManager mSceneManager;

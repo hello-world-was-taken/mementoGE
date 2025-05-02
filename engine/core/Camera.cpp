@@ -23,12 +23,8 @@ Camera::~Camera()
 // TODO: How can we improve the view?
 void Camera::updateView()
 {
-    glm::vec3 camera_front = glm::vec3(0.0f, 0.0f, -1.0f);
-    glm::vec3 camera_up = glm::vec3(0.0f, 1.0f, 0.0f);
-    m_view = glm::lookAt(
-        glm::vec3(m_position, 10.0f),
-        glm::vec3(m_position, 0.0f) + camera_front,
-        camera_up);
+    // Treat position as bottom-left of the viewport
+    m_view = glm::translate(glm::mat4(1.0f), -glm::vec3(m_position, 0.0f));
 }
 
 // using virtual aspect ratio to avoid squishing and stretching
@@ -72,8 +68,18 @@ glm::mat4 Camera::getProjectionMatrix() const
     return m_projection;
 }
 
+glm::vec3 Camera::getPosition()
+{
+    return glm::vec3(m_position, 0.0f);
+}
+void Camera::setPosition(glm::vec2 newPos)
+{
+    m_position = newPos;
+    updateView();
+}
+
 void Camera::update(float deltaTime, glm::vec2 translationVector)
 {
-    m_position = glm::vec3(m_position, 0.0f) + glm::vec3(translationVector, 0.0f);
+    m_position = glm::vec3(m_position, 0.0f) + glm::vec3(translationVector * deltaTime, 0.0f);
     updateView();
 }

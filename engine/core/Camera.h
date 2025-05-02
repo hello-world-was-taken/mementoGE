@@ -23,6 +23,7 @@ public:
     void setProjectionMatrix(float fov, float aspect_ratio, float near_plane, float far_plane);
     void setPosition(glm::vec2 position);
     void setRotation(glm::vec3 rotation);
+    
     void move(glm::vec3 direction);
     void rotate(glm::vec3 rotation);
     void onWindowResize(int framebufferWidth, int framebufferHeight);

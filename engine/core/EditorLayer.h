@@ -45,12 +45,15 @@ private:
     float m_screen_width = 32.0f * 16.0f; // 16 tiles of 32 pixels = 512 pixels
     float m_screen_height = 32.0f * 9.0f; // 9 tiles of 32 pixels = 288 pixels
 
+    // scene preview points
+    ImVec2 m_upperLeft;
+    ImVec2 m_previewAreaSize;
+
     std::map<std::string, std::shared_ptr<Scene>> m_scenes;
     std::shared_ptr<Scene> m_currentScene;
     std::string m_selectedTexturePath;
     std::shared_ptr<Camera> m_editorCamera;
 
-    MouseListener *m_mouseListener = nullptr;
     MouseActionController m_mouseActionController;
     const EventHandler &m_eventHandler;
     GridRenderer m_gridRenderer{static_cast<int>(m_screen_width), static_cast<int>(m_screen_height), 32};

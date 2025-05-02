@@ -37,7 +37,6 @@ void SceneManager::start()
 void SceneManager::update()
 {
     m_activeScene->update(Time::deltaTime(), m_window->getGlfwWindow());
-    mMouseActionController.Update(getActiveScene()->getCamera(), getActiveScene()->getGameObjects());
 }
 
 void SceneManager::loadScene(const char *sceneName)

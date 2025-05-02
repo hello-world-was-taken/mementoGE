@@ -6,103 +6,107 @@
 #include "core/Window.h"
 #include "core/MouseListener.h"
 
-MouseListener::MouseListener() {}
-
-MouseListener::~MouseListener() {}
-
-MouseListener *MouseListener::m_mouse_listener = nullptr;
-
-MouseListener *MouseListener::getListener()
+MouseListener *MouseListener::get()
 {
-    if (m_mouse_listener == nullptr)
-    {
-        m_mouse_listener = new MouseListener();
-    }
+    static MouseListener instance;
+    return &instance;
+}
 
-    return m_mouse_listener;
+void MouseListener::beginFrame()
+{
+    m_mouseDelta = {0.0f, 0.0f};
+    m_scrollDelta = {0.0f, 0.0f};
+    m_buttonPressed.clear();
+    m_buttonReleased.clear();
+}
+
+void MouseListener::endFrame()
+{
+    // TODO: is there per frame clean up we need to do?
 }
 
 void MouseListener::mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
     ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
-    // TODO: what if the user clicks on multiple buttons?
-    //       or what if the user is using a mouse with multiple buttons like the gaming ones.
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+
+    // TODO: the below one doesn't work with the custom
+    // frame buffer. Use a different one.
+    // if (ImGui::GetIO().WantCaptureMouse)
+    //     return;
+
+    auto *listener = MouseListener::get();
+
+    if (action == GLFW_PRESS)
     {
-        MouseListener *listener = getListener();
-        listener->m_is_left_mouse_clicked = true;
+        listener->m_buttonStates[button] = true;
+        listener->m_buttonPressed[button] = true;
     }
-    else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+    else if (action == GLFW_RELEASE)
     {
-
-        MouseListener *listener = getListener();
-        listener->m_is_left_mouse_clicked = false;
-        listener->m_is_dragging = false;
-    }
-}
-
-void MouseListener::cursorPositionCallback(GLFWwindow *window, double x_pos, double y_pos)
-{
-    ImGui_ImplGlfw_CursorPosCallback(window, x_pos, y_pos);
-
-    MouseListener *listener = getListener();
-
-    if (listener->m_is_left_mouse_clicked)
-    {
-        double x_offset = x_pos - listener->m_lastX;
-        double y_offset = listener->m_lastY - y_pos; // Reversed since y-coordinates go from bottom to top
-
-        std::cout << "X position: " << x_pos << " "
-                  << "Y position: " << y_pos << std::endl;
-
-        listener->m_lastX = x_pos;
-        listener->m_lastY = y_pos;
-        listener->m_is_dragging = true;
-    }
-    else
-    {
-        listener->m_lastX = x_pos;
-        listener->m_lastY = y_pos;
-        listener->m_is_dragging = false;
+        listener->m_buttonStates[button] = false;
+        listener->m_buttonReleased[button] = true;
     }
 }
 
-void MouseListener::scrollCallback(GLFWwindow *window, double x_offset, double y_offset)
+void MouseListener::cursorPositionCallback(GLFWwindow *window, double xPos, double yPos)
 {
-    ImGui_ImplGlfw_ScrollCallback(window, x_offset, y_offset);
+    ImGui_ImplGlfw_CursorPosCallback(window, xPos, yPos);
+
+    // TODO: the below one doesn't work with the custom
+    // frame buffer. Use a different one.
+    // if (ImGui::GetIO().WantCaptureMouse)
+    //     return;
+
+    auto *listener = MouseListener::get();
+    glm::vec2 newMousePos = {static_cast<float>(xPos), static_cast<float>(yPos)};
+
+    listener->m_mouseDelta.x = newMousePos.x - listener->m_mousePos.x;
+    // Reversed since y-coordinates go from bottom to top
+    listener->m_mouseDelta.y = listener->m_mousePos.y - newMousePos.y;
+
+    listener->m_mousePos = newMousePos;
 }
 
-glm::vec2 MouseListener::getWorldCoordinates(std::shared_ptr<Camera> camera)
+void MouseListener::scrollCallback(GLFWwindow *window, double xOffset, double yOffset)
 {
-    MouseListener *listener = getListener();
-    glm::mat4 inverseViewMatrix = glm::inverse(camera->getViewMatrix());
-    glm::mat4 inverseProjectionMatrix = glm::inverse(camera->getProjectionMatrix());
+    ImGui_ImplGlfw_ScrollCallback(window, xOffset, yOffset);
 
-    float screenCoordsX = listener->m_lastX;
-    float screenCoordsY = listener->m_lastY;
+    // TODO: the below one doesn't work with the custom
+    // frame buffer. Use a different one.
+    // if (ImGui::GetIO().WantCaptureMouse)
+    //     return;
 
-    // TODO: Not sure if Window::m_width and Window::m_height get updated on window resize.
-    // normalized values are between -1 and 1
-    // TODO: The values (WIDTH AND HEIGHT) are hardcoded and should be taken from the window class
-    float normalizedX = ((screenCoordsX / 1280) * 2.0f) - 1.0f;
-    // Inverted Y because OpenGL uses bottom-left as origin
-    float normalizedY = 1.0f - ((screenCoordsY / 720) * 2.0f);
-
-    // TODO: The z values are not correct and should be taken from the projection matrix
-    glm::vec4 clipCoords = glm::vec4(normalizedX, normalizedY, -1.0f, 1.0f);
-    glm::vec4 viewCoords = inverseProjectionMatrix * clipCoords;
-    viewCoords = glm::vec4(viewCoords.x, viewCoords.y, -1.0f, 0.0f);
-    glm::vec4 worldCoords = inverseViewMatrix * viewCoords;
-
-    return glm::vec2(worldCoords.x, worldCoords.y);
+    auto *listener = MouseListener::get();
+    listener->m_scrollDelta = {static_cast<float>(xOffset), static_cast<float>(yOffset)};
 }
 
-bool MouseListener::isLeftMouseClicked()
+glm::vec2 MouseListener::getMouseScreenPosition() const
 {
-    return m_is_left_mouse_clicked;
+    return m_mousePos;
 }
 
-bool MouseListener::isDragging()
+glm::vec2 MouseListener::getMouseDelta() const
 {
-    return m_is_dragging;
+    return m_mouseDelta;
+}
+
+glm::vec2 MouseListener::getScrollDelta() const
+{
+    return m_scrollDelta;
+}
+
+bool MouseListener::isMouseButtonHeld(int button) const
+{
+    auto it = m_buttonStates.find(button);
+    return it != m_buttonStates.end() && it->second;
+}
+
+bool MouseListener::wasMouseButtonPressed(int button) const
+{
+    return m_buttonPressed.find(button) != m_buttonPressed.end();
+}
+
+bool MouseListener::wasMouseButtonReleased(int button) const
+{
+    return m_buttonReleased.find(button) != m_buttonReleased.end();
 }

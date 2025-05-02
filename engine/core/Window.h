@@ -18,8 +18,8 @@
 class Window
 {
 public:
-    // TODO: MouseListener be extracted away to the EventHandler System. Also the default width height needs to go
-    Window(MouseListener mouselistener, EventHandler &eventHandler, float m_width = 1280, float m_height = 720);
+    // TODO: default width height needs to go
+    Window(EventHandler &eventHandler, float m_width = 1280, float m_height = 720);
     ~Window();
 
     void initializeWindow();
@@ -35,11 +35,10 @@ public:
 public:
     float m_width;
     float m_height;
-    MouseListener m_mouse_listener;
     EventHandler mEventHandler;
 
 private:
     GLFWwindow *m_glfw_window;
-    const char *m_title = "OpenGL Playground";
+    const char *m_title = "MementoGE";
     void setupWindowHints() const;
 };

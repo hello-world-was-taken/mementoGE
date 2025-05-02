@@ -9,22 +9,33 @@
 
 class MouseListener
 {
-private:
-    static MouseListener *m_mouse_listener;
-    bool m_is_left_mouse_clicked;
-    bool m_is_dragging;
-    float m_lastX;
-    float m_lastY;
-
 public:
-    MouseListener();
-    ~MouseListener();
+    static MouseListener *get();
 
-    static MouseListener *getListener();
     static void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
     static void cursorPositionCallback(GLFWwindow *window, double x_pos, double y_pos);
     static void scrollCallback(GLFWwindow *window, double x_offset, double y_offset);
-    glm::vec2 getWorldCoordinates(std::shared_ptr<Camera> camera);
-    bool isLeftMouseClicked();
-    bool isDragging();
+
+    void beginFrame();
+    void endFrame();
+
+    glm::vec2 getMouseScreenPosition() const;
+    glm::vec2 getMouseDelta() const;
+    glm::vec2 getScrollDelta() const;
+
+    bool isMouseButtonHeld(int button) const;
+    bool wasMouseButtonPressed(int button) const;
+    bool wasMouseButtonReleased(int button) const;
+
+private:
+    MouseListener() = default;
+
+    glm::vec2 m_mousePos = {0.0f, 0.0f};
+    glm::vec2 m_mouseDelta = {0.0f, 0.0f};
+    glm::vec2 m_scrollDelta = {0.0f, 0.0f};
+
+    std::unordered_map<int, bool> m_buttonStates;   // current frame state
+    std::unordered_map<int, bool> m_buttonPressed;  // pressed this frame
+    std::unordered_map<int, bool> m_buttonReleased; // released this frame
+
 };
