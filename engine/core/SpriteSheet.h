@@ -20,7 +20,7 @@ private:
 
 public:
     SpriteSheet(
-        std::string&& texturePath,
+        std::string texturePath,
         bool isTextureAtlas,
         unsigned int subTextureSize,
         unsigned int m_subTextureGap);

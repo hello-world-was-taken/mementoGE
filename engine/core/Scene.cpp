@@ -96,7 +96,6 @@ void Scene::start()
 
 void Scene::update(float deltaTime, GLFWwindow *window)
 {
-    mGridRenderer.render(m_camera);
     m_renderBatch->render();
 
     MouseListener *listener = MouseListener::getListener();

@@ -4,7 +4,7 @@
 #include "core/Resource.h"
 
 Sprite::Sprite(
-    std::string &&texturePath, bool isTextureAtlas)
+    std::string texturePath, bool isTextureAtlas)
 {
     m_texture = Resource::getTexture(texturePath, isTextureAtlas);
 }
@@ -19,7 +19,7 @@ Sprite::Sprite(
  * @param subTextureIndexY: The index of the subtexture in the Y direction where the origin is the bottom left corner.
  */
 Sprite::Sprite(
-    std::string &&texturePath,
+    std::string texturePath,
     bool isTextureAtlas,
     unsigned int subTextureSpanX,
     unsigned int subTextureSpanY,
@@ -53,7 +53,7 @@ Sprite::Sprite(
 }
 
 Sprite::Sprite(
-    std::string &&texturePath,
+    std::string texturePath,
     bool isTextureAtlas,
     std::vector<glm::vec2> textureCoordinates)
 : m_textureCoordinates{textureCoordinates},

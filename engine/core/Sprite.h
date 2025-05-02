@@ -26,9 +26,9 @@ public:
     // TODO: We don't need the two constructors. The first one is just a specialized version
     // of the second one. We can get away with default values.
     Sprite(
-        std::string &&texturePath, bool isTextureAtlas);
+        std::string texturePath, bool isTextureAtlas);
     Sprite(
-        std::string &&texturePath,
+        std::string texturePath,
         bool isTextureAtlas,
         unsigned int subTextureSpanX,
         unsigned int subTextureSpanY,
@@ -36,7 +36,7 @@ public:
         unsigned int subTextureIndexX,
         unsigned int subTextureIndexY);
     Sprite(
-        std::string &&texturePath,
+        std::string texturePath,
         bool isTextureAtlas,
         std::vector<glm::vec2> textureCoordinates);
     Sprite(); // TODO: Should only be used for serialization

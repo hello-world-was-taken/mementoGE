@@ -1,3 +1,7 @@
+#ifdef __APPLE__
+#include <mach/mach.h>
+#endif
+
 #include <imgui.h>
 #include <filesystem>
 #include <fstream>
@@ -6,6 +10,9 @@
 #include "core/EditorLayer.h"
 #include "core/SpriteSheet.h"
 #include "core/ImGuiWrapper.h"
+#include "core/Camera.h"
+
+namespace fs = std::filesystem;
 
 EditorLayer::EditorLayer(Window &window, const EventHandler &eventHandler)
     : m_editorCamera{std::make_shared<Camera>(m_viewportWidth, m_viewportHeight)},
@@ -51,7 +58,6 @@ void EditorLayer::setScene(std::shared_ptr<Scene> scene)
 
 void EditorLayer::onUpdate(float deltaTime)
 {
-    // Scene preview start
     m_frameBuffer.bind();
 
     ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
@@ -60,10 +66,11 @@ void EditorLayer::onUpdate(float deltaTime)
     glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    handleEvents();
+    renderGrid();
     m_currentScene->update(Time::deltaTime(), m_window.getGlfwWindow());
+
+    handleEvents();
     m_mouseActionController.Update(m_currentScene->getCamera(), m_currentScene->getGameObjects());
-    // Scene preview end
 
     onImGuiRender();
     m_frameBuffer.unbind();
@@ -75,11 +82,12 @@ void EditorLayer::onImGuiRender()
         return;
 
     ImGuiWrapper::beginDockspace();
-    ImGuiWrapper::showImguiDemo();
 
     renderSceneViewport();
     renderPropertiesPanel();
-    renderResourcesPanel();
+    renderSelectedTexSheetPanel();
+    renderTextureListPanel();
+    renderPerformancePanel();
 }
 
 void EditorLayer::renderSceneViewport()
@@ -139,10 +147,10 @@ void EditorLayer::renderPropertiesPanel()
     ImGui::End();
 }
 
-void EditorLayer::renderResourcesPanel()
+void EditorLayer::renderSelectedTexSheetPanel()
 {
     // TODO: use this as a dummy sprite to render the texture resources change it later on.
-    SpriteSheet spriteSheet = SpriteSheet("../assets/texture/spritesheet_retina.png", true, 128, 0);
+    SpriteSheet spriteSheet = SpriteSheet(m_selectedTexturePath, true, 128, 0);
     ImGui::Begin("Sprites");
     std::shared_ptr<Texture> spriteSheetTexture = spriteSheet.getTexture();
     ImVec2 windowPos = ImGui::GetWindowPos();
@@ -172,7 +180,7 @@ void EditorLayer::renderResourcesPanel()
         {
             m_currentScene->addGameObject(32, 32, "_new");
             m_currentScene->getActiveGameObject().addComponent<Sprite>(
-                "../assets/texture/spritesheet_retina.png",
+                m_selectedTexturePath,
                 true,
                 sprite.getTextureCoordinates());
             m_mouseActionController.SetActiveObject(m_currentScene->getActiveGameObject());
@@ -190,6 +198,110 @@ void EditorLayer::renderResourcesPanel()
     }
 
     ImGui::End();
+}
+
+void EditorLayer::renderPerformancePanel()
+{
+    ImGuiIO &io = ImGui::GetIO();
+    static float frameTimes[100] = {};
+    static int frameIndex = 0;
+    static int counter = 0;
+    static float f = 0.0f;
+    static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+    frameTimes[frameIndex] = 1000.0f / io.Framerate; // ms
+    frameIndex = (frameIndex + 1) % IM_ARRAYSIZE(frameTimes);
+
+    ImGui::Begin("Performance Stats");
+
+    ImGui::Text("FPS: %.1f", io.Framerate);
+    ImGui::Text("Frame Time: %.3f ms", 1000.0f / io.Framerate);
+    ImGui::Text("Delta Time: %.4f s", io.DeltaTime);
+
+    ImGui::PlotLines("Frame Time (ms)", frameTimes, IM_ARRAYSIZE(frameTimes), frameIndex, nullptr, 0.0f, 50.0f, ImVec2(0, 80));
+
+#ifdef _WIN32
+    // Windows-specific memory usage
+    PROCESS_MEMORY_COUNTERS memInfo;
+    if (GetProcessMemoryInfo(GetCurrentProcess(), &memInfo, sizeof(memInfo)))
+    {
+        SIZE_T physMemUsed = memInfo.WorkingSetSize;
+        ImGui::Text("Memory Usage: %.2f MB", physMemUsed / (1024.0f * 1024.0f));
+    }
+#elif defined(__APPLE__)
+    // macOS-specific memory usage
+    mach_task_basic_info info;
+    mach_msg_type_number_t infoCount = MACH_TASK_BASIC_INFO_COUNT;
+
+    if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO,
+                  (task_info_t)&info, &infoCount) == KERN_SUCCESS)
+    {
+        double memUsedMB = static_cast<double>(info.resident_size) / (1024.0 * 1024.0);
+        ImGui::Text("Memory Usage: %.2f MB", memUsedMB);
+    }
+#endif
+
+    // int g_drawCallCount;
+    // int g_renderedSpriteCount;
+    // size_t g_activeGameObjects;
+
+    // ImGui::Text("Draw Calls: %d", g_drawCallCount);
+    // ImGui::Text("Rendered Sprites: %d", g_renderedSpriteCount);
+    // ImGui::Text("Active GameObjects: %zu", g_activeGameObjects);
+
+    // UI demo controls (optional, useful for toggles)
+    ImGui::Separator();
+    ImGui::Text("UI Test Controls:");
+    ImGui::ColorEdit3("Editor Clear Color", (float *)&clear_color);
+    ImGui::SameLine();
+
+    ImGui::End();
+}
+
+void EditorLayer::renderGrid()
+{
+    if (!m_currentScene)
+        return;
+
+    std::shared_ptr<Camera> cam = m_currentScene->getCamera();
+    m_gridRenderer.render(cam);
+}
+
+void EditorLayer::renderTextureListPanel()
+{
+    ImGui::Begin("Texture Resources");
+    auto textures = getTextureFiles("../assets/texture");
+
+    for (const auto &texturePath : textures)
+    {
+        std::string fileName = fs::path(texturePath).filename().string();
+
+        if (ImGui::Selectable(fileName.c_str(), m_selectedTexturePath == texturePath))
+        {
+            m_selectedTexturePath = texturePath;
+        }
+    }
+
+    ImGui::End();
+}
+
+std::vector<std::string> EditorLayer::getTextureFiles(const std::string &folderPath)
+{
+    std::vector<std::string> textures;
+    for (const auto &file : fs::directory_iterator(folderPath))
+    {
+        if (file.is_regular_file())
+        {
+            std::string ext = file.path().extension().string();
+            if (ext == ".png" || ext == ".jpg" || ext == ".jpeg")
+            {
+                textures.push_back(file.path().string());
+            }
+        }
+    }
+
+    // TODO: returning a copy everytime it gets called
+    return textures;
 }
 
 void EditorLayer::handleSceneInteraction()

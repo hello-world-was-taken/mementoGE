@@ -4,7 +4,7 @@
 #include "core/Resource.h"
 
 SpriteSheet::SpriteSheet(
-    std::string &&texturePath,
+    std::string texturePath,
     bool isTextureAtlas,
     unsigned int subTextureSize,
     unsigned int subTextureGap)
@@ -37,7 +37,7 @@ void SpriteSheet::initializeSprites()
         for (unsigned int x = 0; x < maxHorizontalSpriteCount; x++)
         {
             m_sprites.push_back(Sprite(
-                mTexturePath.c_str(), // TODO: copying to c_str, since Sprite is moving the texture path name
+                mTexturePath,
                 mIsTextureAtlas,
                 1,
                 1,
