@@ -1,10 +1,8 @@
 #include <yaml-cpp/yaml.h>
-#include <imgui.h>
 #include <filesystem>
 #include <fstream>
 
 #include "core/SceneManager.h"
-#include "core/ImGuiWrapper.h"
 #include "core/Resource.h"
 #include "core/Sprite.h"
 #include "core/SpriteSheet.h"
@@ -13,7 +11,6 @@
 
 SceneManager::SceneManager(Window *window, const EventHandler &eventHandler)
     : m_window{window},
-      mFrameBuffer{window->getGlfwWindow()},
       mEventHandler{eventHandler}
 {
 }
@@ -34,94 +31,13 @@ void SceneManager::start()
     std::shared_ptr<Camera> camera = m_activeScene->getCamera();
     m_window->setUserData(camera.get());
 
-    // TODO: Improve this
-    // Before starting the scene we mock a window resize, since our
-    // camera is not instantiated with framebuffer rather just the
-    // window size. Since we don't use the actual window size, we'll
-    // pass -1.
-    m_window->frameBufferSizeResizeCallback(m_window->getGlfwWindow(), -1, -1);
-    mFrameBuffer.bind();
     m_activeScene->start();
-    mFrameBuffer.unbind();
 }
 
-void SceneManager::update(float deltaTime)
+void SceneManager::update()
 {
-    if (m_activeScene == nullptr)
-    {
-        std::cout << "No active m_scene found" << std::endl;
-        return;
-    }
-    m_eventHandlerFunction(*m_window, this, mEventHandler);
-
-    m_activeScene->update(deltaTime, m_window->getGlfwWindow());
-}
-
-void SceneManager::gameLoop()
-{
-    ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
-
-    ImGuiWrapper::setupImgui(m_window->getGlfwWindow());
-    glfwSwapInterval(1);
-    // start scene manager by loading the first scene
-    this->start();
-
-    while (!glfwWindowShouldClose(m_window->getGlfwWindow()))
-    {
-        glfwPollEvents();
-
-        mFrameBuffer.bind();
-
-        // clear screen
-        glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        // Start the Dear ImGui frame
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-
-        ImGuiWrapper::beginDockspace();
-        ImGuiWrapper::showImguiDemo();
-        this->renderTextureResourcesImGui();
-
-        this->update(Time::deltaTime());
-        this->renderGameWorld();
-
-        mFrameBuffer.unbind();
-
-        mMouseActionController.Update(getActiveScene()->getCamera(), getActiveScene()->getGameObjects());
-
-        // End imgui frame and render
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-        if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-        {
-            GLFWwindow *backup_current_context = glfwGetCurrentContext();
-            ImGui::UpdatePlatformWindows();
-            ImGui::RenderPlatformWindowsDefault();
-            glfwMakeContextCurrent(backup_current_context);
-        }
-
-        // TODO: why have a static Time class if we are going to pass deltaTime to the update function?
-        Time::update();
-        glfwSwapBuffers(m_window->getGlfwWindow());
-    }
-
-    this->serialize();
-    glfwTerminate();
-    exit(EXIT_SUCCESS);
-}
-
-GameObject &SceneManager::getActiveGameObject() const
-{
-    return m_activeScene->getActiveGameObject();
-}
-
-void SceneManager::setEventHandler(EventHandlerFunction eventHandler)
-{
-    m_eventHandlerFunction = eventHandler;
+    m_activeScene->update(Time::deltaTime(), m_window->getGlfwWindow());
+    mMouseActionController.Update(getActiveScene()->getCamera(), getActiveScene()->getGameObjects());
 }
 
 void SceneManager::loadScene(const char *sceneName)
@@ -156,99 +72,6 @@ void SceneManager::addScene(const char *sceneName, Scene &&scene)
 void SceneManager::removeScene(const char *sceneName)
 {
     m_scenes.erase(sceneName);
-}
-
-void SceneManager::renderTextureResourcesImGui()
-{
-    // TODO: use this as a dummy sprite to render the texture resources change it later on.
-    SpriteSheet spriteSheet = SpriteSheet("../assets/texture/spritesheet_retina.png", true, 128, 0);
-    ImGui::Begin("Sprites");
-    std::shared_ptr<Texture> spriteSheetTexture = spriteSheet.getTexture();
-    ImVec2 windowPos = ImGui::GetWindowPos();
-    ImVec2 windowSize = ImGui::GetWindowSize();
-
-    float windowX2 = windowPos.x + windowSize.x;
-    int id = 0;
-    for (Sprite sprite : spriteSheet.getSprites())
-    {
-        float imgButtonWidth = 32;
-        float imgButtonHeight = 32;
-        std::vector<glm::vec2> textureCoordinates = sprite.getTextureCoordinates();
-        ImTextureID texId = (ImTextureID)(uintptr_t)spriteSheetTexture->getId();
-
-        // TODO: Add sprite IDs and use those to identify which sprite was clicked
-        ImGui::PushID(id);
-        if (ImGui::ImageButton(
-                "",
-                texId,
-                ImVec2(imgButtonWidth, imgButtonHeight),
-                ImVec2(textureCoordinates[0].x,
-                       textureCoordinates[0].y), // uv0 = top-left
-                ImVec2(textureCoordinates[2].x,
-                       textureCoordinates[2].y), // uv1 = bottom-right
-                ImVec4(0.0f, 0.0f, 0.0f, 1.0f),
-                ImVec4(1.0f, 1.0f, 1.0f, 1.0f)))
-        {
-            Scene *activeScene = getActiveScene();
-            activeScene->addGameObject(32, 32, "_new");
-            activeScene->getActiveGameObject().addComponent<Sprite>(
-                "../assets/texture/spritesheet_retina.png",
-                true,
-                sprite.getTextureCoordinates());
-            mMouseActionController.SetActiveObject(activeScene->getActiveGameObject());
-        }
-        ImGui::PopID();
-
-        ImVec2 lastSpritePosition = ImGui::GetItemRectMax();
-        float lastSpriteX2 = lastSpritePosition.x;
-        float nextButtonX2 = lastSpriteX2 + imgButtonWidth;
-        if (id + 1 < spriteSheet.getSprites().size() && nextButtonX2 < windowX2)
-        {
-            ImGui::SameLine();
-        }
-        id++;
-    }
-
-    ImGui::End();
-}
-
-void SceneManager::renderGameWorld()
-{
-    ImGui::Begin("Game World");
-
-    // The custom frame buffer we are using is the
-    // same as glfwGetFramebufferSize, so we can use it
-    // to calculate the aspect ratio for the ImGui image
-    int fbWidth, fbHeight;
-    glfwGetFramebufferSize(m_window->getGlfwWindow(), &fbWidth, &fbHeight);
-    float scale = 1.0f;
-    float renderWidth = fbWidth * scale;
-    float renderHeight = fbHeight * scale;
-    float aspectRatio = renderWidth / renderHeight;
-
-    // Inside ImGui window
-    ImVec2 contentSize = ImGui::GetContentRegionAvail();
-    float contentAspect = contentSize.x / contentSize.y;
-
-    ImVec2 imgSize;
-    if (contentAspect > aspectRatio)
-    {
-        // ImGui Window is wider than framebuffer -> pad width
-        imgSize.y = contentSize.y;
-        imgSize.x = imgSize.y * aspectRatio;
-    }
-    else
-    {
-        // ImGui Window is taller than framebuffer -> pad height
-        imgSize.x = contentSize.x;
-        imgSize.y = imgSize.x / aspectRatio;
-    }
-
-    // Render framebuffer texture (off-screen rendered texture)
-    unsigned int framebufferTexture = mFrameBuffer.getColorTexture();
-    ImGui::Image(framebufferTexture, imgSize, ImVec2{0, 1}, ImVec2{1, 0});
-
-    ImGui::End();
 }
 
 Scene *SceneManager::getActiveScene()

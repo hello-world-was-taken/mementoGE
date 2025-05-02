@@ -16,7 +16,7 @@ public:
      * @param width The width of the framebuffer.
      * @param height The height of the framebuffer.
      */
-    FrameBuffer(GLFWwindow *window, float scale = 1.0f);
+    FrameBuffer(int width, int height);
     ~FrameBuffer();
 
     void bind() const;

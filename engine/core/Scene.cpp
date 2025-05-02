@@ -91,20 +91,13 @@ Scene::~Scene()
 
 void Scene::start()
 {
-    // TODO: can we pass the user character here and update that as the camera moves as well?
-    // Camera moves right -> user moves right and environment moves left
     m_renderBatch = new RenderBatch(m_camera, m_gameObjects);
-
-    mGridRenderer.render(m_camera);
-    m_renderBatch->render();
 }
 
 void Scene::update(float deltaTime, GLFWwindow *window)
 {
     mGridRenderer.render(m_camera);
     m_renderBatch->render();
-
-    renderActiveGameObjectPropsImGui();
 
     MouseListener *listener = MouseListener::getListener();
     listener->getWorldCoordinates(m_camera);
@@ -126,46 +119,20 @@ std::vector<GameObject> &Scene::getGameObjects()
     return m_gameObjects;
 }
 
-std::shared_ptr<Camera> Scene::getCamera()
+std::shared_ptr<Camera> Scene::getCamera() const
 {
     return m_camera;
-}
-
-void Scene::renderActiveGameObjectPropsImGui()
-{
-    if (m_gameObjects.size() == 0)
-    {
-        return;
-    }
-    ImGui::Begin("Properties");
-
-    ImGui::Text("Size");
-    int width = getActiveGameObject().getWidth();
-    int height = getActiveGameObject().getHeight();
-    ImGui::DragInt("Width", &width);
-    ImGui::DragInt("Height", &height);
-    ImGui::Separator();
-
-    ImGui::Text("Transform");
-    Transform &transform = getActiveGameObject().getComponent<Transform>();
-    ImGui::DragFloat("x", &transform.getPosition()->x);
-    ImGui::DragFloat("y", &transform.getPosition()->y);
-    ImGui::DragFloat("z", &transform.getPosition()->z);
-    ImGui::End();
 }
 
 // TODO: If no game object is present, it should throw
 GameObject &Scene::getActiveGameObject()
 {
-    // return *m_activeGameObject;
     return m_gameObjects.back();
 }
 
-// TODO: what if the game object is not part of this scene?
-bool Scene::setActiveGameObject(GameObject *gameObject)
+void Scene::setActiveGameObject(GameObject *gameObject)
 {
     m_activeGameObject = gameObject;
-    return true;
 }
 
 const std::string &Scene::getTag() const

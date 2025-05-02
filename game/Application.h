@@ -2,12 +2,13 @@
 #include "engine/core/SceneManager.h"
 #include "engine/core/MouseListener.h"
 #include "engine/core/EventHandler.h"
+#include "engine/core/EditorLayer.h"
 
 // TODO: should the name of the class be changed to Game?
 class Application
 {
 public:
-    Application();
+    Application(bool editorMode = false);
     ~Application();
 
     /**
@@ -23,11 +24,13 @@ public:
 
 private:
     MouseListener mMouseListener;
-    // TODO: can we improve this?
     EventHandler mEventHandler{};
     Window mWindow;
     SceneManager mSceneManager;
+    EditorLayer m_editorLayer;
     // TODO: what is the advantage of having these here?
     // Even after being extracted to Event Handling system, do we need it here?
     GameObject* mPlayerCharacter = nullptr;
+
+    bool m_editorMode;
 };

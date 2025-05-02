@@ -27,6 +27,7 @@ add_library(${PROJECT_NAME} STATIC
     core/Event.cpp
     core/EventHandler.cpp
     core/MouseActionController.cpp
+    core/EditorLayer.cpp
 
     # renderer
     renderer/RenderBatch.cpp

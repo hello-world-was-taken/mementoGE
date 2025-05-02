@@ -1,4 +1,5 @@
 #include <memory>
+#include <iostream>
 
 #include "Application.h"
 #include "engine/core/GameObject.h"
@@ -10,47 +11,16 @@
 #include "engine/core/EventHandler.h"
 #include "engine/core/Event.h"
 
-void eventHandler2(Window &window, SceneManager *sceneManager, const EventHandler &eventHandler)
-{
-    if (eventHandler.hasActiveEvent())
-    {
-        Event e = eventHandler.getCurrentEvent();
+#include "util/Time.h"
 
-        if (e.getEventType() == EventType::Key)
-        {
-            KeyType keyType = e.getKeyType();
-
-            if (keyType == KeyType::Escape)
-            {
-                window.closeWindow();
-                std::cout << "Escape" << std::endl;
-            }
-            else if (keyType == KeyType::RightArrow)
-            {
-                sceneManager->getActiveGameObject().getComponent<Transform>().translate(500.0f * Time::deltaTime(), 0.0f, 0.0f);
-            }
-            else if (keyType == KeyType::LeftArrow)
-            {
-                sceneManager->getActiveGameObject().getComponent<Transform>().translate(-500.0f * Time::deltaTime(), 0.0f, 0.0f);
-            }
-            else if (keyType == KeyType::DownArrow)
-            {
-                sceneManager->getActiveGameObject().getComponent<Transform>().translate(0.0f, -500.0f * Time::deltaTime(), 0.0f);
-            }
-            else if (keyType == KeyType::UpArrow)
-            {
-                sceneManager->getActiveGameObject().getComponent<Transform>().translate(0.0f, 500.0f * Time::deltaTime(), 0.0f);
-            }
-        }
-    }
-}
-
-Application::Application()
+Application::Application(bool editorMode)
     : mMouseListener{},
       // TODO: listener should be passed as a reference
       // using 16:9 for window size to match our virtual screen setup
       mWindow{mMouseListener, mEventHandler, 1280, 720},
-      mSceneManager{&mWindow, mEventHandler}
+      mSceneManager{&mWindow, mEventHandler},
+      m_editorMode{editorMode},
+      m_editorLayer{mWindow, mEventHandler}
 {
 }
 
@@ -60,8 +30,15 @@ Application::~Application()
 
 void Application::setup()
 {
-    mSceneManager.deserialize();
-    mSceneManager.setEventHandler(eventHandler2);
+    if (m_editorMode)
+    {
+        m_editorLayer.onAttach();
+    }
+    else
+    {
+        mSceneManager.deserialize();
+        mSceneManager.start();
+    }
 }
 
 void Application::start()
@@ -69,25 +46,66 @@ void Application::start()
     setup();
     processInput();
     update();
-    render();
-
-    // Start the game loop
-    mSceneManager.gameLoop();
 }
 
 void Application::processInput()
 {
-    mWindow.setupCallBack();
+    if (m_editorMode)
+    {
+        mWindow.setupCallBack();
+    }
 }
 
 void Application::update()
 {
-}
+    glfwSwapInterval(1);
 
-void Application::render()
-{
+    while (!glfwWindowShouldClose(mWindow.getGlfwWindow()))
+    {
+        glfwPollEvents();
+
+        if (m_editorMode)
+        {
+            // Start the Dear ImGui frame
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
+
+            m_editorLayer.onUpdate(Time::deltaTime());
+
+            // can we neatly wrap this in a function
+            // End frame and render
+            ImGui::Render();
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+            if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+            {
+                GLFWwindow *backup_current_context = glfwGetCurrentContext();
+                ImGui::UpdatePlatformWindows();
+                ImGui::RenderPlatformWindowsDefault();
+                glfwMakeContextCurrent(backup_current_context);
+            }
+        }
+        else
+        {
+            mSceneManager.update();
+        }
+
+        glfwSwapBuffers(mWindow.getGlfwWindow());
+    }
+
+    glfwTerminate();
+    exit(EXIT_SUCCESS);
 }
 
 void Application::destroy()
 {
+    if (m_editorMode)
+    {
+        // do sth
+    }
+    else
+    {
+        mSceneManager.serialize();
+    }
 }

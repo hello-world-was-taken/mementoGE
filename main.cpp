@@ -4,8 +4,7 @@
 int main()
 {
     std::cout << "MementoGE" << std::endl;
-    Application app;
-    // app.setup();
+    Application app{true};
     app.start();
     return 0;
 }

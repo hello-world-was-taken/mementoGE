@@ -1,19 +1,11 @@
 #include <GL/glew.h>
-#include <GLFW/glfw3.h>
 #include <iostream>
 
 #include "FrameBuffer.h"
 
-FrameBuffer::FrameBuffer(GLFWwindow *window, float scale)
+FrameBuffer::FrameBuffer(int width, int height)
+: m_width{width}, m_height{height}
 {
-    int framebufferWidth, framebufferHeight;
-    glfwGetFramebufferSize(window, &framebufferWidth, &framebufferHeight);
-
-    std::cout << "frambuffer width: " << framebufferWidth << " framebuffer height: " << framebufferHeight << std::endl;
-
-    m_width = static_cast<int>(framebufferWidth * scale);
-    m_height = static_cast<int>(framebufferHeight * scale);
-
     // Generate the framebuffer
     glGenFramebuffers(1, &m_fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
@@ -50,6 +42,7 @@ FrameBuffer::~FrameBuffer()
 
 void FrameBuffer::bind() const
 {
+    glViewport(0, 0, m_width, m_height);
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 }
 
