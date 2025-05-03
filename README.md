@@ -2,6 +2,9 @@
 
 Memento is a lightweight 2D game engine built using OpenGL, GLFW, and ImGui, aimed at game prototyping and editor-based level design. It supports rendering, scene editing, input handling, and more.
 
+<img width="1279" alt="image" src="https://github.com/user-attachments/assets/bfe9ef84-afdf-4ab2-90bb-c9424ae12489" />
+
+
 ---
 
 ## ✨ Features
