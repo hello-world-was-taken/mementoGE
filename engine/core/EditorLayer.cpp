@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include <memory>
+#include <yaml-cpp/yaml.h>
 
 #include "core/EditorLayer.h"
 #include "core/SpriteSheet.h"
@@ -346,4 +347,32 @@ void EditorLayer::handleEvents()
             }
         }
     }
+}
+
+void EditorLayer::serialize()
+{
+    YAML::Emitter out;
+    out << YAML::BeginMap;
+
+    // iterate through the map of scenes
+    for (auto &[sceneName, scene] : m_scenes)
+    {
+        out << YAML::Key << sceneName;
+        out << YAML::Value << YAML::BeginMap;
+        out << YAML::Key << "Game Objects";
+        out << YAML::Value << YAML::BeginMap;
+
+        for (GameObject &gameObject : m_currentScene->getGameObjects())
+        {
+            gameObject.serialize(out);
+        }
+
+        out << YAML::EndMap;
+    }
+
+    out << YAML::EndMap;
+    std::ofstream file("../game/scene.yaml", std::ios::out | std::ios::trunc);
+    file << out.c_str();
+
+    std::cout << "Serialized scene to scene.yaml" << std::endl;
 }

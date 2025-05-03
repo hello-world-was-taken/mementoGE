@@ -23,6 +23,8 @@ public:
     void onImGuiRender();           // Render ImGui windows here
 
     void setScene(std::shared_ptr<Scene> scene);
+    //TODO: a copy of the scene manager. Keep in sync for now.
+    void serialize();
 
 private:
     void renderSceneViewport();
