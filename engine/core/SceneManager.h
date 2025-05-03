@@ -7,7 +7,6 @@
 
 #include "core/Scene.h"
 #include "core/Window.h"
-#include "core/MouseActionController.h"
 #include "opengl/FrameBuffer.h"
 
 class SceneManager
@@ -36,5 +35,4 @@ private:
     std::map<std::string, Scene> m_scenes;
     Scene *m_activeScene = nullptr;
     Window *m_window = nullptr;
-    MouseActionController mMouseActionController;
 };

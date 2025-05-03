@@ -18,13 +18,12 @@ public:
 
     glm::vec2 getWorldCoordinate(std::shared_ptr<Camera> camera, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight);
 
-    // treat imgui preview scene start as 0
+    // screen -> glfw window
+    // local -> scene preview imgui window
     glm::vec2 screenToLocal(glm::vec2 mousePos, glm::vec2 imagePos, glm::vec2 imageSize);
     glm::vec2 localToFrameBuffer(glm::vec2 localPos, glm::vec2 imageSize, int framebufferWidth, int framebufferHeight);
     glm::vec2 frameBufferToWorld(std::shared_ptr<Camera> camera, glm::vec2 fbPos, int framebufferWidth, int framebufferHeight);
 
 private:
     GameObject *m_activeObject;
-    bool m_isDraggingEmpty;
-    glm::vec2 m_lastMouseWorldPos{-1, -1};
 };

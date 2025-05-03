@@ -96,6 +96,8 @@ void Application::update()
         glfwSwapBuffers(mWindow.getGlfwWindow());
     }
 
+    destroy();
+    
     glfwTerminate();
     exit(EXIT_SUCCESS);
 }
@@ -104,7 +106,7 @@ void Application::destroy()
 {
     if (m_editorMode)
     {
-        // do sth
+        m_editorLayer.serialize();
     }
     else
     {

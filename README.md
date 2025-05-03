@@ -23,6 +23,7 @@ Memento is a lightweight 2D game engine built using OpenGL, GLFW, and ImGui, aim
 
 ### Prerequisites
 
+- **OpenGL** core.
 - **GLEW** must be installed **locally** on your system. *(Will be removed as a requirement soon — stay tuned!)*
 - A C++17-compatible compiler (e.g., GCC 9+, Clang 10+, MSVC 2019+)
 
@@ -69,17 +70,18 @@ After compiling, you can run the engine like so:
 
 - [ ] Zoom centering on mouse cursor
 - [ ] Support for touchpad gestures (pinch-to-zoom, two-finger pan)
-- [ ] Dedicated event system (abstract input handling from ImGui + GLFW)
-- [ ] Scene serialization (saving/loading scenes)
+- [ ] Dedicated event system (abstract input handling from ImGui + GLFW) <span style="color:green;">(WIP)</span>
+- [x] Scene serialization (saving/loading scenes)
 - [ ] Prefab system for reusable GameObjects
 - [ ] Remove GLEW requirement by bundling or replacing
-- [ ] Gizmo tools (translate/rotate/scale handles)
+- [ ] Gizmo tools - (translate/rotate/scale handles) <span style="color:green;">(WIP)</span>
 - [ ] Custom shader and material editing support
 - [ ] Physics integration (e.g., Box2D)
 - [ ] Audio system (OpenAL or FMOD)
 - [ ] Hot-reload shaders and assets during runtime
 - [ ] Cross-platform support (Linux)
 - [ ] Sprite based animation
+- [ ] Proper logging system
 
 🤝 Contributing
 Feel free to fork and contribute via pull requests! Bug fixes, improvements, and new features are all welcome.

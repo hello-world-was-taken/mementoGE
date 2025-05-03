@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include <memory>
+#include <yaml-cpp/yaml.h>
 
 #include "core/EditorLayer.h"
 #include "core/SpriteSheet.h"
@@ -121,6 +122,10 @@ void EditorLayer::renderSceneViewport()
 
     m_upperLeft = ImGui::GetItemRectMin();
     m_previewAreaSize = ImGui::GetItemRectSize();
+
+    // rendering it here to avoid overlap with the above
+    // scene preview imgui image
+    renderGizmos();
 
     ImGui::End();
 }
@@ -288,6 +293,48 @@ void EditorLayer::renderTextureListPanel()
     ImGui::End();
 }
 
+void EditorLayer::renderGizmos()
+{
+    if (!m_currentScene || m_currentScene->getGameObjects().empty())
+        return;
+
+    GameObject &go = m_currentScene->getActiveGameObject();
+    Transform &transform = go.getComponent<Transform>();
+    glm::vec3 *pos = transform.getPosition();
+
+    glm::vec2 screenPos = getScreenCoordinate({pos->x, pos->y});
+    ImDrawList *drawList = ImGui::GetWindowDrawList();
+
+    // Length of gizmo axis
+    float axisLength = 50.0f;
+
+    // X-axis (Green)
+    ImVec2 xStart = {screenPos.x, screenPos.y};
+    ImVec2 xEnd = ImVec2(screenPos.x + axisLength, screenPos.y);
+    drawList->AddLine(xStart, xEnd, IM_COL32(0, 255, 0, 255), 2.0f);
+    // Arrowhead for X
+    drawList->AddTriangleFilled(
+        ImVec2(xEnd.x, xEnd.y),
+        ImVec2(xEnd.x - 6, xEnd.y - 4),
+        ImVec2(xEnd.x - 6, xEnd.y + 4),
+        IM_COL32(0, 255, 0, 255));
+    // Label for X
+    drawList->AddText(ImVec2(xEnd.x + 4, xEnd.y - 6), IM_COL32(0, 255, 0, 255), "X");
+
+    // Y-axis (Blue)
+    ImVec2 yStart = {screenPos.x, screenPos.y};
+    ImVec2 yEnd = ImVec2(screenPos.x, screenPos.y - axisLength);
+    drawList->AddLine(yStart, yEnd, IM_COL32(0, 0, 255, 255), 2.0f);
+    // Arrowhead for Y
+    drawList->AddTriangleFilled(
+        ImVec2(yEnd.x, yEnd.y),
+        ImVec2(yEnd.x - 4, yEnd.y + 6),
+        ImVec2(yEnd.x + 4, yEnd.y + 6),
+        IM_COL32(0, 0, 255, 255));
+    // Label for Y
+    drawList->AddText(ImVec2(yEnd.x + 4, yEnd.y - 10), IM_COL32(0, 0, 255, 255), "Y");
+}
+
 std::vector<std::string> EditorLayer::getTextureFiles(const std::string &folderPath)
 {
     std::vector<std::string> textures;
@@ -305,6 +352,59 @@ std::vector<std::string> EditorLayer::getTextureFiles(const std::string &folderP
 
     // TODO: returning a copy everytime it gets called
     return textures;
+}
+
+glm::vec2 EditorLayer::getScreenCoordinate(glm::vec2 worldPos)
+{
+    glm::vec2 frameBufferPos = worldToFrameBuffer(worldPos);
+    glm::vec2 localPos = frameBufferToLocal(frameBufferPos);
+
+    return localToScreen(localPos);
+}
+
+glm::vec2 EditorLayer::worldToFrameBuffer(glm::vec2 worldPos)
+{
+    std::shared_ptr<Camera> camera = m_currentScene->getCamera();
+
+    glm::mat4 viewProj = camera->getProjectionMatrix() * camera->getViewMatrix();
+
+    // transform world position to clip space
+    glm::vec4 clipSpaceCoords = viewProj * glm::vec4(worldPos, 0.0f, 1.0f);
+
+    // check if w is zero (could be for certain cases like points at infinity)
+    if (clipSpaceCoords.w == 0.0f)
+    {
+        std::cout << "Warning: Invalid transformation, w = 0!" << std::endl;
+        return glm::vec2(0.0f, 0.0f);
+    }
+
+    // convert clip space to normalized device coordinates (NDC)
+    glm::vec3 ndcCoords = clipSpaceCoords / clipSpaceCoords.w;
+
+    // map NDC to screen space (viewport coordinates)
+    glm::vec2 framebufferCoords;
+    framebufferCoords.x = (ndcCoords.x + 1.0f) * 0.5f * m_viewportWidth;
+    framebufferCoords.y = (1.0f - ndcCoords.y) * 0.5f * m_viewportHeight; // flip Y-axis for imgui
+
+    // std::cout << "World Pos: (" << worldPos.x << ", " << worldPos.y << std::endl;
+    // std::cout << "Framebuffer Coords: (" << framebufferCoords.x << ", " << framebufferCoords.y << std::endl;
+
+    return framebufferCoords;
+}
+
+glm::vec2 EditorLayer::frameBufferToLocal(glm::vec2 frameBufferPos)
+{
+    float localPosX = (frameBufferPos.x / m_viewportWidth) * m_previewAreaSize.x;
+    float localPosY = (frameBufferPos.y / m_viewportHeight) * m_previewAreaSize.y;
+
+    return {localPosX, localPosY};
+}
+
+glm::vec2 EditorLayer::localToScreen(glm::vec2 localPos)
+{
+    glm::vec2 screenPos = localPos + glm::vec2{m_upperLeft.x, m_upperLeft.y};
+
+    return screenPos;
 }
 
 void EditorLayer::handleSceneInteraction()
@@ -346,4 +446,32 @@ void EditorLayer::handleEvents()
             }
         }
     }
+}
+
+void EditorLayer::serialize()
+{
+    YAML::Emitter out;
+    out << YAML::BeginMap;
+
+    // iterate through the map of scenes
+    for (auto &[sceneName, scene] : m_scenes)
+    {
+        out << YAML::Key << sceneName;
+        out << YAML::Value << YAML::BeginMap;
+        out << YAML::Key << "Game Objects";
+        out << YAML::Value << YAML::BeginMap;
+
+        for (GameObject &gameObject : m_currentScene->getGameObjects())
+        {
+            gameObject.serialize(out);
+        }
+
+        out << YAML::EndMap;
+    }
+
+    out << YAML::EndMap;
+    std::ofstream file("../game/scene.yaml", std::ios::out | std::ios::trunc);
+    file << out.c_str();
+
+    std::cout << "Serialized scene to scene.yaml" << std::endl;
 }

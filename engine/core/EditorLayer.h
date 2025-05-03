@@ -23,6 +23,8 @@ public:
     void onImGuiRender();           // Render ImGui windows here
 
     void setScene(std::shared_ptr<Scene> scene);
+    //TODO: a copy of the scene manager. Keep in sync for now.
+    void serialize();
 
 private:
     void renderSceneViewport();
@@ -31,11 +33,20 @@ private:
     void renderTextureListPanel();
     void renderGrid();
     void renderPerformancePanel();
+    void renderGizmos();
 
     void handleSceneInteraction();
     void handleEvents();
 
     std::vector<std::string> getTextureFiles(const std::string &folderPath);
+
+    // get the screen coordinates (glfw screen) from world coordinate
+    // since gizmos are imgui rendered
+    glm::vec2 getScreenCoordinate(glm::vec2 worldPos);
+    glm::vec2 worldToFrameBuffer(glm::vec2 worldPos);
+    glm::vec2 frameBufferToLocal(glm::vec2 frameBufferPos);
+    // screen -> glfw window, local -> scene preview imgui window
+    glm::vec2 localToScreen(glm::vec2 localPos);
 
     // Viewport settings
     int m_viewportWidth = 1280;

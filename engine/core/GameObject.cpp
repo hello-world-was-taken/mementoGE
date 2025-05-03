@@ -51,7 +51,6 @@ GameObject &GameObject::operator=(GameObject &&other)
 
 GameObject::~GameObject()
 {
-    std::cout << "Game Object destructor called: " << mTag << std::endl;
     // m_registry.destroy(m_entity);
 }
 
