@@ -39,6 +39,7 @@ void MouseActionController::Update(std::shared_ptr<Camera> camera, std::vector<G
         float gridSize = static_cast<float>(m_activeObject->getWidth());
 
         // Snap position: round down to nearest multiple of gridSize
+        // This should be kept in sync with GridRenderer.cpp
         float snappedX = std::floor(mouseWorldPos.x / gridSize) * gridSize;
         float snappedY = std::floor(mouseWorldPos.y / gridSize) * gridSize;
 

@@ -18,7 +18,6 @@
 #include "core/Transform.h"
 #include "core/Camera.h"
 #include "renderer/RenderBatch.h"
-#include "renderer/GridRenderer.h"
 
 class Scene
 {

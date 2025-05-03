@@ -35,6 +35,7 @@ RenderBatch::~RenderBatch()
 void RenderBatch::render()
 {
     mp_vao->bind();
+    mp_vb->bind();
 
     // repopulate the vertices with the new data
     updateVertexBuffer();
@@ -56,6 +57,7 @@ void RenderBatch::render()
     glDrawElements(GL_TRIANGLES, BATCH_SIZE * INDICES_PER_QUAD, GL_UNSIGNED_INT, nullptr);
     glCheckError("glDrawTriangles", __FILE__, __LINE__);
 
+    mp_vb->unbind();
     mp_vao->unbind();
 }
 

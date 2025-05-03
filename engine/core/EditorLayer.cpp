@@ -17,7 +17,8 @@ namespace fs = std::filesystem;
 EditorLayer::EditorLayer(Window &window, const EventHandler &eventHandler)
     : m_editorCamera{std::make_shared<Camera>(m_viewportWidth, m_viewportHeight)},
       m_window{window},
-      m_eventHandler{eventHandler}
+      m_eventHandler{eventHandler},
+      m_gridRenderer{static_cast<int>(m_screen_width), static_cast<int>(m_screen_height), 32, m_editorCamera}
 {
     // TODO: if we update our serialization method and scene.yaml doesn't adhere to that
     //       we should throw an error or remove the file

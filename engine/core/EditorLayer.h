@@ -56,7 +56,7 @@ private:
 
     MouseActionController m_mouseActionController;
     const EventHandler &m_eventHandler;
-    GridRenderer m_gridRenderer{static_cast<int>(m_screen_width), static_cast<int>(m_screen_height), 32};
+    GridRenderer m_gridRenderer;
 
     Window &m_window;
 
