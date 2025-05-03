@@ -8,8 +8,7 @@
 #include <backends/imgui_impl_opengl3.h>
 
 #include "util/Time.h"
-#include "core/MouseListener.h"
-#include "core/EventHandler.h"
+#include "core/Camera.h"
 
 // TODO: Window should not have an api that exposes internal
 // libraries it uses like GLFW. The user should be able to
@@ -19,7 +18,7 @@ class Window
 {
 public:
     // TODO: default width height needs to go
-    Window(EventHandler &eventHandler, float m_width = 1280, float m_height = 720);
+    Window(float m_width = 1280, float m_height = 720);
     ~Window();
 
     void initializeWindow();
@@ -35,7 +34,6 @@ public:
 public:
     float m_width;
     float m_height;
-    EventHandler mEventHandler;
 
 private:
     GLFWwindow *m_glfw_window;

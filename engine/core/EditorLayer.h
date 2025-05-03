@@ -15,7 +15,7 @@
 class EditorLayer
 {
 public:
-    EditorLayer(Window &window, const EventHandler &eventHandler);
+    EditorLayer(Window &window);
     ~EditorLayer();
 
     void onAttach();                // Called when the editor initializes
@@ -55,7 +55,6 @@ private:
     std::shared_ptr<Camera> m_editorCamera;
 
     MouseActionController m_mouseActionController;
-    const EventHandler &m_eventHandler;
     GridRenderer m_gridRenderer;
 
     Window &m_window;

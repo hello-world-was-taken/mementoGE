@@ -14,10 +14,9 @@
 
 namespace fs = std::filesystem;
 
-EditorLayer::EditorLayer(Window &window, const EventHandler &eventHandler)
+EditorLayer::EditorLayer(Window &window)
     : m_editorCamera{std::make_shared<Camera>(m_viewportWidth, m_viewportHeight)},
       m_window{window},
-      m_eventHandler{eventHandler},
       m_gridRenderer{static_cast<int>(m_screen_width), static_cast<int>(m_screen_height), 32, m_editorCamera}
 {
     // TODO: if we update our serialization method and scene.yaml doesn't adhere to that
@@ -315,9 +314,10 @@ void EditorLayer::handleSceneInteraction()
 
 void EditorLayer::handleEvents()
 {
-    if (m_eventHandler.hasActiveEvent())
+    auto *eventHandler = EventHandler::get();
+    if (eventHandler->hasActiveEvent())
     {
-        Event e = m_eventHandler.getCurrentEvent();
+        Event e = eventHandler->getCurrentEvent();
 
         if (e.getEventType() == EventType::Key)
         {

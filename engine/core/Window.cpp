@@ -3,8 +3,8 @@
 #include "core/EventHandler.h"
 #include "core/Camera.h"
 
-Window::Window(EventHandler &eventHandler, float width, float height)
-    : m_width(width), m_height(height), mEventHandler(eventHandler)
+Window::Window(float width, float height)
+    : m_width(width), m_height(height)
 {
     /* Init GLFW */
     if (!glfwInit())
@@ -71,7 +71,7 @@ void Window::setupCallBack() const
     glfwSetCursorPosCallback(m_glfw_window, MouseListener::cursorPositionCallback);
     glfwSetMouseButtonCallback(m_glfw_window, MouseListener::mouseButtonCallback);
     glfwSetScrollCallback(m_glfw_window, MouseListener::scrollCallback);
-    glfwSetKeyCallback(m_glfw_window, mEventHandler.glfwKeyCallBack);
+    glfwSetKeyCallback(m_glfw_window, EventHandler::glfwKeyCallBack);
 }
 
 void Window::initializeWindow()

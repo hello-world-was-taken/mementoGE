@@ -9,9 +9,8 @@
 #include "core/GameObject.h"
 #include "core/Camera.h"
 
-SceneManager::SceneManager(Window *window, const EventHandler &eventHandler)
-    : m_window{window},
-      mEventHandler{eventHandler}
+SceneManager::SceneManager(Window *window)
+    : m_window{window}
 {
 }
 
