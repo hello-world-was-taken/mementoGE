@@ -47,6 +47,10 @@ void Camera::updateProjection(float fbWidth, float fbHeight)
         newHeight = m_width / aspectFramebuffer;
     }
 
+    // apply zooming
+    newHeight *= m_zoom;
+    newWidth = newHeight * aspectFramebuffer;
+
     m_projection = glm::ortho(
         0.0f, newWidth,
         0.0f, newHeight,
@@ -82,4 +86,23 @@ void Camera::update(float deltaTime, glm::vec2 translationVector)
 {
     m_position = glm::vec3(m_position, 0.0f) + glm::vec3(translationVector * deltaTime, 0.0f);
     updateView();
+}
+
+void Camera::adjustZoom(float delta)
+{
+    // Zoom sensitivity multiplier for smoothing out
+    const float zoomSpeed = 0.1f;
+
+    m_zoom -= delta * zoomSpeed;
+    m_zoom = std::clamp(m_zoom, m_minZoom, m_maxZoom);
+}
+
+void Camera::setZoom(float zoom)
+{
+    m_zoom = zoom;
+}
+
+float Camera::getZoom() const
+{
+    return m_zoom;
 }

@@ -67,6 +67,11 @@ void MouseActionController::Update(std::shared_ptr<Camera> camera, std::vector<G
     {
         m_activeObject = nullptr;
     }
+
+    // handle zooming in and out of the editor
+    // TODO: improve the camera API
+    camera->adjustZoom(mouse->getScrollDelta().x);
+    camera->updateProjection(framebufferWidth, framebufferHeight);
 }
 
 glm::vec2 MouseActionController::getWorldCoordinate(std::shared_ptr<Camera> camera, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight)

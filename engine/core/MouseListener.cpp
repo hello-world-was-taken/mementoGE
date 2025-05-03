@@ -75,7 +75,6 @@ void MouseListener::scrollCallback(GLFWwindow *window, double xOffset, double yO
     // frame buffer. Use a different one.
     // if (ImGui::GetIO().WantCaptureMouse)
     //     return;
-
     auto *listener = MouseListener::get();
     listener->m_scrollDelta = {static_cast<float>(xOffset), static_cast<float>(yOffset)};
 }
