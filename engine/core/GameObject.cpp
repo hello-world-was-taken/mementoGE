@@ -4,6 +4,7 @@
 #include "core/GameObject.h"
 #include "core/Transform.h"
 #include "core/Sprite.h"
+#include "core/RigidBody2D.h"
 
 GameObject::GameObject(entt::registry &registry, std::string &&tag, unsigned int width, unsigned int height) : m_registry{&registry}, mTag{tag}, m_width{width}, m_height{height}
 {

@@ -31,6 +31,7 @@ private:
     void renderPropertiesPanel();
     void renderSelectedTexSheetPanel();
     void renderTextureListPanel();
+    void renderChooseFile();
     void renderGrid();
     void renderPerformancePanel();
     void renderGizmos();

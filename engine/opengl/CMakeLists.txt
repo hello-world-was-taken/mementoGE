@@ -2,12 +2,10 @@ cmake_minimum_required(VERSION 3.26.4)
 
 project(opengl)
 
-# Set C++ standard to C++17
 set(CMAKE_CXX_STANDARD 17)
 
 #target
 add_library(${PROJECT_NAME} STATIC
-    # opengl
     Texture.cpp
     IndexBuffer.cpp
     VertexBuffer.cpp
@@ -24,11 +22,9 @@ target_link_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     glfw
     yaml-cpp
-    GLEW::glew  # For this one, I installed it to the the system.
+    GLEW::glew
 )
 
-# what is the point of having a separate cmakefile if we are still
-# have similar dependencies?
 target_include_directories(${PROJECT_NAME}
     PUBLIC ${CMAKE_SOURCE_DIR}/engine/lib
     PUBLIC ${CMAKE_SOURCE_DIR}/engine/lib/glm

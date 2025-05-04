@@ -14,3 +14,9 @@
 [submodule "engine/lib/imgui"]
 	path = engine/lib/imgui
 	url = https://github.com/ocornut/imgui.git
+[submodule "engine/lib/ImGuiFileDialog"]
+	path = engine/lib/ImGuiFileDialog
+	url = git@github.com:aiekick/ImGuiFileDialog.git
+[submodule "engine/lib/box2d"]
+	path = engine/lib/box2d
+	url = git@github.com:hello-world-was-taken/box2d.git

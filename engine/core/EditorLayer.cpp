@@ -3,6 +3,7 @@
 #endif
 
 #include <imgui.h>
+#include <ImGuiFileDialog/ImGuiFileDialog.h>
 #include <filesystem>
 #include <fstream>
 #include <memory>
@@ -87,6 +88,7 @@ void EditorLayer::onImGuiRender()
     renderPropertiesPanel();
     renderSelectedTexSheetPanel();
     renderTextureListPanel();
+    renderChooseFile();
     renderPerformancePanel();
     ImGui::ShowMetricsWindow();
 }
@@ -278,8 +280,14 @@ void EditorLayer::renderGrid()
 void EditorLayer::renderTextureListPanel()
 {
     ImGui::Begin("Texture Resources");
+    if (ImGui::Button("Add Texture"))
+    {
+        ImGuiFileDialog::Instance()->OpenDialog(
+            "ChooseTexFile", "Select a Texture",
+            ".png,.jpg,.jpeg");
+    }
+    // TODO: lets avoid this call on every render
     auto textures = getTextureFiles("../assets/texture");
-
     for (const auto &texturePath : textures)
     {
         std::string fileName = fs::path(texturePath).filename().string();
@@ -291,6 +299,32 @@ void EditorLayer::renderTextureListPanel()
     }
 
     ImGui::End();
+}
+
+void EditorLayer::renderChooseFile()
+{
+    if (ImGuiFileDialog::Instance()->Display("ChooseTexFile"))
+    {
+        if (ImGuiFileDialog::Instance()->IsOk())
+        {
+            std::string selectedPath = ImGuiFileDialog::Instance()->GetFilePathName();
+            std::string fileName = ImGuiFileDialog::Instance()->GetCurrentFileName();
+            std::string destPath = "../assets/texture/" + fileName;
+
+            try
+            {
+                std::filesystem::copy_file(
+                    selectedPath, destPath,
+                    std::filesystem::copy_options::update_existing);
+            }
+            catch (const std::filesystem::filesystem_error &e)
+            {
+                std::cerr << "Failed to copy texture: " << e.what() << std::endl;
+            }
+        }
+
+        ImGuiFileDialog::Instance()->Close();
+    }
 }
 
 void EditorLayer::renderGizmos()
