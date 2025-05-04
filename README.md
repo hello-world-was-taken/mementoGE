@@ -1,21 +1,10 @@
-# Memento Game Engine
+# MementoGE
 
 Memento is a lightweight 2D game engine built using OpenGL, GLFW, and ImGui, aimed at game prototyping and editor-based level design. It supports rendering, scene editing, input handling, and more.
 
-<img width="1279" alt="image" src="https://github.com/user-attachments/assets/bfe9ef84-afdf-4ab2-90bb-c9424ae12489" />
+<img width="1276" alt="image" src="https://github.com/user-attachments/assets/40de6cf0-439d-464d-b955-3994e09a7840" />
 
 
----
-
-## ✨ Features
-
-- 🖼️ **Framebuffer-based rendering**: Render the game world into a texture and display it inside an ImGui window.
-- 🧭 **Camera system**: Supports panning and zooming via mouse and scroll input.
-- 🖱️ **Mouse input**: Drag to pan the camera, click to select objects, move with snapping.
-- 🧱 **Grid renderer**: Infinite-feeling grid aligned with camera for intuitive editing.
-- 🧩 **Modular engine**: Organized by core, rendering, editor, and scene systems.
-- 💡 **ImGui-based editor**: Custom editor layer with live tools and viewport.
-- 🎯 **High-DPI support**: Uses framebuffer size for accurate mouse and rendering behavior.
 
 ---
 
