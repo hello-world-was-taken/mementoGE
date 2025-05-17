@@ -53,5 +53,5 @@ lib/.DS_Store
 .DS_Store
 
 # exclude test game textures
-asserts/textures/*
+assets/texture
 game/scene.yaml
