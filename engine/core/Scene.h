@@ -11,6 +11,7 @@
 #include <imgui.h>
 #include <string>
 #include <yaml-cpp/yaml.h>
+#include <optional>
 
 #include "util/log_error.h"
 #include "opengl/Shader.h"
@@ -34,12 +35,12 @@ public:
     void start();
     void update(float deltaTime, GLFWwindow *window);
 
-    GameObject &addGameObject(unsigned int width, unsigned int height, std::string &&tag);
+    void addGameObject(unsigned int width, unsigned int height, std::string &&tag);
     std::vector<GameObject> &getGameObjects();
 
     std::shared_ptr<Camera> getCamera() const;
     GameObject &getActiveGameObject();
-    void setActiveGameObject(GameObject *gameObject);
+    void setActiveGameObject(entt::entity entityId);
 
     const std::string &getTag() const;
     bool serialize(YAML::Emitter &out);
@@ -55,6 +56,6 @@ private:
 
     RenderBatch *m_renderBatch = nullptr;
     std::vector<std::shared_ptr<Texture>> m_textures;
-    GameObject *m_activeGameObject = nullptr;
+    std::optional<entt::entity> m_activeEntityId;
     std::string mTag;
 };

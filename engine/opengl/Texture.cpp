@@ -43,7 +43,7 @@ Texture::~Texture()
     glDeleteTextures(1, &this->m_id);
 }
 
-unsigned int Texture::getId() const
+unsigned int Texture::getTextureId() const
 {
     return m_id;
 }

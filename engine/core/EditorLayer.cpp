@@ -173,7 +173,7 @@ void EditorLayer::renderSelectedTexSheetPanel()
         float imgButtonWidth = 32;
         float imgButtonHeight = 32;
         std::vector<glm::vec2> textureCoordinates = sprite.getTextureCoordinates();
-        ImTextureID texId = (ImTextureID)(uintptr_t)spriteSheetTexture->getId();
+        ImTextureID texId = (ImTextureID)(uintptr_t)spriteSheetTexture->getTextureId();
 
         // TODO: Add sprite IDs and use those to identify which sprite was clicked
         ImGui::PushID(id);

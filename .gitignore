@@ -51,3 +51,6 @@ out
 # exclude mac related file configs
 lib/.DS_Store
 .DS_Store
+
+# exclude test game textures
+asserts/textures/*

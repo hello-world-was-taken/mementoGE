@@ -2,6 +2,7 @@
 #include <string>
 #include <entt/entt.hpp>
 #include <yaml-cpp/yaml.h>
+#include <stdexcept>
 
 #include "core/Scene.h"
 #include "renderer/RenderBatch.h"
@@ -18,7 +19,7 @@ Scene::Scene(std::string &&tag)
 }
 
 Scene::Scene(const YAML::Node &&serializedScene)
-: m_registry{}
+    : m_registry{}
 {
     // Deserializing
     for (YAML::const_iterator it = serializedScene.begin(); it != serializedScene.end(); ++it)
@@ -34,7 +35,7 @@ Scene::Scene(const YAML::Node &&serializedScene)
         }
 
         // TODO: FIX THIS!
-        m_activeGameObject = &m_gameObjects.back();
+        m_activeEntityId = m_gameObjects.back().getEntityId();
     }
 }
 
@@ -56,12 +57,12 @@ Scene::Scene(Scene &&other)
 
     // setting other pointer variables to null_ptr
     other.m_renderBatch = nullptr;
-    other.m_activeGameObject = nullptr;
+    other.m_activeEntityId = entt::null;
     other.m_registry = NULL;
 
     // TODO: DO THIS IN A BETTER WAY
     if (m_gameObjects.size())
-        m_activeGameObject = &m_gameObjects.back();
+        m_activeEntityId = m_gameObjects.back().getEntityId();
 }
 
 Scene &Scene::operator=(Scene &&other)
@@ -73,12 +74,12 @@ Scene &Scene::operator=(Scene &&other)
     m_camera = std::move(other.m_camera);
     m_renderBatch = other.m_renderBatch;
     m_textures = std::move(other.m_textures);
-    m_activeGameObject = other.m_activeGameObject;
+    m_activeEntityId = other.m_activeEntityId;
     mTag = std::move(other.mTag);
 
     // setting other pointer variables to null_ptr
     other.m_renderBatch = nullptr;
-    other.m_activeGameObject = nullptr;
+    other.m_activeEntityId = entt::null;
 
     return *this;
 }
@@ -101,15 +102,11 @@ void Scene::update(float deltaTime, GLFWwindow *window)
     MouseListener *listener = MouseListener::get();
 }
 
-GameObject &Scene::addGameObject(unsigned int width, unsigned int height, std::string &&tag)
+void Scene::addGameObject(unsigned int width, unsigned int height, std::string &&tag)
 {
-    m_gameObjects.push_back(GameObject{m_registry, std::move(tag), width, height});
-    // TODO: FIX THIS
-    // Since m_gameObjects is a vector, m_activeGameObject may point
-    // to invalid address when our vector gets resized.
-    // Better to use idx of the active game object
-    m_activeGameObject = &m_gameObjects.back();
-    return m_gameObjects.back();
+    auto go = GameObject{m_registry, std::move(tag), width, height};
+    m_activeEntityId = go.getEntityId();
+    m_gameObjects.push_back(std::move(go));
 }
 
 std::vector<GameObject> &Scene::getGameObjects()
@@ -125,12 +122,20 @@ std::shared_ptr<Camera> Scene::getCamera() const
 // TODO: If no game object is present, it should throw
 GameObject &Scene::getActiveGameObject()
 {
-    return m_gameObjects.back();
+    for (auto &go : m_gameObjects)
+    {
+        if (go.getEntityId() == m_activeEntityId)
+        {
+            return go;
+        }
+    }
+
+    throw std::runtime_error("Active game object not found");
 }
 
-void Scene::setActiveGameObject(GameObject *gameObject)
+void Scene::setActiveGameObject(entt::entity entityId)
 {
-    m_activeGameObject = gameObject;
+    m_activeEntityId = entityId;
 }
 
 const std::string &Scene::getTag() const

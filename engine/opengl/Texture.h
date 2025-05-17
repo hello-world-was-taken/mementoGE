@@ -11,7 +11,7 @@ public:
         bool is_texture_atlas = false);
     Texture(); // TODO: should only be used for serialization
     ~Texture();
-    unsigned int getId() const;
+    unsigned int getTextureId() const;
     unsigned int getTextureUnit() const;
     bool isTextureAtlas() const;
     void bind() const;

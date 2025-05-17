@@ -65,25 +65,27 @@ public:
     // mouse press detection
     bool containsPoint(glm::vec2 worldPoint) const;
 
-    // TODO: Debug function, remove later
-    void getId() const
+    entt::entity getEntityId() const
     {
-        std::cout << "Entity ID: " << entt::to_entity(m_entity) << " Version: " << entt::to_version(m_entity) << std::endl;
+        // std::cout << "Entity ID: " << entt::to_entity(m_entity) << " Version: " << entt::to_version(m_entity) << std::endl;
+        return m_entity;
     }
 
     void updateEntityReference(entt::registry &registry);
 
     bool serialize(YAML::Emitter &out);
 
-    // TODO: we should add a constructor that takes in serialized gameobject YAML::Node.
-    entt::entity m_entity;
-
 private:
     // TODO: we should change this to unique_ptr
     // We take registry as a reference and internally use it as a pointer to support
     // assignment operation
     entt::registry *m_registry;
+
     unsigned int m_width = 0;
     unsigned int m_height = 0;
+
     std::string mTag; // human readable name of game object
+
+    // TODO: we should add a constructor that takes in serialized gameobject YAML::Node.
+    entt::entity m_entity;
 };
