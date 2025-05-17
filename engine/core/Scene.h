@@ -39,7 +39,7 @@ public:
     std::vector<GameObject> &getGameObjects();
 
     std::shared_ptr<Camera> getCamera() const;
-    GameObject &getActiveGameObject();
+    GameObject *getActiveGameObject();
     void setActiveGameObject(entt::entity entityId);
 
     const std::string &getTag() const;

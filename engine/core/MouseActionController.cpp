@@ -1,52 +1,63 @@
+#include "core/Scene.h"
+#include "core/MouseActionController.h"
+#include "core/Transform.h"
+#include "util/Time.h"
+
 #include <iostream>
 #include <cmath>
 #include <imgui.h>
 #include <GLFW/glfw3.h>
 
-#include "core/MouseActionController.h"
-#include "core/Transform.h"
-#include "util/Time.h"
-
 MouseActionController::MouseActionController()
-    : m_activeObject(nullptr) {}
+{
+}
 
 void MouseActionController::SetActiveObject(GameObject &object)
 {
-    m_activeObject = &object;
 }
 
-void MouseActionController::Update(std::shared_ptr<Camera> camera, std::vector<GameObject> &gameObjects, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight, GLFWwindow *window)
+void MouseActionController::Update(std::shared_ptr<Camera> camera, std::shared_ptr<Scene> scene, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight, GLFWwindow *window)
 {
+    auto &gameObjects = scene->getGameObjects();
+    auto activeGameObject = scene->getActiveGameObject();
+
     MouseListener *mouse = MouseListener::get();
     glm::vec2 mouseWorldPos = getWorldCoordinate(camera, imagePos, imageSize, framebufferWidth, framebufferHeight);
-    if (!m_activeObject)
+
+    // check for button click on an object
+    if (mouse->wasMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT))
     {
-        if (mouse->wasMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT))
+        for (GameObject &obj : gameObjects)
         {
-            for (GameObject &obj : gameObjects)
+            if (obj.containsPoint(mouseWorldPos))
             {
-                if (obj.containsPoint(mouseWorldPos))
-                {
-                    SetActiveObject(obj);
-                    break;
-                }
+                scene->setActiveGameObject(obj.getEntityId());
+                break;
+            } else {
+                // the user clicked on empty space
+                scene->setActiveGameObject(entt::null);
+                activeGameObject = nullptr;
             }
         }
-    } else
+    }
+
+    // handle object being dragged
+    bool draggingOnGameObject = mouse->isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT) && activeGameObject;
+    if (draggingOnGameObject)
     {
         // Assume grid size is equal to the object's width.
         // TODO: is there a scenario where we would want to change this?
-        float gridSize = static_cast<float>(m_activeObject->getWidth());
+        float gridSize = static_cast<float>(activeGameObject->getWidth());
 
         // Snap position: round down to nearest multiple of gridSize
         // This should be kept in sync with GridRenderer.cpp
         float snappedX = std::floor(mouseWorldPos.x / gridSize) * gridSize;
         float snappedY = std::floor(mouseWorldPos.y / gridSize) * gridSize;
 
-        m_activeObject->getComponent<Transform>().setPosition(snappedX, snappedY, 0.0f);
+        activeGameObject->getComponent<Transform>().setPosition(snappedX, snappedY, 0.0f);
     }
 
-    bool draggingOnEmptySpace = mouse->isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT) && !m_activeObject;
+    bool draggingOnEmptySpace = mouse->isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT) && !activeGameObject;
     if (draggingOnEmptySpace)
     {
         // Scale screen (window) coordinates to framebuffer space
@@ -63,11 +74,6 @@ void MouseActionController::Update(std::shared_ptr<Camera> camera, std::vector<G
 
     bool leftButtonClicked = mouse->wasMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) || mouse->isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT);
 
-    if (!leftButtonClicked)
-    {
-        m_activeObject = nullptr;
-    }
-
     // handle zooming in and out of the editor
     // TODO: improve the camera API
     camera->adjustZoom(mouse->getScrollDelta().x);
@@ -81,7 +87,7 @@ glm::vec2 MouseActionController::getWorldCoordinate(std::shared_ptr<Camera> came
     // Mouse position in screen coordinates
     glm::vec2 mousePos = listener->getMouseScreenPosition();
     glm::vec2 localPos = screenToLocal(mousePos, {imagePos.x, imagePos.y}, {imageSize.x, imageSize.y});
-    glm::vec2 fbPos = localToFrameBuffer(localPos, {imageSize.x, imageSize. y}, framebufferWidth, framebufferHeight);
+    glm::vec2 fbPos = localToFrameBuffer(localPos, {imageSize.x, imageSize.y}, framebufferWidth, framebufferHeight);
 
     // Make sure the mouse is inside the image
     if (localPos.x < 0 || localPos.y < 0 || localPos.x > imageSize.x || localPos.y > imageSize.y)

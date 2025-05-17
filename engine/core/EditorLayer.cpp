@@ -71,7 +71,7 @@ void EditorLayer::onUpdate(float deltaTime)
     m_currentScene->update(Time::deltaTime(), m_window.getGlfwWindow());
 
     handleEvents();
-    m_mouseActionController.Update(m_currentScene->getCamera(), m_currentScene->getGameObjects(), m_upperLeft, m_previewAreaSize, m_viewportWidth, m_viewportHeight, m_window.getGlfwWindow());
+    m_mouseActionController.Update(m_currentScene->getCamera(), m_currentScene, m_upperLeft, m_previewAreaSize, m_viewportWidth, m_viewportHeight, m_window.getGlfwWindow());
 
     onImGuiRender();
     m_frameBuffer.unbind();
@@ -139,17 +139,23 @@ void EditorLayer::renderPropertiesPanel()
 
     ImGui::Begin("Properties");
 
-    GameObject &go = m_currentScene->getActiveGameObject();
+    GameObject *go = m_currentScene->getActiveGameObject();
+    if(!go)
+    {
+        ImGui::Text("No game object selected");
+        ImGui::End();
+        return;
+    }
 
     ImGui::Text("Size");
-    int width = go.getWidth();
-    int height = go.getHeight();
+    int width = go->getWidth();
+    int height = go->getHeight();
     ImGui::DragInt("Width", &width);
     ImGui::DragInt("Height", &height);
 
     ImGui::Separator();
     ImGui::Text("Transform");
-    Transform &transform = go.getComponent<Transform>();
+    Transform &transform = go->getComponent<Transform>();
     ImGui::DragFloat("x", &transform.getPosition()->x);
     ImGui::DragFloat("y", &transform.getPosition()->y);
     ImGui::DragFloat("z", &transform.getPosition()->z);
@@ -189,11 +195,11 @@ void EditorLayer::renderSelectedTexSheetPanel()
                 ImVec4(1.0f, 1.0f, 1.0f, 1.0f)))
         {
             m_currentScene->addGameObject(32, 32, "_new");
-            m_currentScene->getActiveGameObject().addComponent<Sprite>(
+            m_currentScene->getActiveGameObject()->addComponent<Sprite>(
                 m_selectedTexturePath,
                 true,
                 sprite.getTextureCoordinates());
-            m_mouseActionController.SetActiveObject(m_currentScene->getActiveGameObject());
+            // m_mouseActionController.SetActiveObject(m_currentScene->getActiveGameObject());
         }
         ImGui::PopID();
 
@@ -332,8 +338,13 @@ void EditorLayer::renderGizmos()
     if (!m_currentScene || m_currentScene->getGameObjects().empty())
         return;
 
-    GameObject &go = m_currentScene->getActiveGameObject();
-    Transform &transform = go.getComponent<Transform>();
+    GameObject *go = m_currentScene->getActiveGameObject();
+    if(!go)
+    {
+        std::cout << "renderGizmos - No active game object selected" << std::endl;
+        return;
+    }
+    Transform &transform = go->getComponent<Transform>();
     glm::vec3 *pos = transform.getPosition();
 
     glm::vec2 screenPos = getScreenCoordinate({pos->x, pos->y});
@@ -464,19 +475,19 @@ void EditorLayer::handleEvents()
             }
             else if (keyType == KeyType::RightArrow)
             {
-                m_currentScene->getActiveGameObject().getComponent<Transform>().translate(500.0f * Time::deltaTime(), 0.0f, 0.0f);
+                m_currentScene->getActiveGameObject()->getComponent<Transform>().translate(500.0f * Time::deltaTime(), 0.0f, 0.0f);
             }
             else if (keyType == KeyType::LeftArrow)
             {
-                m_currentScene->getActiveGameObject().getComponent<Transform>().translate(-500.0f * Time::deltaTime(), 0.0f, 0.0f);
+                m_currentScene->getActiveGameObject()->getComponent<Transform>().translate(-500.0f * Time::deltaTime(), 0.0f, 0.0f);
             }
             else if (keyType == KeyType::DownArrow)
             {
-                m_currentScene->getActiveGameObject().getComponent<Transform>().translate(0.0f, -500.0f * Time::deltaTime(), 0.0f);
+                m_currentScene->getActiveGameObject()->getComponent<Transform>().translate(0.0f, -500.0f * Time::deltaTime(), 0.0f);
             }
             else if (keyType == KeyType::UpArrow)
             {
-                m_currentScene->getActiveGameObject().getComponent<Transform>().translate(0.0f, 500.0f * Time::deltaTime(), 0.0f);
+                m_currentScene->getActiveGameObject()->getComponent<Transform>().translate(0.0f, 500.0f * Time::deltaTime(), 0.0f);
             }
         }
     }

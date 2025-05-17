@@ -120,17 +120,17 @@ std::shared_ptr<Camera> Scene::getCamera() const
 }
 
 // TODO: If no game object is present, it should throw
-GameObject &Scene::getActiveGameObject()
+GameObject *Scene::getActiveGameObject()
 {
     for (auto &go : m_gameObjects)
     {
         if (go.getEntityId() == m_activeEntityId)
         {
-            return go;
+            return &go;
         }
     }
 
-    throw std::runtime_error("Active game object not found");
+    return nullptr;
 }
 
 void Scene::setActiveGameObject(entt::entity entityId)
