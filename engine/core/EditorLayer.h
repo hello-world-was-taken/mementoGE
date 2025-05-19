@@ -23,13 +23,14 @@ public:
     void onImGuiRender();           // Render ImGui windows here
 
     void setScene(std::shared_ptr<Scene> scene);
-    //TODO: a copy of the scene manager. Keep in sync for now.
+    // TODO: a copy of the scene manager. Keep in sync for now.
     void serialize();
 
 private:
     void renderSceneViewport();
     void renderPropertiesPanel();
     void renderSelectedTexSheetPanel();
+    void renderSelectedTexSheetPanel(bool isInModal);
     void renderTextureListPanel();
     void renderChooseFile();
     void renderGrid();
@@ -56,6 +57,8 @@ private:
     // logical game world screen size. Should be kept in sync with scene.h
     float m_screen_width = 32.0f * 16.0f; // 16 tiles of 32 pixels = 512 pixels
     float m_screen_height = 32.0f * 9.0f; // 9 tiles of 32 pixels = 288 pixels
+
+    bool m_sceneImageHovered = false;
 
     // scene preview points
     ImVec2 m_upperLeft;

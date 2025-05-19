@@ -56,8 +56,8 @@ Sprite::Sprite(
     std::string texturePath,
     bool isTextureAtlas,
     std::vector<glm::vec2> textureCoordinates)
-: m_textureCoordinates{textureCoordinates},
-  m_texture{Resource::getTexture(texturePath, isTextureAtlas)}
+    : m_textureCoordinates{textureCoordinates},
+      m_texture{Resource::getTexture(texturePath, isTextureAtlas)}
 {
 }
 Sprite::Sprite()
@@ -70,7 +70,21 @@ Sprite::~Sprite()
 
 std::vector<glm::vec2> Sprite::getTextureCoordinates()
 {
-    return m_textureCoordinates;
+    std::vector<glm::vec2> coords = m_textureCoordinates;
+
+    if (m_flipX)
+    {
+        std::swap(coords[0], coords[3]); // topLeft <-> topRight
+        std::swap(coords[1], coords[2]); // bottomLeft <-> bottomRight
+    }
+
+    if (m_flipY)
+    {
+        std::swap(coords[0], coords[1]); // topLeft <-> bottomLeft
+        std::swap(coords[3], coords[2]); // topRight <-> bottomRight
+    }
+
+    return coords;
 }
 
 std::shared_ptr<Texture> Sprite::getTexture()
@@ -78,9 +92,35 @@ std::shared_ptr<Texture> Sprite::getTexture()
     return m_texture;
 }
 
-glm::vec4 Sprite::getColor()
+std::string Sprite::getTexturePath()
+{
+    return m_texture->getFilePath();
+}
+
+glm::vec4
+Sprite::getColor()
 {
     return m_color;
+}
+
+void Sprite::setFlipX(bool flip)
+{
+    m_flipX = flip;
+}
+
+void Sprite::setFlipY(bool flip)
+{
+    m_flipY = flip;
+}
+
+bool Sprite::isFlippedX() const
+{
+    return m_flipX;
+}
+
+bool Sprite::isFlippedY() const
+{
+    return m_flipY;
 }
 
 void Sprite::serialize(YAML::Emitter &out)
@@ -108,6 +148,9 @@ void Sprite::serialize(YAML::Emitter &out)
     out << m_color.a;
     out << YAML::EndSeq;
 
+    out << YAML::Key << "FlipX" << YAML::Value << m_flipX;
+    out << YAML::Key << "FlipY" << YAML::Value << m_flipY;
+
     m_texture->serialize(out);
     out << YAML::EndMap;
 }
@@ -129,4 +172,7 @@ void Sprite::deserialize(const YAML::Node &in)
     bool isTextureAtlas = texture["isTextureAtlas"].as<bool>();
     m_texture = Resource::getTexture(filePath, isTextureAtlas);
     m_texture.get()->bind();
+
+    m_flipX = in["Sprite"]["FlipX"] ? in["Sprite"]["FlipX"].as<bool>() : false;
+    m_flipY = in["Sprite"]["FlipY"] ? in["Sprite"]["FlipY"].as<bool>() : false;
 }

@@ -71,7 +71,7 @@ void EditorLayer::onUpdate(float deltaTime)
     m_currentScene->update(Time::deltaTime(), m_window.getGlfwWindow());
 
     handleEvents();
-    m_mouseActionController.Update(m_currentScene->getCamera(), m_currentScene, m_upperLeft, m_previewAreaSize, m_viewportWidth, m_viewportHeight, m_window.getGlfwWindow());
+    m_mouseActionController.Update(m_currentScene->getCamera(), m_currentScene, m_upperLeft, m_previewAreaSize, m_viewportWidth, m_viewportHeight, m_window.getGlfwWindow(), m_sceneImageHovered);
 
     onImGuiRender();
     m_frameBuffer.unbind();
@@ -129,6 +129,10 @@ void EditorLayer::renderSceneViewport()
     // scene preview imgui image
     renderGizmos();
 
+    // Store whether this specific image is hovered
+    // We use this to distinguish mouse clicks in/outside our scene preview
+    m_sceneImageHovered = ImGui::IsItemHovered();
+
     ImGui::End();
 }
 
@@ -140,29 +144,139 @@ void EditorLayer::renderPropertiesPanel()
     ImGui::Begin("Properties");
 
     GameObject *go = m_currentScene->getActiveGameObject();
-    if(!go)
+    if (!go)
     {
         ImGui::Text("No game object selected");
         ImGui::End();
         return;
     }
 
+    // Size
     ImGui::Text("Size");
     int width = go->getWidth();
     int height = go->getHeight();
-    ImGui::DragInt("Width", &width);
-    ImGui::DragInt("Height", &height);
+    // if (ImGui::DragInt("Width", &width))
+    //     go->setWidth(width);
+    // if (ImGui::DragInt("Height", &height))
+    //     go->setHeight(height);
 
+    // Transform
     ImGui::Separator();
     ImGui::Text("Transform");
     Transform &transform = go->getComponent<Transform>();
-    ImGui::DragFloat("x", &transform.getPosition()->x);
-    ImGui::DragFloat("y", &transform.getPosition()->y);
-    ImGui::DragFloat("z", &transform.getPosition()->z);
+    glm::vec3 *pos = transform.getPosition();
+    ImGui::DragFloat("x", &pos->x);
+    ImGui::DragFloat("y", &pos->y);
+    // ImGui::DragFloat("z", &pos->z);
 
+    // Layer
+    ImGui::Separator();
+    ImGui::Text("Layer");
+    int layer = static_cast<int>(pos->z);
+    if (ImGui::DragInt("Layer", &layer))
+        pos->z = static_cast<float>(layer);
+
+    // Sprite Settings
+    if (go->hasComponent<Sprite>())
+    {
+        Sprite &sprite = go->getComponent<Sprite>();
+
+        ImGui::Separator();
+        ImGui::Text("Sprite Settings");
+
+        // Flip
+        static bool flipX = sprite.isFlippedX();
+        static bool flipY = sprite.isFlippedY();
+        if (ImGui::Checkbox("Flip Horizontally", &flipX))
+            sprite.setFlipX(flipX);
+        if (ImGui::Checkbox("Flip Vertically", &flipY))
+            sprite.setFlipY(flipY);
+
+        // Open sprite picker modal
+        if (ImGui::Button("Change Sprite"))
+            ImGui::OpenPopup("Select Sprite");
+
+        std::string texPath = sprite.getTexturePath();
+        ImGui::Text("Current Sprite:");
+        ImGui::TextWrapped("%s", texPath.c_str());
+    }
+
+    if (ImGui::BeginPopupModal("Select Sprite", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        renderSelectedTexSheetPanel(true);
+
+        if (ImGui::Button("Cancel"))
+            ImGui::CloseCurrentPopup();
+
+        ImGui::EndPopup();
+    }
     ImGui::End();
 }
 
+void EditorLayer::renderSelectedTexSheetPanel(bool isInModal)
+{
+
+    // TODO: use this as a dummy sprite to render the texture resources change it later on.
+    SpriteSheet spriteSheet = SpriteSheet(m_selectedTexturePath, true, 128, 0);
+    std::shared_ptr<Texture> spriteSheetTexture = spriteSheet.getTexture();
+    ImVec2 windowPos = ImGui::GetWindowPos();
+    ImVec2 windowSize = ImGui::GetWindowSize();
+
+    float windowX2 = windowPos.x + windowSize.x;
+    int id = 0;
+
+    ImGui::Text("Pick a Sprite:");
+
+    for (Sprite sprite : spriteSheet.getSprites())
+    {
+        float imgButtonWidth = 32;
+        float imgButtonHeight = 32;
+        std::vector<glm::vec2> textureCoordinates = sprite.getTextureCoordinates();
+        ImTextureID texId = (ImTextureID)(uintptr_t)spriteSheetTexture->getTextureId();
+
+        // TODO: Add sprite IDs and use those to identify which sprite was clicked
+        ImGui::PushID(id);
+        if (ImGui::ImageButton(
+                "",
+                texId,
+                ImVec2(imgButtonWidth, imgButtonHeight),
+                ImVec2(textureCoordinates[0].x,
+                       textureCoordinates[0].y), // uv0 = top-left
+                ImVec2(textureCoordinates[2].x,
+                       textureCoordinates[2].y), // uv1 = bottom-right
+                ImVec4(0.0f, 0.0f, 0.0f, 1.0f),
+                ImVec4(1.0f, 1.0f, 1.0f, 1.0f)))
+        {
+            if (m_currentScene && m_currentScene->getActiveGameObject())
+            {
+                GameObject *go = m_currentScene->getActiveGameObject();
+                // first remove Sprite if it exists
+                if (go->hasComponent<Sprite>())
+                    go->removeComponent<Sprite>();
+
+                m_currentScene->getActiveGameObject()->addComponent<Sprite>(
+                    m_selectedTexturePath,
+                    true,
+                    sprite.getTextureCoordinates());
+                // ImGui::CloseCurrentPopup(); // Close modal
+            }
+        }
+        ImGui::PopID();
+
+        ImVec2 lastSpritePosition = ImGui::GetItemRectMax();
+        float lastSpriteX2 = lastSpritePosition.x;
+        float nextButtonX2 = lastSpriteX2 + imgButtonWidth;
+        if (id + 1 < spriteSheet.getSprites().size() && nextButtonX2 < windowX2)
+        {
+            ImGui::SameLine();
+        }
+        id++;
+    }
+}
+
+// TODO: this and the overloaded function is the same as
+// renderSelectedTexSheetPanel(bool isInModal) other than the
+// start ImGui::Begin and end. As well the the onclick. Update it.
 void EditorLayer::renderSelectedTexSheetPanel()
 {
     // TODO: use this as a dummy sprite to render the texture resources change it later on.
@@ -339,7 +453,7 @@ void EditorLayer::renderGizmos()
         return;
 
     GameObject *go = m_currentScene->getActiveGameObject();
-    if(!go)
+    if (!go)
     {
         std::cout << "renderGizmos - No active game object selected" << std::endl;
         return;

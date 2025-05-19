@@ -16,8 +16,11 @@ void MouseActionController::SetActiveObject(GameObject &object)
 {
 }
 
-void MouseActionController::Update(std::shared_ptr<Camera> camera, std::shared_ptr<Scene> scene, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight, GLFWwindow *window)
+void MouseActionController::Update(std::shared_ptr<Camera> camera, std::shared_ptr<Scene> scene, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight, GLFWwindow *window, bool sceneImageHovered)
 {
+    if(!sceneImageHovered)
+        return;
+
     auto &gameObjects = scene->getGameObjects();
     auto activeGameObject = scene->getActiveGameObject();
 
