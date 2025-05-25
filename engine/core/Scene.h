@@ -1,10 +1,16 @@
 #pragma once
 
+#include "core/GLIncludes.h"
+#include "util/log_error.h"
+#include "opengl/Shader.h"
+#include "core/GameObject.h"
+#include "core/Transform.h"
+#include "core/Camera.h"
+#include "renderer/RenderBatch.h"
+
 #include <iostream>
 #include <vector>
 #include <memory>
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <glm/ext/matrix_transform.hpp>
@@ -12,13 +18,6 @@
 #include <string>
 #include <yaml-cpp/yaml.h>
 #include <optional>
-
-#include "util/log_error.h"
-#include "opengl/Shader.h"
-#include "core/GameObject.h"
-#include "core/Transform.h"
-#include "core/Camera.h"
-#include "renderer/RenderBatch.h"
 
 class Scene
 {

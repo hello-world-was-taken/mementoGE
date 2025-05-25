@@ -1,11 +1,11 @@
 #pragma once
 
+#include "core/GLIncludes.h"
+#include "core/Camera.h"
+
 #include <iostream>
-#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <memory>
-
-#include "core/Camera.h"
 
 class MouseListener
 {

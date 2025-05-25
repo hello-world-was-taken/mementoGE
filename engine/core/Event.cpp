@@ -1,6 +1,6 @@
-#include <string>
-
 #include "core/Event.h"
+
+#include <string>
 
 Event::Event(std::string name, EventType type, bool isPressed, KeyType keyType)
     : mEventName{name},

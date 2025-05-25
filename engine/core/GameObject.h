@@ -52,8 +52,10 @@ public:
 
     void destroy();
 
-    const int getWidth() const;
+    void setWidth(int width);
+    void setHeight(int height);
 
+    const int getWidth() const;
     const int getHeight() const;
 
     const std::string &getTag() const;

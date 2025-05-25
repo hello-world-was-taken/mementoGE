@@ -1,7 +1,7 @@
+#include "core/EventHandler.h"
+
 #include <iostream>
 #include <imgui.h>
-
-#include "core/EventHandler.h"
 
 EventHandler *EventHandler::get()
 {
@@ -12,76 +12,38 @@ EventHandler *EventHandler::get()
 void EventHandler::glfwKeyCallBack(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     auto *listener = EventHandler::get();
-    ImGuiIO &io = ImGui::GetIO();
-    if (io.WantCaptureKeyboard)
-    {
-        return;
-    }
-    // TODO: can we handle this in a better way?
-    if (action == GLFW_PRESS)
-    {
-        listener->m_hasActiveEvent = true;
-    }
-    else
-    {
-        listener->m_hasActiveEvent = false;
-    }
+    // ImGuiIO &io = ImGui::GetIO();
+    // if (io.WantCaptureKeyboard)
+    // {
+    //     return;
+    // }
 
-    if (key == GLFW_KEY_LEFT)
+    listener->m_hasActiveEvent = (action == GLFW_PRESS || action == GLFW_REPEAT);
+
+    auto updateKey = [&](int glfwKey, KeyType type, const std::string &name)
     {
-        if (action == GLFW_PRESS)
+        if (key == glfwKey)
         {
-            listener->m_currentEvent = Event("LeftArrowKey", EventType::Key, true, KeyType::LeftArrow);
+            bool isPressed = (action != GLFW_RELEASE);
+            const EventType eventType = (action == GLFW_REPEAT) ? EventType::KeyRepeat : EventType::Key;
+            listener->m_keyStates[type] = true;
+            listener->m_currentEvent = Event{name, eventType, isPressed, type};
         }
-        else if (action == GLFW_RELEASE)
-        {
-            listener->m_currentEvent = Event("LeftArrowKey", EventType::MouseLeftClick, false, KeyType::LeftArrow);
-        }
-    }
-    else if (key == GLFW_KEY_RIGHT)
-    {
-        if (action == GLFW_PRESS)
-        {
-            listener->m_currentEvent = Event("RightArrowKey", EventType::Key, true, KeyType::RightArrow);
-        }
-        else if (action == GLFW_RELEASE)
-        {
-            listener->m_currentEvent = Event("RightArrowKey", EventType::Key, false, KeyType::RightArrow);
-        }
-    }
-    else if (key == GLFW_KEY_UP)
-    {
-        if (action == GLFW_PRESS)
-        {
-            listener->m_currentEvent = Event("UpArrowKey", EventType::Key, true, KeyType::UpArrow);
-        }
-        else if (action == GLFW_RELEASE)
-        {
-            listener->m_currentEvent = Event("UpArrowKey", EventType::Key, false, KeyType::UpArrow);
-        }
-    }
-    else if (key == GLFW_KEY_DOWN)
-    {
-        if (action == GLFW_PRESS)
-        {
-            listener->m_currentEvent = Event("DownArrowKey", EventType::Key, false, KeyType::DownArrow);
-        }
-        else if (action == GLFW_RELEASE)
-        {
-            listener->m_currentEvent = Event("DownArrowKey", EventType::Key, false, KeyType::DownArrow);
-        }
-    }
-    else if (key == GLFW_KEY_ESCAPE)
-    {
-        if (action == GLFW_PRESS)
-        {
-            listener->m_currentEvent = Event("EscapeKey", EventType::Key, true, KeyType::Escape);
-        }
-        else if (action == GLFW_RELEASE)
-        {
-            listener->m_currentEvent = Event("EscapeKey", EventType::Key, false, KeyType::Escape);
-        }
-    }
+    };
+
+    // Movement keys
+    updateKey(GLFW_KEY_LEFT, KeyType::LeftArrow, "LeftArrowKey");
+    updateKey(GLFW_KEY_RIGHT, KeyType::RightArrow, "RightArrowKey");
+    updateKey(GLFW_KEY_UP, KeyType::UpArrow, "UpArrowKey");
+    updateKey(GLFW_KEY_DOWN, KeyType::DownArrow, "DownArrowKey");
+    updateKey(GLFW_KEY_ESCAPE, KeyType::Escape, "EscapeKey");
+
+    // WASD and Space
+    updateKey(GLFW_KEY_W, KeyType::W, "WKey");
+    updateKey(GLFW_KEY_A, KeyType::A, "AKey");
+    updateKey(GLFW_KEY_S, KeyType::S, "SKey");
+    updateKey(GLFW_KEY_D, KeyType::D, "DKey");
+    updateKey(GLFW_KEY_SPACE, KeyType::Space, "SpaceKey");
 }
 
 bool EventHandler::hasActiveEvent()
@@ -89,7 +51,13 @@ bool EventHandler::hasActiveEvent()
     return m_hasActiveEvent;
 }
 
-Event EventHandler::getCurrentEvent()
+const Event EventHandler::getCurrentEvent()
 {
     return m_currentEvent;
+}
+
+bool EventHandler::isKeyPressed(KeyType key) const
+{
+    auto it = m_keyStates.find(key);
+    return it != m_keyStates.end() && it->second;
 }

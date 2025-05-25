@@ -1,23 +1,24 @@
 #pragma once
 
-#include <vector>
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/ext/matrix_transform.hpp>
-#include <memory>
+#include "core/GLIncludes.h"
+#include "core/Camera.h"
+#include "core/Camera.h"
+#include "core/GameObject.h"
+#include "core/Transform.h"
 
-#include "util/log_error.h"
 #include "opengl/Vertex.h"
 #include "opengl/VertexArray.h"
 #include "opengl/VertexBuffer.h"
 #include "opengl/Indexbuffer.h"
 #include "opengl/Shader.h"
 #include "opengl/Texture.h"
-#include "core/Camera.h"
-#include "core/Camera.h"
-#include "core/GameObject.h"
-#include "core/Transform.h"
+
+#include "util/log_error.h"
+
+#include <vector>
+#include <glm/glm.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <memory>
 
 // TODO: Once the engine adds support for Vulkan, common batch
 // rendering logic needs to be abstracted.

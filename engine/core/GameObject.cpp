@@ -1,10 +1,10 @@
-#include <yaml-cpp/yaml.h>
-#include <string>
-
 #include "core/GameObject.h"
 #include "core/Transform.h"
 #include "core/Sprite.h"
 #include "core/RigidBody2D.h"
+
+#include <yaml-cpp/yaml.h>
+#include <string>
 
 GameObject::GameObject(entt::registry &registry, std::string &&tag, unsigned int width, unsigned int height) : m_registry{&registry}, mTag{tag}, m_width{width}, m_height{height}
 {
@@ -58,6 +58,16 @@ GameObject::~GameObject()
 void GameObject::destroy()
 {
     // m_registry.destroy(m_entity);
+}
+
+void GameObject::setWidth(int width)
+{
+    m_width = width;
+}
+
+void GameObject::setHeight(int height)
+{
+    m_height = height;
 }
 
 const int GameObject::getWidth() const

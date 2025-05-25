@@ -1,13 +1,12 @@
 #pragma once
 
-#include <map>
-#include <memory>
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-
+#include "core/GLIncludes.h"
 #include "core/Scene.h"
 #include "core/Window.h"
 #include "opengl/FrameBuffer.h"
+
+#include <map>
+#include <memory>
 
 class SceneManager
 {

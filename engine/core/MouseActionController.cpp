@@ -1,3 +1,4 @@
+#include "core/GLIncludes.h"
 #include "core/Scene.h"
 #include "core/MouseActionController.h"
 #include "core/Transform.h"
@@ -6,10 +7,14 @@
 #include <iostream>
 #include <cmath>
 #include <imgui.h>
-#include <GLFW/glfw3.h>
 
 MouseActionController::MouseActionController()
 {
+}
+
+void MouseActionController::setMovementMode(MovementMode mode)
+{
+    m_movementMode = mode;
 }
 
 void MouseActionController::SetActiveObject(GameObject &object)
@@ -18,7 +23,7 @@ void MouseActionController::SetActiveObject(GameObject &object)
 
 void MouseActionController::Update(std::shared_ptr<Camera> camera, std::shared_ptr<Scene> scene, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight, GLFWwindow *window, bool sceneImageHovered)
 {
-    if(!sceneImageHovered)
+    if (!sceneImageHovered)
         return;
 
     auto &gameObjects = scene->getGameObjects();
@@ -36,7 +41,9 @@ void MouseActionController::Update(std::shared_ptr<Camera> camera, std::shared_p
             {
                 scene->setActiveGameObject(obj.getEntityId());
                 break;
-            } else {
+            }
+            else
+            {
                 // the user clicked on empty space
                 scene->setActiveGameObject(entt::null);
                 activeGameObject = nullptr;
@@ -48,31 +55,13 @@ void MouseActionController::Update(std::shared_ptr<Camera> camera, std::shared_p
     bool draggingOnGameObject = mouse->isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT) && activeGameObject;
     if (draggingOnGameObject)
     {
-        // Assume grid size is equal to the object's width.
-        // TODO: is there a scenario where we would want to change this?
-        float gridSize = static_cast<float>(activeGameObject->getWidth());
-
-        // Snap position: round down to nearest multiple of gridSize
-        // This should be kept in sync with GridRenderer.cpp
-        float snappedX = std::floor(mouseWorldPos.x / gridSize) * gridSize;
-        float snappedY = std::floor(mouseWorldPos.y / gridSize) * gridSize;
-
-        activeGameObject->getComponent<Transform>().setPosition(snappedX, snappedY, 0.0f);
+        moveGameObject(activeGameObject, mouseWorldPos);
     }
 
     bool draggingOnEmptySpace = mouse->isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT) && !activeGameObject;
     if (draggingOnEmptySpace)
     {
-        // Scale screen (window) coordinates to framebuffer space
-        int winWidth, winHeight;
-        glfwGetWindowSize(window, &winWidth, &winHeight);
-
-        float scaleX = static_cast<float>(framebufferWidth) / winWidth;
-        float scaleY = static_cast<float>(framebufferHeight) / winHeight;
-
-        glm::vec2 dragDelta = mouse->getMouseDelta();
-
-        camera->setPosition(camera->getPosition() - glm::vec3(dragDelta.x * scaleX, dragDelta.y * scaleY, 0.0f));
+        moveCamera(camera, mouse, framebufferWidth, framebufferHeight, window);
     }
 
     bool leftButtonClicked = mouse->wasMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) || mouse->isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT);
@@ -81,6 +70,39 @@ void MouseActionController::Update(std::shared_ptr<Camera> camera, std::shared_p
     // TODO: improve the camera API
     camera->adjustZoom(mouse->getScrollDelta().x);
     camera->updateProjection(framebufferWidth, framebufferHeight);
+}
+
+void MouseActionController::moveGameObject(GameObject *activeGameObject, glm::vec2 mouseWorldPos)
+{
+    if (m_movementMode == MovementMode::SnapToGrid)
+    {
+        // Assume grid size is equal to the object's width.
+        float gridSize = static_cast<float>(activeGameObject->getWidth());
+
+        // This should be kept in sync with GridRenderer.cpp
+        float snappedX = std::floor(mouseWorldPos.x / gridSize) * gridSize;
+        float snappedY = std::floor(mouseWorldPos.y / gridSize) * gridSize;
+
+        activeGameObject->getComponent<Transform>().setPosition(snappedX, snappedY, 0.0f);
+    }
+    else if (m_movementMode == MovementMode::Free)
+    {
+        activeGameObject->getComponent<Transform>().setPosition(mouseWorldPos.x, mouseWorldPos.y, 0.0f);
+    }
+}
+
+void MouseActionController::moveCamera(std::shared_ptr<Camera> camera, MouseListener *mouse, int framebufferWidth, int framebufferHeight, GLFWwindow *window)
+{
+    // Scale screen (window) coordinates to framebuffer space
+    int winWidth, winHeight;
+    glfwGetWindowSize(window, &winWidth, &winHeight);
+
+    float scaleX = static_cast<float>(framebufferWidth) / winWidth;
+    float scaleY = static_cast<float>(framebufferHeight) / winHeight;
+
+    glm::vec2 dragDelta = mouse->getMouseDelta();
+
+    camera->setPosition(camera->getPosition() - glm::vec3(dragDelta.x * scaleX, dragDelta.y * scaleY, 0.0f));
 }
 
 glm::vec2 MouseActionController::getWorldCoordinate(std::shared_ptr<Camera> camera, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight)

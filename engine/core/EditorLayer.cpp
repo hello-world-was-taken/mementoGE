@@ -2,17 +2,18 @@
 #include <mach/mach.h>
 #endif
 
+#include "core/ImGuiWrapper.h"
+#include "core/EditorLayer.h"
+#include "core/SpriteSheet.h"
+#include "core/Camera.h"
+#include "core/MovementMode.h"
+
 #include <imgui.h>
 #include <ImGuiFileDialog/ImGuiFileDialog.h>
 #include <filesystem>
 #include <fstream>
 #include <memory>
 #include <yaml-cpp/yaml.h>
-
-#include "core/EditorLayer.h"
-#include "core/SpriteSheet.h"
-#include "core/ImGuiWrapper.h"
-#include "core/Camera.h"
 
 namespace fs = std::filesystem;
 
@@ -73,11 +74,11 @@ void EditorLayer::onUpdate(float deltaTime)
     handleEvents();
     m_mouseActionController.Update(m_currentScene->getCamera(), m_currentScene, m_upperLeft, m_previewAreaSize, m_viewportWidth, m_viewportHeight, m_window.getGlfwWindow(), m_sceneImageHovered);
 
-    onImGuiRender();
+    drawEditorUI();
     m_frameBuffer.unbind();
 }
 
-void EditorLayer::onImGuiRender()
+void EditorLayer::drawEditorUI()
 {
     if (!m_currentScene)
         return;
@@ -90,6 +91,7 @@ void EditorLayer::onImGuiRender()
     renderTextureListPanel();
     renderChooseFile();
     renderPerformancePanel();
+    renderEditorProperties();
     ImGui::ShowMetricsWindow();
 }
 
@@ -155,10 +157,10 @@ void EditorLayer::renderPropertiesPanel()
     ImGui::Text("Size");
     int width = go->getWidth();
     int height = go->getHeight();
-    // if (ImGui::DragInt("Width", &width))
-    //     go->setWidth(width);
-    // if (ImGui::DragInt("Height", &height))
-    //     go->setHeight(height);
+    if (ImGui::DragInt("Width", &width))
+        go->setWidth(width);
+    if (ImGui::DragInt("Height", &height))
+        go->setHeight(height);
 
     // Transform
     ImGui::Separator();
@@ -390,7 +392,7 @@ void EditorLayer::renderPerformancePanel()
 
 void EditorLayer::renderGrid()
 {
-    if (!m_currentScene)
+    if (!m_currentScene || !m_drawGrid)
         return;
 
     std::shared_ptr<Camera> cam = m_currentScene->getCamera();
@@ -494,6 +496,26 @@ void EditorLayer::renderGizmos()
     drawList->AddText(ImVec2(yEnd.x + 4, yEnd.y - 10), IM_COL32(0, 0, 255, 255), "Y");
 }
 
+void EditorLayer::renderEditorProperties()
+{
+    ImGui::Begin("Editor Properties");
+
+    bool snap = (m_movementMode == MovementMode::SnapToGrid);
+    if (ImGui::Checkbox("Snap to Grid", &snap))
+    {
+        m_movementMode = snap ? MovementMode::SnapToGrid : MovementMode::Free;
+        m_drawGrid = snap;
+    }
+
+    // update mouse controller
+    m_mouseActionController.setMovementMode(m_movementMode);
+
+    ImGui::Separator();
+    ImGui::Checkbox("Draw Grid", &m_drawGrid);
+
+    ImGui::End();
+}
+
 std::vector<std::string> EditorLayer::getTextureFiles(const std::string &folderPath)
 {
     std::vector<std::string> textures;
@@ -574,6 +596,7 @@ void EditorLayer::handleSceneInteraction()
 void EditorLayer::handleEvents()
 {
     auto *eventHandler = EventHandler::get();
+    std::cout << "Processing event: " << eventHandler->getCurrentEvent().getEventName() << std::endl;
     if (eventHandler->hasActiveEvent())
     {
         Event e = eventHandler->getCurrentEvent();

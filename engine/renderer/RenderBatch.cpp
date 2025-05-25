@@ -1,14 +1,16 @@
-#include <iostream>
-#include <GL/glew.h>
-#include <memory>
+#include "core/GLIncludes.h"
+#include "core/Resource.h"
+#include "core/Sprite.h"
 
 #include "opengl/Vertex.h"
 #include "opengl/VertexBuffer.h"
 #include "opengl/VertexAttribute.h"
+
 #include "renderer/RenderBatch.h"
-#include "core/Resource.h"
-#include "core/Sprite.h"
 #include "util/log_error.h"
+
+#include <iostream>
+#include <memory>
 
 RenderBatch::RenderBatch(
     const std::shared_ptr<Camera> camera,

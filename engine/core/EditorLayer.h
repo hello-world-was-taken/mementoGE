@@ -8,6 +8,8 @@
 #include "core/MouseActionController.h"
 #include "core/Window.h"
 #include "core/EventHandler.h"
+#include "core/MovementMode.h"
+
 #include "renderer/GridRenderer.h"
 
 #include "opengl/FrameBuffer.h"
@@ -20,13 +22,14 @@ public:
 
     void onAttach();                // Called when the editor initializes
     void onUpdate(float deltaTime); // Called every frame
-    void onImGuiRender();           // Render ImGui windows here
+    void drawEditorUI();            // Render ImGui windows here
 
     void setScene(std::shared_ptr<Scene> scene);
     // TODO: a copy of the scene manager. Keep in sync for now.
     void serialize();
 
 private:
+    // imgui panels
     void renderSceneViewport();
     void renderPropertiesPanel();
     void renderSelectedTexSheetPanel();
@@ -36,6 +39,10 @@ private:
     void renderGrid();
     void renderPerformancePanel();
     void renderGizmos();
+    void renderEditorProperties();
+
+    MovementMode m_movementMode = MovementMode::Free;
+    bool m_drawGrid = false;
 
     void handleSceneInteraction();
     void handleEvents();

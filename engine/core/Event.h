@@ -18,16 +18,16 @@ enum class EventType
 enum class KeyType
 {
     None = 0,
-    A,
-    S,
-    D,
-    W,
-    SPACE,
     LeftArrow,
     RightArrow,
     UpArrow,
     DownArrow,
     Escape,
+    W,
+    A,
+    S,
+    D,
+    Space
 };
 
 class Event

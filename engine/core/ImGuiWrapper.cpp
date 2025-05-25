@@ -1,9 +1,9 @@
-#include <GL/glew.h>
+#include "core/GLIncludes.h"
+#include "core/ImGuiWrapper.h"
+
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
-
-#include "core/ImGuiWrapper.h"
 
 void ImGuiWrapper::setupImgui(GLFWwindow *glfw_window)
 {
