@@ -1,12 +1,15 @@
 #pragma once
 
-#include "core/GLIncludes.h"
 #include "util/log_error.h"
 #include "opengl/Shader.h"
+#include "renderer/RenderBatch.h"
+
+#include "core/GLIncludes.h"
 #include "core/GameObject.h"
 #include "core/Transform.h"
 #include "core/Camera.h"
-#include "renderer/RenderBatch.h"
+
+#include "physics/Physics2D.h"
 
 #include <iostream>
 #include <vector>
@@ -35,19 +38,26 @@ public:
     void update(float deltaTime, GLFWwindow *window);
 
     void addGameObject(unsigned int width, unsigned int height, std::string &&tag);
-    std::vector<GameObject> &getGameObjects();
+    void setActiveGameObject(entt::entity entityId);
 
+    void addRigidBody2DToWorld();
+
+    std::vector<GameObject> &getGameObjects();
     std::shared_ptr<Camera> getCamera() const;
     GameObject *getActiveGameObject();
-    void setActiveGameObject(entt::entity entityId);
 
     const std::string &getTag() const;
     bool serialize(YAML::Emitter &out);
+
+    // TODO: should be private. For testing purposes
+    Physics2D m_physicsWorld{{0.0f, -9.8f}};
 
 private:
     // logical game world screen size
     float m_screen_width = 32.0f * 16.0f; // 16 tiles of 32 pixels = 512 pixels
     float m_screen_height = 32.0f * 9.0f; // 9 tiles of 32 pixels = 288 pixels
+
+    // Physics2D m_physicsWorld{{0.0f, 9.8f}};
 
     entt::registry m_registry;
     std::vector<GameObject> m_gameObjects;

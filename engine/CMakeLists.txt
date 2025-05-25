@@ -33,6 +33,9 @@ add_library(${PROJECT_NAME} STATIC
     renderer/SpriteRenderer.cpp
     renderer/GridRenderer.cpp
 
+    # physics
+    physics/Physics2D.cpp
+
     # utils
     util/log_error.cpp
     util/Time.cpp

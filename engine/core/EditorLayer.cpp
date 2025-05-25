@@ -8,6 +8,12 @@
 #include "core/Camera.h"
 #include "core/MovementMode.h"
 
+#include "physics/RigidBox2D.h"
+#include "physics/BoxCollider2D.h"
+#include "physics/CircleCollider2D.h"
+#include "physics/EdgeCollider2D.h"
+#include "physics/PolygonCollider2D.h"
+
 #include <imgui.h>
 #include <ImGuiFileDialog/ImGuiFileDialog.h>
 #include <filesystem>
@@ -212,6 +218,63 @@ void EditorLayer::renderPropertiesPanel()
 
         ImGui::EndPopup();
     }
+
+    if (ImGui::BeginCombo("Add Component", "Select..."))
+    {
+        if (ImGui::Selectable("Rigidbody2D"))
+        {
+            go->addComponent<Rigidbody2D>();
+            m_currentScene->m_physicsWorld.addRigidbody(*go);
+        }
+
+        if (ImGui::Selectable("BoxCollider2D"))
+        {
+            int width = go->getWidth();
+            int height = go->getHeight();
+            go->addComponent<BoxCollider2D>(width, height);
+            m_currentScene->m_physicsWorld.addRigidbody(*go);
+        }
+
+        if (ImGui::Selectable("CircleCollider2D"))
+        {
+            go->addComponent<CircleCollider2D>();
+            m_currentScene->m_physicsWorld.addRigidbody(*go);
+        }
+
+        ImGui::EndCombo();
+    }
+
+    // If the active game object have rigid body 2d, we should be able to
+    // edit whether it should be static, dynamic or kinematics
+    if (go->hasComponent<Rigidbody2D>())
+    {
+        Rigidbody2D &rb = go->getComponent<Rigidbody2D>();
+        if(ImGui::BeginCombo("Rigidbody 2D Type", rb.getBodyType().c_str()))
+        {
+            if (ImGui::Selectable("Static"))
+                rb.setType(BodyType::Static);
+
+            if (ImGui::Selectable("Dynamic"))
+                rb.setType(BodyType::Dynamic);
+
+            if (ImGui::Selectable("Kinematic"))
+                rb.setType(BodyType::Kinematic);
+
+            ImGui::EndCombo();
+        }
+    }
+
+    if (go->hasComponent<BoxCollider2D>())
+    {
+        auto &box = go->getComponent<BoxCollider2D>();
+        ImGui::Text("Box Collider 2D");
+        // ImGui::DragFloat2("Size", glm::value_ptr(box.m_size), 0.1f);
+        // ImGui::DragFloat2("Offset", glm::value_ptr(box.m_offset), 0.1f);
+        ImGui::DragFloat("Density", &box.m_density, 0.01f, 0.0f);
+        ImGui::DragFloat("Friction", &box.m_friction, 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat("Restitution", &box.m_restitution, 0.01f, 0.0f, 1.0f);
+    }
+
     ImGui::End();
 }
 
@@ -457,7 +520,7 @@ void EditorLayer::renderGizmos()
     GameObject *go = m_currentScene->getActiveGameObject();
     if (!go)
     {
-        std::cout << "renderGizmos - No active game object selected" << std::endl;
+        // std::cout << "renderGizmos - No active game object selected" << std::endl;
         return;
     }
     Transform &transform = go->getComponent<Transform>();
@@ -596,7 +659,6 @@ void EditorLayer::handleSceneInteraction()
 void EditorLayer::handleEvents()
 {
     auto *eventHandler = EventHandler::get();
-    std::cout << "Processing event: " << eventHandler->getCurrentEvent().getEventName() << std::endl;
     if (eventHandler->hasActiveEvent())
     {
         Event e = eventHandler->getCurrentEvent();

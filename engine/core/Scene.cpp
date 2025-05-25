@@ -97,9 +97,10 @@ void Scene::start()
 
 void Scene::update(float deltaTime, GLFWwindow *window)
 {
-    m_renderBatch->render();
+    m_physicsWorld.simulate(deltaTime, m_gameObjects);
+    m_physicsWorld.syncTransforms(m_gameObjects);
 
-    MouseListener *listener = MouseListener::get();
+    m_renderBatch->render();
 }
 
 void Scene::addGameObject(unsigned int width, unsigned int height, std::string &&tag)
@@ -119,7 +120,6 @@ std::shared_ptr<Camera> Scene::getCamera() const
     return m_camera;
 }
 
-// TODO: If no game object is present, it should throw
 GameObject *Scene::getActiveGameObject()
 {
     for (auto &go : m_gameObjects)
@@ -136,6 +136,13 @@ GameObject *Scene::getActiveGameObject()
 void Scene::setActiveGameObject(entt::entity entityId)
 {
     m_activeEntityId = entityId;
+}
+
+// TODO: this adds rigid bodies again and again. Fix it
+void Scene::addRigidBody2DToWorld()
+{
+    GameObject *go = getActiveGameObject();
+    m_physicsWorld.addRigidbody(*go);
 }
 
 const std::string &Scene::getTag() const
