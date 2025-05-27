@@ -22,27 +22,27 @@
 
 // TODO: Once the engine adds support for Vulkan, common batch
 // rendering logic needs to be abstracted.
-class RenderBatch
+class PhysicsRenderer
 {
 public:
-    RenderBatch(const std::shared_ptr<Camera> camera, std::vector<GameObject>& m_gameObjects);
-    ~RenderBatch();
+    PhysicsRenderer();
+    ~PhysicsRenderer();
 
-    void render();
-    // void getQuad();
-    // void generateVertexArray();
+    void render(std::shared_ptr<Camera> &camera);
+
     void updateVertexBuffer();
+    void updateColliderLines();
+
     void generateVertexBuffer();
     void generateIndexArray();
-    std::vector<glm::vec3> transformQuad(glm::mat4x4 transformMatrix, std::vector<glm::vec3> quad);
+
+    void setActiveGameObjects(std::vector<GameObject> *gameObjects);
 
 private:
-    const std::shared_ptr<Camera> m_camera;
-    std::vector<GameObject>& m_gameObjects;
-    std::vector<Vertex> m_vertices;
+    std::vector<GameObject> *m_gameObjects;
 
     static const int BATCH_SIZE = 1000;    // 1000 QUADS
-    static const int INDICES_PER_QUAD = 6; // 6 indices per quad
+    static const int INDICES_PER_QUAD = 8; // 4 since we are drawing lines
     unsigned int m_indices[BATCH_SIZE * INDICES_PER_QUAD];
 
     // TODO: use smart pointer
@@ -51,4 +51,5 @@ private:
     IndexBuffer *mp_ib;
 
     std::vector<int> m_texture_units = {0, 1, 2, 3, 4, 5, 6, 7};
+    std::vector<Vertex> m_colliderLines;
 };

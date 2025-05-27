@@ -8,6 +8,7 @@ layout(location = 3) in float tex_index;
 uniform mat4 u_projection_matrix;
 uniform mat4 u_view_matrix;
 
+out vec4 v_color;
 out vec2 v_texture_coordinate;
 out float v_tex_index;
 
@@ -15,6 +16,7 @@ void main() {
     // We can think of 'vec4(position, 1.0)' as the model_matrix, since we are passing in the
     // world coordinates of sprites in our implementation.
     gl_Position = u_projection_matrix * u_view_matrix  * vec4(position, 1.0);
+    v_color = color;
     v_texture_coordinate = texture_coordinate;
     v_tex_index = tex_index;
 }

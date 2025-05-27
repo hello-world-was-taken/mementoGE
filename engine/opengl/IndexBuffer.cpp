@@ -10,7 +10,8 @@ IndexBuffer::IndexBuffer(
 {
     glGenBuffers(1, &this->m_id);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->m_id);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, length * sizeof(indices), indices, draw_type);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, length * sizeof(unsigned int), indices, draw_type);
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 

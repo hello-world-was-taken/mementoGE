@@ -11,6 +11,7 @@
 #include "core/MovementMode.h"
 
 #include "renderer/GridRenderer.h"
+#include "renderer/PhysicsRenderer.h"
 
 #include "opengl/FrameBuffer.h"
 
@@ -77,7 +78,9 @@ private:
     std::shared_ptr<Camera> m_editorCamera;
 
     MouseActionController m_mouseActionController;
+
     GridRenderer m_gridRenderer;
+    PhysicsRenderer m_physicsRenderer{};
 
     Window &m_window;
 

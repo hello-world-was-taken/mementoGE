@@ -2,6 +2,7 @@
 
 layout (location = 0) out vec4 FragColor;
 
+in vec4 v_color;
 in vec2 v_texture_coordinate;
 in float v_tex_index;
 
@@ -10,7 +11,14 @@ uniform sampler2D textures[8];
 
 void main()
 {
+    vec4 texColor;
     int slot = int(v_tex_index);
+    if (slot == -1) {
+        // Use only vertex color (for colliders or non-textured geometry)
+        FragColor = v_color;
+        return;
+    }
+
     if (slot == 0) {
         FragColor = texture(textures[0], v_texture_coordinate);
     } else if (slot == 1) {
@@ -28,4 +36,7 @@ void main()
     } else {
         FragColor = texture(textures[7], v_texture_coordinate);
     }
+
+    // Modulate texture color by vertex color for tinting
+    // FragColor = texColor * v_color;
 }

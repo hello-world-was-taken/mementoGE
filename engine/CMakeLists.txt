@@ -32,6 +32,7 @@ add_library(${PROJECT_NAME} STATIC
     renderer/RenderBatch.cpp
     renderer/SpriteRenderer.cpp
     renderer/GridRenderer.cpp
+    renderer/PhysicsRenderer.cpp
 
     # physics
     physics/Physics2D.cpp

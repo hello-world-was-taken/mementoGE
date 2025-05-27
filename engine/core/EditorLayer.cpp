@@ -249,7 +249,7 @@ void EditorLayer::renderPropertiesPanel()
     if (go->hasComponent<Rigidbody2D>())
     {
         Rigidbody2D &rb = go->getComponent<Rigidbody2D>();
-        if(ImGui::BeginCombo("Rigidbody 2D Type", rb.getBodyType().c_str()))
+        if (ImGui::BeginCombo("Rigidbody 2D Type", rb.getBodyType().c_str()))
         {
             if (ImGui::Selectable("Static"))
                 rb.setType(BodyType::Static);
@@ -455,10 +455,17 @@ void EditorLayer::renderPerformancePanel()
 
 void EditorLayer::renderGrid()
 {
-    if (!m_currentScene || !m_drawGrid)
+    if (!m_currentScene)
         return;
 
     std::shared_ptr<Camera> cam = m_currentScene->getCamera();
+
+    m_physicsRenderer.setActiveGameObjects(&m_currentScene->getGameObjects());
+    m_physicsRenderer.render(cam);
+
+    if (!m_drawGrid)
+        return;
+
     m_gridRenderer.render(cam);
 }
 

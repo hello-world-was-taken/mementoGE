@@ -118,6 +118,11 @@ void Shader::setUniform4fv(const std::string &name, glm::mat4 value)
     glUniformMatrix4fv(getUniformLocation(name), 1, GL_FALSE, &value[0][0]);
 }
 
+void Shader::setUniform4f(const std::string &name, glm::vec4 value)
+{
+    glUniform4f(getUniformLocation(name), value.x, value.y, value.z, value.w);
+}
+
 void Shader::setMultipleTextureUnits(const std::string &name, int *texture_units, int size)
 {
     glUniform1iv(getUniformLocation(name), size, texture_units);

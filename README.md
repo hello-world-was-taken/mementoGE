@@ -60,13 +60,13 @@ After compiling, you can run the engine like so:
 
 - [ ] Zoom centering on mouse cursor
 - [ ] Support for touchpad gestures (pinch-to-zoom, two-finger pan)
-- [ ] (`inprogress`) Dedicated event system (abstract input handling from ImGui + GLFW)
+- [x] Dedicated event system (abstract input handling from ImGui + GLFW)
 - [x] Scene serialization (saving/loading scenes)
 - [x] Prefab system for reusable GameObjects
 - [ ] Remove GLEW requirement by bundling or replacing
 - [ ] (`inprogress`) Gizmo tools - (translate/rotate/scale handles)
 - [ ] Custom shader and material editing support
-- [ ] (`inprogress`) Physics integration (Box2D)
+- [x] Physics integration (Box2D)
 - [ ] Audio system (OpenAL or FMOD)
 - [x] Hot-reload shaders and assets during runtime
 - [x] Cross-platform support (Window/MacOS)
