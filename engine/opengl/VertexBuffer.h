@@ -17,8 +17,10 @@ public:
     VertexBuffer() = default;
     VertexBuffer(unsigned int buffer_size, unsigned int draw_type);
     ~VertexBuffer();
+
     void bind() const;
     void unbind() const;
+
     void updateBufferData(std::vector<Vertex> vertices);
 
 private:

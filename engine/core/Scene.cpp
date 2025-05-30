@@ -1,21 +1,17 @@
+#include "core/Scene.h"
+#include "core/MouseListener.h" // TODO: Game specific things shouldn't be here.
+
+#include "renderer/RenderBatch.h"
+
 #include <iostream>
 #include <string>
 #include <entt/entt.hpp>
 #include <yaml-cpp/yaml.h>
 #include <stdexcept>
 
-#include "core/Scene.h"
-#include "renderer/RenderBatch.h"
-#include "core/MouseListener.h" // TODO: Game specific things shouldn't be here.
-
 Scene::Scene(std::string &&tag)
     : mTag{tag}
 {
-    // NOTE: When trying to construct RenderBatch here, it was causing a segfault. I think it was because
-    // the OpenGL context was not yet created which resulted in glGenVertexArrays == NULL. So, I moved the
-    // RenderBatch construction to the start.
-    // TODO: Investigate this further
-    // m_renderBatch = new RenderBatch(this);
 }
 
 Scene::Scene(const YAML::Node &&serializedScene)
@@ -45,7 +41,6 @@ Scene::Scene(Scene &&other)
     m_screen_height = other.m_screen_height;
     m_screen_width = other.m_screen_width;
     m_camera = std::move(other.m_camera);
-    m_renderBatch = other.m_renderBatch;
     m_textures = std::move(other.m_textures);
     mTag = std::move(other.mTag);
 
@@ -56,7 +51,6 @@ Scene::Scene(Scene &&other)
     }
 
     // setting other pointer variables to null_ptr
-    other.m_renderBatch = nullptr;
     other.m_activeEntityId = entt::null;
     other.m_registry = NULL;
 
@@ -72,13 +66,11 @@ Scene &Scene::operator=(Scene &&other)
     m_registry = std::move(other.m_registry);
     m_gameObjects = std::move(other.m_gameObjects);
     m_camera = std::move(other.m_camera);
-    m_renderBatch = other.m_renderBatch;
     m_textures = std::move(other.m_textures);
     m_activeEntityId = other.m_activeEntityId;
     mTag = std::move(other.mTag);
 
     // setting other pointer variables to null_ptr
-    other.m_renderBatch = nullptr;
     other.m_activeEntityId = entt::null;
 
     return *this;
@@ -87,12 +79,10 @@ Scene &Scene::operator=(Scene &&other)
 Scene::~Scene()
 {
     std::cout << "Scene destructor called: " << mTag << std::endl;
-    delete m_renderBatch;
 }
 
 void Scene::start()
 {
-    m_renderBatch = new RenderBatch(m_camera, m_gameObjects);
 }
 
 void Scene::update(float deltaTime, GLFWwindow *window)
@@ -100,7 +90,9 @@ void Scene::update(float deltaTime, GLFWwindow *window)
     m_physicsWorld.simulate(deltaTime, m_gameObjects);
     m_physicsWorld.syncTransforms(m_gameObjects);
 
-    m_renderBatch->render();
+    m_spriteRenderer.setActiveGameObjects(&getGameObjects());
+    m_spriteRenderer.setCamera(m_camera);
+    m_spriteRenderer.render();
 }
 
 void Scene::addGameObject(unsigned int width, unsigned int height, std::string &&tag)

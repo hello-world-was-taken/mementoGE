@@ -13,128 +13,94 @@
 #include <memory>
 
 RenderBatch::RenderBatch(
-    const std::shared_ptr<Camera> camera,
-    std::vector<GameObject> &gameObjects)
-    : m_camera(camera), m_gameObjects(gameObjects)
+    std::shared_ptr<Camera> camera,
+    std::vector<unsigned int> indices,
+    GLenum drawMode)
+    : m_camera(camera),
+      m_indices(indices),
+      m_drawMode(drawMode)
 {
-    generateIndexArray();
-    generateVertexBuffer();
+    setupBuffers();
 }
 
 RenderBatch::~RenderBatch()
 {
     std::cout << "RenderBatch destructor called" << std::endl;
 
-    mp_vb->unbind();
-    mp_ib->unbind();
-    mp_vao->unbind();
-
-    delete mp_vb;
-    delete mp_ib;
-    delete mp_vao;
+    m_vbo->unbind();
+    m_ibo->unbind();
+    m_vao->unbind();
 }
 
-void RenderBatch::render()
+void RenderBatch::setupBuffers()
 {
-    mp_vao->bind();
-    mp_vb->bind();
-
-    // repopulate the vertices with the new data
-    updateVertexBuffer();
-
-    std::shared_ptr<Shader> shader = Resource::getShaderProgram("../assets/shader/vertex.shader", "../assets/shader/fragment.shader");
-    shader.get()->use();
-
-    // set the view matrix
-    glm::mat4 u_view_matrix = m_camera->getViewMatrix();
-    shader.get()->setUniform4fv("u_view_matrix", u_view_matrix);
-
-    // set the projection matrix
-    glm::mat4 u_projection_matrix = m_camera->getProjectionMatrix();
-    shader.get()->setUniform4fv("u_projection_matrix", u_projection_matrix);
-
-    shader.get()->setMultipleTextureUnits("textures", m_texture_units.data(), m_texture_units.size());
-
-    glClearError();
-    glDrawElements(GL_TRIANGLES, BATCH_SIZE * INDICES_PER_QUAD, GL_UNSIGNED_INT, nullptr);
-    glCheckError("glDrawTriangles", __FILE__, __LINE__);
-
-    mp_vb->unbind();
-    mp_vao->unbind();
-}
-
-void RenderBatch::updateVertexBuffer()
-{
-    // clear the vertices vector
-    m_vertices.clear();
-
-    for (GameObject &gameObject : m_gameObjects)
-    {
-
-        Transform transform = gameObject.getComponent<Transform>();
-
-        // The world coordinate is model matrix * local quad.
-        std::vector<glm::vec3> transformedQuad = gameObject.getWorldCoordinateQuad();
-
-        if (gameObject.hasComponent<Sprite>())
-        {
-            Sprite sprite = gameObject.getComponent<Sprite>();
-
-            for (int i = 0; i < transformedQuad.size(); i++)
-            {
-                m_vertices.push_back({transformedQuad[i],
-                                      sprite.getColor(),
-                                      sprite.getTextureCoordinates()[i], // TODO: do we need to retrieve this from the sprite renderer?
-                                      (float)sprite.getTexture()->getTextureUnit()});
-            }
-        }
-    }
-
-    // update the vertex buffer
-    mp_vb->updateBufferData(m_vertices);
-}
-
-// TODO: why is this function creating an index buffer?
-void RenderBatch::generateVertexBuffer()
-{
-    // 1000 Quads * 4 vertices per quad * sizeof(Vertex)
+    // TODO: We may not use the total space.
     unsigned int bufferSize = 1000 * 4 * sizeof(Vertex);
-    glClearError();
 
-    mp_vao = new VertexArray();
-    mp_vao->bind();
+    m_vao = std::make_unique<VertexArray>();
+    m_vao->bind();
 
-    mp_vb = new VertexBuffer(bufferSize, GL_DYNAMIC_DRAW);
-    mp_vb->bind();
+    m_vbo = std::make_unique<VertexBuffer>(bufferSize, GL_DYNAMIC_DRAW);
+    m_vbo->bind();
 
-    mp_vao->attachVertexAttribute(VertexAttribute{3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0});
-    mp_vao->attachVertexAttribute(VertexAttribute{4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, color)});
-    mp_vao->attachVertexAttribute(VertexAttribute{2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, texture)});
-    mp_vao->attachVertexAttribute(VertexAttribute{1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, texIndex)});
+    m_vao->attachVertexAttribute({3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0});
+    m_vao->attachVertexAttribute({4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, color)});
+    m_vao->attachVertexAttribute({2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, texture)});
+    m_vao->attachVertexAttribute({1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, texIndex)});
 
-    mp_ib = new IndexBuffer{m_indices, BATCH_SIZE * INDICES_PER_QUAD, GL_STATIC_DRAW};
-    mp_ib->bind();
+    if (m_drawMode == GL_TRIANGLES)
+    {
+        // TODO: FIX INDICES SIZE MISMATCH
+        m_ibo = std::make_unique<IndexBuffer>(BATCH_SIZE * INDICES_PER_QUAD, GL_STATIC_DRAW);
+    }
+    else if (m_drawMode == GL_LINES)
+    {
+        m_ibo = std::make_unique<IndexBuffer>(BATCH_SIZE * INDICES_PER_LINE_QUAD, GL_STATIC_DRAW);
+    }
+    m_ibo->bind();
 
     // Once we associate vbo and ibo with the vao, we should only unbound the vao
     // to not break the association.
-    mp_vao->unbind();
+    m_vao->unbind();
 }
 
-void RenderBatch::generateIndexArray()
+void RenderBatch::setVertexData(std::vector<Vertex> vertices)
 {
-    // The pattern of the indices is the same for each quad
-    // 0, 1, 2, 0, 3, 2     // then by adding 4 to each index
-    // +4,+4,+4,+4,+4,+4
-    // 4, 5, 6, 4, 7, 6     // we get this one and so on.
-    // The for-loop below generates the indices for each quad
+    m_vertices.clear();
+    m_vertices.insert(m_vertices.end(), vertices.begin(), vertices.end());
 
-    for (int i = 0; i < BATCH_SIZE; i++)
+    m_vbo->updateBufferData(m_vertices);
+}
+
+void RenderBatch::setIndexData(std::vector<unsigned int> indices)
+{
+    m_indices.clear();
+    m_indices.insert(m_indices.end(), indices.begin(), indices.end());
+
+    m_ibo->updateIndicesData(m_indices.data(), m_indices.size());
+}
+
+void RenderBatch::render(std::shared_ptr<Shader> customShader)
+{
+    std::shared_ptr<Shader> shader = customShader ? customShader
+                                                  : Resource::getShaderProgram("../assets/shader/vertex.shader", "../assets/shader/fragment.shader");
+
+    shader->use();
+    shader->setUniform4fv("u_view_matrix", m_camera->getViewMatrix());
+    shader->setUniform4fv("u_projection_matrix", m_camera->getProjectionMatrix());
+    shader->setMultipleTextureUnits("textures", m_textureUnits.data(), m_textureUnits.size());
+
+    m_vao->bind();
+    glClearError();
+    if (m_drawMode == GL_TRIANGLES)
     {
-        m_indices[i * 6] = i * 4;
-        m_indices[i * 6 + 1] = i * 4 + 1;
-        m_indices[i * 6 + 2] = i * 4 + 2;
-        m_indices[i * 6 + 3] = i * 4;
-        m_indices[i * 6 + 4] = i * 4 + 3;
-        m_indices[i * 6 + 5] = i * 4 + 2;
+        glDrawElements(GL_TRIANGLES, BATCH_SIZE * INDICES_PER_QUAD, GL_UNSIGNED_INT, nullptr);
+        glCheckError("glDrawTriangles", __FILE__, __LINE__);
     }
+    else if (m_drawMode == GL_LINES)
+    {
+        glDrawElements(GL_LINES, BATCH_SIZE * INDICES_PER_LINE_QUAD, GL_UNSIGNED_INT, nullptr);
+        glCheckError("glDrawLines", __FILE__, __LINE__);
+    }
+    m_vao->unbind();
 }

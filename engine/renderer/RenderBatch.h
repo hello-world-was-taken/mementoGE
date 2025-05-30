@@ -25,30 +25,32 @@
 class RenderBatch
 {
 public:
-    RenderBatch(const std::shared_ptr<Camera> camera, std::vector<GameObject>& m_gameObjects);
+    RenderBatch(std::shared_ptr<Camera> camera, std::vector<unsigned int> indices, GLenum drawMode);
     ~RenderBatch();
 
-    void render();
-    // void getQuad();
-    // void generateVertexArray();
-    void updateVertexBuffer();
-    void generateVertexBuffer();
-    void generateIndexArray();
-    std::vector<glm::vec3> transformQuad(glm::mat4x4 transformMatrix, std::vector<glm::vec3> quad);
+    void setVertexData(std::vector<Vertex> vertices);
+    void setIndexData(std::vector<unsigned int> indices);
+    void render(std::shared_ptr<Shader> customShader = nullptr);
 
 private:
-    const std::shared_ptr<Camera> m_camera;
-    std::vector<GameObject>& m_gameObjects;
+    void setupBuffers();
+
+public:
+    const int BATCH_SIZE = 1000;
+    const int VERTEX_PER_QUAD = 4;
+    const int INDICES_PER_QUAD = 6;
+    const int INDICES_PER_LINE_QUAD = 8;
+
+private:
+    GLenum m_drawMode;
+
+    std::shared_ptr<Camera> m_camera;
     std::vector<Vertex> m_vertices;
+    std::vector<unsigned int> m_indices;
 
-    static const int BATCH_SIZE = 1000;    // 1000 QUADS
-    static const int INDICES_PER_QUAD = 6; // 6 indices per quad
-    unsigned int m_indices[BATCH_SIZE * INDICES_PER_QUAD];
+    std::unique_ptr<VertexArray> m_vao;
+    std::unique_ptr<VertexBuffer> m_vbo;
+    std::unique_ptr<IndexBuffer> m_ibo;
 
-    // TODO: use smart pointer
-    VertexArray *mp_vao;
-    VertexBuffer *mp_vb;
-    IndexBuffer *mp_ib;
-
-    std::vector<int> m_texture_units = {0, 1, 2, 3, 4, 5, 6, 7};
+    std::vector<int> m_textureUnits = {0, 1, 2, 3, 4, 5, 6, 7};
 };

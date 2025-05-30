@@ -4,14 +4,12 @@
 #include "Indexbuffer.h"
 
 IndexBuffer::IndexBuffer(
-    const unsigned int *indices,
     const int length,
     unsigned int draw_type)
 {
     glGenBuffers(1, &this->m_id);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->m_id);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, length * sizeof(unsigned int), indices, draw_type);
-
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, length * sizeof(unsigned int), nullptr, draw_type);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
@@ -29,5 +27,12 @@ void IndexBuffer::bind() const
 
 void IndexBuffer::unbind() const
 {
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void IndexBuffer::updateIndicesData(const unsigned int *data, int count) const
+{
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->m_id);
+    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, count * sizeof(unsigned int), data);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }

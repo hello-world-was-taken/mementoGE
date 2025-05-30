@@ -2,16 +2,11 @@
 
 #include "core/GLIncludes.h"
 #include "core/Camera.h"
-#include "core/Camera.h"
 #include "core/GameObject.h"
-#include "core/Transform.h"
 
 #include "opengl/Vertex.h"
-#include "opengl/VertexArray.h"
-#include "opengl/VertexBuffer.h"
-#include "opengl/Indexbuffer.h"
-#include "opengl/Shader.h"
-#include "opengl/Texture.h"
+
+#include "renderer/RenderBatch.h"
 
 #include "util/log_error.h"
 
@@ -20,36 +15,26 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <memory>
 
-// TODO: Once the engine adds support for Vulkan, common batch
-// rendering logic needs to be abstracted.
 class PhysicsRenderer
 {
 public:
     PhysicsRenderer();
     ~PhysicsRenderer();
 
-    void render(std::shared_ptr<Camera> &camera);
+    void render();
 
-    void updateVertexBuffer();
-    void updateColliderLines();
-
-    void generateVertexBuffer();
-    void generateIndexArray();
-
+    void setCamera(std::shared_ptr<Camera> &camera);
     void setActiveGameObjects(std::vector<GameObject> *gameObjects);
 
 private:
-    std::vector<GameObject> *m_gameObjects;
+    void updateVertices();
+    void generateIndexArray();
 
-    static const int BATCH_SIZE = 1000;    // 1000 QUADS
-    static const int INDICES_PER_QUAD = 8; // 4 since we are drawing lines
-    unsigned int m_indices[BATCH_SIZE * INDICES_PER_QUAD];
+private:
+    std::shared_ptr<Camera> m_camera;
+    std::unique_ptr<RenderBatch> m_batch;
+    std::vector<GameObject> *m_gameObjects = nullptr;
 
-    // TODO: use smart pointer
-    VertexArray *mp_vao;
-    VertexBuffer *mp_vb;
-    IndexBuffer *mp_ib;
-
-    std::vector<int> m_texture_units = {0, 1, 2, 3, 4, 5, 6, 7};
-    std::vector<Vertex> m_colliderLines;
+    std::vector<Vertex> m_vertices;
+    std::vector<unsigned int> m_indices;
 };

@@ -2,7 +2,8 @@
 
 #include "util/log_error.h"
 #include "opengl/Shader.h"
-#include "renderer/RenderBatch.h"
+
+#include "renderer/SpriteRenderer.h"
 
 #include "core/GLIncludes.h"
 #include "core/GameObject.h"
@@ -58,12 +59,12 @@ private:
     float m_screen_height = 32.0f * 9.0f; // 9 tiles of 32 pixels = 288 pixels
 
     // Physics2D m_physicsWorld{{0.0f, 9.8f}};
+    SpriteRenderer m_spriteRenderer{};
 
     entt::registry m_registry;
     std::vector<GameObject> m_gameObjects;
     std::shared_ptr<Camera> m_camera = std::make_shared<Camera>(m_screen_width, m_screen_height);
 
-    RenderBatch *m_renderBatch = nullptr;
     std::vector<std::shared_ptr<Texture>> m_textures;
     std::optional<entt::entity> m_activeEntityId;
     std::string mTag;

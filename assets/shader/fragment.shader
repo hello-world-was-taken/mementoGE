@@ -19,24 +19,24 @@ void main()
         return;
     }
 
-    if (slot == 0) {
-        FragColor = texture(textures[0], v_texture_coordinate);
-    } else if (slot == 1) {
-        FragColor = texture(textures[1], v_texture_coordinate);
-    } else if (slot == 2) {
-        FragColor = texture(textures[2], v_texture_coordinate);
-    } else if (slot == 3) {
-        FragColor = texture(textures[3], v_texture_coordinate);
-    } else if (slot == 4) {
-        FragColor = texture(textures[4], v_texture_coordinate);
-    } else if (slot == 5) {
-        FragColor = texture(textures[5], v_texture_coordinate);
-    } else if (slot == 6) {
-        FragColor = texture(textures[6], v_texture_coordinate);
-    } else {
-        FragColor = texture(textures[7], v_texture_coordinate);
+    /**
+    * For GLSL above 3.3
+    * FragColor = texture(textures[slot], v_texture_coordinate);
+    */
+
+    if (slot == 0) texColor = texture(textures[0], v_texture_coordinate);
+    else if (slot == 1) texColor = texture(textures[1], v_texture_coordinate);
+    else if (slot == 2) texColor = texture(textures[2], v_texture_coordinate);
+    else if (slot == 3) texColor = texture(textures[3], v_texture_coordinate);
+    else if (slot == 4) texColor = texture(textures[4], v_texture_coordinate);
+    else if (slot == 5) texColor = texture(textures[5], v_texture_coordinate);
+    else if (slot == 6) texColor = texture(textures[6], v_texture_coordinate);
+    else if (slot == 7) texColor = texture(textures[7], v_texture_coordinate);
+    else {
+        FragColor = v_color; // fallback
+        return;
     }
 
-    // Modulate texture color by vertex color for tinting
-    // FragColor = texColor * v_color;
+    // TODO: support tiniting
+    FragColor = texColor;
 }

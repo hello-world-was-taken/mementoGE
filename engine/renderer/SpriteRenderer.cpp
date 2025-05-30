@@ -1,110 +1,93 @@
-#include "SpriteRenderer.h"
+#include "renderer/SpriteRenderer.h"
 
-SpriteRenderer::SpriteRenderer(glm::vec4 color)
+#include "core/Sprite.h"
+
+SpriteRenderer::SpriteRenderer()
 {
-    this->color = color;
-
-    initializeTextureCoordinate();
-}
-
-SpriteRenderer::SpriteRenderer(
-    std::shared_ptr<Texture> texture,
-    unsigned int subTextureSpanX,
-    unsigned int subTextureSpanY,
-    unsigned int subTextureSize,
-    unsigned int subTextureIndexX,
-    unsigned int subTextureIndexY)
-{
-    this->texture = texture;
-    this->m_subTextureSpanX = subTextureSpanX;
-    this->m_subTextureSpanY = subTextureSpanY;
-    this->m_subTextureSize = subTextureSize;
-    this->m_subTextureIndexX = subTextureIndexX;
-    this->m_subTextureIndexY = subTextureIndexY;
-
-    initializeTextureCoordinate();
+    generateIndexArray();
 }
 
 SpriteRenderer::~SpriteRenderer()
 {
 }
 
-void SpriteRenderer::initializeTextureCoordinate()
+void SpriteRenderer::render()
 {
-    if (texture->isTextureAtlas())
+    if (!m_camera)
     {
-        this->textureCoordinates
-            .push_back({float(m_subTextureSize * m_subTextureIndexX) / float(this->texture->getWidth()),
-                        float((m_subTextureSize * (m_subTextureIndexY + m_subTextureSpanY))) / float(this->texture->getHeight())}); // top left
-        this->textureCoordinates
-            .push_back({float(m_subTextureSize * m_subTextureIndexX) / float(this->texture->getWidth()),
-                        float(m_subTextureSize * m_subTextureIndexY) / float(this->texture->getHeight())}); // bottom left
-        this->textureCoordinates
-            .push_back({float(m_subTextureSize * (m_subTextureIndexX + m_subTextureSpanX)) / float(this->texture->getWidth()),
-                        float(m_subTextureSize * (m_subTextureIndexY)) / float(this->texture->getHeight())}); // bottom right
-        this->textureCoordinates
-            .push_back({float(m_subTextureSize * (m_subTextureIndexX + m_subTextureSpanX)) / float(this->texture->getWidth()),
-                        float(m_subTextureSize * (m_subTextureIndexY + m_subTextureSpanY)) / float(this->texture->getHeight())}); // top right
+        throw std::runtime_error("Attempted to render without setting camera!");
     }
-    else
+
+    if (!m_gameObjects)
+        return;
+
+    if (m_batch == nullptr)
+        m_batch = std::make_unique<RenderBatch>(m_camera, m_indices, GL_TRIANGLES);
+
+    updateVertices();
+    m_batch->setVertexData(m_vertices);
+    m_batch->setIndexData(m_indices);
+
+    // std::cout << "vertex size: " << m_vertices.size() << " index size: " << m_indices.size()  << std::endl;
+    m_batch->render();
+}
+
+void SpriteRenderer::updateVertices()
+{
+    m_vertices.clear();
+
+    for (GameObject &gameObject : *m_gameObjects)
     {
-        this->textureCoordinates.push_back({0.0f, 1.0f}); // top left
-        this->textureCoordinates.push_back({0.0f, 0.0f}); // bottom left
-        this->textureCoordinates.push_back({1.0f, 0.0f}); // bottom right
-        this->textureCoordinates.push_back({1.0f, 1.0f}); // top right
+
+        Transform transform = gameObject.getComponent<Transform>();
+
+        // The world coordinate is model matrix * local quad.
+        std::vector<glm::vec3> transformedQuad = gameObject.getWorldCoordinateQuad();
+
+        if (gameObject.hasComponent<Sprite>())
+        {
+            Sprite sprite = gameObject.getComponent<Sprite>();
+
+            for (int i = 0; i < transformedQuad.size(); i++)
+            {
+                m_vertices.push_back({transformedQuad[i],
+                                      sprite.getColor(),
+                                      sprite.getTextureCoordinates()[i], // TODO: do we need to retrieve this from the sprite renderer?
+                                      (float)sprite.getTexture()->getTextureUnit()});
+            }
+        }
     }
 }
 
-void SpriteRenderer::start()
+// The pattern of the indices is the same for each quad
+// 0, 1, 2, 0, 3, 2     // then by adding 4 to each index
+// +4,+4,+4,+4,+4,+4
+// 4, 5, 6, 4, 7, 6     // we get this one and so on.
+// The for-loop below generates the indices for each quad
+void SpriteRenderer::generateIndexArray()
 {
-    std::cout << "SpriteRenderer::start()" << std::endl;
-}
-
-void SpriteRenderer::update(float deltaTime)
-{
-    std::cout << "SpriteRenderer::update()" << std::endl;
-}
-
-std::vector<glm::vec2> SpriteRenderer::getTextureCoordinates()
-{
-    if (this->texture == nullptr)
+    // m_indices.reserve(m_batch->BATCH_SIZE * m_batch->INDICES_PER_QUAD);
+    // for (int i = 0; i < m_batch->BATCH_SIZE; i++)
+    // {
+    m_indices.resize(1000 * 6);
+    for (int i = 0; i < 1000; i++)
     {
-        std::cout << "SpriteRenderer::getTextureCoordinates() - texture is null" << std::endl;
+        m_indices[i * 6] = i * 4;
+        m_indices[i * 6 + 1] = i * 4 + 1;
+        m_indices[i * 6 + 2] = i * 4 + 2;
+        m_indices[i * 6 + 3] = i * 4;
+        m_indices[i * 6 + 4] = i * 4 + 3;
+        m_indices[i * 6 + 5] = i * 4 + 2;
     }
-    return this->textureCoordinates;
+    std::cout << "index size: " << m_indices.size() << std::endl;
 }
 
-std::shared_ptr<Texture> SpriteRenderer::getTexture()
+void SpriteRenderer::setActiveGameObjects(std::vector<GameObject> *gameObjects)
 {
-    return this->texture;
+    m_gameObjects = gameObjects;
 }
 
-glm::vec4 SpriteRenderer::getColor()
+void SpriteRenderer::setCamera(std::shared_ptr<Camera> &camera)
 {
-    return this->color;
-}
-
-unsigned int SpriteRenderer::getSubTextureSpanX()
-{
-    return this->m_subTextureSpanX;
-}
-
-unsigned int SpriteRenderer::getSubTextureSpanY()
-{
-    return this->m_subTextureSpanY;
-}
-
-unsigned int SpriteRenderer::getSubTextureSize()
-{
-    return this->m_subTextureSize;
-}
-
-unsigned int SpriteRenderer::getSubTextureIndexX()
-{
-    return this->m_subTextureIndexX;
-}
-
-unsigned int SpriteRenderer::getSubTextureIndexY()
-{
-    return this->m_subTextureIndexY;
+    m_camera = camera;
 }

@@ -30,5 +30,7 @@ void VertexBuffer::unbind() const
 
 void VertexBuffer::updateBufferData(std::vector<Vertex> vertices)
 {
+    glBindBuffer(GL_ARRAY_BUFFER, m_id);
     glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(Vertex), vertices.data());
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }

@@ -461,7 +461,8 @@ void EditorLayer::renderGrid()
     std::shared_ptr<Camera> cam = m_currentScene->getCamera();
 
     m_physicsRenderer.setActiveGameObjects(&m_currentScene->getGameObjects());
-    m_physicsRenderer.render(cam);
+    m_physicsRenderer.setCamera(cam);
+    m_physicsRenderer.render();
 
     if (!m_drawGrid)
         return;
