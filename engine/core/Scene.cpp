@@ -26,7 +26,7 @@ Scene::Scene(const YAML::Node &&serializedScene)
 
         for (YAML::const_iterator it = gameObjects.begin(); it != gameObjects.end(); ++it)
         {
-            GameObject gameObj{m_registry, it->second};
+            GameObject gameObj{m_registry, it->second, m_physicsWorld};
             m_gameObjects.push_back(std::move(gameObj));
         }
 
@@ -92,7 +92,6 @@ Scene Scene::clone(std::string tag)
 
     YAML::Node serializedScene = YAML::Load(out.c_str());
 
-
     return Scene{std::move(serializedScene)};
 }
 
@@ -102,11 +101,11 @@ void Scene::start()
 
 void Scene::update(float deltaTime, GLFWwindow *window)
 {
-    if (m_isPaused)
-        return;
-
-    m_physicsWorld.simulate(deltaTime, m_gameObjects);
-    m_physicsWorld.syncTransforms(m_gameObjects);
+    if (!m_isPaused)
+    {
+        m_physicsWorld.simulate(deltaTime, m_gameObjects);
+        m_physicsWorld.syncTransforms(m_gameObjects);
+    }
 
     m_spriteRenderer.setActiveGameObjects(&getGameObjects());
     m_spriteRenderer.setCamera(m_camera);

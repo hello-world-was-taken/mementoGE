@@ -1,7 +1,6 @@
 #pragma once
 
 #include "core/Transform.h"
-#include "core/GameObject.h"
 
 #include "physics/RigidBox2D.h"
 #include "physics/BoxCollider2D.h"
@@ -10,6 +9,8 @@
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <box2d/box2d.h>
+
+class GameObject;
 
 class Physics2D
 {

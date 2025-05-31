@@ -3,12 +3,12 @@
 #include <box2d/box2d.h>
 #include <yaml-cpp/yaml.h>
 
-enum class BodyType
-{
-    Static = 0,
-    Dynamic = 1,
-    Kinematic = 2
-};
+// enum class BodyType
+// {
+//     Static = 0,
+//     Dynamic = 1,
+//     Kinematic = 2
+// };
 
 struct RigidBody2D
 {

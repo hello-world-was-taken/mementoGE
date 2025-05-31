@@ -85,7 +85,47 @@ void EditorLayer::drawEditorUI()
 
 void EditorLayer::renderSceneViewport()
 {
-    ImGui::Begin("Scene");
+    ImGui::PushStyleColor(ImGuiCol_MenuBarBg, IM_COL32(0, 0, 0, 255));
+    ImGui::Begin("Scene", nullptr, ImGuiWindowFlags_MenuBar);
+    ImGui::PopStyleColor();
+    if (ImGui::BeginMenuBar())
+    {
+        // Trying to center the components
+        float spacing = ImGui::GetStyle().ItemSpacing.x;
+        float buttonWidth = 40.0f;
+        float totalWidth = 3 * buttonWidth + 2 * spacing;
+
+        float availableWidth = ImGui::GetContentRegionAvail().x;
+        float startX = (availableWidth - totalWidth) / 2.0f;
+
+        ImGui::SetCursorPosX(startX);
+
+        if (ImGui::Button("PLAY"))
+        {
+            if (!m_sceneManager.isPlaying())
+            {
+                m_sceneManager.startRuntimeScene();
+            }
+        }
+
+        if (ImGui::Button("PAUSE"))
+        {
+            if (m_sceneManager.isPlaying())
+            {
+                m_sceneManager.m_isPlaying = false;
+                Scene &current = m_sceneManager.getActiveScene();
+                current.setPaused(!current.isPaused());
+            }
+        }
+
+        if (ImGui::Button("STOP"))
+        {
+            m_sceneManager.stopRuntimeScene();
+        }
+
+        ImGui::EndMenuBar();
+    }
+
     int fbWidth, fbHeight;
     glfwGetFramebufferSize(m_window.getGlfwWindow(), &fbWidth, &fbHeight);
     float aspectRatio = static_cast<float>(m_viewportWidth) / m_viewportHeight;
@@ -562,29 +602,6 @@ void EditorLayer::renderEditorProperties()
 
     ImGui::Separator();
     ImGui::Checkbox("Draw Grid", &m_drawGrid);
-
-    if (ImGui::Button("Play"))
-    {
-        if (!m_sceneManager.isPlaying())
-        {
-            m_sceneManager.startRuntimeScene();
-        }
-    }
-
-    if (ImGui::Button("Pause"))
-    {
-        if (m_sceneManager.isPlaying())
-        {
-            m_sceneManager.m_isPlaying = false;
-            Scene &current = m_sceneManager.getActiveScene();
-            current.setPaused(!current.isPaused());
-        }
-    }
-
-    if (ImGui::Button("Stop"))
-    {
-        m_sceneManager.stopRuntimeScene();
-    }
 
     ImGui::End();
 }

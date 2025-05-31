@@ -3,6 +3,8 @@
 #include "core/Sprite.h"
 #include "core/RigidBody2D.h"
 
+#include "physics/Physics2D.h"
+
 #include <yaml-cpp/yaml.h>
 #include <string>
 
@@ -28,6 +30,34 @@ GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGam
     // Deserialize Sprite Component of the Game Object
     addComponent<Sprite>();
     getComponent<Sprite>().deserialize(serializedGameObject);
+}
+
+GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGameObject, Physics2D &physics) : m_registry{&registry}
+{
+    m_entity = m_registry->create();
+
+    // Deserializing
+    mTag = serializedGameObject["Tag"].as<std::string>();
+    m_width = serializedGameObject["Width"].as<unsigned int>();
+    m_height = serializedGameObject["Height"].as<unsigned int>();
+
+    // Deserializing Transform Component of the Game Object
+    addComponent<Transform>(glm::vec3(0.0f, 0.0f, 0.0f));
+    getComponent<Transform>().deserialize(serializedGameObject);
+
+    // Deserialize Sprite Component of the Game Object
+    addComponent<Sprite>();
+    getComponent<Sprite>().deserialize(serializedGameObject);
+
+    bool hasRigidBody2D = false;
+    if (serializedGameObject["HasRigidBody2D"] && serializedGameObject["HasRigidBody2D"].IsScalar())
+    {
+        hasRigidBody2D = serializedGameObject["HasRigidBody2D"].as<bool>();
+        if (hasRigidBody2D)
+        {
+            physics.addRigidbody(*this);
+        }
+    }
 }
 
 GameObject::GameObject(GameObject &&other)
@@ -148,6 +178,10 @@ bool GameObject::serialize(YAML::Emitter &out)
         Sprite &sprite = getComponent<Sprite>();
         sprite.serialize(out);
     }
+
+    // RIGIDBODY2D COMPONENT
+    out << YAML::Key << "HasRigidBody2D";
+    out << YAML::Value << hasComponent<Rigidbody2D>();
 
     out << YAML::EndMap;
 

@@ -32,6 +32,10 @@ void Physics2D::simulate(float timestep, const std::vector<GameObject> &gameObje
 void Physics2D::addRigidbody(GameObject &obj)
 {
     Transform &transform = obj.getComponent<Transform>();
+    if (!obj.hasComponent<Rigidbody2D>())
+    {
+        obj.addComponent<Rigidbody2D>();
+    }
     Rigidbody2D &rb = obj.getComponent<Rigidbody2D>();
 
     b2BodyId bodyId = createBodyHelper(obj);
