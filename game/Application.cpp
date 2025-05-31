@@ -97,19 +97,10 @@ void Application::update()
     }
 
     destroy();
-    
+
     glfwTerminate();
-    exit(EXIT_SUCCESS);
 }
 
 void Application::destroy()
 {
-    if (m_editorMode)
-    {
-        m_editorLayer.serialize();
-    }
-    else
-    {
-        mSceneManager.serialize();
-    }
 }

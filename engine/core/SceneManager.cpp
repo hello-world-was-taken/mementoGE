@@ -17,34 +17,30 @@ SceneManager::SceneManager(Window *window)
 SceneManager::~SceneManager()
 {
     std::cout << "SceneManager destructor called" << std::endl;
+    serialize();
 }
 
 void SceneManager::start()
 {
-    if (m_activeScene == nullptr)
-    {
-        std::cout << "No active m_scene found" << std::endl;
-        return;
-    }
     // TODO: improve the it to avoid such a gymnastics
-    std::shared_ptr<Camera> camera = m_activeScene->getCamera();
+    std::shared_ptr<Camera> camera = getActiveScene().getCamera();
     m_window->setUserData(camera.get());
 
-    m_activeScene->start();
+    getActiveScene().start();
 }
 
 void SceneManager::update()
 {
-    m_activeScene->update(Time::deltaTime(), m_window->getGlfwWindow());
+    getActiveScene().update(Time::deltaTime(), m_window->getGlfwWindow());
 }
 
-void SceneManager::loadScene(const char *sceneName)
+void SceneManager::loadScene(std::string sceneName)
 {
     auto it = m_scenes.find(sceneName);
     if (it != m_scenes.end())
     {
-        m_activeScene = &(it->second);
-        m_activeScene->start();
+        m_activeSceneName = sceneName;
+        getActiveScene().start();
     }
     else
     {
@@ -52,33 +48,42 @@ void SceneManager::loadScene(const char *sceneName)
     }
 }
 
-void SceneManager::unloadScene(const char *sceneName)
+void SceneManager::unloadScene(std::string sceneName)
 {
-    m_activeScene = nullptr;
+    m_activeSceneName = std::nullopt;
 }
 
-void SceneManager::addScene(const char *sceneName, Scene &&scene)
+void SceneManager::addScene(std::string sceneName, Scene &&scene)
 {
     m_scenes.insert({sceneName, std::move(scene)});
     // TODO: shouldn't the active scene be set to the latest scene added?
-    if (m_activeScene == nullptr)
+    if (!m_activeSceneName.has_value())
     {
-        m_activeScene = &(m_scenes.find(sceneName)->second);
+        m_activeSceneName = sceneName;
     }
 }
 
-void SceneManager::removeScene(const char *sceneName)
+void SceneManager::removeScene(std::string sceneName)
 {
     m_scenes.erase(sceneName);
 }
 
-Scene *SceneManager::getActiveScene()
+Scene &SceneManager::getActiveScene()
 {
-    return m_activeScene;
+    if (m_activeSceneName.has_value())
+    {
+        return m_scenes.find(m_activeSceneName.value())->second;
+    }
+    throw std::runtime_error("No active scene found.");
 }
 
 void SceneManager::serialize()
 {
+    if (m_scenes.size() == 0)
+    {
+        return;
+    }
+
     YAML::Emitter out;
     out << YAML::BeginMap;
 
@@ -97,7 +102,7 @@ void SceneManager::serialize()
 
         out << YAML::EndMap;
     }
-
+    
     out << YAML::EndMap;
     std::ofstream file("../game/scene.yaml", std::ios::out | std::ios::trunc);
     file << out.c_str();
@@ -121,9 +126,8 @@ void SceneManager::deserialize()
     Scene scene = Scene{std::move(serializedScene)};
 
     m_scenes.insert_or_assign("default_scene", std::move(scene));
-    // TODO: map.find() returns iterator end if the value is not present. Fix it.
     // TODO: active scene should be handled better.
-    m_activeScene = &(m_scenes.find("default_scene")->second);
+    m_activeSceneName = "default_scene";
 
     std::cout << "Deserialized scene from scene.yaml" << std::endl;
 }

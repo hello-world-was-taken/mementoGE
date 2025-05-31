@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "core/Scene.h"
+#include "core/SceneManager.h"
 #include "core/Camera.h"
 #include "core/MouseListener.h"
 #include "core/MouseActionController.h"
@@ -42,13 +43,8 @@ private:
     void renderGizmos();
     void renderEditorProperties();
 
-    MovementMode m_movementMode = MovementMode::Free;
-    bool m_drawGrid = false;
-
     void handleSceneInteraction();
     void handleEvents();
-
-    std::vector<std::string> getTextureFiles(const std::string &folderPath);
 
     // get the screen coordinates (glfw screen) from world coordinate
     // since gizmos are imgui rendered
@@ -57,6 +53,12 @@ private:
     glm::vec2 frameBufferToLocal(glm::vec2 frameBufferPos);
     // screen -> glfw window, local -> scene preview imgui window
     glm::vec2 localToScreen(glm::vec2 localPos);
+
+    std::vector<std::string> getTextureFiles(const std::string &folderPath);
+
+private:
+    MovementMode m_movementMode = MovementMode::Free;
+    bool m_drawGrid = false;
 
     // Viewport settings
     int m_viewportWidth = 1280;
@@ -68,21 +70,19 @@ private:
 
     bool m_sceneImageHovered = false;
 
+    Window &m_window;
+
     // scene preview points
     ImVec2 m_upperLeft;
     ImVec2 m_previewAreaSize;
 
-    std::map<std::string, std::shared_ptr<Scene>> m_scenes;
-    std::shared_ptr<Scene> m_currentScene;
+    SceneManager m_sceneManager;
     std::string m_selectedTexturePath;
     std::shared_ptr<Camera> m_editorCamera;
-
-    MouseActionController m_mouseActionController;
 
     GridRenderer m_gridRenderer;
     PhysicsRenderer m_physicsRenderer{};
 
-    Window &m_window;
-
+    MouseActionController m_mouseActionController;
     FrameBuffer m_frameBuffer{m_viewportWidth, m_viewportHeight};
 };

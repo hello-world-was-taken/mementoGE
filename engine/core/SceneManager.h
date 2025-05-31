@@ -3,10 +3,10 @@
 #include "core/GLIncludes.h"
 #include "core/Scene.h"
 #include "core/Window.h"
-#include "opengl/FrameBuffer.h"
 
 #include <map>
 #include <memory>
+#include <optional>
 
 class SceneManager
 {
@@ -17,21 +17,21 @@ public:
     void start();
     void update();
 
-    void loadScene(const char *sceneName);
+    void loadScene(std::string sceneName);
     // TODO: what should we do when we unload a scene?
-    void unloadScene(const char *sceneName);
-    void addScene(const char *sceneName, Scene &&scene);
-    void removeScene(const char *sceneName);
+    void unloadScene(std::string sceneName);
+    void addScene(std::string sceneName, Scene &&scene);
+    void removeScene(std::string sceneName);
 
-    void getScene(const char *sceneName);
-    Scene *getActiveScene();
-    void setActiveScene(const char *sceneName);
+    void getScene(std::string sceneName);
+    Scene &getActiveScene();
+    void setActiveScene(std::string sceneName);
 
     void serialize();
     void deserialize();
 
 private:
     std::map<std::string, Scene> m_scenes;
-    Scene *m_activeScene = nullptr;
+    std::optional<std::string> m_activeSceneName;
     Window *m_window = nullptr;
 };

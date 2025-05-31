@@ -1,7 +1,9 @@
 #include "core/GLIncludes.h"
 #include "core/Scene.h"
-#include "core/MouseActionController.h"
 #include "core/Transform.h"
+#include "core/SceneManager.h"
+#include "core/MouseActionController.h"
+
 #include "util/Time.h"
 
 #include <iostream>
@@ -21,13 +23,16 @@ void MouseActionController::SetActiveObject(GameObject &object)
 {
 }
 
-void MouseActionController::Update(std::shared_ptr<Camera> camera, std::shared_ptr<Scene> scene, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight, GLFWwindow *window, bool sceneImageHovered)
+void MouseActionController::Update(SceneManager &sceneManager, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight, GLFWwindow *window, bool sceneImageHovered)
 {
     if (!sceneImageHovered)
         return;
 
-    auto &gameObjects = scene->getGameObjects();
-    auto activeGameObject = scene->getActiveGameObject();
+    Scene &scene = sceneManager.getActiveScene();
+    std::shared_ptr<Camera> camera = scene.getCamera();
+
+    auto &gameObjects = scene.getGameObjects();
+    auto activeGameObject = scene.getActiveGameObject();
 
     MouseListener *mouse = MouseListener::get();
     glm::vec2 mouseWorldPos = getWorldCoordinate(camera, imagePos, imageSize, framebufferWidth, framebufferHeight);
@@ -39,13 +44,13 @@ void MouseActionController::Update(std::shared_ptr<Camera> camera, std::shared_p
         {
             if (obj.containsPoint(mouseWorldPos))
             {
-                scene->setActiveGameObject(obj.getEntityId());
+                scene.setActiveGameObject(obj.getEntityId());
                 break;
             }
             else
             {
                 // the user clicked on empty space
-                scene->setActiveGameObject(entt::null);
+                scene.setActiveGameObject(entt::null);
                 activeGameObject = nullptr;
             }
         }

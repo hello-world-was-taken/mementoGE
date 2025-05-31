@@ -144,6 +144,7 @@ const std::string &Scene::getTag() const
 
 bool Scene::serialize(YAML::Emitter &out)
 {
+    std::cout << "scene serialization called" << std::endl;
     out << YAML::Key << mTag;
     out << YAML::Value << YAML::BeginMap;
 

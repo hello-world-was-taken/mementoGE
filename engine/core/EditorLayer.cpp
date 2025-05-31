@@ -24,45 +24,30 @@
 namespace fs = std::filesystem;
 
 EditorLayer::EditorLayer(Window &window)
-    : m_editorCamera{std::make_shared<Camera>(m_viewportWidth, m_viewportHeight)},
-      m_window{window},
-      m_gridRenderer{static_cast<int>(m_screen_width), static_cast<int>(m_screen_height), 32, m_editorCamera}
+    : m_window{window},
+      m_sceneManager{&window},
+      m_gridRenderer{static_cast<int>(m_screen_width), static_cast<int>(m_screen_height), 32, m_editorCamera},
+      m_editorCamera{std::make_shared<Camera>(m_viewportWidth, m_viewportHeight)}
 {
-    // TODO: if we update our serialization method and scene.yaml doesn't adhere to that
-    //       we should throw an error or remove the file
-    // if a file called ../game/scene.yaml does not exist, return
-    if (!std::filesystem::exists("../game/scene.yaml"))
-    {
-        std::cout << "scene.yaml does not exist" << std::endl;
-        return;
-    }
-
-    // TODO: We are assuming we'll always have a single scene. fix.
-    YAML::Node serializedScene = YAML::LoadFile("../game/scene.yaml");
-    std::shared_ptr<Scene> scene = std::make_shared<Scene>(std::move(serializedScene));
-
-    m_scenes.insert_or_assign("default_scene", scene);
-    // TODO: map.find() returns iterator end if the value is not present. Fix it.
-    // TODO: active scene should be handled better.
-    m_currentScene = (m_scenes.find("default_scene")->second);
-
-    std::cout << "Deserialized scene from scene.yaml editory layer" << std::endl;
+    m_sceneManager.deserialize();
+    m_sceneManager.start();
 }
 
 EditorLayer::~EditorLayer()
 {
+    m_sceneManager.serialize();
 }
 
 void EditorLayer::onAttach()
 {
     ImGuiWrapper::setupImgui(m_window.getGlfwWindow());
-    m_currentScene->start();
+    m_sceneManager.getActiveScene().start();
 }
 
-void EditorLayer::setScene(std::shared_ptr<Scene> scene)
-{
-    m_currentScene = scene;
-}
+// void EditorLayer::setScene(std::shared_ptr<Scene> scene)
+// {
+//     m_sceneManager.setActiveScene(scene->);
+// }
 
 void EditorLayer::onUpdate(float deltaTime)
 {
@@ -75,10 +60,10 @@ void EditorLayer::onUpdate(float deltaTime)
     glClear(GL_COLOR_BUFFER_BIT);
 
     renderGrid();
-    m_currentScene->update(Time::deltaTime(), m_window.getGlfwWindow());
+    m_sceneManager.getActiveScene().update(Time::deltaTime(), m_window.getGlfwWindow());
 
     handleEvents();
-    m_mouseActionController.Update(m_currentScene->getCamera(), m_currentScene, m_upperLeft, m_previewAreaSize, m_viewportWidth, m_viewportHeight, m_window.getGlfwWindow(), m_sceneImageHovered);
+    m_mouseActionController.Update(m_sceneManager, m_upperLeft, m_previewAreaSize, m_viewportWidth, m_viewportHeight, m_window.getGlfwWindow(), m_sceneImageHovered);
 
     drawEditorUI();
     m_frameBuffer.unbind();
@@ -86,9 +71,6 @@ void EditorLayer::onUpdate(float deltaTime)
 
 void EditorLayer::drawEditorUI()
 {
-    if (!m_currentScene)
-        return;
-
     ImGuiWrapper::beginDockspace();
 
     renderSceneViewport();
@@ -146,12 +128,12 @@ void EditorLayer::renderSceneViewport()
 
 void EditorLayer::renderPropertiesPanel()
 {
-    if (m_currentScene->getGameObjects().empty())
+    if (m_sceneManager.getActiveScene().getGameObjects().empty())
         return;
 
     ImGui::Begin("Properties");
 
-    GameObject *go = m_currentScene->getActiveGameObject();
+    GameObject *go = m_sceneManager.getActiveScene().getActiveGameObject();
     if (!go)
     {
         ImGui::Text("No game object selected");
@@ -224,7 +206,7 @@ void EditorLayer::renderPropertiesPanel()
         if (ImGui::Selectable("Rigidbody2D"))
         {
             go->addComponent<Rigidbody2D>();
-            m_currentScene->m_physicsWorld.addRigidbody(*go);
+            m_sceneManager.getActiveScene().m_physicsWorld.addRigidbody(*go);
         }
 
         if (ImGui::Selectable("BoxCollider2D"))
@@ -232,13 +214,13 @@ void EditorLayer::renderPropertiesPanel()
             int width = go->getWidth();
             int height = go->getHeight();
             go->addComponent<BoxCollider2D>(width, height);
-            m_currentScene->m_physicsWorld.addRigidbody(*go);
+            m_sceneManager.getActiveScene().m_physicsWorld.addRigidbody(*go);
         }
 
         if (ImGui::Selectable("CircleCollider2D"))
         {
             go->addComponent<CircleCollider2D>();
-            m_currentScene->m_physicsWorld.addRigidbody(*go);
+            m_sceneManager.getActiveScene().m_physicsWorld.addRigidbody(*go);
         }
 
         ImGui::EndCombo();
@@ -312,14 +294,14 @@ void EditorLayer::renderSelectedTexSheetPanel(bool isInModal)
                 ImVec4(0.0f, 0.0f, 0.0f, 1.0f),
                 ImVec4(1.0f, 1.0f, 1.0f, 1.0f)))
         {
-            if (m_currentScene && m_currentScene->getActiveGameObject())
+            if (m_sceneManager.getActiveScene().getActiveGameObject())
             {
-                GameObject *go = m_currentScene->getActiveGameObject();
+                GameObject *go = m_sceneManager.getActiveScene().getActiveGameObject();
                 // first remove Sprite if it exists
                 if (go->hasComponent<Sprite>())
                     go->removeComponent<Sprite>();
 
-                m_currentScene->getActiveGameObject()->addComponent<Sprite>(
+                m_sceneManager.getActiveScene().getActiveGameObject()->addComponent<Sprite>(
                     m_selectedTexturePath,
                     true,
                     sprite.getTextureCoordinates());
@@ -373,12 +355,12 @@ void EditorLayer::renderSelectedTexSheetPanel()
                 ImVec4(0.0f, 0.0f, 0.0f, 1.0f),
                 ImVec4(1.0f, 1.0f, 1.0f, 1.0f)))
         {
-            m_currentScene->addGameObject(32, 32, "_new");
-            m_currentScene->getActiveGameObject()->addComponent<Sprite>(
+            m_sceneManager.getActiveScene().addGameObject(32, 32, "_new");
+            m_sceneManager.getActiveScene().getActiveGameObject()->addComponent<Sprite>(
                 m_selectedTexturePath,
                 true,
                 sprite.getTextureCoordinates());
-            // m_mouseActionController.SetActiveObject(m_currentScene->getActiveGameObject());
+            // m_mouseActionController.SetActiveObject(m_sceneManager.getActiveScene().getActiveGameObject());
         }
         ImGui::PopID();
 
@@ -455,12 +437,9 @@ void EditorLayer::renderPerformancePanel()
 
 void EditorLayer::renderGrid()
 {
-    if (!m_currentScene)
-        return;
+    std::shared_ptr<Camera> cam = m_sceneManager.getActiveScene().getCamera();
 
-    std::shared_ptr<Camera> cam = m_currentScene->getCamera();
-
-    m_physicsRenderer.setActiveGameObjects(&m_currentScene->getGameObjects());
+    m_physicsRenderer.setActiveGameObjects(&m_sceneManager.getActiveScene().getGameObjects());
     m_physicsRenderer.setCamera(cam);
     m_physicsRenderer.render();
 
@@ -522,10 +501,10 @@ void EditorLayer::renderChooseFile()
 
 void EditorLayer::renderGizmos()
 {
-    if (!m_currentScene || m_currentScene->getGameObjects().empty())
+    if (m_sceneManager.getActiveScene().getGameObjects().empty())
         return;
 
-    GameObject *go = m_currentScene->getActiveGameObject();
+    GameObject *go = m_sceneManager.getActiveScene().getActiveGameObject();
     if (!go)
     {
         // std::cout << "renderGizmos - No active game object selected" << std::endl;
@@ -616,7 +595,7 @@ glm::vec2 EditorLayer::getScreenCoordinate(glm::vec2 worldPos)
 
 glm::vec2 EditorLayer::worldToFrameBuffer(glm::vec2 worldPos)
 {
-    std::shared_ptr<Camera> camera = m_currentScene->getCamera();
+    std::shared_ptr<Camera> camera = m_sceneManager.getActiveScene().getCamera();
 
     glm::mat4 viewProj = camera->getProjectionMatrix() * camera->getViewMatrix();
 
@@ -682,48 +661,20 @@ void EditorLayer::handleEvents()
             }
             else if (keyType == KeyType::RightArrow)
             {
-                m_currentScene->getActiveGameObject()->getComponent<Transform>().translate(500.0f * Time::deltaTime(), 0.0f, 0.0f);
+                m_sceneManager.getActiveScene().getActiveGameObject()->getComponent<Transform>().translate(500.0f * Time::deltaTime(), 0.0f, 0.0f);
             }
             else if (keyType == KeyType::LeftArrow)
             {
-                m_currentScene->getActiveGameObject()->getComponent<Transform>().translate(-500.0f * Time::deltaTime(), 0.0f, 0.0f);
+                m_sceneManager.getActiveScene().getActiveGameObject()->getComponent<Transform>().translate(-500.0f * Time::deltaTime(), 0.0f, 0.0f);
             }
             else if (keyType == KeyType::DownArrow)
             {
-                m_currentScene->getActiveGameObject()->getComponent<Transform>().translate(0.0f, -500.0f * Time::deltaTime(), 0.0f);
+                m_sceneManager.getActiveScene().getActiveGameObject()->getComponent<Transform>().translate(0.0f, -500.0f * Time::deltaTime(), 0.0f);
             }
             else if (keyType == KeyType::UpArrow)
             {
-                m_currentScene->getActiveGameObject()->getComponent<Transform>().translate(0.0f, 500.0f * Time::deltaTime(), 0.0f);
+                m_sceneManager.getActiveScene().getActiveGameObject()->getComponent<Transform>().translate(0.0f, 500.0f * Time::deltaTime(), 0.0f);
             }
         }
     }
-}
-
-void EditorLayer::serialize()
-{
-    YAML::Emitter out;
-    out << YAML::BeginMap;
-
-    // iterate through the map of scenes
-    for (auto &[sceneName, scene] : m_scenes)
-    {
-        out << YAML::Key << sceneName;
-        out << YAML::Value << YAML::BeginMap;
-        out << YAML::Key << "Game Objects";
-        out << YAML::Value << YAML::BeginMap;
-
-        for (GameObject &gameObject : m_currentScene->getGameObjects())
-        {
-            gameObject.serialize(out);
-        }
-
-        out << YAML::EndMap;
-    }
-
-    out << YAML::EndMap;
-    std::ofstream file("../game/scene.yaml", std::ios::out | std::ios::trunc);
-    file << out.c_str();
-
-    std::cout << "Serialized scene to scene.yaml" << std::endl;
 }

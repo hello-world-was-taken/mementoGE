@@ -18,7 +18,7 @@ public:
 
     // camera required for world-space conversion
     // game object required for selection detection
-    void Update(std::shared_ptr<Camera> camera, std::shared_ptr<Scene> scene, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight, GLFWwindow *window, bool sceneImageHovered);
+    void Update(SceneManager &sceneManager, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight, GLFWwindow *window, bool sceneImageHovered);
 
     glm::vec2 getWorldCoordinate(std::shared_ptr<Camera> camera, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight);
 
