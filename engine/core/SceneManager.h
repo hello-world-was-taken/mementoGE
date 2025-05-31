@@ -27,10 +27,18 @@ public:
     Scene &getActiveScene();
     void setActiveScene(std::string sceneName);
 
+    void startRuntimeScene();
+    void stopRuntimeScene();
+    bool isPlaying() const;
+
     void serialize();
     void deserialize();
 
+    // TODO: make this private. for debugging
+    bool m_isPlaying = false;
+
 private:
+
     std::map<std::string, Scene> m_scenes;
     std::optional<std::string> m_activeSceneName;
     Window *m_window = nullptr;

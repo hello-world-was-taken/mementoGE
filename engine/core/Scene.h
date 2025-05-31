@@ -35,8 +35,13 @@ public:
     Scene(Scene &&other);               // move constructor
     Scene &operator=(Scene &&other);    // move assignment operator
 
+    Scene clone(std::string tag);
+
     void start();
     void update(float deltaTime, GLFWwindow *window);
+
+    void setPaused(bool paused);
+    bool isPaused() const;
 
     void addGameObject(unsigned int width, unsigned int height, std::string &&tag);
     void setActiveGameObject(entt::entity entityId);
@@ -57,6 +62,8 @@ private:
     // logical game world screen size
     float m_screen_width = 32.0f * 16.0f; // 16 tiles of 32 pixels = 512 pixels
     float m_screen_height = 32.0f * 9.0f; // 9 tiles of 32 pixels = 288 pixels
+
+    bool m_isPaused;
 
     // Physics2D m_physicsWorld{{0.0f, 9.8f}};
     SpriteRenderer m_spriteRenderer{};

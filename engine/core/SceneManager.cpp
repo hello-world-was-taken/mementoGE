@@ -72,9 +72,32 @@ Scene &SceneManager::getActiveScene()
 {
     if (m_activeSceneName.has_value())
     {
-        return m_scenes.find(m_activeSceneName.value())->second;
+        auto it = m_scenes.find(m_activeSceneName.value());
+        if (it != m_scenes.end())
+        {
+            return it->second;
+        }
     }
     throw std::runtime_error("No active scene found.");
+}
+
+void SceneManager::startRuntimeScene()
+{
+    m_scenes.insert_or_assign("runtime_scene", getActiveScene().clone("runtime_scene"));
+    m_activeSceneName = "runtime_scene";
+    std::cout << "startRuntimeScene tag: " << getActiveScene().getTag() << std::endl;
+    m_isPlaying = true;
+}
+
+void SceneManager::stopRuntimeScene()
+{
+    m_activeSceneName = "default_scene";
+    // TODO: simulate destroy simulation copy
+}
+
+bool SceneManager::isPlaying() const
+{
+    return m_isPlaying;
 }
 
 void SceneManager::serialize()
@@ -85,25 +108,12 @@ void SceneManager::serialize()
     }
 
     YAML::Emitter out;
-    out << YAML::BeginMap;
 
-    // iterate through the map of scenes
     for (auto &[sceneName, scene] : m_scenes)
     {
-        out << YAML::Key << sceneName;
-        out << YAML::Value << YAML::BeginMap;
-        out << YAML::Key << "Game Objects";
-        out << YAML::Value << YAML::BeginMap;
-
-        for (GameObject &gameObject : scene.getGameObjects())
-        {
-            gameObject.serialize(out);
-        }
-
-        out << YAML::EndMap;
+        scene.serialize(out);
     }
-    
-    out << YAML::EndMap;
+
     std::ofstream file("../game/scene.yaml", std::ios::out | std::ios::trunc);
     file << out.c_str();
 
@@ -112,22 +122,31 @@ void SceneManager::serialize()
 
 void SceneManager::deserialize()
 {
-    // TODO: if we update our serialization method and scene.yaml doesn't adhere to that
-    //       we should throw an error or remove the file
-    // if a file called ../game/scene.yaml does not exist, return
-    if (!std::filesystem::exists("../game/scene.yaml"))
+    const std::string sceneFile = "../game/scene.yaml";
+
+    if (!std::filesystem::exists(sceneFile))
     {
         std::cout << "scene.yaml does not exist" << std::endl;
+        Scene scene{"default_scene"};
+        m_scenes.insert_or_assign(scene.getTag(), std::move(scene));
+        m_activeSceneName = scene.getTag();
         return;
     }
 
-    // TODO: We are assuming we'll always have a single scene. fix.
-    YAML::Node serializedScene = YAML::LoadFile("../game/scene.yaml");
-    Scene scene = Scene{std::move(serializedScene)};
+    YAML::Node serializedScene = YAML::LoadFile(sceneFile);
 
-    m_scenes.insert_or_assign("default_scene", std::move(scene));
-    // TODO: active scene should be handled better.
-    m_activeSceneName = "default_scene";
+    // Check if loaded node is valid and not empty
+    if (!serializedScene.IsDefined() || serializedScene.size() == 0)
+    {
+        std::cerr << "scene.yaml is empty or invalid" << std::endl;
+        Scene scene{"default_scene"};
+        m_activeSceneName = scene.getTag();
+        m_scenes.insert_or_assign(scene.getTag(), std::move(scene));
+        return;
+    }
 
+    Scene scene{std::move(serializedScene)};
+    m_activeSceneName = scene.getTag();
+    m_scenes.insert_or_assign(scene.getTag(), std::move(scene));
     std::cout << "Deserialized scene from scene.yaml" << std::endl;
 }

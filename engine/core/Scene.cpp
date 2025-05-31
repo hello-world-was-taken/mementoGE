@@ -10,7 +10,7 @@
 #include <stdexcept>
 
 Scene::Scene(std::string &&tag)
-    : mTag{tag}
+    : mTag{tag}, m_isPaused{false}
 {
 }
 
@@ -81,18 +81,46 @@ Scene::~Scene()
     std::cout << "Scene destructor called: " << mTag << std::endl;
 }
 
+Scene Scene::clone(std::string tag)
+{
+    YAML::Emitter out;
+    std::string sceneTag = mTag;
+    mTag = tag;
+
+    serialize(out);
+    mTag = sceneTag;
+
+    YAML::Node serializedScene = YAML::Load(out.c_str());
+
+
+    return Scene{std::move(serializedScene)};
+}
+
 void Scene::start()
 {
 }
 
 void Scene::update(float deltaTime, GLFWwindow *window)
 {
+    if (m_isPaused)
+        return;
+
     m_physicsWorld.simulate(deltaTime, m_gameObjects);
     m_physicsWorld.syncTransforms(m_gameObjects);
 
     m_spriteRenderer.setActiveGameObjects(&getGameObjects());
     m_spriteRenderer.setCamera(m_camera);
     m_spriteRenderer.render();
+}
+
+void Scene::setPaused(bool paused)
+{
+    m_isPaused = paused;
+}
+
+bool Scene::isPaused() const
+{
+    return m_isPaused;
 }
 
 void Scene::addGameObject(unsigned int width, unsigned int height, std::string &&tag)
@@ -144,7 +172,7 @@ const std::string &Scene::getTag() const
 
 bool Scene::serialize(YAML::Emitter &out)
 {
-    std::cout << "scene serialization called" << std::endl;
+    out << YAML::BeginMap;
     out << YAML::Key << mTag;
     out << YAML::Value << YAML::BeginMap;
 
@@ -156,6 +184,7 @@ bool Scene::serialize(YAML::Emitter &out)
         gameObject.serialize(out);
     }
 
+    out << YAML::EndMap;
     out << YAML::EndMap;
     out << YAML::EndMap;
 

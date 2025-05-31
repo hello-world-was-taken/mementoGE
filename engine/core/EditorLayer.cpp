@@ -563,6 +563,29 @@ void EditorLayer::renderEditorProperties()
     ImGui::Separator();
     ImGui::Checkbox("Draw Grid", &m_drawGrid);
 
+    if (ImGui::Button("Play"))
+    {
+        if (!m_sceneManager.isPlaying())
+        {
+            m_sceneManager.startRuntimeScene();
+        }
+    }
+
+    if (ImGui::Button("Pause"))
+    {
+        if (m_sceneManager.isPlaying())
+        {
+            m_sceneManager.m_isPlaying = false;
+            Scene &current = m_sceneManager.getActiveScene();
+            current.setPaused(!current.isPaused());
+        }
+    }
+
+    if (ImGui::Button("Stop"))
+    {
+        m_sceneManager.stopRuntimeScene();
+    }
+
     ImGui::End();
 }
 

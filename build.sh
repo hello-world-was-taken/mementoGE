@@ -6,7 +6,10 @@ if [ ! -d ./out ]; then
 fi
 
 # This script is used to run cmake and make for the project
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DGLFW_BUILD_DOCS=OFF -S . -B ./out
+cmake -DCMAKE_BUILD_TYPE=Debug \
+      -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+      -DGLFW_BUILD_DOCS=OFF \
+      -S . -B ./out
 
 # Run make to build the project
 cd out
