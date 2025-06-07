@@ -40,13 +40,14 @@ public:
     void start();
     void update(float deltaTime, GLFWwindow *window);
 
-    void setPaused(bool paused);
-    bool isPaused() const;
+    void play();
+    void pause();
 
     void addGameObject(unsigned int width, unsigned int height, std::string &&tag);
     void setActiveGameObject(entt::entity entityId);
 
     void addRigidBody2DToWorld();
+    void setGraivty(glm::vec2 gravity);
 
     std::vector<GameObject> &getGameObjects();
     std::shared_ptr<Camera> getCamera() const;
@@ -55,17 +56,16 @@ public:
     const std::string &getTag() const;
     bool serialize(YAML::Emitter &out);
 
-    // TODO: should be private. For testing purposes
-    Physics2D m_physicsWorld{{0.0f, -9.8f}};
+    Physics2D &getPhysics2d();
 
 private:
     // logical game world screen size
     float m_screen_width = 32.0f * 16.0f; // 16 tiles of 32 pixels = 512 pixels
     float m_screen_height = 32.0f * 9.0f; // 9 tiles of 32 pixels = 288 pixels
 
-    bool m_isPaused;
+    bool m_play;
 
-    // Physics2D m_physicsWorld{{0.0f, 9.8f}};
+    Physics2D m_physicsWorld{{0.0f, 9.8f}};
     SpriteRenderer m_spriteRenderer{};
 
     entt::registry m_registry;

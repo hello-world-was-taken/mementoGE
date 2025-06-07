@@ -83,16 +83,29 @@ Scene &SceneManager::getActiveScene()
 
 void SceneManager::startRuntimeScene()
 {
-    m_scenes.insert_or_assign("runtime_scene", getActiveScene().clone("runtime_scene"));
+    auto it = m_scenes.find("runtime_scene");
+    if (it == m_scenes.end())
+    {
+        m_scenes.insert({"runtime_scene", getActiveScene().clone("runtime_scene")});
+    }
     m_activeSceneName = "runtime_scene";
-    std::cout << "startRuntimeScene tag: " << getActiveScene().getTag() << std::endl;
+    getActiveScene().play();
+    std::cout
+        << "startRuntimeScene tag: " << getActiveScene().getTag() << std::endl;
     m_isPlaying = true;
+}
+
+void SceneManager::pauseRuntimeScene()
+{
+    getActiveScene().pause();
+    m_isPlaying = false;
 }
 
 void SceneManager::stopRuntimeScene()
 {
+    m_scenes.erase("runtime_scene");
     m_activeSceneName = "default_scene";
-    // TODO: simulate destroy simulation copy
+    m_isPlaying = false;
 }
 
 bool SceneManager::isPlaying() const

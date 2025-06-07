@@ -112,9 +112,8 @@ void EditorLayer::renderSceneViewport()
         {
             if (m_sceneManager.isPlaying())
             {
+                m_sceneManager.pauseRuntimeScene();
                 m_sceneManager.m_isPlaying = false;
-                Scene &current = m_sceneManager.getActiveScene();
-                current.setPaused(!current.isPaused());
             }
         }
 
@@ -246,7 +245,7 @@ void EditorLayer::renderPropertiesPanel()
         if (ImGui::Selectable("Rigidbody2D"))
         {
             go->addComponent<Rigidbody2D>();
-            m_sceneManager.getActiveScene().m_physicsWorld.addRigidbody(*go);
+            m_sceneManager.getActiveScene().getPhysics2d().addRigidbody(*go);
         }
 
         if (ImGui::Selectable("BoxCollider2D"))
@@ -254,13 +253,13 @@ void EditorLayer::renderPropertiesPanel()
             int width = go->getWidth();
             int height = go->getHeight();
             go->addComponent<BoxCollider2D>(width, height);
-            m_sceneManager.getActiveScene().m_physicsWorld.addRigidbody(*go);
+            m_sceneManager.getActiveScene().getPhysics2d().addRigidbody(*go);
         }
 
         if (ImGui::Selectable("CircleCollider2D"))
         {
             go->addComponent<CircleCollider2D>();
-            m_sceneManager.getActiveScene().m_physicsWorld.addRigidbody(*go);
+            m_sceneManager.getActiveScene().getPhysics2d().addRigidbody(*go);
         }
 
         ImGui::EndCombo();

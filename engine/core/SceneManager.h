@@ -28,6 +28,7 @@ public:
     void setActiveScene(std::string sceneName);
 
     void startRuntimeScene();
+    void pauseRuntimeScene();
     void stopRuntimeScene();
     bool isPlaying() const;
 

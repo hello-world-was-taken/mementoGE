@@ -19,13 +19,43 @@ Physics2D::Physics2D(const glm::vec2 &gravity)
 
 Physics2D::~Physics2D()
 {
-    b2DestroyWorld(m_worldId);
+    if (B2_IS_NON_NULL(m_worldId))
+    {
+        b2DestroyWorld(m_worldId);
+    }
+    std::cout << "Physics2D destructor called: " << m_worldId.index1 << std::endl;
+}
+
+Physics2D::Physics2D(Physics2D &&other) noexcept
+    : m_worldId(other.m_worldId)
+{
+    other.m_worldId = b2_nullWorldId;
+}
+
+Physics2D &Physics2D::operator=(Physics2D &&other) noexcept
+{
+    if (this != &other)
+    {
+        if (B2_IS_NON_NULL(m_worldId))
+        {
+            b2DestroyWorld(m_worldId);
+        }
+
+        m_worldId = other.m_worldId;
+        other.m_worldId = b2_nullWorldId;
+    }
+    return *this;
 }
 
 void Physics2D::simulate(float timestep, const std::vector<GameObject> &gameObjects)
 {
     float fixedDeltaTime = 0.0167f;
     b2World_Step(m_worldId, fixedDeltaTime, 4);
+}
+
+void Physics2D::setGravity(glm::vec2 gravity)
+{
+    b2World_SetGravity(m_worldId, b2Vec2{gravity.x, gravity.y});
 }
 
 // TODO: we should support other colliders than box collider

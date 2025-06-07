@@ -10,7 +10,7 @@
 #include <stdexcept>
 
 Scene::Scene(std::string &&tag)
-    : mTag{tag}, m_isPaused{false}
+    : mTag{tag}, m_play{false}
 {
 }
 
@@ -57,6 +57,8 @@ Scene::Scene(Scene &&other)
     // TODO: DO THIS IN A BETTER WAY
     if (m_gameObjects.size())
         m_activeEntityId = m_gameObjects.back().getEntityId();
+
+    m_physicsWorld = std::move(other.m_physicsWorld);
 }
 
 Scene &Scene::operator=(Scene &&other)
@@ -101,7 +103,7 @@ void Scene::start()
 
 void Scene::update(float deltaTime, GLFWwindow *window)
 {
-    if (!m_isPaused)
+    if (m_play)
     {
         m_physicsWorld.simulate(deltaTime, m_gameObjects);
         m_physicsWorld.syncTransforms(m_gameObjects);
@@ -112,14 +114,14 @@ void Scene::update(float deltaTime, GLFWwindow *window)
     m_spriteRenderer.render();
 }
 
-void Scene::setPaused(bool paused)
+void Scene::play()
 {
-    m_isPaused = paused;
+    m_play = true;
 }
 
-bool Scene::isPaused() const
+void Scene::pause()
 {
-    return m_isPaused;
+    m_play = false;
 }
 
 void Scene::addGameObject(unsigned int width, unsigned int height, std::string &&tag)
@@ -150,6 +152,15 @@ GameObject *Scene::getActiveGameObject()
     }
 
     return nullptr;
+}
+
+Physics2D &Scene::getPhysics2d()
+{
+    return m_physicsWorld;
+}
+void Scene::setGraivty(glm::vec2 gravity)
+{
+    m_physicsWorld.setGravity(gravity);
 }
 
 void Scene::setActiveGameObject(entt::entity entityId)
