@@ -1,9 +1,12 @@
-#include <glm/glm.hpp>
-
 #include "renderer/GridRenderer.h"
 #include "core/Resource.h"
 #include "opengl/Vertex.h"
+
 #include "util/log_error.h"
+#include "util/GetExecutableDir.h"
+
+#include <glm/glm.hpp>
+#include <filesystem>
 
 GridRenderer::GridRenderer(int width, int height, int tileSize, std::shared_ptr<Camera> camera)
     : m_width(width), m_height(height), m_tileSize(tileSize)
@@ -19,8 +22,10 @@ GridRenderer::GridRenderer(int width, int height, int tileSize, std::shared_ptr<
     m_vao->attachVertexAttribute(VertexAttribute{3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0}); // position
 
     m_vbo->updateBufferData(m_vertices);
-
-    m_shader = Resource::getShaderProgram("../assets/shader/grid_vertex.shader", "../assets/shader/grid_fragment.shader");
+    std::cout << "Curr directory: " << std::filesystem::current_path() << std::endl;
+    m_shader = Resource::getShaderProgram(
+        getFilePath("assets/shader/grid_vertex.shader"),
+        getFilePath("assets/shader/grid_fragment.shader"));
 }
 
 GridRenderer::~GridRenderer()

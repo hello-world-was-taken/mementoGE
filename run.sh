@@ -1,4 +1,5 @@
 #! /bin/sh
 
 ./build.sh
-./out/myGame
+cd ./out
+./myGame

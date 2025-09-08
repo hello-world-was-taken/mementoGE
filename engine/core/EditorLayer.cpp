@@ -14,6 +14,8 @@
 #include "physics/EdgeCollider2D.h"
 #include "physics/PolygonCollider2D.h"
 
+#include "util/GetExecutableDir.h"
+
 #include <imgui.h>
 #include <ImGuiFileDialog/ImGuiFileDialog.h>
 #include <filesystem>
@@ -60,7 +62,7 @@ void EditorLayer::onUpdate(float deltaTime)
     glClear(GL_COLOR_BUFFER_BIT);
 
     renderGrid();
-    m_sceneManager.getActiveScene().update(Time::deltaTime(), m_window.getGlfwWindow());
+    m_sceneManager.getActiveScene().update(Time::deltaTime());
 
     handleEvents();
     m_mouseActionController.Update(m_sceneManager, m_upperLeft, m_previewAreaSize, m_viewportWidth, m_viewportHeight, m_window.getGlfwWindow(), m_sceneImageHovered);
@@ -478,9 +480,7 @@ void EditorLayer::renderGrid()
 {
     std::shared_ptr<Camera> cam = m_sceneManager.getActiveScene().getCamera();
 
-    m_physicsRenderer.setActiveGameObjects(&m_sceneManager.getActiveScene().getGameObjects());
-    m_physicsRenderer.setCamera(cam);
-    m_physicsRenderer.render();
+    m_physicsRenderer.render(cam, m_sceneManager.getActiveScene().getGameObjects());
 
     if (!m_drawGrid)
         return;
@@ -498,7 +498,8 @@ void EditorLayer::renderTextureListPanel()
             ".png,.jpg,.jpeg");
     }
     // TODO: lets avoid this call on every render
-    auto textures = getTextureFiles("../assets/texture");
+    auto textures = getTextureFiles(
+        getFilePath("assets/texture"));
     for (const auto &texturePath : textures)
     {
         std::string fileName = fs::path(texturePath).filename().string();
@@ -520,7 +521,7 @@ void EditorLayer::renderChooseFile()
         {
             std::string selectedPath = ImGuiFileDialog::Instance()->GetFilePathName();
             std::string fileName = ImGuiFileDialog::Instance()->GetCurrentFileName();
-            std::string destPath = "../assets/texture/" + fileName;
+            std::string destPath = getFilePath("assets/texture") / fileName;
 
             try
             {

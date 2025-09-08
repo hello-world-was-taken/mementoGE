@@ -32,13 +32,13 @@ public:
 
     // We can't use a copy constructor because entt::registry is not copyable
     Scene(const Scene &other) = delete; // copy constructor
-    Scene(Scene &&other);               // move constructor
+    Scene(Scene &&other) noexcept;               // move constructor
     Scene &operator=(Scene &&other);    // move assignment operator
 
     Scene clone(std::string tag);
 
     void start();
-    void update(float deltaTime, GLFWwindow *window);
+    void update(float deltaTime);
 
     void play();
     void pause();
@@ -49,7 +49,7 @@ public:
     void addRigidBody2DToWorld();
     void setGraivty(glm::vec2 gravity);
 
-    std::vector<GameObject> &getGameObjects();
+    const std::vector<GameObject> &getGameObjects();
     std::shared_ptr<Camera> getCamera() const;
     GameObject *getActiveGameObject();
 

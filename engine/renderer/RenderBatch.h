@@ -25,12 +25,12 @@
 class RenderBatch
 {
 public:
-    RenderBatch(std::shared_ptr<Camera> camera, std::vector<unsigned int> indices, GLenum drawMode);
+    RenderBatch(std::vector<unsigned int> indices, GLenum drawMode);
     ~RenderBatch();
 
     void setVertexData(std::vector<Vertex> vertices);
     void setIndexData(std::vector<unsigned int> indices);
-    void render(std::shared_ptr<Shader> customShader = nullptr);
+    void render(const std::shared_ptr<Camera> &camera, std::shared_ptr<Shader> customShader = nullptr);
 
 private:
     void setupBuffers();
@@ -44,7 +44,6 @@ public:
 private:
     GLenum m_drawMode;
 
-    std::shared_ptr<Camera> m_camera;
     std::vector<Vertex> m_vertices;
     std::vector<unsigned int> m_indices;
 

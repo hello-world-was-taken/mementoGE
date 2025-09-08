@@ -35,7 +35,7 @@ Scene::Scene(const YAML::Node &&serializedScene)
     }
 }
 
-Scene::Scene(Scene &&other)
+Scene::Scene(Scene &&other) noexcept
     : m_registry{std::move(other.m_registry)}
 {
     m_screen_height = other.m_screen_height;
@@ -101,7 +101,7 @@ void Scene::start()
 {
 }
 
-void Scene::update(float deltaTime, GLFWwindow *window)
+void Scene::update(float deltaTime)
 {
     if (m_play)
     {
@@ -109,9 +109,7 @@ void Scene::update(float deltaTime, GLFWwindow *window)
         m_physicsWorld.syncTransforms(m_gameObjects);
     }
 
-    m_spriteRenderer.setActiveGameObjects(&getGameObjects());
-    m_spriteRenderer.setCamera(m_camera);
-    m_spriteRenderer.render();
+    m_spriteRenderer.render(m_camera, getGameObjects());
 }
 
 void Scene::play()
@@ -131,7 +129,7 @@ void Scene::addGameObject(unsigned int width, unsigned int height, std::string &
     m_gameObjects.push_back(std::move(go));
 }
 
-std::vector<GameObject> &Scene::getGameObjects()
+const std::vector<GameObject> &Scene::getGameObjects()
 {
     return m_gameObjects;
 }
@@ -143,6 +141,8 @@ std::shared_ptr<Camera> Scene::getCamera() const
 
 GameObject *Scene::getActiveGameObject()
 {
+    // TODO: once we start having thousands of gameobjects in a single
+    // scene this will become costly. Improve it.
     for (auto &go : m_gameObjects)
     {
         if (go.getEntityId() == m_activeEntityId)

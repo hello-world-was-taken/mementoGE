@@ -7,17 +7,17 @@
 #include "opengl/VertexAttribute.h"
 
 #include "renderer/RenderBatch.h"
+
 #include "util/log_error.h"
+#include "util/GetExecutableDir.h"
 
 #include <iostream>
 #include <memory>
 
 RenderBatch::RenderBatch(
-    std::shared_ptr<Camera> camera,
     std::vector<unsigned int> indices,
     GLenum drawMode)
-    : m_camera(camera),
-      m_indices(indices),
+    : m_indices(indices),
       m_drawMode(drawMode)
 {
     setupBuffers();
@@ -80,14 +80,14 @@ void RenderBatch::setIndexData(std::vector<unsigned int> indices)
     m_ibo->updateIndicesData(m_indices.data(), m_indices.size());
 }
 
-void RenderBatch::render(std::shared_ptr<Shader> customShader)
+void RenderBatch::render(const std::shared_ptr<Camera> &camera, std::shared_ptr<Shader> customShader)
 {
     std::shared_ptr<Shader> shader = customShader ? customShader
-                                                  : Resource::getShaderProgram("../assets/shader/vertex.shader", "../assets/shader/fragment.shader");
+                                                  : Resource::getShaderProgram(getFilePath("assets/shader/vertex.shader"), getFilePath("assets/shader/fragment.shader"));
 
     shader->use();
-    shader->setUniform4fv("u_view_matrix", m_camera->getViewMatrix());
-    shader->setUniform4fv("u_projection_matrix", m_camera->getProjectionMatrix());
+    shader->setUniform4fv("u_view_matrix", camera->getViewMatrix());
+    shader->setUniform4fv("u_projection_matrix", camera->getProjectionMatrix());
     shader->setMultipleTextureUnits("textures", m_textureUnits.data(), m_textureUnits.size());
 
     m_vao->bind();

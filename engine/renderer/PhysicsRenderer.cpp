@@ -24,35 +24,28 @@ PhysicsRenderer::~PhysicsRenderer()
     std::cout << "PhysicsRenderer destructor called" << std::endl;
 }
 
-void PhysicsRenderer::render()
+void PhysicsRenderer::render(
+    const std::shared_ptr<Camera> &camera,
+    const std::vector<GameObject> &gameObjects)
 {
 
-    if (!m_camera)
-    {
-        throw std::runtime_error("Attempted to render without setting camera!");
-    }
-
-    if (m_gameObjects == nullptr)
-    {
-        std::cout << "No gameobjects" << std::endl;
-        return;
-    }
-
     if (m_batch == nullptr)
-        m_batch = std::make_unique<RenderBatch>(m_camera, m_indices, GL_LINES);
+        m_batch = std::make_unique<RenderBatch>(m_indices, GL_LINES);
 
-    updateVertices();
+    updateVertices(camera, gameObjects);
 
     m_batch->setVertexData(m_vertices);
     m_batch->setIndexData(m_indices);
-    m_batch->render();
+    m_batch->render(camera);
 }
 
-void PhysicsRenderer::updateVertices()
+void PhysicsRenderer::updateVertices(
+    const std::shared_ptr<Camera> &camera,
+    const std::vector<GameObject> &gameObjects)
 {
     m_vertices.clear();
 
-    for (GameObject &gameObject : *m_gameObjects)
+    for (const GameObject &gameObject : gameObjects)
     {
         if (!gameObject.hasComponent<BoxCollider2D>())
             continue;
@@ -130,12 +123,3 @@ void PhysicsRenderer::generateIndexArray()
     }
 }
 
-void PhysicsRenderer::setActiveGameObjects(std::vector<GameObject> *gameObjects)
-{
-    m_gameObjects = gameObjects;
-}
-
-void PhysicsRenderer::setCamera(std::shared_ptr<Camera> &camera)
-{
-    m_camera = camera;
-}

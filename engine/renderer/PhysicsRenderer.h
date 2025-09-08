@@ -21,13 +21,14 @@ public:
     PhysicsRenderer();
     ~PhysicsRenderer();
 
-    void render();
-
-    void setCamera(std::shared_ptr<Camera> &camera);
-    void setActiveGameObjects(std::vector<GameObject> *gameObjects);
+    void render(
+        const std::shared_ptr<Camera> &camera,
+        const std::vector<GameObject> &gameObjects);
 
 private:
-    void updateVertices();
+    void updateVertices(
+        const std::shared_ptr<Camera> &camera,
+        const std::vector<GameObject> &gameObjects);
     void generateIndexArray();
 
 private:

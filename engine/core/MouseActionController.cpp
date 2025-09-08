@@ -40,7 +40,7 @@ void MouseActionController::Update(SceneManager &sceneManager, ImVec2 imagePos, 
     // check for button click on an object
     if (mouse->wasMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT))
     {
-        for (GameObject &obj : gameObjects)
+        for (const GameObject &obj : gameObjects)
         {
             if (obj.containsPoint(mouseWorldPos))
             {

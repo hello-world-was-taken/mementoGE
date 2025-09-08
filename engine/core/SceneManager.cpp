@@ -9,6 +9,8 @@
 #include "core/GameObject.h"
 #include "core/Camera.h"
 
+#include "util/GetExecutableDir.h"
+
 SceneManager::SceneManager(Window *window)
     : m_window{window}
 {
@@ -31,7 +33,7 @@ void SceneManager::start()
 
 void SceneManager::update()
 {
-    getActiveScene().update(Time::deltaTime(), m_window->getGlfwWindow());
+    getActiveScene().update(Time::deltaTime());
 }
 
 void SceneManager::loadScene(std::string sceneName)
@@ -127,7 +129,7 @@ void SceneManager::serialize()
         scene.serialize(out);
     }
 
-    std::ofstream file("../game/scene.yaml", std::ios::out | std::ios::trunc);
+    std::ofstream file(getFilePath("scene.yaml"), std::ios::out | std::ios::trunc);
     file << out.c_str();
 
     std::cout << "Serialized scene to scene.yaml" << std::endl;
@@ -135,7 +137,7 @@ void SceneManager::serialize()
 
 void SceneManager::deserialize()
 {
-    const std::string sceneFile = "../game/scene.yaml";
+    const std::string sceneFile = getFilePath("scene.yaml");
 
     if (!std::filesystem::exists(sceneFile))
     {

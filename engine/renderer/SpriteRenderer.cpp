@@ -11,32 +11,28 @@ SpriteRenderer::~SpriteRenderer()
 {
 }
 
-void SpriteRenderer::render()
+void SpriteRenderer::render(
+    const std::shared_ptr<Camera> &camera,
+    const std::vector<GameObject> &gameObjects)
 {
-    if (!m_camera)
-    {
-        throw std::runtime_error("Attempted to render without setting camera!");
-    }
-
-    if (!m_gameObjects)
-        return;
-
     if (m_batch == nullptr)
-        m_batch = std::make_unique<RenderBatch>(m_camera, m_indices, GL_TRIANGLES);
+        m_batch = std::make_unique<RenderBatch>(m_indices, GL_TRIANGLES);
 
-    updateVertices();
+    updateVertices(camera, gameObjects);
     m_batch->setVertexData(m_vertices);
     m_batch->setIndexData(m_indices);
 
     // std::cout << "vertex size: " << m_vertices.size() << " index size: " << m_indices.size()  << std::endl;
-    m_batch->render();
+    m_batch->render(camera);
 }
 
-void SpriteRenderer::updateVertices()
+void SpriteRenderer::updateVertices(
+    const std::shared_ptr<Camera> &camera,
+    const std::vector<GameObject> &gameObjects)
 {
     m_vertices.clear();
 
-    for (GameObject &gameObject : *m_gameObjects)
+    for (const GameObject &gameObject : gameObjects)
     {
 
         Transform transform = gameObject.getComponent<Transform>();
@@ -80,14 +76,4 @@ void SpriteRenderer::generateIndexArray()
         m_indices[i * 6 + 5] = i * 4 + 2;
     }
     std::cout << "index size: " << m_indices.size() << std::endl;
-}
-
-void SpriteRenderer::setActiveGameObjects(std::vector<GameObject> *gameObjects)
-{
-    m_gameObjects = gameObjects;
-}
-
-void SpriteRenderer::setCamera(std::shared_ptr<Camera> &camera)
-{
-    m_camera = camera;
 }

@@ -4,7 +4,7 @@ project(myGame)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_subdirectory(${CMAKE_SOURCE_DIR}/engine)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/engine)
 
 add_executable(${PROJECT_NAME}
     main.cpp
@@ -14,13 +14,15 @@ add_executable(${PROJECT_NAME}
 )
 
 target_include_directories(${PROJECT_NAME}
-    PUBLIC ${CMAKE_SOURCE_DIR}/
-)
-
-target_link_directories(${PROJECT_NAME}
-    PUBLIC ${CMAKE_SOURCE_DIR}/engine
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/
 )
 
 target_link_libraries(${PROJECT_NAME}
     engine
 )
+
+add_custom_command(TARGET myGame POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/assets
+        $<TARGET_FILE_DIR:myGame>/assets
+        COMMENT "Copying assets to build directory...")
