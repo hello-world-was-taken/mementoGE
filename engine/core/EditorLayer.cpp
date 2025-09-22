@@ -2,34 +2,37 @@
 #include <mach/mach.h>
 #endif
 
-#include "core/ImGuiWrapper.h"
-#include "core/EditorLayer.h"
-#include "core/SpriteSheet.h"
 #include "core/Camera.h"
+#include "core/EditorLayer.h"
+#include "core/ImGuiWrapper.h"
 #include "core/MovementMode.h"
+#include "core/SpriteSheet.h"
 
-#include "physics/RigidBox2D.h"
 #include "physics/BoxCollider2D.h"
 #include "physics/CircleCollider2D.h"
 #include "physics/EdgeCollider2D.h"
 #include "physics/PolygonCollider2D.h"
+#include "physics/RigidBox2D.h"
 
 #include "util/GetExecutableDir.h"
 
-#include <imgui.h>
 #include <ImGuiFileDialog/ImGuiFileDialog.h>
 #include <filesystem>
 #include <fstream>
+#include <imgui.h>
 #include <memory>
 #include <yaml-cpp/yaml.h>
 
 namespace fs = std::filesystem;
 
+// Build a lightweight payload: sprite index or tex coords
+struct SpritePayload
+{
+    int spriteIndex;
+};
+
 EditorLayer::EditorLayer(Window &window)
-    : m_window{window},
-      m_sceneManager{&window},
-      m_gridRenderer{static_cast<int>(m_screen_width), static_cast<int>(m_screen_height), 32, m_editorCamera},
-      m_editorCamera{std::make_shared<Camera>(m_viewportWidth, m_viewportHeight)}
+    : m_window{window}, m_sceneManager{&window}, m_gridRenderer{static_cast<int>(m_screen_width), static_cast<int>(m_screen_height), 32, m_editorCamera}, m_editorCamera{std::make_shared<Camera>(m_viewportWidth, m_viewportHeight)}
 {
     m_sceneManager.deserialize();
     m_sceneManager.start();
@@ -152,6 +155,30 @@ void EditorLayer::renderSceneViewport()
     // Render framebuffer texture (off-screen rendered texture)
     unsigned int framebufferTexture = m_frameBuffer.getColorTexture();
     ImGui::Image(framebufferTexture, imgSize, ImVec2{0, 1}, ImVec2{1, 0});
+
+    if (ImGui::BeginDragDropTarget())
+    {
+        if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("SPRITE"))
+        {
+            IM_ASSERT(payload->DataSize == sizeof(int) || payload->DataSize == sizeof(SpritePayload));
+            int spriteIndex = ((SpritePayload *)payload->Data)->spriteIndex;
+
+            // Convert current mouse to world position
+            std::shared_ptr<Camera> cam = m_sceneManager.getActiveScene().getCamera();
+            SpriteSheet spriteSheet = SpriteSheet(m_selectedTexturePath, true, 128, 0);
+            glm::vec2 worldPos = m_mouseActionController.getWorldCoordinate(
+                cam, m_upperLeft, m_previewAreaSize,
+                fbWidth, fbHeight);
+
+            // Create object here
+            Sprite sprite = spriteSheet.getSprites()[spriteIndex];
+            m_sceneManager.getActiveScene().addGameObject(32, 32, "_new");
+            auto newObj = m_sceneManager.getActiveScene().getActiveGameObject();
+            newObj->addComponent<Sprite>(m_selectedTexturePath, true, sprite.getTextureCoordinates());
+            newObj->getComponent<Transform>().setPosition(worldPos.x, worldPos.y, 0.0f);
+        }
+        ImGui::EndDragDropTarget();
+    }
 
     m_upperLeft = ImGui::GetItemRectMin();
     m_previewAreaSize = ImGui::GetItemRectSize();
@@ -396,13 +423,18 @@ void EditorLayer::renderSelectedTexSheetPanel()
                 ImVec4(0.0f, 0.0f, 0.0f, 1.0f),
                 ImVec4(1.0f, 1.0f, 1.0f, 1.0f)))
         {
-            m_sceneManager.getActiveScene().addGameObject(32, 32, "_new");
-            m_sceneManager.getActiveScene().getActiveGameObject()->addComponent<Sprite>(
-                m_selectedTexturePath,
-                true,
-                sprite.getTextureCoordinates());
-            // m_mouseActionController.SetActiveObject(m_sceneManager.getActiveScene().getActiveGameObject());
+            // No action here. Drag-n-drop using imgui
         }
+
+        if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+        {
+            SpritePayload payload{id};
+
+            ImGui::SetDragDropPayload("SPRITE", &payload, sizeof(SpritePayload));
+            ImGui::Text("Dragging sprite %d", id);
+            ImGui::EndDragDropSource();
+        }
+
         ImGui::PopID();
 
         ImVec2 lastSpritePosition = ImGui::GetItemRectMax();

@@ -1,5 +1,4 @@
 #include "core/Scene.h"
-#include "core/MouseListener.h" // TODO: Game specific things shouldn't be here.
 
 #include "renderer/RenderBatch.h"
 
