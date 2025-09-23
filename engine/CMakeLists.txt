@@ -30,6 +30,7 @@ add_library(${PROJECT_NAME} STATIC
     core/EventHandler.cpp
     core/MouseActionController.cpp
     core/EditorLayer.cpp
+    core/ScenePanel.cpp
 
     # renderer
     renderer/RenderBatch.cpp

@@ -7,10 +7,15 @@
 
 #include <glm/glm.hpp>
 #include <filesystem>
+#include <stdexcept>
 
 GridRenderer::GridRenderer(int width, int height, int tileSize, std::shared_ptr<Camera> camera)
     : m_width(width), m_height(height), m_tileSize(tileSize)
 {
+    if(camera.get() == nullptr) {
+        throw std::runtime_error("Camera needs to be defined.");
+    };
+
     generateGridLines(camera);
 
     m_vao = new VertexArray();

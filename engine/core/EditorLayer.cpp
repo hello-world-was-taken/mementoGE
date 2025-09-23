@@ -7,6 +7,7 @@
 #include "core/ImGuiWrapper.h"
 #include "core/MovementMode.h"
 #include "core/SpriteSheet.h"
+#include "core/SpritePayload.h"
 
 #include "physics/BoxCollider2D.h"
 #include "physics/CircleCollider2D.h"
@@ -25,28 +26,25 @@
 
 namespace fs = std::filesystem;
 
-// Build a lightweight payload: sprite index or tex coords
-struct SpritePayload
-{
-    int spriteIndex;
-};
-
 EditorLayer::EditorLayer(Window &window)
-    : m_window{window}, m_sceneManager{&window}, m_gridRenderer{static_cast<int>(m_screen_width), static_cast<int>(m_screen_height), 32, m_editorCamera}, m_editorCamera{std::make_shared<Camera>(m_viewportWidth, m_viewportHeight)}
+    : m_ctx{window},
+      m_scenePanel{m_ctx},
+      m_gridRenderer{static_cast<int>(m_screen_width),
+                     static_cast<int>(m_screen_height), 32, m_ctx.editorCamera}
 {
-    m_sceneManager.deserialize();
-    m_sceneManager.start();
+    m_ctx.sceneManager.deserialize();
+    m_ctx.sceneManager.start();
 }
 
 EditorLayer::~EditorLayer()
 {
-    m_sceneManager.serialize();
+    m_ctx.sceneManager.serialize();
 }
 
 void EditorLayer::onAttach()
 {
-    ImGuiWrapper::setupImgui(m_window.getGlfwWindow());
-    m_sceneManager.getActiveScene().start();
+    ImGuiWrapper::setupImgui(m_ctx.window.getGlfwWindow());
+    m_ctx.sceneManager.getActiveScene().start();
 }
 
 // void EditorLayer::setScene(std::shared_ptr<Scene> scene)
@@ -56,7 +54,7 @@ void EditorLayer::onAttach()
 
 void EditorLayer::onUpdate(float deltaTime)
 {
-    m_frameBuffer.bind();
+    m_ctx.frameBuffer.bind();
 
     ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
 
@@ -65,20 +63,19 @@ void EditorLayer::onUpdate(float deltaTime)
     glClear(GL_COLOR_BUFFER_BIT);
 
     renderGrid();
-    m_sceneManager.getActiveScene().update(Time::deltaTime());
+    m_ctx.sceneManager.getActiveScene().update(Time::deltaTime());
 
     handleEvents();
-    m_mouseActionController.Update(m_sceneManager, m_upperLeft, m_previewAreaSize, m_viewportWidth, m_viewportHeight, m_window.getGlfwWindow(), m_sceneImageHovered);
 
     drawEditorUI();
-    m_frameBuffer.unbind();
+    m_ctx.frameBuffer.unbind();
 }
 
 void EditorLayer::drawEditorUI()
 {
     ImGuiWrapper::beginDockspace();
 
-    renderSceneViewport();
+    m_scenePanel.draw();
     renderPropertiesPanel();
     renderSelectedTexSheetPanel();
     renderTextureListPanel();
@@ -88,120 +85,14 @@ void EditorLayer::drawEditorUI()
     ImGui::ShowMetricsWindow();
 }
 
-void EditorLayer::renderSceneViewport()
-{
-    ImGui::PushStyleColor(ImGuiCol_MenuBarBg, IM_COL32(0, 0, 0, 255));
-    ImGui::Begin("Scene", nullptr, ImGuiWindowFlags_MenuBar);
-    ImGui::PopStyleColor();
-    if (ImGui::BeginMenuBar())
-    {
-        // Trying to center the components
-        float spacing = ImGui::GetStyle().ItemSpacing.x;
-        float buttonWidth = 40.0f;
-        float totalWidth = 3 * buttonWidth + 2 * spacing;
-
-        float availableWidth = ImGui::GetContentRegionAvail().x;
-        float startX = (availableWidth - totalWidth) / 2.0f;
-
-        ImGui::SetCursorPosX(startX);
-
-        if (ImGui::Button("PLAY"))
-        {
-            if (!m_sceneManager.isPlaying())
-            {
-                m_sceneManager.startRuntimeScene();
-            }
-        }
-
-        if (ImGui::Button("PAUSE"))
-        {
-            if (m_sceneManager.isPlaying())
-            {
-                m_sceneManager.pauseRuntimeScene();
-                m_sceneManager.m_isPlaying = false;
-            }
-        }
-
-        if (ImGui::Button("STOP"))
-        {
-            m_sceneManager.stopRuntimeScene();
-        }
-
-        ImGui::EndMenuBar();
-    }
-
-    int fbWidth, fbHeight;
-    glfwGetFramebufferSize(m_window.getGlfwWindow(), &fbWidth, &fbHeight);
-    float aspectRatio = static_cast<float>(m_viewportWidth) / m_viewportHeight;
-
-    // Inside ImGui window
-    ImVec2 imGuiWindowSize = ImGui::GetContentRegionAvail();
-    float imGuiAspectRatio = imGuiWindowSize.x / imGuiWindowSize.y;
-
-    ImVec2 imgSize;
-    if (imGuiAspectRatio > aspectRatio)
-    {
-        // ImGui Window is wider than viewport -> pad width
-        imgSize.y = imGuiWindowSize.y;
-        imgSize.x = imgSize.y * aspectRatio;
-    }
-    else
-    {
-        // ImGui Window is taller than viewport -> pad height
-        imgSize.x = imGuiWindowSize.x;
-        imgSize.y = imgSize.x / aspectRatio;
-    }
-
-    // Render framebuffer texture (off-screen rendered texture)
-    unsigned int framebufferTexture = m_frameBuffer.getColorTexture();
-    ImGui::Image(framebufferTexture, imgSize, ImVec2{0, 1}, ImVec2{1, 0});
-
-    if (ImGui::BeginDragDropTarget())
-    {
-        if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("SPRITE"))
-        {
-            IM_ASSERT(payload->DataSize == sizeof(int) || payload->DataSize == sizeof(SpritePayload));
-            int spriteIndex = ((SpritePayload *)payload->Data)->spriteIndex;
-
-            // Convert current mouse to world position
-            std::shared_ptr<Camera> cam = m_sceneManager.getActiveScene().getCamera();
-            SpriteSheet spriteSheet = SpriteSheet(m_selectedTexturePath, true, 128, 0);
-            glm::vec2 worldPos = m_mouseActionController.getWorldCoordinate(
-                cam, m_upperLeft, m_previewAreaSize,
-                fbWidth, fbHeight);
-
-            // Create object here
-            Sprite sprite = spriteSheet.getSprites()[spriteIndex];
-            m_sceneManager.getActiveScene().addGameObject(32, 32, "_new");
-            auto newObj = m_sceneManager.getActiveScene().getActiveGameObject();
-            newObj->addComponent<Sprite>(m_selectedTexturePath, true, sprite.getTextureCoordinates());
-            newObj->getComponent<Transform>().setPosition(worldPos.x, worldPos.y, 0.0f);
-        }
-        ImGui::EndDragDropTarget();
-    }
-
-    m_upperLeft = ImGui::GetItemRectMin();
-    m_previewAreaSize = ImGui::GetItemRectSize();
-
-    // rendering it here to avoid overlap with the above
-    // scene preview imgui image
-    renderGizmos();
-
-    // Store whether this specific image is hovered
-    // We use this to distinguish mouse clicks in/outside our scene preview
-    m_sceneImageHovered = ImGui::IsItemHovered();
-
-    ImGui::End();
-}
-
 void EditorLayer::renderPropertiesPanel()
 {
-    if (m_sceneManager.getActiveScene().getGameObjects().empty())
+    if (m_ctx.sceneManager.getActiveScene().getGameObjects().empty())
         return;
 
     ImGui::Begin("Properties");
 
-    GameObject *go = m_sceneManager.getActiveScene().getActiveGameObject();
+    GameObject *go = m_ctx.sceneManager.getActiveScene().getActiveGameObject();
     if (!go)
     {
         ImGui::Text("No game object selected");
@@ -274,7 +165,7 @@ void EditorLayer::renderPropertiesPanel()
         if (ImGui::Selectable("Rigidbody2D"))
         {
             go->addComponent<Rigidbody2D>();
-            m_sceneManager.getActiveScene().getPhysics2d().addRigidbody(*go);
+            m_ctx.sceneManager.getActiveScene().getPhysics2d().addRigidbody(*go);
         }
 
         if (ImGui::Selectable("BoxCollider2D"))
@@ -282,13 +173,13 @@ void EditorLayer::renderPropertiesPanel()
             int width = go->getWidth();
             int height = go->getHeight();
             go->addComponent<BoxCollider2D>(width, height);
-            m_sceneManager.getActiveScene().getPhysics2d().addRigidbody(*go);
+            m_ctx.sceneManager.getActiveScene().getPhysics2d().addRigidbody(*go);
         }
 
         if (ImGui::Selectable("CircleCollider2D"))
         {
             go->addComponent<CircleCollider2D>();
-            m_sceneManager.getActiveScene().getPhysics2d().addRigidbody(*go);
+            m_ctx.sceneManager.getActiveScene().getPhysics2d().addRigidbody(*go);
         }
 
         ImGui::EndCombo();
@@ -332,7 +223,7 @@ void EditorLayer::renderSelectedTexSheetPanel(bool isInModal)
 {
 
     // TODO: use this as a dummy sprite to render the texture resources change it later on.
-    SpriteSheet spriteSheet = SpriteSheet(m_selectedTexturePath, true, 128, 0);
+    SpriteSheet spriteSheet = SpriteSheet(m_ctx.selectedTexturePath, true, 128, 0);
     std::shared_ptr<Texture> spriteSheetTexture = spriteSheet.getTexture();
     ImVec2 windowPos = ImGui::GetWindowPos();
     ImVec2 windowSize = ImGui::GetWindowSize();
@@ -362,15 +253,15 @@ void EditorLayer::renderSelectedTexSheetPanel(bool isInModal)
                 ImVec4(0.0f, 0.0f, 0.0f, 1.0f),
                 ImVec4(1.0f, 1.0f, 1.0f, 1.0f)))
         {
-            if (m_sceneManager.getActiveScene().getActiveGameObject())
+            if (m_ctx.sceneManager.getActiveScene().getActiveGameObject())
             {
-                GameObject *go = m_sceneManager.getActiveScene().getActiveGameObject();
+                GameObject *go = m_ctx.sceneManager.getActiveScene().getActiveGameObject();
                 // first remove Sprite if it exists
                 if (go->hasComponent<Sprite>())
                     go->removeComponent<Sprite>();
 
-                m_sceneManager.getActiveScene().getActiveGameObject()->addComponent<Sprite>(
-                    m_selectedTexturePath,
+                m_ctx.sceneManager.getActiveScene().getActiveGameObject()->addComponent<Sprite>(
+                    m_ctx.selectedTexturePath,
                     true,
                     sprite.getTextureCoordinates());
                 // ImGui::CloseCurrentPopup(); // Close modal
@@ -395,7 +286,7 @@ void EditorLayer::renderSelectedTexSheetPanel(bool isInModal)
 void EditorLayer::renderSelectedTexSheetPanel()
 {
     // TODO: use this as a dummy sprite to render the texture resources change it later on.
-    SpriteSheet spriteSheet = SpriteSheet(m_selectedTexturePath, true, 128, 0);
+    SpriteSheet spriteSheet = SpriteSheet(m_ctx.selectedTexturePath, true, 128, 0);
     ImGui::Begin("Sprites");
     std::shared_ptr<Texture> spriteSheetTexture = spriteSheet.getTexture();
     ImVec2 windowPos = ImGui::GetWindowPos();
@@ -510,9 +401,9 @@ void EditorLayer::renderPerformancePanel()
 
 void EditorLayer::renderGrid()
 {
-    std::shared_ptr<Camera> cam = m_sceneManager.getActiveScene().getCamera();
+    std::shared_ptr<Camera> cam = m_ctx.sceneManager.getActiveScene().getCamera();
 
-    m_physicsRenderer.render(cam, m_sceneManager.getActiveScene().getGameObjects());
+    m_physicsRenderer.render(cam, m_ctx.sceneManager.getActiveScene().getGameObjects());
 
     if (!m_drawGrid)
         return;
@@ -536,9 +427,9 @@ void EditorLayer::renderTextureListPanel()
     {
         std::string fileName = fs::path(texturePath).filename().string();
 
-        if (ImGui::Selectable(fileName.c_str(), m_selectedTexturePath == texturePath))
+        if (ImGui::Selectable(fileName.c_str(), m_ctx.selectedTexturePath == texturePath))
         {
-            m_selectedTexturePath = texturePath;
+            m_ctx.selectedTexturePath = texturePath;
         }
     }
 
@@ -571,53 +462,6 @@ void EditorLayer::renderChooseFile()
     }
 }
 
-void EditorLayer::renderGizmos()
-{
-    if (m_sceneManager.getActiveScene().getGameObjects().empty())
-        return;
-
-    GameObject *go = m_sceneManager.getActiveScene().getActiveGameObject();
-    if (!go)
-    {
-        // std::cout << "renderGizmos - No active game object selected" << std::endl;
-        return;
-    }
-    Transform &transform = go->getComponent<Transform>();
-    glm::vec3 *pos = transform.getPosition();
-
-    glm::vec2 screenPos = getScreenCoordinate({pos->x, pos->y});
-    ImDrawList *drawList = ImGui::GetWindowDrawList();
-
-    // Length of gizmo axis
-    float axisLength = 50.0f;
-
-    // X-axis (Green)
-    ImVec2 xStart = {screenPos.x, screenPos.y};
-    ImVec2 xEnd = ImVec2(screenPos.x + axisLength, screenPos.y);
-    drawList->AddLine(xStart, xEnd, IM_COL32(0, 255, 0, 255), 2.0f);
-    // Arrowhead for X
-    drawList->AddTriangleFilled(
-        ImVec2(xEnd.x, xEnd.y),
-        ImVec2(xEnd.x - 6, xEnd.y - 4),
-        ImVec2(xEnd.x - 6, xEnd.y + 4),
-        IM_COL32(0, 255, 0, 255));
-    // Label for X
-    drawList->AddText(ImVec2(xEnd.x + 4, xEnd.y - 6), IM_COL32(0, 255, 0, 255), "X");
-
-    // Y-axis (Blue)
-    ImVec2 yStart = {screenPos.x, screenPos.y};
-    ImVec2 yEnd = ImVec2(screenPos.x, screenPos.y - axisLength);
-    drawList->AddLine(yStart, yEnd, IM_COL32(0, 0, 255, 255), 2.0f);
-    // Arrowhead for Y
-    drawList->AddTriangleFilled(
-        ImVec2(yEnd.x, yEnd.y),
-        ImVec2(yEnd.x - 4, yEnd.y + 6),
-        ImVec2(yEnd.x + 4, yEnd.y + 6),
-        IM_COL32(0, 0, 255, 255));
-    // Label for Y
-    drawList->AddText(ImVec2(yEnd.x + 4, yEnd.y - 10), IM_COL32(0, 0, 255, 255), "Y");
-}
-
 void EditorLayer::renderEditorProperties()
 {
     ImGui::Begin("Editor Properties");
@@ -630,7 +474,7 @@ void EditorLayer::renderEditorProperties()
     }
 
     // update mouse controller
-    m_mouseActionController.setMovementMode(m_movementMode);
+    m_ctx.mouseActionController.setMovementMode(m_movementMode);
 
     ImGui::Separator();
     ImGui::Checkbox("Draw Grid", &m_drawGrid);
@@ -657,59 +501,6 @@ std::vector<std::string> EditorLayer::getTextureFiles(const std::string &folderP
     return textures;
 }
 
-glm::vec2 EditorLayer::getScreenCoordinate(glm::vec2 worldPos)
-{
-    glm::vec2 frameBufferPos = worldToFrameBuffer(worldPos);
-    glm::vec2 localPos = frameBufferToLocal(frameBufferPos);
-
-    return localToScreen(localPos);
-}
-
-glm::vec2 EditorLayer::worldToFrameBuffer(glm::vec2 worldPos)
-{
-    std::shared_ptr<Camera> camera = m_sceneManager.getActiveScene().getCamera();
-
-    glm::mat4 viewProj = camera->getProjectionMatrix() * camera->getViewMatrix();
-
-    // transform world position to clip space
-    glm::vec4 clipSpaceCoords = viewProj * glm::vec4(worldPos, 0.0f, 1.0f);
-
-    // check if w is zero (could be for certain cases like points at infinity)
-    if (clipSpaceCoords.w == 0.0f)
-    {
-        std::cout << "Warning: Invalid transformation, w = 0!" << std::endl;
-        return glm::vec2(0.0f, 0.0f);
-    }
-
-    // convert clip space to normalized device coordinates (NDC)
-    glm::vec3 ndcCoords = clipSpaceCoords / clipSpaceCoords.w;
-
-    // map NDC to screen space (viewport coordinates)
-    glm::vec2 framebufferCoords;
-    framebufferCoords.x = (ndcCoords.x + 1.0f) * 0.5f * m_viewportWidth;
-    framebufferCoords.y = (1.0f - ndcCoords.y) * 0.5f * m_viewportHeight; // flip Y-axis for imgui
-
-    // std::cout << "World Pos: (" << worldPos.x << ", " << worldPos.y << std::endl;
-    // std::cout << "Framebuffer Coords: (" << framebufferCoords.x << ", " << framebufferCoords.y << std::endl;
-
-    return framebufferCoords;
-}
-
-glm::vec2 EditorLayer::frameBufferToLocal(glm::vec2 frameBufferPos)
-{
-    float localPosX = (frameBufferPos.x / m_viewportWidth) * m_previewAreaSize.x;
-    float localPosY = (frameBufferPos.y / m_viewportHeight) * m_previewAreaSize.y;
-
-    return {localPosX, localPosY};
-}
-
-glm::vec2 EditorLayer::localToScreen(glm::vec2 localPos)
-{
-    glm::vec2 screenPos = localPos + glm::vec2{m_upperLeft.x, m_upperLeft.y};
-
-    return screenPos;
-}
-
 void EditorLayer::handleSceneInteraction()
 {
     // Use mouseListener and viewport coordinates to select or modify objects
@@ -728,24 +519,24 @@ void EditorLayer::handleEvents()
 
             if (keyType == KeyType::Escape)
             {
-                m_window.closeWindow();
+                m_ctx.window.closeWindow();
                 std::cout << "Escape" << std::endl;
             }
             else if (keyType == KeyType::RightArrow)
             {
-                m_sceneManager.getActiveScene().getActiveGameObject()->getComponent<Transform>().translate(500.0f * Time::deltaTime(), 0.0f, 0.0f);
+                m_ctx.sceneManager.getActiveScene().getActiveGameObject()->getComponent<Transform>().translate(500.0f * Time::deltaTime(), 0.0f, 0.0f);
             }
             else if (keyType == KeyType::LeftArrow)
             {
-                m_sceneManager.getActiveScene().getActiveGameObject()->getComponent<Transform>().translate(-500.0f * Time::deltaTime(), 0.0f, 0.0f);
+                m_ctx.sceneManager.getActiveScene().getActiveGameObject()->getComponent<Transform>().translate(-500.0f * Time::deltaTime(), 0.0f, 0.0f);
             }
             else if (keyType == KeyType::DownArrow)
             {
-                m_sceneManager.getActiveScene().getActiveGameObject()->getComponent<Transform>().translate(0.0f, -500.0f * Time::deltaTime(), 0.0f);
+                m_ctx.sceneManager.getActiveScene().getActiveGameObject()->getComponent<Transform>().translate(0.0f, -500.0f * Time::deltaTime(), 0.0f);
             }
             else if (keyType == KeyType::UpArrow)
             {
-                m_sceneManager.getActiveScene().getActiveGameObject()->getComponent<Transform>().translate(0.0f, 500.0f * Time::deltaTime(), 0.0f);
+                m_ctx.sceneManager.getActiveScene().getActiveGameObject()->getComponent<Transform>().translate(0.0f, 500.0f * Time::deltaTime(), 0.0f);
             }
         }
     }
