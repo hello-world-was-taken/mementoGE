@@ -11,6 +11,8 @@
 #include "core/MovementMode.h"
 #include "core/EditorContext.h"
 #include "core/ScenePanel.h"
+#include "core/PropertiesPanel.h"
+#include "core/TexturePanel.h"
 
 #include "renderer/GridRenderer.h"
 #include "renderer/PhysicsRenderer.h"
@@ -33,15 +35,8 @@ public:
 
 private:
     // imgui panels
-    void renderSceneViewport();
-    void renderPropertiesPanel();
-    void renderSelectedTexSheetPanel();
-    void renderSelectedTexSheetPanel(bool isInModal);
-    void renderTextureListPanel();
-    void renderChooseFile();
     void renderGrid();
     void renderPerformancePanel();
-    // void renderGizmos();
     void renderEditorProperties();
 
     void handleSceneInteraction();
@@ -52,6 +47,8 @@ private:
 private:
     EditorContext m_ctx;
     ScenePanel m_scenePanel;
+    PropertiesPanel m_propertiesPanel;
+    TexturePanel m_texturePanel;
 
     MovementMode m_movementMode = MovementMode::Free;
     bool m_drawGrid = false;

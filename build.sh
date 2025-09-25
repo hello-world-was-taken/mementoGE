@@ -1,4 +1,5 @@
 #! /bin/sh
+set -e
 
 # Check if the out directory exists, if not create it
 if [ ! -d ./out ]; then

@@ -31,6 +31,8 @@ add_library(${PROJECT_NAME} STATIC
     core/MouseActionController.cpp
     core/EditorLayer.cpp
     core/ScenePanel.cpp
+    core/PropertiesPanel.cpp
+    core/TexturePanel.cpp
 
     # renderer
     renderer/RenderBatch.cpp
