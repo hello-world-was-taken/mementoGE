@@ -32,7 +32,7 @@ public:
 
     // We can't use a copy constructor because entt::registry is not copyable
     Scene(const Scene &other) = delete; // copy constructor
-    Scene(Scene &&other) noexcept;               // move constructor
+    Scene(Scene &&other) noexcept;      // move constructor
     Scene &operator=(Scene &&other);    // move assignment operator
 
     Scene clone(std::string tag);

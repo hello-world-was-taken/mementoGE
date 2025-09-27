@@ -14,7 +14,8 @@ MouseListener *MouseListener::get()
 
 void MouseListener::beginFrame()
 {
-    m_mouseDelta = {0.0f, 0.0f};
+    // previous mouse position is used to calculate mouse delta and has not been tested yet
+    m_previMousePos = m_mousePos;
     m_scrollDelta = {0.0f, 0.0f};
     m_buttonPressed.clear();
     m_buttonReleased.clear();
@@ -60,10 +61,7 @@ void MouseListener::cursorPositionCallback(GLFWwindow *window, double xPos, doub
     auto *listener = MouseListener::get();
     glm::vec2 newMousePos = {static_cast<float>(xPos), static_cast<float>(yPos)};
 
-    listener->m_mouseDelta.x = newMousePos.x - listener->m_mousePos.x;
-    // Reversed since y-coordinates go from bottom to top
-    listener->m_mouseDelta.y = listener->m_mousePos.y - newMousePos.y;
-
+    listener->m_previMousePos = listener->m_mousePos;
     listener->m_mousePos = newMousePos;
 }
 
@@ -84,9 +82,19 @@ glm::vec2 MouseListener::getMouseScreenPosition() const
     return m_mousePos;
 }
 
+glm::vec2 MouseListener::getPrevMouseScreenPosition() const
+{
+    return m_previMousePos;
+}
+
+// returns the delta in window size coordinate, not game world coordinate
 glm::vec2 MouseListener::getMouseDelta() const
 {
-    return m_mouseDelta;
+    auto *listener = MouseListener::get();
+
+    return {
+        listener->m_mousePos.x - listener->m_previMousePos.x,
+        listener->m_mousePos.y - listener->m_previMousePos.y};
 }
 
 glm::vec2 MouseListener::getScrollDelta() const

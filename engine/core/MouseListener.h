@@ -20,6 +20,7 @@ public:
     void endFrame();
 
     glm::vec2 getMouseScreenPosition() const;
+    glm::vec2 getPrevMouseScreenPosition() const;
     glm::vec2 getMouseDelta() const;
     glm::vec2 getScrollDelta() const;
 
@@ -31,11 +32,10 @@ private:
     MouseListener() = default;
 
     glm::vec2 m_mousePos = {0.0f, 0.0f};
-    glm::vec2 m_mouseDelta = {0.0f, 0.0f};
+    glm::vec2 m_previMousePos = {0.0f, 0.0f};
     glm::vec2 m_scrollDelta = {0.0f, 0.0f};
 
     std::unordered_map<int, bool> m_buttonStates;   // current frame state
     std::unordered_map<int, bool> m_buttonPressed;  // pressed this frame
     std::unordered_map<int, bool> m_buttonReleased; // released this frame
-
 };

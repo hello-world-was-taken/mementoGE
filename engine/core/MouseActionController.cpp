@@ -23,7 +23,14 @@ void MouseActionController::SetActiveObject(GameObject &object)
 {
 }
 
-void MouseActionController::Update(SceneManager &sceneManager, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight, GLFWwindow *window, bool sceneImageHovered)
+void MouseActionController::Update(
+    SceneManager &sceneManager,
+    ImVec2 imagePos,
+    ImVec2 imageSize,
+    int framebufferWidth,
+    int framebufferHeight,
+    GLFWwindow *window,
+    bool sceneImageHovered)
 {
     if (!sceneImageHovered)
         return;
@@ -45,6 +52,14 @@ void MouseActionController::Update(SceneManager &sceneManager, ImVec2 imagePos, 
             if (obj.containsPoint(mouseWorldPos))
             {
                 scene.setActiveGameObject(obj.getEntityId());
+                auto activeGameObject = scene.getActiveGameObject();
+
+                // store offset between object origin and mouse world position to avoid initial sharp mov't
+                if (activeGameObject)
+                {
+                    glm::vec3* objPos = activeGameObject->getComponent<Transform>().getPosition();
+                    m_dragOffset = glm::vec2(objPos->x, objPos->y) - mouseWorldPos;
+                }
                 break;
             }
             else
@@ -92,7 +107,10 @@ void MouseActionController::moveGameObject(GameObject *activeGameObject, glm::ve
     }
     else if (m_movementMode == MovementMode::Free)
     {
-        activeGameObject->getComponent<Transform>().setPosition(mouseWorldPos.x, mouseWorldPos.y, 0.0f);
+        glm::vec2 newPos = mouseWorldPos + m_dragOffset;
+        Transform &transform = activeGameObject->getComponent<Transform>();
+
+        activeGameObject->getComponent<Transform>().setPosition(newPos.x, newPos.y, 0.0f);
     }
 }
 

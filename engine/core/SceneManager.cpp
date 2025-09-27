@@ -143,8 +143,8 @@ void SceneManager::deserialize()
     {
         std::cout << "scene.yaml does not exist" << std::endl;
         Scene scene{"default_scene"};
-        m_scenes.insert_or_assign(scene.getTag(), std::move(scene));
         m_activeSceneName = scene.getTag();
+        m_scenes.insert_or_assign(scene.getTag(), std::move(scene));
         return;
     }
 
