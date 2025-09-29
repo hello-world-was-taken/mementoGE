@@ -1,7 +1,7 @@
 #include <string>
 
 #include "core/SpriteSheet.h"
-#include "core/Resource.h"
+#include "core/ResourceManager.h"
 
 SpriteSheet::SpriteSheet(
     std::string texturePath,
@@ -13,7 +13,7 @@ SpriteSheet::SpriteSheet(
 , m_subTextureSize{subTextureSize}
 , m_subTextureGap{subTextureGap}
 {
-    m_texture = Resource::getTexture(texturePath, isTextureAtlas);
+    m_texture = ResourceManager::instance().getTexture(texturePath, isTextureAtlas);
     m_sprites = std::vector<Sprite>();
 
     initializeSprites();

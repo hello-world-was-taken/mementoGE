@@ -29,7 +29,7 @@ Scene::Scene(const YAML::Node &&serializedScene)
             m_gameObjects.push_back(std::move(gameObj));
         }
 
-        // TODO: FIX THIS!
+        // TODO: FIX THIS! Exception is thrown when scene.yaml doesn't have any objects
         m_activeEntityId = m_gameObjects.back().getEntityId();
     }
 }

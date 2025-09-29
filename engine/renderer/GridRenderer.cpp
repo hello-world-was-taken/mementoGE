@@ -1,5 +1,5 @@
 #include "renderer/GridRenderer.h"
-#include "core/Resource.h"
+#include "core/ResourceManager.h"
 #include "opengl/Vertex.h"
 
 #include "util/log_error.h"
@@ -28,7 +28,7 @@ GridRenderer::GridRenderer(int width, int height, int tileSize, std::shared_ptr<
 
     m_vbo->updateBufferData(m_vertices);
     std::cout << "Curr directory: " << std::filesystem::current_path() << std::endl;
-    m_shader = Resource::getShaderProgram(
+    m_shader = ResourceManager::instance().getShaderProgram(
         getFilePath("assets/shader/grid_vertex.shader"),
         getFilePath("assets/shader/grid_fragment.shader"));
 }

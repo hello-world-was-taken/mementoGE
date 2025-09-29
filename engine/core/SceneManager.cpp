@@ -3,7 +3,6 @@
 #include <fstream>
 
 #include "core/SceneManager.h"
-#include "core/Resource.h"
 #include "core/Sprite.h"
 #include "core/SpriteSheet.h"
 #include "core/GameObject.h"

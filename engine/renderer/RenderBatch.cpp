@@ -1,5 +1,5 @@
 #include "core/GLIncludes.h"
-#include "core/Resource.h"
+#include "core/ResourceManager.h"
 #include "core/Sprite.h"
 
 #include "opengl/Vertex.h"
@@ -82,8 +82,12 @@ void RenderBatch::setIndexData(std::vector<unsigned int> indices)
 
 void RenderBatch::render(const std::shared_ptr<Camera> &camera, std::shared_ptr<Shader> customShader)
 {
-    std::shared_ptr<Shader> shader = customShader ? customShader
-                                                  : Resource::getShaderProgram(getFilePath("assets/shader/vertex.shader"), getFilePath("assets/shader/fragment.shader"));
+    auto vertexShaderPath = getFilePath("assets/shader/vertex.shader");
+    auto fragmentShaderPath = getFilePath("assets/shader/fragment.shader");
+
+    std::shared_ptr<Shader>
+        shader = customShader ? customShader
+                              : ResourceManager::instance().getShaderProgram(vertexShaderPath, fragmentShaderPath);
 
     shader->use();
     shader->setUniform4fv("u_view_matrix", camera->getViewMatrix());

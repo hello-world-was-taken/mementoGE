@@ -22,7 +22,6 @@ add_library(${PROJECT_NAME} STATIC
     core/SceneManager.cpp
     core/Scene.cpp
     core/ImGuiWrapper.cpp
-    core/Resource.cpp
     core/Sprite.cpp
     core/SpriteSheet.cpp
     core/MouseListener.cpp
@@ -33,6 +32,7 @@ add_library(${PROJECT_NAME} STATIC
     core/ScenePanel.cpp
     core/PropertiesPanel.cpp
     core/TexturePanel.cpp
+    core/ResourceManager.cpp
 
     # renderer
     renderer/RenderBatch.cpp

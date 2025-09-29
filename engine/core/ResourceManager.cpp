@@ -1,0 +1,48 @@
+#include "core/ResourceManager.h"
+
+#include "opengl/Shader.h"
+#include "opengl/Texture.h"
+
+#include <memory>
+
+ResourceManager &ResourceManager::instance()
+{
+    static ResourceManager rm;
+    return rm;
+}
+
+std::shared_ptr<Shader> ResourceManager::getShaderProgram(const std::string &vertexShaderPath,
+                                                          const std::string &fragmentShaderPath)
+{
+    std::string fullShaderPath = vertexShaderPath + fragmentShaderPath;
+
+    auto it = shaders.find(fullShaderPath);
+    if (it == shaders.end())
+    {
+        auto shader = std::make_shared<Shader>(vertexShaderPath.c_str(),
+                                               fragmentShaderPath.c_str());
+        shaders[fullShaderPath] = shader;
+        return shader;
+    }
+
+    return it->second;
+}
+
+std::shared_ptr<Texture> ResourceManager::getTexture(const std::string &texturePath,
+                                                     bool isSpriteSheet)
+{
+    auto it = textures.find(texturePath);
+    if (it == textures.end())
+    {
+        auto texture = std::make_shared<Texture>(texturePath.c_str(),
+                                                 textureUnit,
+                                                 isSpriteSheet);
+        textureUnit++;
+        textures[texturePath] = texture;
+
+        texture->bind(); // auto-bind on load
+        return texture;
+    }
+
+    return it->second;
+}

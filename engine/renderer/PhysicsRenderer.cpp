@@ -1,5 +1,4 @@
 #include "core/GLIncludes.h"
-#include "core/Resource.h"
 #include "core/Sprite.h"
 
 #include "opengl/Vertex.h"

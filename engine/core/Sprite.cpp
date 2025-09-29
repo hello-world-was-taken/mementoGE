@@ -1,12 +1,12 @@
 #include <iostream>
 
 #include "core/Sprite.h"
-#include "core/Resource.h"
+#include "core/ResourceManager.h"
 
 Sprite::Sprite(
     std::string texturePath, bool isTextureAtlas)
 {
-    m_texture = Resource::getTexture(texturePath, isTextureAtlas);
+    m_texture = ResourceManager::instance().getTexture(texturePath, isTextureAtlas);
 }
 
 /**
@@ -27,7 +27,7 @@ Sprite::Sprite(
     unsigned int subTextureIndexX,
     unsigned int subTextureIndexY)
 {
-    m_texture = Resource::getTexture(texturePath, isTextureAtlas);
+    m_texture = ResourceManager::instance().getTexture(texturePath, isTextureAtlas);
 
     if (m_texture->isTextureAtlas())
     {
@@ -57,7 +57,7 @@ Sprite::Sprite(
     bool isTextureAtlas,
     std::vector<glm::vec2> textureCoordinates)
     : m_textureCoordinates{textureCoordinates},
-      m_texture{Resource::getTexture(texturePath, isTextureAtlas)}
+      m_texture{ResourceManager::instance().getTexture(texturePath, isTextureAtlas)}
 {
 }
 Sprite::Sprite()
@@ -170,7 +170,7 @@ void Sprite::deserialize(const YAML::Node &in)
     auto texture = in["Sprite"]["Texture"];
     std::string filePath = texture["FilePath"].as<std::string>();
     bool isTextureAtlas = texture["isTextureAtlas"].as<bool>();
-    m_texture = Resource::getTexture(filePath, isTextureAtlas);
+    m_texture = ResourceManager::instance().getTexture(filePath, isTextureAtlas);
     m_texture.get()->bind();
 
     m_flipX = in["Sprite"]["FlipX"] ? in["Sprite"]["FlipX"].as<bool>() : false;
