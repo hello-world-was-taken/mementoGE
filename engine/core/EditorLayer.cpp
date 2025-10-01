@@ -7,7 +7,6 @@
 #include "core/ImGuiWrapper.h"
 #include "core/MovementMode.h"
 #include "core/SpriteSheet.h"
-#include "core/SpritePayload.h"
 #include "core/PropertiesPanel.h"
 
 #include "physics/BoxCollider2D.h"

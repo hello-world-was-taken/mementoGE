@@ -16,7 +16,6 @@
 
 namespace fs = std::filesystem;
 
-
 // TODO: move this to a dedicated utilities file
 // for now keep insync with TexturePanel.getTextureFiles
 // remove fstream / filesystem if they are not needed after removal
@@ -28,7 +27,8 @@ inline std::vector<std::string> getTextureFiles(const std::string &folderPath)
         if (file.is_regular_file())
         {
             std::string ext = file.path().extension().string();
-            if (ext == ".png" || ext == ".jpg" || ext == ".jpeg")
+            // TODO: on-click for the list, return the texture within the json
+            if (ext == ".json")
             {
                 textures.push_back(file.path().string());
             }
@@ -39,7 +39,7 @@ inline std::vector<std::string> getTextureFiles(const std::string &folderPath)
     return textures;
 }
 
-PropertiesPanel::PropertiesPanel(EditorContext &ctx) : EditorPanel {ctx}, m_ctx{ctx}
+PropertiesPanel::PropertiesPanel(EditorContext &ctx) : EditorPanel{ctx}, m_ctx{ctx}
 {
 }
 
@@ -198,8 +198,9 @@ void PropertiesPanel::renderSelectedTexSheetPanel(bool isInModal)
         ImGui::Begin("Sprites");
     }
 
-    // TODO: use this as a dummy sprite to render the texture resources change it later on.
-    SpriteSheet spriteSheet = SpriteSheet(m_ctx.selectedTexturePath, true, 128, 0);
+    // TODO: we shouldn't be re-creating sprite sheet for an atlas, if we have already created it
+    // somewhere else
+    SpriteSheet spriteSheet = SpriteSheet::fromJson(m_ctx.selectedTextureJsonPath);
     std::shared_ptr<Texture> spriteSheetTexture = spriteSheet.getTexture();
     ImVec2 windowPos = ImGui::GetWindowPos();
     ImVec2 windowSize = ImGui::GetWindowSize();
@@ -237,8 +238,7 @@ void PropertiesPanel::renderSelectedTexSheetPanel(bool isInModal)
                     go->removeComponent<Sprite>();
 
                 m_ctx.sceneManager.getActiveScene().getActiveGameObject()->addComponent<Sprite>(
-                    m_ctx.selectedTexturePath,
-                    true,
+                    m_ctx.selectedTextureJsonPath,
                     sprite.getTextureCoordinates());
                 // ImGui::CloseCurrentPopup(); // Close modal
             }

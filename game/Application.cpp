@@ -59,6 +59,7 @@ void Application::update()
 
     while (!glfwWindowShouldClose(mWindow.getGlfwWindow()))
     {
+        Time::update();
         glfwPollEvents();
 
         if (m_editorMode)

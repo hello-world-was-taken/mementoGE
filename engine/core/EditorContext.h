@@ -20,7 +20,7 @@ struct EditorContext
     int viewportHeight = 720;
 
     bool drawGrid = false;
-    std::string selectedTexturePath;
+    std::string selectedTextureJsonPath;
     bool sceneImageHovered = false;
 
     // TODO: do we need activeScene? we can get it from scene manager

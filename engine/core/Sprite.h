@@ -11,28 +11,21 @@
 class Sprite
 {
 public:
-    // TODO: We don't need the two constructors. The first one is just a specialized version
-    // of the second one. We can get away with default values.
-    Sprite(
-        std::string texturePath, bool isTextureAtlas);
     Sprite(
         std::string texturePath,
-        bool isTextureAtlas,
-        unsigned int subTextureSpanX,
-        unsigned int subTextureSpanY,
-        unsigned int subTextureSize,
-        unsigned int subTextureIndexX,
-        unsigned int subTextureIndexY);
-    Sprite(
-        std::string texturePath,
-        bool isTextureAtlas,
         std::vector<glm::vec2> textureCoordinates);
-    Sprite(); // TODO: Should only be used for serialization
+    Sprite(
+        std::string texturePath,
+        glm::vec2 topLeft,
+        float width,
+        float height);
+
+    Sprite(); // TODO: Should only be used for serialization and Frame creation
     ~Sprite();
 
     glm::vec4 getColor();
 
-    std::vector<glm::vec2> getTextureCoordinates();
+    std::vector<glm::vec2> getTextureCoordinates() const;
     std::shared_ptr<Texture> getTexture();
     std::string getTexturePath();
 

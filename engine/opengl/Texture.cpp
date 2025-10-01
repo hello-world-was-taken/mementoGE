@@ -1,21 +1,21 @@
+#include "Texture.h"
+
 #include <yaml-cpp/yaml.h>
 #include <stb_image/stb_image.h>
 #include <GL/glew.h>
 #include <iostream>
-
-#include "Texture.h"
+#include <stdexcept>
 
 Texture::Texture(const char *texture_path, int texture_unit, bool isTextureAtlas)
     : m_texture_unit(texture_unit),
       m_is_texture_atlas(isTextureAtlas)
 {
     this->m_texture_path = texture_path;
-    stbi_set_flip_vertically_on_load(true);
+    // stbi_set_flip_vertically_on_load(true);
     m_texture_buffer = (char *)stbi_load(texture_path, &this->m_width, &this->m_height, &this->m_nrChannels, 0);
     if (!m_texture_buffer)
     {
-        std::cout << "Failed to load texture" << std::endl;
-        return;
+        throw std::runtime_error("Failed to load texture - " + m_texture_path);
     }
 
     glGenTextures(1, &this->m_id);

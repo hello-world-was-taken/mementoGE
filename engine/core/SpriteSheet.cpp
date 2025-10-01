@@ -1,56 +1,63 @@
-#include <string>
-
 #include "core/SpriteSheet.h"
+#include "core/Sprite.h"
 #include "core/ResourceManager.h"
 
-SpriteSheet::SpriteSheet(
-    std::string texturePath,
-    bool isTextureAtlas,
-    unsigned int subTextureSize,
-    unsigned int subTextureGap)
-: mTexturePath{texturePath}
-, mIsTextureAtlas{isTextureAtlas}
-, m_subTextureSize{subTextureSize}
-, m_subTextureGap{subTextureGap}
-{
-    m_texture = ResourceManager::instance().getTexture(texturePath, isTextureAtlas);
-    m_sprites = std::vector<Sprite>();
+#include "opengl/Texture.h"
 
-    initializeSprites();
+#include "util/GetExecutableDir.h"
+
+#include <string>
+#include <filesystem>
+#include <fstream>
+#include <nlohmann/json.h>
+
+SpriteSheet::SpriteSheet(std::shared_ptr<Texture> texture) : m_texture{texture}
+{
+}
+
+SpriteSheet SpriteSheet::fromJson(const std::filesystem::path &jsonPath)
+{
+    std::ifstream file(jsonPath);
+    nlohmann::json data;
+    file >> data;
+
+    std::filesystem::path texturePath = getFilePath("assets/texture") / data["texture"];
+    std::shared_ptr<Texture> tex = ResourceManager::instance().getTexture(texturePath, true);
+    SpriteSheet spriteSheet = SpriteSheet(tex);
+
+    float spriteW = data["spriteWidth"];
+    float spriteH = data["spriteHeight"];
+    float spriteGapX = data["spriteGapX"];
+    float spriteGapY = data["spriteGapY"];
+
+    int columns = data["columns"];
+    int spriteCount = data["spriteCount"];
+
+    for (int i = 0; i < spriteCount; i++)
+    {
+
+        int col = i % columns;
+        int row = i / columns;
+
+        Sprite s{};
+        float x = col * (spriteW + spriteGapX);
+        float y = row * (spriteH + spriteGapY);
+        float w = spriteW;
+        float h = spriteH;
+
+        spriteSheet.addSprite(Sprite(texturePath, glm::vec2{x, y}, w, h));
+    }
+
+    return spriteSheet;
 }
 
 SpriteSheet::~SpriteSheet()
 {
 }
 
-// TODO: Add support for when there is a gap between subTextures
-void SpriteSheet::initializeSprites()
+void SpriteSheet::addSprite(Sprite &&sprite)
 {
-    unsigned int textureWidth = m_texture->getWidth();
-    unsigned int textureHeight = m_texture->getHeight();
-
-    unsigned int maxHorizontalSpriteCount = textureWidth / m_subTextureSize;
-    unsigned int maxVerticalSpriteCount = textureHeight / m_subTextureSize;
-
-    for (unsigned int y = 0; y < maxVerticalSpriteCount; y++)
-    {
-        for (unsigned int x = 0; x < maxHorizontalSpriteCount; x++)
-        {
-            m_sprites.push_back(Sprite(
-                mTexturePath,
-                mIsTextureAtlas,
-                1,
-                1,
-                m_subTextureSize,
-                x,
-                y));
-        }
-    }
-}
-
-unsigned int SpriteSheet::getSubTextureSize()
-{
-    return m_subTextureSize;
+    m_sprites.push_back(sprite);
 }
 
 std::vector<Sprite> SpriteSheet::getSprites()

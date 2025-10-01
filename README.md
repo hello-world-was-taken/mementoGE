@@ -10,7 +10,7 @@ Memento is a lightweight 2D game engine built using OpenGL, GLFW, and ImGui, aim
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -48,7 +48,7 @@ After compiling, you can run the engine like so:
 ./run.sh
 ```
 
-## 🧪 Controls
+## Controls
 
 | Action           | Input                            |
 |------------------|----------------------------------|
@@ -57,7 +57,7 @@ After compiling, you can run the engine like so:
 | Select object    | Left click on object             |
 | Move object      | Drag selected object (snaps to grid) |
 
-## 🛠️ Remaining Features / TODO
+## Remaining Features / TODO
 
 - [ ] Zoom centering on mouse cursor
 - [ ] Support for touchpad gestures (pinch-to-zoom, two-finger pan)
@@ -71,11 +71,11 @@ After compiling, you can run the engine like so:
 - [ ] Audio system (OpenAL or FMOD)
 - [x] Hot-reload shaders and assets during runtime
 - [x] Cross-platform support (Window/MacOS)
-- [ ] Sprite based animation
+- [x] Sprite based animation
 - [ ] Proper logging system
 
-🤝 Contributing
+Contributing
 Feel free to fork and contribute via pull requests! Bug fixes, improvements, and new features are all welcome.
 
-📄 License
+License
 MIT License © 2025 hello_world_was_taken

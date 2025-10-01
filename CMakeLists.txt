@@ -21,8 +21,10 @@ target_link_libraries(${PROJECT_NAME}
     engine
 )
 
-add_custom_command(TARGET myGame POST_BUILD
+add_custom_target(copy_assets ALL
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_CURRENT_SOURCE_DIR}/assets
-        $<TARGET_FILE_DIR:myGame>/assets
+                ${CMAKE_CURRENT_SOURCE_DIR}/assets
+                $<TARGET_FILE_DIR:myGame>/assets
         COMMENT "Copying assets to build directory...")
+
+add_dependencies(myGame copy_assets)

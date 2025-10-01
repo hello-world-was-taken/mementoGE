@@ -28,6 +28,8 @@ std::shared_ptr<Shader> ResourceManager::getShaderProgram(const std::string &ver
     return it->second;
 }
 
+// TODO: can we remove the isSpriteSheet bool here.
+// we have two d/t classes now. SpriteSheet.h and just Sprite.h
 std::shared_ptr<Texture> ResourceManager::getTexture(const std::string &texturePath,
                                                      bool isSpriteSheet)
 {

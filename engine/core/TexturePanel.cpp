@@ -1,9 +1,11 @@
 #include "core/TexturePanel.h"
 #include "core/SpriteSheet.h"
 #include "core/SpritePayload.h"
+#include "core/AnimationMap.h"
 #include "core/Sprite.h"
 
 #include "util/GetExecutableDir.h"
+#include "util/Time.h"
 
 #include <ImGuiFileDialog/ImGuiFileDialog.h>
 #include <filesystem>
@@ -22,7 +24,7 @@ inline std::vector<std::string> getTextureFiles(const std::string &folderPath)
         if (file.is_regular_file())
         {
             std::string ext = file.path().extension().string();
-            if (ext == ".png" || ext == ".jpg" || ext == ".jpeg")
+            if (ext == ".json")
             {
                 textures.push_back(file.path().string());
             }
@@ -58,15 +60,15 @@ void TexturePanel::renderTextureAssetsListPanel()
             ".png,.jpg,.jpeg");
     }
     // TODO: lets avoid this call on every render
-    auto textures = getTextureFiles(
+    auto texturesJsonPath = getTextureFiles(
         getFilePath("assets/texture"));
-    for (const auto &texturePath : textures)
+    for (const auto &textureJsonPath : texturesJsonPath)
     {
-        std::string fileName = fs::path(texturePath).filename().string();
+        std::string fileName = fs::path(textureJsonPath).filename().string();
 
-        if (ImGui::Selectable(fileName.c_str(), m_ctx.selectedTexturePath == texturePath))
+        if (ImGui::Selectable(fileName.c_str(), m_ctx.selectedTextureJsonPath == textureJsonPath))
         {
-            m_ctx.selectedTexturePath = texturePath;
+            m_ctx.selectedTextureJsonPath = textureJsonPath;
         }
     }
 
@@ -102,13 +104,69 @@ void TexturePanel::copyTextureToAssets()
 
 void TexturePanel::renderSelectedTexSheetPanel(bool isInModal)
 {
+    static int currentFrame = 0;
+    static float currentFrameTime = 0.0f;
+
     if (!isInModal)
     {
         ImGui::Begin("Sprites");
     }
 
-    // TODO: use this as a dummy sprite to render the texture resources change it later on.
-    SpriteSheet spriteSheet = SpriteSheet(m_ctx.selectedTexturePath, true, 128, 0);
+    // TODO: testing animation - remove
+    auto path = getFilePath("assets/texture/run.json");
+    auto animationMap = AnimationMap::fromJson(path);
+
+    const Animation &burn = animationMap->getAnimation("burn");
+
+    std::vector<glm::vec2> texCoord = burn.frames[currentFrame].sprite.getTextureCoordinates();
+
+    ImVec2 topLeft = ImVec2(texCoord[0].x, texCoord[0].y);
+    ImVec2 bottomRight = ImVec2(texCoord[2].x, texCoord[2].y);
+
+    ImTextureID texIdNew = (ImTextureID)(uintptr_t)animationMap->getTexture()->getTextureId();
+
+    ImGui::PushID(1000);
+    if (ImGui::ImageButton(
+            "",
+            texIdNew,
+            ImVec2(128, 128),
+            topLeft,
+            bottomRight,
+            ImVec4(0.0f, 0.0f, 0.0f, 1.0f),
+            ImVec4(1.0f, 1.0f, 1.0f, 1.0f)))
+    {
+        // No action here. Drag-n-drop using imgui
+    }
+    ImGui::PopID();
+
+    if (currentFrameTime >= burn.frames[currentFrame].duration)
+    {
+        currentFrame++;
+        currentFrameTime = 0.0f;
+    }
+    else
+    {
+        currentFrameTime += Time::deltaTime();
+    }
+
+    if (currentFrame == burn.frames.size())
+    {
+        currentFrame = 0;
+        currentFrameTime = 0.0f;
+    }
+
+    if (m_ctx.selectedTextureJsonPath == "")
+    {
+        if (!isInModal)
+        {
+            ImGui::End();
+        }
+        return;
+    }
+
+    // TODO: we shouldn't be re-creating sprite sheet for an atlas, if we have already created it
+    // somewhere else
+    SpriteSheet spriteSheet = SpriteSheet::fromJson(m_ctx.selectedTextureJsonPath);
     std::shared_ptr<Texture> spriteSheetTexture = spriteSheet.getTexture();
     ImVec2 windowPos = ImGui::GetWindowPos();
     ImVec2 windowSize = ImGui::GetWindowSize();

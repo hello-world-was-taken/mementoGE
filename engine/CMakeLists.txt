@@ -33,6 +33,7 @@ add_library(${PROJECT_NAME} STATIC
     core/PropertiesPanel.cpp
     core/TexturePanel.cpp
     core/ResourceManager.cpp
+    core/AnimationMap.cpp
 
     # renderer
     renderer/RenderBatch.cpp

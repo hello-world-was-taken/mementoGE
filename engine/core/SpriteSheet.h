@@ -1,32 +1,26 @@
-#include <memory>
-
 #include "opengl/Texture.h"
 #include "core/Sprite.h"
 
+#include <memory>
+#include <filesystem>
+
+
+/**
+ * @brief Texture atlas sprite representation
+ */
 class SpriteSheet
 {
-private:
-    std::string mTexturePath;
-    bool mIsTextureAtlas;
-    // The size of one sprite in a sprite sheet. Assumed to be a square.
-    unsigned int m_subTextureSize = 100;
-    unsigned int m_subTextureGap = 0;
-
-    std::shared_ptr<Texture> m_texture;
-    std::vector<Sprite> m_sprites;
-
-private:
-    void initializeSprites();
-
 public:
-    SpriteSheet(
-        std::string texturePath,
-        bool isTextureAtlas,
-        unsigned int subTextureSize,
-        unsigned int m_subTextureGap);
+    SpriteSheet(std::shared_ptr<Texture> texture);
     ~SpriteSheet();
 
-    unsigned int getSubTextureSize();
+    static SpriteSheet fromJson(const std::filesystem::path &jsonPath);
+
+    void addSprite(Sprite &&sprite);
     std::vector<Sprite> getSprites();
     std::shared_ptr<Texture> getTexture();
+
+private:
+    std::shared_ptr<Texture> m_texture;
+    std::vector<Sprite> m_sprites;
 };
