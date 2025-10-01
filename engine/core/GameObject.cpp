@@ -1,9 +1,9 @@
 #include "core/GameObject.h"
 #include "core/Transform.h"
 #include "core/Sprite.h"
-#include "core/RigidBody2D.h"
 
 #include "physics/Physics2D.h"
+#include "physics/RigidBody2D.h"
 
 #include <yaml-cpp/yaml.h>
 #include <string>
@@ -12,24 +12,6 @@ GameObject::GameObject(entt::registry &registry, std::string &&tag, unsigned int
 {
     m_entity = m_registry->create();
     addComponent<Transform>(glm::vec3(0.0f, 0.0f, 0.0f));
-}
-
-GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGameObject) : m_registry{&registry}
-{
-    m_entity = m_registry->create();
-
-    // Deserializing
-    mTag = serializedGameObject["Tag"].as<std::string>();
-    m_width = serializedGameObject["Width"].as<unsigned int>();
-    m_height = serializedGameObject["Height"].as<unsigned int>();
-
-    // Deserializing Transform Component of the Game Object
-    addComponent<Transform>(glm::vec3(0.0f, 0.0f, 0.0f));
-    getComponent<Transform>().deserialize(serializedGameObject);
-
-    // Deserialize Sprite Component of the Game Object
-    addComponent<Sprite>();
-    getComponent<Sprite>().deserialize(serializedGameObject);
 }
 
 GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGameObject, Physics2D &physics) : m_registry{&registry}
@@ -49,14 +31,12 @@ GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGam
     addComponent<Sprite>();
     getComponent<Sprite>().deserialize(serializedGameObject);
 
-    bool hasRigidBody2D = false;
-    if (serializedGameObject["HasRigidBody2D"] && serializedGameObject["HasRigidBody2D"].IsScalar())
+    // Deserialize RigidBody2D
+    if (serializedGameObject["RigidBody2D"])
     {
-        hasRigidBody2D = serializedGameObject["HasRigidBody2D"].as<bool>();
-        if (hasRigidBody2D)
-        {
-            physics.addRigidbody(*this);
-        }
+        addComponent<RigidBody2D>();
+        getComponent<RigidBody2D>().deserialize(serializedGameObject);
+        physics.addRigidbody(*this);
     }
 }
 
@@ -180,8 +160,11 @@ bool GameObject::serialize(YAML::Emitter &out)
     }
 
     // RIGIDBODY2D COMPONENT
-    out << YAML::Key << "HasRigidBody2D";
-    out << YAML::Value << hasComponent<Rigidbody2D>();
+    if (hasComponent<RigidBody2D>())
+    {
+        RigidBody2D &rb = getComponent<RigidBody2D>();
+        rb.serialize(out);
+    }
 
     out << YAML::EndMap;
 

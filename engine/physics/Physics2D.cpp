@@ -1,9 +1,11 @@
 #include "physics/Physics2D.h"
-#include "physics/RigidBox2D.h"
+#include "physics/RigidBody2D.h"
 #include "physics/BoxCollider2D.h"
 
 #include "core/Transform.h"
 #include "core/Scene.h"
+
+#include "util/Time.h"
 
 #include <vector>
 #include <box2d/box2d.h>
@@ -49,8 +51,7 @@ Physics2D &Physics2D::operator=(Physics2D &&other) noexcept
 
 void Physics2D::simulate(float timestep, const std::vector<GameObject> &gameObjects)
 {
-    float fixedDeltaTime = 0.0167f;
-    b2World_Step(m_worldId, fixedDeltaTime, 4);
+    b2World_Step(m_worldId, Time::deltaTime(), 4);
 }
 
 void Physics2D::setGravity(glm::vec2 gravity)
@@ -62,11 +63,10 @@ void Physics2D::setGravity(glm::vec2 gravity)
 void Physics2D::addRigidbody(GameObject &obj)
 {
     Transform &transform = obj.getComponent<Transform>();
-    if (!obj.hasComponent<Rigidbody2D>())
+    if (!obj.hasComponent<RigidBody2D>())
     {
-        obj.addComponent<Rigidbody2D>();
+        obj.addComponent<RigidBody2D>();
     }
-    Rigidbody2D &rb = obj.getComponent<Rigidbody2D>();
 
     b2BodyId bodyId = createBodyHelper(obj);
     attachShapeHelper(bodyId, obj);
@@ -75,7 +75,7 @@ void Physics2D::addRigidbody(GameObject &obj)
 b2BodyId Physics2D::createBodyHelper(GameObject &obj)
 {
     Transform &transform = obj.getComponent<Transform>();
-    Rigidbody2D &rb = obj.getComponent<Rigidbody2D>();
+    RigidBody2D &rb = obj.getComponent<RigidBody2D>();
 
     b2BodyDef bodyDef = b2DefaultBodyDef();
     bodyDef.type = (rb.m_type == BodyType::Static)    ? b2_staticBody
@@ -103,7 +103,7 @@ b2BodyId Physics2D::createBodyHelper(GameObject &obj)
 void Physics2D::attachShapeHelper(b2BodyId bodyId, GameObject &obj)
 {
     // TODO: think this through. Added for testing physics
-    if(!obj.hasComponent<BoxCollider2D>())
+    if (!obj.hasComponent<BoxCollider2D>())
     {
         int width = obj.getWidth();
         int height = obj.getHeight();
@@ -134,12 +134,12 @@ void Physics2D::syncTransforms(const std::vector<GameObject> &gameObjects)
 {
     for (auto &go : gameObjects)
     {
-        if (!go.hasComponent<Rigidbody2D>())
+        if (!go.hasComponent<RigidBody2D>())
         {
             continue;
         }
 
-        auto &rb = go.getComponent<Rigidbody2D>();
+        auto &rb = go.getComponent<RigidBody2D>();
         auto &transform = go.getComponent<Transform>();
 
         if (b2Body_IsValid(rb.m_runtimeBody))

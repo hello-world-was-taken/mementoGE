@@ -150,7 +150,7 @@ void PropertiesPanel::renderPropertiesPanel()
     {
         if (ImGui::Selectable("Rigidbody2D"))
         {
-            go->addComponent<Rigidbody2D>();
+            go->addComponent<RigidBody2D>();
             m_ctx.sceneManager.getActiveScene().getPhysics2d().addRigidbody(*go);
         }
 
@@ -173,9 +173,9 @@ void PropertiesPanel::renderPropertiesPanel()
 
     // If the active game object have rigid body 2d, we should be able to
     // edit whether it should be static, dynamic or kinematics
-    if (go->hasComponent<Rigidbody2D>())
+    if (go->hasComponent<RigidBody2D>())
     {
-        Rigidbody2D &rb = go->getComponent<Rigidbody2D>();
+        RigidBody2D &rb = go->getComponent<RigidBody2D>();
         if (ImGui::BeginCombo("Rigidbody 2D Type", rb.getBodyType().c_str()))
         {
             if (ImGui::Selectable("Static"))

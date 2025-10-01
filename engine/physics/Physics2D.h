@@ -2,7 +2,7 @@
 
 #include "core/Transform.h"
 
-#include "physics/RigidBox2D.h"
+#include "physics/RigidBody2D.h"
 #include "physics/BoxCollider2D.h"
 
 #include <memory>

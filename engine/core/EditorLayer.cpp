@@ -13,7 +13,7 @@
 #include "physics/CircleCollider2D.h"
 #include "physics/EdgeCollider2D.h"
 #include "physics/PolygonCollider2D.h"
-#include "physics/RigidBox2D.h"
+#include "physics/RigidBody2D.h"
 
 #include "util/PathUtils.h"
 

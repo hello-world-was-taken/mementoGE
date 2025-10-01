@@ -17,7 +17,6 @@ class GameObject
 public:
     GameObject(entt::registry &registry, std::string &&tag, unsigned int width = 0, unsigned int height = 0);
     GameObject(entt::registry &registry, const YAML::Node &serializedGameObject, Physics2D &physics);
-    GameObject(entt::registry &registry, const YAML::Node &serializedGameObject);
     GameObject(GameObject &&other);
     GameObject &operator=(GameObject &&other);
     ~GameObject();

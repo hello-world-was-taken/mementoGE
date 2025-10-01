@@ -9,7 +9,7 @@ enum class BodyType
     Kinematic
 };
 
-class Rigidbody2D
+class RigidBody2D
 {
 public:
     BodyType m_type = BodyType::Static;
@@ -35,5 +35,25 @@ public:
     {
         return (m_type == BodyType::Static) ? "Static" : (m_type == BodyType::Dynamic) ? "Dynamic"
                                                                                        : "Kinematic";
+    }
+
+    // TODO: move these to cpp file
+    void serialize(YAML::Emitter &out)
+    {
+        out << YAML::Key << "RigidBody2D";
+        out << YAML::Value << YAML::BeginMap;
+        out << YAML::Key << "BodyType" << YAML::Value << static_cast<int>(m_type);
+        out << YAML::Key << "FixedRotation" << YAML::Value << m_fixedRotation;
+        out << YAML::EndMap;
+    }
+
+    // TODO: move these to cpp file
+    void deserialize(const YAML::Node &node)
+    {
+        if (!node["RigidBody2D"])
+            return;
+        const auto &data = node["RigidBody2D"];
+        m_type = static_cast<BodyType>(data["BodyType"].as<int>());
+        m_fixedRotation = data["FixedRotation"].as<bool>();
     }
 };
