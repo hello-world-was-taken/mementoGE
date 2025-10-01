@@ -50,6 +50,7 @@ void TexturePanel::draw()
     renderTextureAssetsListPanel();
     copyTextureToAssets();
     renderSelectedTexSheetPanel(false);
+    renderAnimationPanel();
 }
 
 void TexturePanel::renderTextureAssetsListPanel()
@@ -104,33 +105,31 @@ void TexturePanel::copyTextureToAssets()
     }
 }
 
-void TexturePanel::renderSelectedTexSheetPanel(bool isInModal, std::function<void(Sprite &sprite)> onClick)
+void TexturePanel::renderAnimationPanel()
 {
+    ImGui::Begin("Animations");
+
+    // ****************************************** run *********************************************** //
     static int currentFrame = 0;
     static float currentFrameTime = 0.0f;
 
-    if (!isInModal)
-    {
-        ImGui::Begin("Sprites");
-    }
-
     // TODO: testing animation - remove
-    auto path = getFilePath("assets/texture/run.json");
+    auto path = getFilePath("assets/texture/player.json");
     std::shared_ptr<AnimationMap> animationMap = AssetManager::instance().getAnimationMap(path);
 
-    const Animation &burn = animationMap->getAnimation("burn");
+    const Animation &run = animationMap->getAnimation("run");
 
-    std::vector<glm::vec2> texCoord = burn.frames[currentFrame].sprite.getTextureCoordinates();
+    std::vector<glm::vec2> texCoord = run.frames[currentFrame].sprite.getTextureCoordinates();
 
     ImVec2 topLeft = ImVec2(texCoord[0].x, texCoord[0].y);
     ImVec2 bottomRight = ImVec2(texCoord[2].x, texCoord[2].y);
 
-    ImTextureID texIdNew = (ImTextureID)(uintptr_t)animationMap->getTexture()->getTextureId();
+    ImTextureID texIdRun = (ImTextureID)(uintptr_t)animationMap->getTexture()->getTextureId();
 
     ImGui::PushID(1000);
     if (ImGui::ImageButton(
             "",
-            texIdNew,
+            texIdRun,
             ImVec2(128, 128),
             topLeft,
             bottomRight,
@@ -141,7 +140,7 @@ void TexturePanel::renderSelectedTexSheetPanel(bool isInModal, std::function<voi
 
     ImGui::PopID();
 
-    if (currentFrameTime >= burn.frames[currentFrame].duration)
+    if (currentFrameTime >= run.frames[currentFrame].duration)
     {
         currentFrame++;
         currentFrameTime = 0.0f;
@@ -151,13 +150,71 @@ void TexturePanel::renderSelectedTexSheetPanel(bool isInModal, std::function<voi
         currentFrameTime += Time::deltaTime();
     }
 
-    if (currentFrame == burn.frames.size())
+    if (currentFrame == run.frames.size())
     {
         currentFrame = 0;
         currentFrameTime = 0.0f;
     }
 
-    if (m_ctx.selectedTextureJsonPath == "")
+    // ****************************************** jump *********************************************** //
+
+    static int currentFrameJump = 0;
+    static float currentFrameTimeJump = 0.0f;
+
+    // TODO: testing animation - remove
+    path = getFilePath("assets/texture/player.json");
+    animationMap = AssetManager::instance().getAnimationMap(path);
+
+    const Animation &jump = animationMap->getAnimation("jump");
+
+    texCoord = jump.frames[currentFrameJump].sprite.getTextureCoordinates();
+
+    topLeft = ImVec2(texCoord[0].x, texCoord[0].y);
+    bottomRight = ImVec2(texCoord[2].x, texCoord[2].y);
+
+    ImTextureID texIdJump = (ImTextureID)(uintptr_t)animationMap->getTexture()->getTextureId();
+
+    ImGui::PushID(1001);
+    if (ImGui::ImageButton(
+            "",
+            texIdJump,
+            ImVec2(128, 128),
+            topLeft,
+            bottomRight,
+            ImVec4(0.0f, 0.0f, 0.0f, 1.0f),
+            ImVec4(1.0f, 1.0f, 1.0f, 1.0f)))
+    {
+    }
+
+    ImGui::PopID();
+
+    if (currentFrameTimeJump >= jump.frames[currentFrameJump].duration)
+    {
+        currentFrameJump++;
+        currentFrameTimeJump = 0.0f;
+    }
+    else
+    {
+        currentFrameTimeJump += Time::deltaTime();
+    }
+
+    if (currentFrameJump == jump.frames.size())
+    {
+        currentFrameJump = 0;
+        currentFrameTimeJump = 0.0f;
+    }
+
+    ImGui::End();
+}
+
+void TexturePanel::renderSelectedTexSheetPanel(bool isInModal, std::function<void(Sprite &sprite)> onClick)
+{
+    if (!isInModal)
+    {
+        ImGui::Begin("Sprites");
+    }
+
+    if (m_ctx.selectedTextureJsonPath.empty())
     {
         if (!isInModal)
         {
@@ -167,6 +224,23 @@ void TexturePanel::renderSelectedTexSheetPanel(bool isInModal, std::function<voi
     }
 
     std::shared_ptr<SpriteSheet> spriteSheet = AssetManager::instance().getSpriteSheet(m_ctx.selectedTextureJsonPath);
+
+    bool changed = false;
+
+    ImGui::PushItemWidth(80);
+    changed |= ImGui::DragFloat("W", &spriteSheet->m_spriteW);
+    ImGui::SameLine();
+    changed |= ImGui::DragFloat("H", &spriteSheet->m_spriteH);
+    ImGui::SameLine();
+    changed |= ImGui::DragFloat("GapX", &spriteSheet->m_spriteGapX);
+    ImGui::SameLine();
+    changed |= ImGui::DragFloat("GapY", &spriteSheet->m_spriteGapY);
+
+    if (changed)
+    {
+        spriteSheet->updateSpriteSizes();
+    }
+
     std::shared_ptr<Texture> spriteSheetTexture = spriteSheet->getTexture();
     ImVec2 windowPos = ImGui::GetWindowPos();
     ImVec2 windowSize = ImGui::GetWindowSize();
@@ -175,8 +249,8 @@ void TexturePanel::renderSelectedTexSheetPanel(bool isInModal, std::function<voi
     int id = 0;
     for (Sprite sprite : spriteSheet->getSprites())
     {
-        float imgButtonWidth = 32;
-        float imgButtonHeight = 32;
+        float imgButtonWidth = 64;
+        float imgButtonHeight = 64;
         std::vector<glm::vec2> textureCoordinates = sprite.getTextureCoordinates();
         ImTextureID texId = (ImTextureID)(uintptr_t)spriteSheetTexture->getTextureId();
 

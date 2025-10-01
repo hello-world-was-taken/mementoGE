@@ -25,31 +25,55 @@ std::shared_ptr<SpriteSheet> SpriteSheet::fromJson(const std::filesystem::path &
     std::filesystem::path texturePath = getTexturePathFromJson(jsonPath);
     std::shared_ptr<Texture> tex = ResourceManager::instance().getTexture(texturePath, true);
     std::shared_ptr<SpriteSheet> spriteSheet = std::make_shared<SpriteSheet>(tex);
+    spriteSheet->m_jsonPath = jsonPath;
 
-    float spriteW = data["spriteWidth"];
-    float spriteH = data["spriteHeight"];
-    float spriteGapX = data["spriteGapX"];
-    float spriteGapY = data["spriteGapY"];
+    spriteSheet->m_spriteW = data["spriteWidth"];
+    spriteSheet->m_spriteH = data["spriteHeight"];
+    spriteSheet->m_spriteGapX = data["spriteGapX"];
+    spriteSheet->m_spriteGapY = data["spriteGapY"];
 
-    int columns = data["columns"];
-    int spriteCount = data["spriteCount"];
+    spriteSheet->m_columns = data["columns"];
+    spriteSheet->m_spriteCount = data["spriteCount"];
 
-    for (int i = 0; i < spriteCount; i++)
+    for (int i = 0; i < spriteSheet->m_spriteCount; i++)
     {
 
-        int col = i % columns;
-        int row = i / columns;
+        int col = i % spriteSheet->m_columns;
+        int row = i / spriteSheet->m_columns;
 
         Sprite s{};
-        float x = col * (spriteW + spriteGapX);
-        float y = row * (spriteH + spriteGapY);
-        float w = spriteW;
-        float h = spriteH;
+        float x = col * (spriteSheet->m_spriteW + spriteSheet->m_spriteGapX);
+        float y = row * (spriteSheet->m_spriteH + spriteSheet->m_spriteGapY);
 
-        spriteSheet->addSprite(Sprite(texturePath, glm::vec2{x, y}, w, h));
+        spriteSheet->addSprite(Sprite(
+            texturePath,
+            glm::vec2{x, y},
+            spriteSheet->m_spriteW,
+            spriteSheet->m_spriteH));
     }
 
     return spriteSheet;
+}
+
+void SpriteSheet::updateSpriteSizes()
+{
+    m_sprites.clear();
+
+    for (int i = 0; i < m_spriteCount; i++)
+    {
+
+        int col = i % m_columns;
+        int row = i / m_columns;
+
+        Sprite s{};
+        float x = col * (m_spriteW + m_spriteGapX);
+        float y = row * (m_spriteH + m_spriteGapY);
+        float w = m_spriteW;
+        float h = m_spriteH;
+
+        // TODO: emplace_back?
+        m_sprites.push_back(Sprite(m_texture->getFilePath(), glm::vec2{x, y}, w, h));
+    }
 }
 
 SpriteSheet::~SpriteSheet()
@@ -58,6 +82,7 @@ SpriteSheet::~SpriteSheet()
 
 void SpriteSheet::addSprite(Sprite &&sprite)
 {
+    // TODO: emplace_back?
     m_sprites.push_back(sprite);
 }
 

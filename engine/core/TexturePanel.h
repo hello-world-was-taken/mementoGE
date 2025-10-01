@@ -20,5 +20,6 @@ private:
 
 private:
     void renderTextureAssetsListPanel();
+    void renderAnimationPanel();
     void copyTextureToAssets();
 };
