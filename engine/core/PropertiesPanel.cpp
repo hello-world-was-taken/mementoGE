@@ -18,29 +18,6 @@
 
 namespace fs = std::filesystem;
 
-// TODO: move this to a dedicated utilities file
-// for now keep insync with TexturePanel.getTextureFiles
-// remove fstream / filesystem if they are not needed after removal
-inline std::vector<std::string> getTextureFiles(const std::string &folderPath)
-{
-    std::vector<std::string> textures;
-    for (const auto &file : fs::directory_iterator(folderPath))
-    {
-        if (file.is_regular_file())
-        {
-            std::string ext = file.path().extension().string();
-            // TODO: on-click for the list, return the texture within the json
-            if (ext == ".json")
-            {
-                textures.push_back(file.path().string());
-            }
-        }
-    }
-
-    // TODO: returning a copy everytime it gets called
-    return textures;
-}
-
 PropertiesPanel::PropertiesPanel(EditorContext &ctx, TexturePanel &texturePanel)
     : EditorPanel{ctx},
       m_ctx{ctx},

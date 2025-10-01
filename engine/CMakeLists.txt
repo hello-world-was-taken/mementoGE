@@ -35,6 +35,7 @@ add_library(${PROJECT_NAME} STATIC
     core/ResourceManager.cpp
     core/AnimationMap.cpp
     core/AssetManager.cpp
+    core/AnimationPlayer.cpp
 
     # renderer
     renderer/RenderBatch.cpp

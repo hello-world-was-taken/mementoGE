@@ -10,7 +10,7 @@
 #include <nlohmann/json.h>
 
 AnimationMap::AnimationMap(std::shared_ptr<Texture> texture)
-    : texture(texture) {}
+    : m_texture(texture) {}
 
 std::shared_ptr<AnimationMap> AnimationMap::fromJson(const std::filesystem::path &jsonPath)
 {
@@ -66,13 +66,13 @@ std::shared_ptr<AnimationMap> AnimationMap::fromJson(const std::filesystem::path
 
 void AnimationMap::addAnimation(const Animation &anim)
 {
-    animations[anim.name] = anim;
+    m_animations[anim.name] = anim;
 }
 
 const Animation &AnimationMap::getAnimation(const std::string &name) const
 {
-    auto it = animations.find(name);
-    if (it != animations.end())
+    auto it = m_animations.find(name);
+    if (it != m_animations.end())
     {
         return it->second;
     }
@@ -80,4 +80,12 @@ const Animation &AnimationMap::getAnimation(const std::string &name) const
     throw std::runtime_error("Animation not found");
 }
 
-std::shared_ptr<Texture> AnimationMap::getTexture() const { return texture; }
+std::map<std::string, Animation> &AnimationMap::getAnimations()
+{
+    return m_animations;
+}
+
+std::shared_ptr<Texture> AnimationMap::getTexture() const
+{
+    return m_texture;
+}
