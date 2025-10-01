@@ -34,6 +34,7 @@ add_library(${PROJECT_NAME} STATIC
     core/TexturePanel.cpp
     core/ResourceManager.cpp
     core/AnimationMap.cpp
+    core/AssetManager.cpp
 
     # renderer
     renderer/RenderBatch.cpp

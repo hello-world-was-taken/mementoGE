@@ -1,3 +1,4 @@
+#pragma once
 #include "opengl/Texture.h"
 #include "core/Sprite.h"
 
@@ -14,7 +15,7 @@ public:
     SpriteSheet(std::shared_ptr<Texture> texture);
     ~SpriteSheet();
 
-    static SpriteSheet fromJson(const std::filesystem::path &jsonPath);
+    static std::shared_ptr<SpriteSheet> fromJson(const std::filesystem::path &jsonPath);
 
     void addSprite(Sprite &&sprite);
     std::vector<Sprite> getSprites();

@@ -2,6 +2,7 @@
 #include "core/SpriteSheet.h"
 #include "core/SpritePayload.h"
 #include "core/AnimationMap.h"
+#include "core/AssetManager.h"
 #include "core/Sprite.h"
 
 #include "util/GetExecutableDir.h"
@@ -114,7 +115,7 @@ void TexturePanel::renderSelectedTexSheetPanel(bool isInModal)
 
     // TODO: testing animation - remove
     auto path = getFilePath("assets/texture/run.json");
-    auto animationMap = AnimationMap::fromJson(path);
+    std::shared_ptr<AnimationMap> animationMap = AssetManager::instance().getAnimationMap(path);
 
     const Animation &burn = animationMap->getAnimation("burn");
 
@@ -164,16 +165,14 @@ void TexturePanel::renderSelectedTexSheetPanel(bool isInModal)
         return;
     }
 
-    // TODO: we shouldn't be re-creating sprite sheet for an atlas, if we have already created it
-    // somewhere else
-    SpriteSheet spriteSheet = SpriteSheet::fromJson(m_ctx.selectedTextureJsonPath);
-    std::shared_ptr<Texture> spriteSheetTexture = spriteSheet.getTexture();
+    std::shared_ptr<SpriteSheet> spriteSheet = AssetManager::instance().getSpriteSheet(m_ctx.selectedTextureJsonPath);
+    std::shared_ptr<Texture> spriteSheetTexture = spriteSheet->getTexture();
     ImVec2 windowPos = ImGui::GetWindowPos();
     ImVec2 windowSize = ImGui::GetWindowSize();
 
     float windowX2 = windowPos.x + windowSize.x;
     int id = 0;
-    for (Sprite sprite : spriteSheet.getSprites())
+    for (Sprite sprite : spriteSheet->getSprites())
     {
         float imgButtonWidth = 32;
         float imgButtonHeight = 32;
@@ -210,7 +209,7 @@ void TexturePanel::renderSelectedTexSheetPanel(bool isInModal)
         ImVec2 lastSpritePosition = ImGui::GetItemRectMax();
         float lastSpriteX2 = lastSpritePosition.x;
         float nextButtonX2 = lastSpriteX2 + imgButtonWidth;
-        if (id + 1 < spriteSheet.getSprites().size() && nextButtonX2 < windowX2)
+        if (id + 1 < spriteSheet->getSprites().size() && nextButtonX2 < windowX2)
         {
             ImGui::SameLine();
         }

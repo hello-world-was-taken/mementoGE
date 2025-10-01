@@ -3,6 +3,7 @@
 #include "core/EditorContext.h"
 #include "core/SpritePayload.h"
 #include "core/SpriteSheet.h"
+#include "core/AssetManager.h"
 #include "core/Sprite.h"
 
 #include "util/GetExecutableDir.h"
@@ -10,6 +11,7 @@
 #include <imgui.h>
 #include <nlohmann/json.h>
 #include <fstream>
+#include <memory>
 
 ScenePanel::ScenePanel(EditorContext &ctx) : EditorPanel(ctx), m_ctx{ctx}
 {
@@ -102,20 +104,19 @@ void ScenePanel::renderSceneViewport()
 
             // Convert current mouse to world position
             std::shared_ptr<Camera> cam = m_ctx.sceneManager.getActiveScene().getCamera();
-            // TODO: we shouldn't be re-creating sprite sheet for an atlas, if we have already created it
-            // somewhere else
+            
             std::ifstream file(m_ctx.selectedTextureJsonPath);
             nlohmann::json data;
             file >> data;
 
             std::filesystem::path texturePath = getFilePath("assets/texture") / data["texture"];
-            SpriteSheet spriteSheet = SpriteSheet::fromJson(m_ctx.selectedTextureJsonPath);
+            std::shared_ptr<SpriteSheet> spriteSheet = AssetManager::instance().getSpriteSheet(m_ctx.selectedTextureJsonPath);
             glm::vec2 worldPos = m_ctx.mouseActionController.getWorldCoordinate(
                 cam, m_upperLeft, m_previewAreaSize,
                 fbWidth, fbHeight);
 
             // Create object here
-            Sprite sprite = spriteSheet.getSprites()[spriteIndex];
+            Sprite sprite = spriteSheet->getSprites()[spriteIndex];
             m_ctx.sceneManager.getActiveScene().addGameObject(32, 32, "_new");
             auto newObj = m_ctx.sceneManager.getActiveScene().getActiveGameObject();
             newObj->addComponent<Sprite>(texturePath, sprite.getTextureCoordinates());

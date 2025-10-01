@@ -2,6 +2,7 @@
 #include "core/EditorPanel.h"
 #include "core/EditorContext.h"
 #include "core/SpriteSheet.h"
+#include "core/AssetManager.h"
 #include "core/Sprite.h"
 
 #include "physics/CircleCollider2D.h"
@@ -198,10 +199,8 @@ void PropertiesPanel::renderSelectedTexSheetPanel(bool isInModal)
         ImGui::Begin("Sprites");
     }
 
-    // TODO: we shouldn't be re-creating sprite sheet for an atlas, if we have already created it
-    // somewhere else
-    SpriteSheet spriteSheet = SpriteSheet::fromJson(m_ctx.selectedTextureJsonPath);
-    std::shared_ptr<Texture> spriteSheetTexture = spriteSheet.getTexture();
+    std::shared_ptr<SpriteSheet> spriteSheet = AssetManager::instance().getSpriteSheet(m_ctx.selectedTextureJsonPath);
+    std::shared_ptr<Texture> spriteSheetTexture = spriteSheet->getTexture();
     ImVec2 windowPos = ImGui::GetWindowPos();
     ImVec2 windowSize = ImGui::GetWindowSize();
 
@@ -210,7 +209,7 @@ void PropertiesPanel::renderSelectedTexSheetPanel(bool isInModal)
 
     ImGui::Text("Pick a Sprite:");
 
-    for (Sprite sprite : spriteSheet.getSprites())
+    for (Sprite sprite : spriteSheet->getSprites())
     {
         float imgButtonWidth = 32;
         float imgButtonHeight = 32;
@@ -248,7 +247,7 @@ void PropertiesPanel::renderSelectedTexSheetPanel(bool isInModal)
         ImVec2 lastSpritePosition = ImGui::GetItemRectMax();
         float lastSpriteX2 = lastSpritePosition.x;
         float nextButtonX2 = lastSpriteX2 + imgButtonWidth;
-        if (id + 1 < spriteSheet.getSprites().size() && nextButtonX2 < windowX2)
+        if (id + 1 < spriteSheet->getSprites().size() && nextButtonX2 < windowX2)
         {
             ImGui::SameLine();
         }

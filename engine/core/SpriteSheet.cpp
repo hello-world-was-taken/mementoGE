@@ -6,6 +6,7 @@
 
 #include "util/GetExecutableDir.h"
 
+#include <memory>
 #include <string>
 #include <filesystem>
 #include <fstream>
@@ -15,7 +16,7 @@ SpriteSheet::SpriteSheet(std::shared_ptr<Texture> texture) : m_texture{texture}
 {
 }
 
-SpriteSheet SpriteSheet::fromJson(const std::filesystem::path &jsonPath)
+std::shared_ptr<SpriteSheet> SpriteSheet::fromJson(const std::filesystem::path &jsonPath)
 {
     std::ifstream file(jsonPath);
     nlohmann::json data;
@@ -23,7 +24,7 @@ SpriteSheet SpriteSheet::fromJson(const std::filesystem::path &jsonPath)
 
     std::filesystem::path texturePath = getFilePath("assets/texture") / data["texture"];
     std::shared_ptr<Texture> tex = ResourceManager::instance().getTexture(texturePath, true);
-    SpriteSheet spriteSheet = SpriteSheet(tex);
+    std::shared_ptr<SpriteSheet> spriteSheet = std::make_shared<SpriteSheet>(tex);
 
     float spriteW = data["spriteWidth"];
     float spriteH = data["spriteHeight"];
@@ -45,7 +46,7 @@ SpriteSheet SpriteSheet::fromJson(const std::filesystem::path &jsonPath)
         float w = spriteW;
         float h = spriteH;
 
-        spriteSheet.addSprite(Sprite(texturePath, glm::vec2{x, y}, w, h));
+        spriteSheet->addSprite(Sprite(texturePath, glm::vec2{x, y}, w, h));
     }
 
     return spriteSheet;
