@@ -9,7 +9,7 @@
 #include "renderer/RenderBatch.h"
 
 #include "util/log_error.h"
-#include "util/GetExecutableDir.h"
+#include "util/PathUtils.h"
 
 #include <iostream>
 #include <memory>

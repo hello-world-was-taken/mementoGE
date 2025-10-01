@@ -47,8 +47,8 @@ private:
 private:
     EditorContext m_ctx;
     ScenePanel m_scenePanel;
-    PropertiesPanel m_propertiesPanel;
     TexturePanel m_texturePanel;
+    PropertiesPanel m_propertiesPanel;
 
     MovementMode m_movementMode = MovementMode::Free;
     bool m_drawGrid = false;

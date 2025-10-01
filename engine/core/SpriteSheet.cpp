@@ -4,7 +4,7 @@
 
 #include "opengl/Texture.h"
 
-#include "util/GetExecutableDir.h"
+#include "util/PathUtils.h"
 
 #include <memory>
 #include <string>
@@ -22,7 +22,7 @@ std::shared_ptr<SpriteSheet> SpriteSheet::fromJson(const std::filesystem::path &
     nlohmann::json data;
     file >> data;
 
-    std::filesystem::path texturePath = getFilePath("assets/texture") / data["texture"];
+    std::filesystem::path texturePath = getTexturePathFromJson(jsonPath);
     std::shared_ptr<Texture> tex = ResourceManager::instance().getTexture(texturePath, true);
     std::shared_ptr<SpriteSheet> spriteSheet = std::make_shared<SpriteSheet>(tex);
 

@@ -6,7 +6,7 @@
 #include "core/AssetManager.h"
 #include "core/Sprite.h"
 
-#include "util/GetExecutableDir.h"
+#include "util/PathUtils.h"
 
 #include <imgui.h>
 #include <nlohmann/json.h>
@@ -104,12 +104,8 @@ void ScenePanel::renderSceneViewport()
 
             // Convert current mouse to world position
             std::shared_ptr<Camera> cam = m_ctx.sceneManager.getActiveScene().getCamera();
-            
-            std::ifstream file(m_ctx.selectedTextureJsonPath);
-            nlohmann::json data;
-            file >> data;
 
-            std::filesystem::path texturePath = getFilePath("assets/texture") / data["texture"];
+            std::filesystem::path texturePath = getTexturePathFromJson(m_ctx.selectedTextureJsonPath);
             std::shared_ptr<SpriteSheet> spriteSheet = AssetManager::instance().getSpriteSheet(m_ctx.selectedTextureJsonPath);
             glm::vec2 worldPos = m_ctx.mouseActionController.getWorldCoordinate(
                 cam, m_upperLeft, m_previewAreaSize,

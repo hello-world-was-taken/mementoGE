@@ -8,7 +8,7 @@
 #include "core/GameObject.h"
 #include "core/Camera.h"
 
-#include "util/GetExecutableDir.h"
+#include "util/PathUtils.h"
 
 SceneManager::SceneManager(Window *window)
     : m_window{window}

@@ -1,7 +1,10 @@
 #pragma once
 
 #include <filesystem>
+#include <fstream>
 #include <string>
+#include <nlohmann/json.h>
+
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -47,4 +50,13 @@ inline std::filesystem::path getFilePath(const std::string &relative)
 {
     auto base = getExecutableDir();
     return base / relative;
+}
+
+inline std::filesystem::path getTexturePathFromJson(const std::string &jsonTexturePath)
+{
+    std::ifstream file(jsonTexturePath);
+    nlohmann::json data;
+    file >> data;
+
+    return getFilePath("assets/texture") / data["texture"];
 }

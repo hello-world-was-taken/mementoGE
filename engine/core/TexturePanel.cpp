@@ -5,9 +5,10 @@
 #include "core/AssetManager.h"
 #include "core/Sprite.h"
 
-#include "util/GetExecutableDir.h"
+#include "util/PathUtils.h"
 #include "util/Time.h"
 
+#include <functional>
 #include <ImGuiFileDialog/ImGuiFileDialog.h>
 #include <filesystem>
 #include <fstream>
@@ -103,7 +104,7 @@ void TexturePanel::copyTextureToAssets()
     }
 }
 
-void TexturePanel::renderSelectedTexSheetPanel(bool isInModal)
+void TexturePanel::renderSelectedTexSheetPanel(bool isInModal, std::function<void(Sprite &sprite)> onClick)
 {
     static int currentFrame = 0;
     static float currentFrameTime = 0.0f;
@@ -136,8 +137,8 @@ void TexturePanel::renderSelectedTexSheetPanel(bool isInModal)
             ImVec4(0.0f, 0.0f, 0.0f, 1.0f),
             ImVec4(1.0f, 1.0f, 1.0f, 1.0f)))
     {
-        // No action here. Drag-n-drop using imgui
     }
+
     ImGui::PopID();
 
     if (currentFrameTime >= burn.frames[currentFrame].duration)
@@ -192,9 +193,13 @@ void TexturePanel::renderSelectedTexSheetPanel(bool isInModal)
                 ImVec4(0.0f, 0.0f, 0.0f, 1.0f),
                 ImVec4(1.0f, 1.0f, 1.0f, 1.0f)))
         {
-            // No action here. Drag-n-drop using imgui
+            if (onClick != nullptr)
+            {
+                onClick(sprite);
+            }
         }
 
+        // TODO: drag and drop should only be enabled when not in modal form
         if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
         {
             SpritePayload payload{id};

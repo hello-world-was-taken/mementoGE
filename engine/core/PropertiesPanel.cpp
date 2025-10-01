@@ -1,5 +1,6 @@
 #include "core/PropertiesPanel.h"
 #include "core/EditorPanel.h"
+#include "core/TexturePanel.h"
 #include "core/EditorContext.h"
 #include "core/SpriteSheet.h"
 #include "core/AssetManager.h"
@@ -7,7 +8,7 @@
 
 #include "physics/CircleCollider2D.h"
 
-#include "util/GetExecutableDir.h"
+#include "util/PathUtils.h"
 
 #include <ImGuiFileDialog/ImGuiFileDialog.h>
 #include <filesystem>
@@ -40,7 +41,10 @@ inline std::vector<std::string> getTextureFiles(const std::string &folderPath)
     return textures;
 }
 
-PropertiesPanel::PropertiesPanel(EditorContext &ctx) : EditorPanel{ctx}, m_ctx{ctx}
+PropertiesPanel::PropertiesPanel(EditorContext &ctx, TexturePanel &texturePanel)
+    : EditorPanel{ctx},
+      m_ctx{ctx},
+      m_texturePanel{texturePanel}
 {
 }
 
@@ -111,16 +115,53 @@ void PropertiesPanel::renderPropertiesPanel()
 
         // Open sprite picker modal
         if (ImGui::Button("Change Sprite"))
-            ImGui::OpenPopup("Select Sprite");
+        {
+            if (m_ctx.selectedTextureJsonPath.empty())
+            {
+                ImGui::OpenPopup("MissingTexturePopup");
+            }
+            else
+            {
+                ImGui::OpenPopup("Select Sprite");
+            }
+        }
 
         std::string texPath = sprite.getTexturePath();
         ImGui::Text("Current Sprite:");
         ImGui::TextWrapped("%s", texPath.c_str());
     }
 
+    if (ImGui::BeginPopupModal("MissingTexturePopup", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::Text("Please select a texture first!");
+        ImGui::Separator();
+
+        if (ImGui::Button("OK", ImVec2(120, 0)))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
+
     if (ImGui::BeginPopupModal("Select Sprite", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
-        renderSelectedTexSheetPanel(true);
+        m_texturePanel.renderSelectedTexSheetPanel(
+            true,
+            [&](Sprite &sprite)
+            {
+            if (m_ctx.sceneManager.getActiveScene().getActiveGameObject())
+            {
+                GameObject *go = m_ctx.sceneManager.getActiveScene().getActiveGameObject();
+                // first remove Sprite if it exists
+                if (go->hasComponent<Sprite>())
+                    go->removeComponent<Sprite>();
+
+                m_ctx.sceneManager.getActiveScene().getActiveGameObject()->addComponent<Sprite>(
+                    getTexturePathFromJson(m_ctx.selectedTextureJsonPath),
+                    sprite.getTextureCoordinates());
+                // ImGui::CloseCurrentPopup(); // Close modal
+            } });
 
         if (ImGui::Button("Cancel"))
             ImGui::CloseCurrentPopup();
@@ -185,77 +226,4 @@ void PropertiesPanel::renderPropertiesPanel()
     }
 
     ImGui::End();
-}
-
-// TODO: properties panel should have its own way to
-// select sprite files and render lists to enable the
-// user to select them. For the moment lets keep this
-// function insync with TexturePanel.renderSelectedTexSheetPanel(bool isInModal)
-// @deprecated should only be used in a modal form
-void PropertiesPanel::renderSelectedTexSheetPanel(bool isInModal)
-{
-    if (!isInModal)
-    {
-        ImGui::Begin("Sprites");
-    }
-
-    std::shared_ptr<SpriteSheet> spriteSheet = AssetManager::instance().getSpriteSheet(m_ctx.selectedTextureJsonPath);
-    std::shared_ptr<Texture> spriteSheetTexture = spriteSheet->getTexture();
-    ImVec2 windowPos = ImGui::GetWindowPos();
-    ImVec2 windowSize = ImGui::GetWindowSize();
-
-    float windowX2 = windowPos.x + windowSize.x;
-    int id = 0;
-
-    ImGui::Text("Pick a Sprite:");
-
-    for (Sprite sprite : spriteSheet->getSprites())
-    {
-        float imgButtonWidth = 32;
-        float imgButtonHeight = 32;
-        std::vector<glm::vec2> textureCoordinates = sprite.getTextureCoordinates();
-        ImTextureID texId = (ImTextureID)(uintptr_t)spriteSheetTexture->getTextureId();
-
-        // TODO: Add sprite IDs and use those to identify which sprite was clicked
-        ImGui::PushID(id);
-        if (ImGui::ImageButton(
-                "",
-                texId,
-                ImVec2(imgButtonWidth, imgButtonHeight),
-                ImVec2(textureCoordinates[0].x,
-                       textureCoordinates[0].y), // uv0 = top-left
-                ImVec2(textureCoordinates[2].x,
-                       textureCoordinates[2].y), // uv1 = bottom-right
-                ImVec4(0.0f, 0.0f, 0.0f, 1.0f),
-                ImVec4(1.0f, 1.0f, 1.0f, 1.0f)))
-        {
-            if (m_ctx.sceneManager.getActiveScene().getActiveGameObject())
-            {
-                GameObject *go = m_ctx.sceneManager.getActiveScene().getActiveGameObject();
-                // first remove Sprite if it exists
-                if (go->hasComponent<Sprite>())
-                    go->removeComponent<Sprite>();
-
-                m_ctx.sceneManager.getActiveScene().getActiveGameObject()->addComponent<Sprite>(
-                    m_ctx.selectedTextureJsonPath,
-                    sprite.getTextureCoordinates());
-                // ImGui::CloseCurrentPopup(); // Close modal
-            }
-        }
-        ImGui::PopID();
-
-        ImVec2 lastSpritePosition = ImGui::GetItemRectMax();
-        float lastSpriteX2 = lastSpritePosition.x;
-        float nextButtonX2 = lastSpriteX2 + imgButtonWidth;
-        if (id + 1 < spriteSheet->getSprites().size() && nextButtonX2 < windowX2)
-        {
-            ImGui::SameLine();
-        }
-        id++;
-    }
-
-    if (!isInModal)
-    {
-        ImGui::End();
-    }
 }

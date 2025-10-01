@@ -3,7 +3,7 @@
 
 #include "opengl/Texture.h"
 
-#include "util/GetExecutableDir.h"
+#include "util/PathUtils.h"
 
 #include <memory>
 #include <fstream>
@@ -18,7 +18,7 @@ std::shared_ptr<AnimationMap> AnimationMap::fromJson(const std::filesystem::path
     nlohmann::json data;
     file >> data;
 
-    std::filesystem::path texturePath = getFilePath("assets/texture") / data["texture"];
+    std::filesystem::path texturePath = getTexturePathFromJson(jsonPath);
     auto tex = ResourceManager::instance().getTexture(texturePath, true);
     auto set = std::make_shared<AnimationMap>(tex);
 

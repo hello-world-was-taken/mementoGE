@@ -3,7 +3,7 @@
 #include "opengl/Vertex.h"
 
 #include "util/log_error.h"
-#include "util/GetExecutableDir.h"
+#include "util/PathUtils.h"
 
 #include <glm/glm.hpp>
 #include <filesystem>

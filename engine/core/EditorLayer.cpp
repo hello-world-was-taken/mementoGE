@@ -15,7 +15,7 @@
 #include "physics/PolygonCollider2D.h"
 #include "physics/RigidBox2D.h"
 
-#include "util/GetExecutableDir.h"
+#include "util/PathUtils.h"
 
 #include <filesystem>
 #include <fstream>
@@ -28,8 +28,8 @@ namespace fs = std::filesystem;
 EditorLayer::EditorLayer(Window &window)
     : m_ctx{window},
       m_scenePanel{m_ctx},
-      m_propertiesPanel{m_ctx},
       m_texturePanel{m_ctx},
+      m_propertiesPanel{m_ctx, m_texturePanel},
       m_gridRenderer{static_cast<int>(m_screen_width),
                      static_cast<int>(m_screen_height), 32, m_ctx.editorCamera}
 {
