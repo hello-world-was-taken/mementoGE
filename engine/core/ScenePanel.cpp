@@ -23,7 +23,15 @@ ScenePanel::~ScenePanel()
 
 void ScenePanel::draw()
 {
-    m_ctx.mouseActionController.Update(m_ctx.sceneManager, m_upperLeft, m_previewAreaSize, m_ctx.viewportWidth, m_ctx.viewportHeight, m_ctx.window.getGlfwWindow(), m_ctx.sceneImageHovered);
+    m_ctx.mouseActionController
+        .Update(
+            m_ctx.sceneManager,
+            m_upperLeft,
+            m_previewAreaSize,
+            m_ctx.viewportWidth,
+            m_ctx.viewportHeight,
+            m_ctx.window.getGlfwWindow(),
+            m_ctx.sceneImageHovered);
     renderSceneViewport();
 }
 
@@ -69,31 +77,14 @@ void ScenePanel::renderSceneViewport()
         ImGui::EndMenuBar();
     }
 
-    int fbWidth, fbHeight;
-    glfwGetFramebufferSize(m_ctx.window.getGlfwWindow(), &fbWidth, &fbHeight);
-    float aspectRatio = static_cast<float>(m_ctx.viewportWidth) / m_ctx.viewportHeight;
-
     // Inside ImGui window
     ImVec2 imGuiWindowSize = ImGui::GetContentRegionAvail();
-    float imGuiAspectRatio = imGuiWindowSize.x / imGuiWindowSize.y;
 
-    ImVec2 imgSize;
-    if (imGuiAspectRatio > aspectRatio)
-    {
-        // ImGui Window is wider than viewport -> pad width
-        imgSize.y = imGuiWindowSize.y;
-        imgSize.x = imgSize.y * aspectRatio;
-    }
-    else
-    {
-        // ImGui Window is taller than viewport -> pad height
-        imgSize.x = imGuiWindowSize.x;
-        imgSize.y = imgSize.x / aspectRatio;
-    }
-
+    m_ctx.sceneManager.getActiveScene().getCamera()->updateProjection(
+        imGuiWindowSize.x, imGuiWindowSize.y);
     // Render framebuffer texture (off-screen rendered texture)
     unsigned int framebufferTexture = m_ctx.frameBuffer.getColorTexture();
-    ImGui::Image(framebufferTexture, imgSize, ImVec2{0, 1}, ImVec2{1, 0});
+    ImGui::Image(framebufferTexture, imGuiWindowSize, ImVec2{0, 1}, ImVec2{1, 0});
 
     if (ImGui::BeginDragDropTarget())
     {
@@ -107,13 +98,18 @@ void ScenePanel::renderSceneViewport()
 
             std::filesystem::path texturePath = getTexturePathFromJson(m_ctx.selectedTextureJsonPath);
             std::shared_ptr<SpriteSheet> spriteSheet = AssetManager::instance().getSpriteSheet(m_ctx.selectedTextureJsonPath);
+
+            int fbWidth, fbHeight;
+            glfwGetFramebufferSize(m_ctx.window.getGlfwWindow(), &fbWidth, &fbHeight);
+
             glm::vec2 worldPos = m_ctx.mouseActionController.getWorldCoordinate(
                 cam, m_upperLeft, m_previewAreaSize,
                 fbWidth, fbHeight);
 
             // Create object here
             Sprite sprite = spriteSheet->getSprites()[spriteIndex];
-            m_ctx.sceneManager.getActiveScene().addGameObject(32, 32, "_new");
+            const float aspectRatio = sprite.getWidth() / sprite.getHeight();
+            m_ctx.sceneManager.getActiveScene().addGameObject(32 * aspectRatio, 32, "_new");
             auto newObj = m_ctx.sceneManager.getActiveScene().getActiveGameObject();
             newObj->addComponent<Sprite>(texturePath, sprite.getTextureCoordinates());
             newObj->getComponent<Transform>().setPosition(worldPos.x, worldPos.y, 0.0f);

@@ -8,13 +8,15 @@ Sprite::Sprite(
     glm::vec2 topLeft,
     float width,
     float height)
+    : m_width{width},
+      m_height{height}
 {
     m_texture = ResourceManager::instance().getTexture(texturePath, false);
 
     if (m_texture->isTextureAtlas())
     {
         glm::vec2 topLeftLocal = {topLeft.x / float(m_texture->getWidth()),
-                             topLeft.y / float(m_texture->getHeight())};
+                                  topLeft.y / float(m_texture->getHeight())};
 
         glm::vec2 bottomLeft = {topLeft.x / float(m_texture->getWidth()),
                                 (topLeft.y + height) / float(m_texture->getHeight())};
@@ -103,6 +105,15 @@ bool Sprite::isFlippedY() const
 {
     return m_flipY;
 }
+
+float Sprite::getWidth() const
+{
+    return m_width;
+};
+float Sprite::getHeight() const
+{
+    return m_height;
+};
 
 void Sprite::serialize(YAML::Emitter &out)
 {

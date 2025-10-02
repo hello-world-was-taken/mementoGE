@@ -16,7 +16,7 @@ public:
      * @param width The width of the framebuffer.
      * @param height The height of the framebuffer.
      */
-    FrameBuffer(int width, int height);
+    FrameBuffer(float width, float height);
     ~FrameBuffer();
 
     void bind() const;
@@ -35,5 +35,5 @@ private:
     unsigned int m_fbo;                // Framebuffer object
     unsigned int m_textureColorBuffer; // Color texture attached to the framebuffer
     unsigned int m_rbo;                // Renderbuffer for depth/stencil
-    int m_width, m_height;             // Dimensions of the framebuffer
+    float m_width, m_height;             // Dimensions of the framebuffer
 };

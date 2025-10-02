@@ -65,7 +65,7 @@ private:
 
     bool m_play;
 
-    Physics2D m_physicsWorld{{0.0f, 9.8f}};
+    Physics2D m_physicsWorld{{0.0f, -9.8f}};
     SpriteRenderer m_spriteRenderer{};
 
     entt::registry m_registry;

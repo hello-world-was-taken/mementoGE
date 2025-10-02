@@ -59,6 +59,7 @@ void Camera::updateProjection(float fbWidth, float fbHeight)
 
 void Camera::onWindowResize(int framebufferWidth, int framebufferHeight)
 {
+    // TODO: is this needed when using a custom frame buffer
     updateProjection(static_cast<float>(framebufferWidth), static_cast<float>(framebufferHeight));
 }
 

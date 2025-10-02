@@ -3,7 +3,7 @@
 
 #include "FrameBuffer.h"
 
-FrameBuffer::FrameBuffer(int width, int height)
+FrameBuffer::FrameBuffer(float width, float height)
 : m_width{width}, m_height{height}
 {
     // Generate the framebuffer

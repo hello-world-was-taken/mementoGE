@@ -16,8 +16,8 @@ struct EditorContext
     Window &window;
     SceneManager sceneManager{&window};
 
-    int viewportWidth = 1280;
-    int viewportHeight = 720;
+    float viewportWidth = 1280.0f;
+    float viewportHeight = 720.0f;
 
     bool drawGrid = false;
     std::string selectedTextureJsonPath;

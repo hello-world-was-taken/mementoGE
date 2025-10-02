@@ -35,6 +35,9 @@ public:
     bool isFlippedX() const;
     bool isFlippedY() const;
 
+    float getWidth() const;
+    float getHeight() const;
+
     void serialize(YAML::Emitter &out);
     void deserialize(const YAML::Node &in);
 
@@ -51,6 +54,9 @@ private:
 
     bool m_flipX = false;
     bool m_flipY = false;
+
+    float m_width;
+    float m_height;
 
     // TODO: a sprite could just be a color as well
 };
