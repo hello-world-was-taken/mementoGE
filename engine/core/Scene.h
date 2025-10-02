@@ -43,6 +43,8 @@ public:
     void play();
     void pause();
 
+    void animate();
+
     void addGameObject(unsigned int width, unsigned int height, std::string &&tag);
     void setActiveGameObject(entt::entity entityId);
 

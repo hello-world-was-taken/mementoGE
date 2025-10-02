@@ -20,7 +20,8 @@ std::shared_ptr<AnimationMap> AnimationMap::fromJson(const std::filesystem::path
 
     std::filesystem::path texturePath = getTexturePathFromJson(jsonPath);
     auto tex = ResourceManager::instance().getTexture(texturePath, true);
-    auto set = std::make_shared<AnimationMap>(tex);
+    auto animMap = std::make_shared<AnimationMap>(tex);
+    animMap->setJsonPath(jsonPath);
 
     float spriteW = data["spriteWidth"];
     float spriteH = data["spriteHeight"];
@@ -58,10 +59,10 @@ std::shared_ptr<AnimationMap> AnimationMap::fromJson(const std::filesystem::path
             anim.frames.push_back(f);
         }
 
-        set->addAnimation(anim);
+        animMap->addAnimation(anim);
     }
 
-    return set;
+    return animMap;
 }
 
 void AnimationMap::addAnimation(const Animation &anim)
@@ -83,6 +84,16 @@ const Animation &AnimationMap::getAnimation(const std::string &name) const
 std::map<std::string, Animation> &AnimationMap::getAnimations()
 {
     return m_animations;
+}
+
+void AnimationMap::setJsonPath(const std::filesystem::path &jsonPath)
+{
+    m_jsonPath = jsonPath;
+}
+
+std::filesystem::path AnimationMap::getJsonPath()
+{
+    return m_jsonPath;
 }
 
 std::shared_ptr<Texture> AnimationMap::getTexture() const

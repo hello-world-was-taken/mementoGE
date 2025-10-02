@@ -5,6 +5,7 @@
 #include "core/SpriteSheet.h"
 #include "core/AssetManager.h"
 #include "core/Sprite.h"
+#include "core/Animator.h"
 
 #include "physics/CircleCollider2D.h"
 
@@ -168,6 +169,20 @@ void PropertiesPanel::renderPropertiesPanel()
             m_ctx.sceneManager.getActiveScene().getPhysics2d().addRigidbody(*go);
         }
 
+        if (ImGui::Selectable("Animator"))
+        {
+            // You’ll need to pick an animation set first
+            if (!m_ctx.selectedTextureJsonPath.empty())
+            {
+                auto animMap = AssetManager::instance().getAnimationMap(m_ctx.selectedTextureJsonPath);
+                go->addComponent<Animator>(animMap, "run"); // Default anim
+            }
+            else
+            {
+                ImGui::OpenPopup("MissingAnimationPopup");
+            }
+        }
+
         ImGui::EndCombo();
     }
 
@@ -201,6 +216,59 @@ void PropertiesPanel::renderPropertiesPanel()
         ImGui::DragFloat("Friction", &box.m_friction, 0.01f, 0.0f, 1.0f);
         ImGui::DragFloat("Restitution", &box.m_restitution, 0.01f, 0.0f, 1.0f);
     }
+
+    if (go->hasComponent<Animator>())
+    {
+        auto &animator = go->getComponent<Animator>();
+
+        ImGui::Separator();
+        ImGui::Text("Animator");
+
+        // Show current animation
+        ImGui::Text("Current Animation: %s", animator.currentAnimation.c_str());
+
+        // Dropdown for all animations in the map
+        if (ImGui::BeginCombo("Animation", animator.currentAnimation.c_str()))
+        {
+            for (auto &[name, anim] : animator.animationMap->getAnimations())
+            {
+                bool selected = (name == animator.currentAnimation);
+                if (ImGui::Selectable(name.c_str(), selected))
+                {
+                    animator.play(name, anim.loop);
+                }
+                if (selected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
+        // Play/Pause buttons
+        if (ImGui::Button(animator.animationPlayer.isPlaying() ? "Pause" : "Play"))
+        {
+            if (animator.animationPlayer.isPlaying())
+                animator.animationPlayer.pause();
+            else
+                animator.animationPlayer.play(animator.animationMap->getAnimation(animator.currentAnimation), true);
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Stop"))
+            animator.animationPlayer.stop();
+    }
+
+    // TODO: not showing? why??
+    // if (ImGui::BeginPopupModal("MissingAnimationPopup", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    // {
+    //     ImGui::Text("Please select an animation JSON first!");
+    //     ImGui::Separator();
+
+    //     if (ImGui::Button("OK", ImVec2(120, 0)))
+    //         ImGui::CloseCurrentPopup();
+
+    //     ImGui::EndPopup();
+    // }
 
     ImGui::End();
 }

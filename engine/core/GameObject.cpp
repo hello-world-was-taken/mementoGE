@@ -1,6 +1,7 @@
 #include "core/GameObject.h"
 #include "core/Transform.h"
 #include "core/Sprite.h"
+#include "core/Animator.h"
 
 #include "physics/Physics2D.h"
 #include "physics/RigidBody2D.h"
@@ -37,6 +38,13 @@ GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGam
         addComponent<RigidBody2D>();
         getComponent<RigidBody2D>().deserialize(serializedGameObject);
         physics.addRigidbody(*this);
+    }
+
+    // Deserialize Animator
+    if (serializedGameObject["Animator"])
+    {
+        addComponent<Animator>();
+        getComponent<Animator>().deserialize(serializedGameObject);
     }
 }
 
@@ -164,6 +172,13 @@ bool GameObject::serialize(YAML::Emitter &out)
     {
         RigidBody2D &rb = getComponent<RigidBody2D>();
         rb.serialize(out);
+    }
+
+    // ANIMATOR COMPONENT
+    if (hasComponent<Animator>())
+    {
+        Animator &anim = getComponent<Animator>();
+        anim.serialize(out);
     }
 
     out << YAML::EndMap;

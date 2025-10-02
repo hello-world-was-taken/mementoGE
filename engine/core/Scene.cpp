@@ -1,4 +1,6 @@
 #include "core/Scene.h"
+#include "core/Animator.h"
+#include "core/Sprite.h"
 
 #include "renderer/RenderBatch.h"
 
@@ -109,7 +111,7 @@ void Scene::update()
         m_physicsWorld.simulate(Time::deltaTime(), m_gameObjects);
         m_physicsWorld.syncTransforms(m_gameObjects);
     }
-
+    animate();
     m_spriteRenderer.render(m_camera, getGameObjects());
 }
 
@@ -121,6 +123,19 @@ void Scene::play()
 void Scene::pause()
 {
     m_play = false;
+}
+
+void Scene::animate()
+{
+    auto view = m_registry.view<Animator, Sprite>();
+    for (auto entity : view)
+    {
+        auto &animator = view.get<Animator>(entity);
+        auto &sprite = view.get<Sprite>(entity);
+
+        animator.update();
+        sprite = animator.getCurrentSprite();
+    }
 }
 
 void Scene::addGameObject(unsigned int width, unsigned int height, std::string &&tag)
