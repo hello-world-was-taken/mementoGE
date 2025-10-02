@@ -10,7 +10,7 @@
 class MouseListener
 {
 public:
-    static MouseListener *get();
+    static MouseListener *instance();
 
     static void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
     static void cursorPositionCallback(GLFWwindow *window, double x_pos, double y_pos);

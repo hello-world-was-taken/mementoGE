@@ -45,7 +45,7 @@ EditorLayer::~EditorLayer()
 
 void EditorLayer::prepare()
 {
-    ImGuiWrapper::setupImgui(m_ctx.window.getGlfwWindow());
+    ImGuiWrapper::setupImgui(m_ctx.window);
     m_ctx.sceneManager.getActiveScene().prepare();
 }
 

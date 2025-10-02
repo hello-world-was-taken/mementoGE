@@ -7,6 +7,8 @@
 #include <memory>
 #include <imgui.h>
 
+class EditorContext;
+
 class EditorMouseController
 {
 public:
@@ -17,7 +19,7 @@ public:
 
     // camera required for world-space conversion
     // game object required for selection detection
-    void Update(SceneManager &sceneManager, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight, GLFWwindow *window, bool sceneImageHovered);
+    void Update(EditorContext &ctx, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight);
 
     glm::vec2 getWorldCoordinate(std::shared_ptr<Camera> camera, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight);
 
@@ -32,7 +34,7 @@ public:
 private:
     // based on m_mode, move the game object to snap to grid or free
     void moveGameObject(GameObject *activeGameObject, glm::vec2 mouseWorldPos);
-    void moveCamera(std::shared_ptr<Camera> camera, MouseListener *mouse, int framebufferWidth, int framebufferHeight, GLFWwindow *window);
+    void moveCamera(EditorContext &ctx, int framebufferWidth, int framebufferHeight);
 
     MovementMode m_movementMode = MovementMode::Free;
     glm::vec2 m_dragOffset;

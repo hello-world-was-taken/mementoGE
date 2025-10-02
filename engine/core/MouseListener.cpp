@@ -6,7 +6,7 @@
 #include "core/Window.h"
 #include "core/MouseListener.h"
 
-MouseListener *MouseListener::get()
+MouseListener *MouseListener::instance()
 {
     static MouseListener instance;
     return &instance;
@@ -35,7 +35,7 @@ void MouseListener::mouseButtonCallback(GLFWwindow *window, int button, int acti
     // if (ImGui::GetIO().WantCaptureMouse)
     //     return;
 
-    auto *listener = MouseListener::get();
+    auto *listener = MouseListener::instance();
 
     if (action == GLFW_PRESS)
     {
@@ -58,7 +58,7 @@ void MouseListener::cursorPositionCallback(GLFWwindow *window, double xPos, doub
     // if (ImGui::GetIO().WantCaptureMouse)
     //     return;
 
-    auto *listener = MouseListener::get();
+    auto *listener = MouseListener::instance();
     glm::vec2 newMousePos = {static_cast<float>(xPos), static_cast<float>(yPos)};
 
     listener->m_previMousePos = listener->m_mousePos;
@@ -73,7 +73,7 @@ void MouseListener::scrollCallback(GLFWwindow *window, double xOffset, double yO
     // frame buffer. Use a different one.
     // if (ImGui::GetIO().WantCaptureMouse)
     //     return;
-    auto *listener = MouseListener::get();
+    auto *listener = MouseListener::instance();
     listener->m_scrollDelta = {static_cast<float>(xOffset), static_cast<float>(yOffset)};
 }
 
@@ -90,7 +90,7 @@ glm::vec2 MouseListener::getPrevMouseScreenPosition() const
 // returns the delta in window size coordinate, not game world coordinate
 glm::vec2 MouseListener::getMouseDelta() const
 {
-    auto *listener = MouseListener::get();
+    auto *listener = MouseListener::instance();
 
     return {
         listener->m_mousePos.x - listener->m_previMousePos.x,

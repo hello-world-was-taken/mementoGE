@@ -61,7 +61,7 @@ void Application::update()
             if (m_editorMode)
             {
                 m_editorLayer.update();
-                MouseListener::get()->beginFrame();
+                MouseListener::instance()->beginFrame();
             }
             else
             {

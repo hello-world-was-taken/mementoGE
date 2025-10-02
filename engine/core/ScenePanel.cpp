@@ -25,13 +25,11 @@ void ScenePanel::draw()
 {
     m_ctx.editorMouseController
         .Update(
-            m_ctx.sceneManager,
+            m_ctx,
             m_upperLeft,
             m_previewAreaSize,
             m_ctx.viewportWidth,
-            m_ctx.viewportHeight,
-            m_ctx.window.getGlfwWindow(),
-            m_ctx.sceneImageHovered);
+            m_ctx.viewportHeight);
 
     renderSceneViewport();
 }

@@ -3,6 +3,7 @@
 #include "core/Transform.h"
 #include "core/SceneManager.h"
 #include "core/EditorMouseController.h"
+#include "core/EditorContext.h"
 
 #include "util/Time.h"
 
@@ -24,24 +25,22 @@ void EditorMouseController::SetActiveObject(GameObject &object)
 }
 
 void EditorMouseController::Update(
-    SceneManager &sceneManager,
+    EditorContext &ctx,
     ImVec2 imagePos,
     ImVec2 imageSize,
     int framebufferWidth,
-    int framebufferHeight,
-    GLFWwindow *window,
-    bool sceneImageHovered)
+    int framebufferHeight)
 {
-    if (!sceneImageHovered)
+    if (!ctx.sceneImageHovered)
         return;
 
-    Scene &scene = sceneManager.getActiveScene();
+    Scene &scene = ctx.sceneManager.getActiveScene();
     std::shared_ptr<Camera> camera = scene.getCamera();
 
     auto &gameObjects = scene.getGameObjects();
     auto activeGameObject = scene.getActiveGameObject();
 
-    MouseListener *mouse = MouseListener::get();
+    MouseListener *mouse = MouseListener::instance();
     glm::vec2 mouseWorldPos = getWorldCoordinate(camera, imagePos, imageSize, framebufferWidth, framebufferHeight);
 
     // check for button click on an object
@@ -57,7 +56,7 @@ void EditorMouseController::Update(
                 // store offset between object origin and mouse world position to avoid initial sharp mov't
                 if (activeGameObject)
                 {
-                    glm::vec3* objPos = activeGameObject->getComponent<Transform>().getPosition();
+                    glm::vec3 *objPos = activeGameObject->getComponent<Transform>().getPosition();
                     m_dragOffset = glm::vec2(objPos->x, objPos->y) - mouseWorldPos;
                 }
                 break;
@@ -81,7 +80,7 @@ void EditorMouseController::Update(
     bool draggingOnEmptySpace = mouse->isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT) && !activeGameObject;
     if (draggingOnEmptySpace)
     {
-        moveCamera(camera, mouse, framebufferWidth, framebufferHeight, window);
+        moveCamera(ctx, framebufferWidth, framebufferHeight);
     }
 
     bool leftButtonClicked = mouse->wasMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) || mouse->isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT);
@@ -114,23 +113,26 @@ void EditorMouseController::moveGameObject(GameObject *activeGameObject, glm::ve
     }
 }
 
-void EditorMouseController::moveCamera(std::shared_ptr<Camera> camera, MouseListener *mouse, int framebufferWidth, int framebufferHeight, GLFWwindow *window)
+void EditorMouseController::moveCamera(EditorContext &ctx, int framebufferWidth, int framebufferHeight)
 {
+    Scene &scene = ctx.sceneManager.getActiveScene();
+    std::shared_ptr<Camera> camera = scene.getCamera();
+    
     // Scale screen (window) coordinates to framebuffer space
     int winWidth, winHeight;
-    glfwGetWindowSize(window, &winWidth, &winHeight);
+    glfwGetWindowSize(ctx.window.getGlfwWindow(), &winWidth, &winHeight);
 
     float scaleX = static_cast<float>(framebufferWidth) / winWidth;
     float scaleY = static_cast<float>(framebufferHeight) / winHeight;
 
-    glm::vec2 dragDelta = mouse->getMouseDelta();
+    glm::vec2 dragDelta = MouseListener::instance()->getMouseDelta();
 
     camera->setPosition(camera->getPosition() - glm::vec3(dragDelta.x * scaleX, dragDelta.y * scaleY, 0.0f));
 }
 
 glm::vec2 EditorMouseController::getWorldCoordinate(std::shared_ptr<Camera> camera, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight)
 {
-    MouseListener *listener = MouseListener::get();
+    MouseListener *listener = MouseListener::instance();
 
     // Mouse position in screen coordinates
     glm::vec2 mousePos = listener->getMouseScreenPosition();

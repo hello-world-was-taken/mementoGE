@@ -1,12 +1,13 @@
 #include "core/GLIncludes.h"
 #include "core/ImGuiWrapper.h"
+#include "core/Window.h"
 
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
 #include <functional>
 
-void ImGuiWrapper::setupImgui(GLFWwindow *glfw_window)
+void ImGuiWrapper::setupImgui(Window &window)
 {
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -32,7 +33,7 @@ void ImGuiWrapper::setupImgui(GLFWwindow *glfw_window)
     }
 
     // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(glfw_window, true);
+    ImGui_ImplGlfw_InitForOpenGL(window.getGlfwWindow(), true);
 
     const char *glsl_version = "#version 150";
     ImGui_ImplOpenGL3_Init(glsl_version);
