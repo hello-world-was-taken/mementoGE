@@ -1,5 +1,4 @@
 #pragma once
-
 #include "core/MouseListener.h"
 #include "core/GameObject.h"
 #include "core/Scene.h"
@@ -8,10 +7,10 @@
 #include <memory>
 #include <imgui.h>
 
-class MouseActionController
+class EditorMouseController
 {
 public:
-    MouseActionController();
+    EditorMouseController();
 
     void setMovementMode(MovementMode mode);
     void SetActiveObject(GameObject &object);

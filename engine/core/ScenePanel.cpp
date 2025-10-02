@@ -23,7 +23,7 @@ ScenePanel::~ScenePanel()
 
 void ScenePanel::draw()
 {
-    m_ctx.mouseActionController
+    m_ctx.editorMouseController
         .Update(
             m_ctx.sceneManager,
             m_upperLeft,
@@ -32,6 +32,7 @@ void ScenePanel::draw()
             m_ctx.viewportHeight,
             m_ctx.window.getGlfwWindow(),
             m_ctx.sceneImageHovered);
+
     renderSceneViewport();
 }
 
@@ -102,7 +103,7 @@ void ScenePanel::renderSceneViewport()
             int fbWidth, fbHeight;
             glfwGetFramebufferSize(m_ctx.window.getGlfwWindow(), &fbWidth, &fbHeight);
 
-            glm::vec2 worldPos = m_ctx.mouseActionController.getWorldCoordinate(
+            glm::vec2 worldPos = m_ctx.editorMouseController.getWorldCoordinate(
                 cam, m_upperLeft, m_previewAreaSize,
                 fbWidth, fbHeight);
 

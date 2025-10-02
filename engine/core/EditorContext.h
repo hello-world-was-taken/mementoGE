@@ -6,7 +6,7 @@
 #include "core/Scene.h"
 #include "core/SceneManager.h"
 #include "core/Camera.h"
-#include "core/MouseActionController.h"
+#include "core/EditorMouseController.h"
 
 #include "opengl/FrameBuffer.h"
 
@@ -28,7 +28,6 @@ struct EditorContext
     // TODO: seems like only the gridRenderer uses this?
     std::shared_ptr<Camera> editorCamera{std::make_shared<Camera>(viewportWidth, viewportHeight)};
 
-    // TODO: think more about the need for mouseActionController
-    MouseActionController mouseActionController;
+    EditorMouseController editorMouseController;
     FrameBuffer frameBuffer{viewportWidth, viewportHeight};
 };

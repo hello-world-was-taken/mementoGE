@@ -5,7 +5,6 @@
 #include "core/Scene.h"
 #include "core/SceneManager.h"
 #include "core/Camera.h"
-#include "core/MouseActionController.h"
 #include "core/Window.h"
 #include "core/EventHandler.h"
 #include "core/MovementMode.h"
@@ -25,13 +24,11 @@ public:
     EditorLayer(Window &window);
     ~EditorLayer();
 
-    void onAttach();                // Called when the editor initializes
-    void onUpdate(float deltaTime); // Called every frame
-    void drawEditorUI();            // Render ImGui windows here
+    void prepare();
+    void update();
+    void drawEditorUI();          // Render ImGui windows here
 
     void setScene(std::shared_ptr<Scene> scene);
-    // TODO: a copy of the scene manager. Keep in sync for now.
-    void serialize();
 
 private:
     // imgui panels

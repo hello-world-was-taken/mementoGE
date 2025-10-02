@@ -60,7 +60,7 @@ void GridRenderer::generateGridLines(std::shared_ptr<Camera> camera)
     glm::vec2 bottomLeft = glm::vec2(corners[0]) / corners[0].w;
     glm::vec2 topRight = glm::vec2(corners[1]) / corners[1].w;
 
-    // The same snapping logic we used in MouseActionController.cpp
+    // The same snapping logic we used in EditorMouseController.cpp
     // They should be kept in sync
     int startX = static_cast<int>(std::floor(bottomLeft.x / m_tileSize)) * m_tileSize;
     int endX = static_cast<int>(std::ceil(topRight.x / m_tileSize)) * m_tileSize;

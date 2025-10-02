@@ -29,12 +29,12 @@ void Application::setup()
 {
     if (m_editorMode)
     {
-        m_editorLayer.onAttach();
+        m_editorLayer.prepare();
     }
     else
     {
         mSceneManager.deserialize();
-        mSceneManager.start();
+        mSceneManager.prepare();
     }
 }
 
@@ -69,10 +69,7 @@ void Application::update()
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
 
-            m_editorLayer.onUpdate(Time::deltaTime());
-
-            // The order matters. Putting it here so that our mouseDelta doesn't get wipped
-            // before we process it in mouseActionController
+            m_editorLayer.update();
             MouseListener::get()->beginFrame();
 
             // can we neatly wrap this in a function

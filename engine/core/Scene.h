@@ -37,8 +37,8 @@ public:
 
     Scene clone(std::string tag);
 
-    void start();
-    void update(float deltaTime);
+    void prepare();
+    void update();
 
     void play();
     void pause();

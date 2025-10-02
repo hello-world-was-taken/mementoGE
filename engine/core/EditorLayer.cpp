@@ -8,6 +8,7 @@
 #include "core/MovementMode.h"
 #include "core/SpriteSheet.h"
 #include "core/PropertiesPanel.h"
+#include "core/EditorMouseController.h"
 
 #include "physics/BoxCollider2D.h"
 #include "physics/CircleCollider2D.h"
@@ -34,7 +35,7 @@ EditorLayer::EditorLayer(Window &window)
                      static_cast<int>(m_screen_height), 32, m_ctx.editorCamera}
 {
     m_ctx.sceneManager.deserialize();
-    m_ctx.sceneManager.start();
+    m_ctx.sceneManager.prepare();
 }
 
 EditorLayer::~EditorLayer()
@@ -42,10 +43,10 @@ EditorLayer::~EditorLayer()
     m_ctx.sceneManager.serialize();
 }
 
-void EditorLayer::onAttach()
+void EditorLayer::prepare()
 {
     ImGuiWrapper::setupImgui(m_ctx.window.getGlfwWindow());
-    m_ctx.sceneManager.getActiveScene().start();
+    m_ctx.sceneManager.getActiveScene().prepare();
 }
 
 // void EditorLayer::setScene(std::shared_ptr<Scene> scene)
@@ -53,7 +54,7 @@ void EditorLayer::onAttach()
 //     m_sceneManager.setActiveScene(scene->);
 // }
 
-void EditorLayer::onUpdate(float deltaTime)
+void EditorLayer::update()
 {
     m_ctx.frameBuffer.bind();
 
@@ -64,7 +65,7 @@ void EditorLayer::onUpdate(float deltaTime)
     glClear(GL_COLOR_BUFFER_BIT);
 
     renderGrid();
-    m_ctx.sceneManager.getActiveScene().update(Time::deltaTime());
+    m_ctx.sceneManager.update();
 
     handleEvents();
 
@@ -167,7 +168,7 @@ void EditorLayer::renderEditorProperties()
     }
 
     // update mouse controller
-    m_ctx.mouseActionController.setMovementMode(m_movementMode);
+    m_ctx.editorMouseController.setMovementMode(m_movementMode);
 
     ImGui::Separator();
     ImGui::Checkbox("Draw Grid", &m_drawGrid);

@@ -27,7 +27,7 @@ add_library(${PROJECT_NAME} STATIC
     core/MouseListener.cpp
     core/Event.cpp
     core/EventHandler.cpp
-    core/MouseActionController.cpp
+    core/EditorMouseController.cpp
     core/EditorLayer.cpp
     core/ScenePanel.cpp
     core/PropertiesPanel.cpp

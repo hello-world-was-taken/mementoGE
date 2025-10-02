@@ -2,7 +2,7 @@
 #include "core/Scene.h"
 #include "core/Transform.h"
 #include "core/SceneManager.h"
-#include "core/MouseActionController.h"
+#include "core/EditorMouseController.h"
 
 #include "util/Time.h"
 
@@ -10,20 +10,20 @@
 #include <cmath>
 #include <imgui.h>
 
-MouseActionController::MouseActionController()
+EditorMouseController::EditorMouseController()
 {
 }
 
-void MouseActionController::setMovementMode(MovementMode mode)
+void EditorMouseController::setMovementMode(MovementMode mode)
 {
     m_movementMode = mode;
 }
 
-void MouseActionController::SetActiveObject(GameObject &object)
+void EditorMouseController::SetActiveObject(GameObject &object)
 {
 }
 
-void MouseActionController::Update(
+void EditorMouseController::Update(
     SceneManager &sceneManager,
     ImVec2 imagePos,
     ImVec2 imageSize,
@@ -92,7 +92,7 @@ void MouseActionController::Update(
     camera->updateProjection(framebufferWidth, framebufferHeight);
 }
 
-void MouseActionController::moveGameObject(GameObject *activeGameObject, glm::vec2 mouseWorldPos)
+void EditorMouseController::moveGameObject(GameObject *activeGameObject, glm::vec2 mouseWorldPos)
 {
     if (m_movementMode == MovementMode::SnapToGrid)
     {
@@ -114,7 +114,7 @@ void MouseActionController::moveGameObject(GameObject *activeGameObject, glm::ve
     }
 }
 
-void MouseActionController::moveCamera(std::shared_ptr<Camera> camera, MouseListener *mouse, int framebufferWidth, int framebufferHeight, GLFWwindow *window)
+void EditorMouseController::moveCamera(std::shared_ptr<Camera> camera, MouseListener *mouse, int framebufferWidth, int framebufferHeight, GLFWwindow *window)
 {
     // Scale screen (window) coordinates to framebuffer space
     int winWidth, winHeight;
@@ -128,7 +128,7 @@ void MouseActionController::moveCamera(std::shared_ptr<Camera> camera, MouseList
     camera->setPosition(camera->getPosition() - glm::vec3(dragDelta.x * scaleX, dragDelta.y * scaleY, 0.0f));
 }
 
-glm::vec2 MouseActionController::getWorldCoordinate(std::shared_ptr<Camera> camera, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight)
+glm::vec2 EditorMouseController::getWorldCoordinate(std::shared_ptr<Camera> camera, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight)
 {
     MouseListener *listener = MouseListener::get();
 
@@ -144,7 +144,7 @@ glm::vec2 MouseActionController::getWorldCoordinate(std::shared_ptr<Camera> came
     return frameBufferToWorld(camera, fbPos, framebufferWidth, framebufferHeight);
 }
 
-glm::vec2 MouseActionController::screenToLocal(glm::vec2 mousePos, glm::vec2 imagePos, glm::vec2 imageSize)
+glm::vec2 EditorMouseController::screenToLocal(glm::vec2 mousePos, glm::vec2 imagePos, glm::vec2 imageSize)
 {
     // Get position of mouse relative to imgui scene preview window
     float localX = mousePos.x - imagePos.x;
@@ -156,7 +156,7 @@ glm::vec2 MouseActionController::screenToLocal(glm::vec2 mousePos, glm::vec2 ima
     return {localX, localY};
 }
 
-glm::vec2 MouseActionController::localToFrameBuffer(glm::vec2 localPos, glm::vec2 imageSize, int framebufferWidth, int framebufferHeight)
+glm::vec2 EditorMouseController::localToFrameBuffer(glm::vec2 localPos, glm::vec2 imageSize, int framebufferWidth, int framebufferHeight)
 {
     float fbX = (localPos.x / imageSize.x) * framebufferWidth;
     float fbY = (localPos.y / imageSize.y) * framebufferHeight;
@@ -164,7 +164,7 @@ glm::vec2 MouseActionController::localToFrameBuffer(glm::vec2 localPos, glm::vec
     return {fbX, fbY};
 }
 
-glm::vec2 MouseActionController::frameBufferToWorld(std::shared_ptr<Camera> camera, glm::vec2 fbPos, int framebufferWidth, int framebufferHeight)
+glm::vec2 EditorMouseController::frameBufferToWorld(std::shared_ptr<Camera> camera, glm::vec2 fbPos, int framebufferWidth, int framebufferHeight)
 {
     // Convert to Normalized Device Coordinates (NDC)
     float ndcX = (fbPos.x / framebufferWidth) * 2.0f - 1.0f;

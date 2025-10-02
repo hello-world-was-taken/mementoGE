@@ -1,7 +1,3 @@
-#include <yaml-cpp/yaml.h>
-#include <filesystem>
-#include <fstream>
-
 #include "core/SceneManager.h"
 #include "core/Sprite.h"
 #include "core/SpriteSheet.h"
@@ -9,6 +5,11 @@
 #include "core/Camera.h"
 
 #include "util/PathUtils.h"
+
+#include <yaml-cpp/yaml.h>
+#include <filesystem>
+#include <fstream>
+#include <stdexcept>
 
 SceneManager::SceneManager(Window *window)
     : m_window{window}
@@ -21,18 +22,16 @@ SceneManager::~SceneManager()
     serialize();
 }
 
-void SceneManager::start()
+void SceneManager::prepare()
 {
     // TODO: improve the it to avoid such a gymnastics
     std::shared_ptr<Camera> camera = getActiveScene().getCamera();
     m_window->setUserData(camera.get());
-
-    getActiveScene().start();
 }
 
 void SceneManager::update()
 {
-    getActiveScene().update(Time::deltaTime());
+    getActiveScene().update();
 }
 
 void SceneManager::loadScene(std::string sceneName)
@@ -41,12 +40,11 @@ void SceneManager::loadScene(std::string sceneName)
     if (it != m_scenes.end())
     {
         m_activeSceneName = sceneName;
-        getActiveScene().start();
+        getActiveScene().prepare();
+        return;
     }
-    else
-    {
-        std::cout << "Scene not found: " << sceneName << std::endl;
-    }
+
+    throw std::runtime_error("Scene not found: " + sceneName);
 }
 
 void SceneManager::unloadScene(std::string sceneName)

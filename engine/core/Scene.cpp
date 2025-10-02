@@ -2,6 +2,8 @@
 
 #include "renderer/RenderBatch.h"
 
+#include "util/Time.h"
+
 #include <iostream>
 #include <string>
 #include <entt/entt.hpp>
@@ -96,15 +98,15 @@ Scene Scene::clone(std::string tag)
     return Scene{std::move(serializedScene)};
 }
 
-void Scene::start()
+void Scene::prepare()
 {
 }
 
-void Scene::update(float deltaTime)
+void Scene::update()
 {
     if (m_play)
     {
-        m_physicsWorld.simulate(deltaTime, m_gameObjects);
+        m_physicsWorld.simulate(Time::deltaTime(), m_gameObjects);
         m_physicsWorld.syncTransforms(m_gameObjects);
     }
 
@@ -157,6 +159,7 @@ Physics2D &Scene::getPhysics2d()
 {
     return m_physicsWorld;
 }
+
 void Scene::setGraivty(glm::vec2 gravity)
 {
     m_physicsWorld.setGravity(gravity);
