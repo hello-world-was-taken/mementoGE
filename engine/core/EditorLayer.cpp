@@ -56,21 +56,25 @@ void EditorLayer::prepare()
 
 void EditorLayer::update()
 {
-    m_ctx.frameBuffer.bind();
+    ImGuiWrapper::ImGuiFrame(
+        [&]()
+        {
+            m_ctx.frameBuffer.bind();
 
-    ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
+            ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
 
-    // clearing our off screen frame buffer before each render
-    glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-    glClear(GL_COLOR_BUFFER_BIT);
+            // clearing our off screen frame buffer before each render
+            glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
+            glClear(GL_COLOR_BUFFER_BIT);
 
-    renderGrid();
-    m_ctx.sceneManager.update();
+            renderGrid();
+            m_ctx.sceneManager.update();
 
-    handleEvents();
+            handleEvents();
 
-    drawEditorUI();
-    m_ctx.frameBuffer.unbind();
+            drawEditorUI();
+            m_ctx.frameBuffer.unbind();
+        });
 }
 
 void EditorLayer::drawEditorUI()

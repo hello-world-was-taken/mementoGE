@@ -55,47 +55,23 @@ void Application::processInput()
 
 void Application::update()
 {
-    glfwSwapInterval(1);
-
-    while (!glfwWindowShouldClose(mWindow.getGlfwWindow()))
-    {
-        Time::update();
-        glfwPollEvents();
-
-        if (m_editorMode)
+    mWindow.run(
+        [&]()
         {
-            // Start the Dear ImGui frame
-            ImGui_ImplOpenGL3_NewFrame();
-            ImGui_ImplGlfw_NewFrame();
-            ImGui::NewFrame();
-
-            m_editorLayer.update();
-            MouseListener::get()->beginFrame();
-
-            // can we neatly wrap this in a function
-            // End frame and render
-            ImGui::Render();
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-            if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+            if (m_editorMode)
             {
-                GLFWwindow *backup_current_context = glfwGetCurrentContext();
-                ImGui::UpdatePlatformWindows();
-                ImGui::RenderPlatformWindowsDefault();
-                glfwMakeContextCurrent(backup_current_context);
+                m_editorLayer.update();
+                MouseListener::get()->beginFrame();
             }
-        }
-        else
+            else
+            {
+                mSceneManager.update();
+            }
+        },
+        [&]()
         {
-            mSceneManager.update();
-        }
-
-        glfwSwapBuffers(mWindow.getGlfwWindow());
-    }
-
-    destroy();
-
-    glfwTerminate();
+            destroy();
+        });
 }
 
 void Application::destroy()

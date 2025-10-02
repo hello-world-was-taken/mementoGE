@@ -1,7 +1,5 @@
 #pragma once
 
-#include "core/GLIncludes.h"
-
 class Time {
 private:
     static float m_last_frame_time;

@@ -3,6 +3,8 @@
 #include "core/EventHandler.h"
 #include "core/Camera.h"
 
+#include "util/Time.h"
+
 Window::Window(float width, float height)
     : m_width(width), m_height(height)
 {
@@ -41,6 +43,27 @@ Window::Window(float width, float height)
 // TODO: Remove all the resources we used
 Window::~Window()
 {
+}
+
+float Window::getWindowTime()
+{
+    return glfwGetTime();
+}
+
+void Window::run(const std::function<void()> &frameFunc, const std::function<void()> &cleanupFunc)
+{
+    glfwSwapInterval(1);
+
+    while (!glfwWindowShouldClose(getGlfwWindow()))
+    {
+        Time::update();
+        glfwPollEvents();
+        frameFunc();
+        glfwSwapBuffers(getGlfwWindow());
+    }
+
+    cleanupFunc();
+    glfwTerminate();
 }
 
 float Window::getWidth() const

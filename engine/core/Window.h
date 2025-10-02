@@ -21,6 +21,8 @@ public:
     ~Window();
 
     void initializeWindow();
+    void run(const std::function<void()> &frameFunc, const std::function<void()> &cleanupFunc);
+
     void setupCallBack() const;
     GLFWwindow *getGlfwWindow();
     static void frameBufferSizeResizeCallback(GLFWwindow *window, int width, int height);
@@ -29,6 +31,8 @@ public:
     float getHeight() const;
     void closeWindow();
     void setUserData(Camera *c);
+
+    static float getWindowTime();
 
 public:
     float m_width;
