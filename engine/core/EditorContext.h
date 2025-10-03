@@ -22,6 +22,8 @@ struct EditorContext
     bool drawGrid = false;
     std::string selectedTextureJsonPath;
     bool sceneImageHovered = false;
+    bool showPropertiesPopup = false;
+    ImVec2 propertiesPopupPos;
 
     // TODO: do we need activeScene? we can get it from scene manager
     std::shared_ptr<Scene> activeScene;

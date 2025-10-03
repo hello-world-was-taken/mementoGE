@@ -19,6 +19,11 @@
 
 namespace fs = std::filesystem;
 
+inline void SetFieldWidth(float w = 120.0f)
+{
+    ImGui::SetNextItemWidth(w);
+}
+
 PropertiesPanel::PropertiesPanel(EditorContext &ctx, TexturePanel &texturePanel)
     : EditorPanel{ctx},
       m_ctx{ctx},
@@ -32,7 +37,38 @@ PropertiesPanel::~PropertiesPanel()
 
 void PropertiesPanel::draw()
 {
+    renderPropertiesInWindow();
+    renderPropertiesInPopup();
+}
+
+void PropertiesPanel::renderPropertiesInWindow()
+{
+    ImGui::Begin("Properties");
     renderPropertiesPanel();
+    ImGui::End();
+}
+
+void PropertiesPanel::renderPropertiesInPopup()
+{
+    if (!m_ctx.showPropertiesPopup)
+        return;
+
+    // Place popup a little to the right of mouse click
+    ImGui::SetNextWindowPos(m_ctx.propertiesPopupPos);
+    ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_Appearing);
+    if (ImGui::BeginPopup("PropertiesPopup"))
+    {
+        ImGui::BeginChild("PropertiesScrollRegion", ImVec2(0, 0), false, ImGuiWindowFlags_AlwaysUseWindowPadding);
+
+        renderPropertiesPanel();
+
+        ImGui::EndChild();
+        ImGui::EndPopup();
+    }
+    else
+    {
+        m_ctx.showPropertiesPopup = false;
+    }
 }
 
 void PropertiesPanel::renderPropertiesPanel()
@@ -40,113 +76,105 @@ void PropertiesPanel::renderPropertiesPanel()
     if (m_ctx.sceneManager.getActiveScene().getGameObjects().empty())
         return;
 
-    ImGui::Begin("Properties");
-
     GameObject *go = m_ctx.sceneManager.getActiveScene().getActiveGameObject();
     if (!go)
     {
         ImGui::Text("No game object selected");
-        ImGui::End();
         return;
     }
 
-    // Size
+    drawSize(go);
+    drawTransform(go);
+    drawLayer(go);
+    drawSpriteSettings(go);
+    drawAddComponentCombo(go);
+    drawRigidBodySettings(go);
+    drawBoxColliderSettings(go);
+    drawAnimatorSettings(go);
+
+    // Popups (global)
+    drawPopups();
+}
+
+void PropertiesPanel::drawSize(GameObject *go)
+{
     ImGui::Text("Size");
     int width = go->getWidth();
     int height = go->getHeight();
+
+    SetFieldWidth();
     if (ImGui::DragInt("Width", &width))
         go->setWidth(width);
+
+    SetFieldWidth();
     if (ImGui::DragInt("Height", &height))
         go->setHeight(height);
+}
 
-    // Transform
+void PropertiesPanel::drawTransform(GameObject *go)
+{
     ImGui::Separator();
     ImGui::Text("Transform");
     Transform &transform = go->getComponent<Transform>();
     glm::vec3 *pos = transform.getPosition();
-    ImGui::DragFloat("x", &pos->x);
-    ImGui::DragFloat("y", &pos->y);
-    // ImGui::DragFloat("z", &pos->z);
 
-    // Layer
+    SetFieldWidth();
+    ImGui::DragFloat("x", &pos->x);
+
+    SetFieldWidth();
+    ImGui::DragFloat("y", &pos->y);
+}
+
+void PropertiesPanel::drawLayer(GameObject *go)
+{
     ImGui::Separator();
     ImGui::Text("Layer");
+    Transform &transform = go->getComponent<Transform>();
+    glm::vec3 *pos = transform.getPosition();
     int layer = static_cast<int>(pos->z);
+
+    SetFieldWidth();
     if (ImGui::DragInt("Layer", &layer))
         pos->z = static_cast<float>(layer);
+}
 
-    // Sprite Settings
-    if (go->hasComponent<Sprite>())
+void PropertiesPanel::drawSpriteSettings(GameObject *go)
+{
+    if (!go->hasComponent<Sprite>())
+        return;
+
+    Sprite &sprite = go->getComponent<Sprite>();
+
+    ImGui::Separator();
+    ImGui::Text("Sprite Settings");
+
+    static bool flipX = sprite.isFlippedX();
+    static bool flipY = sprite.isFlippedY();
+    if (ImGui::Checkbox("Flip Horizontally", &flipX))
+        sprite.setFlipX(flipX);
+    if (ImGui::Checkbox("Flip Vertically", &flipY))
+        sprite.setFlipY(flipY);
+
+    if (ImGui::Button("Change Sprite"))
     {
-        Sprite &sprite = go->getComponent<Sprite>();
-
-        ImGui::Separator();
-        ImGui::Text("Sprite Settings");
-
-        // Flip
-        static bool flipX = sprite.isFlippedX();
-        static bool flipY = sprite.isFlippedY();
-        if (ImGui::Checkbox("Flip Horizontally", &flipX))
-            sprite.setFlipX(flipX);
-        if (ImGui::Checkbox("Flip Vertically", &flipY))
-            sprite.setFlipY(flipY);
-
-        // Open sprite picker modal
-        if (ImGui::Button("Change Sprite"))
+        if (m_ctx.selectedTextureJsonPath.empty())
         {
-            if (m_ctx.selectedTextureJsonPath.empty())
-            {
-                ImGui::OpenPopup("MissingTexturePopup");
-            }
-            else
-            {
-                ImGui::OpenPopup("Select Sprite");
-            }
+            ImGui::OpenPopup("MissingTexturePopup");
         }
-
-        std::string texPath = sprite.getTexturePath();
-        ImGui::Text("Current Sprite:");
-        ImGui::TextWrapped("%s", texPath.c_str());
-    }
-
-    if (ImGui::BeginPopupModal("MissingTexturePopup", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-    {
-        ImGui::Text("Please select a texture first!");
-        ImGui::Separator();
-
-        if (ImGui::Button("OK", ImVec2(120, 0)))
+        else
         {
-            ImGui::CloseCurrentPopup();
+            ImGui::OpenPopup("Select Sprite");
         }
-
-        ImGui::EndPopup();
     }
 
-    if (ImGui::BeginPopupModal("Select Sprite", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-    {
-        m_texturePanel.renderSelectedTexSheetPanel(
-            true,
-            [&](Sprite &sprite)
-            {
-            if (m_ctx.sceneManager.getActiveScene().getActiveGameObject())
-            {
-                GameObject *go = m_ctx.sceneManager.getActiveScene().getActiveGameObject();
-                // first remove Sprite if it exists
-                if (go->hasComponent<Sprite>())
-                    go->removeComponent<Sprite>();
+    std::string texPath = sprite.getTexturePath();
+    ImGui::Text("Current Sprite:");
+    ImGui::TextWrapped("%s", texPath.c_str());
+}
 
-                m_ctx.sceneManager.getActiveScene().getActiveGameObject()->addComponent<Sprite>(
-                    getTexturePathFromJson(m_ctx.selectedTextureJsonPath),
-                    sprite.getTextureCoordinates());
-                // ImGui::CloseCurrentPopup(); // Close modal
-            } });
-
-        if (ImGui::Button("Cancel"))
-            ImGui::CloseCurrentPopup();
-
-        ImGui::EndPopup();
-    }
-
+void PropertiesPanel::drawAddComponentCombo(GameObject *go)
+{
+    SetFieldWidth(150);
     if (ImGui::BeginCombo("Add Component", "Select..."))
     {
         if (ImGui::Selectable("Rigidbody2D"))
@@ -157,9 +185,7 @@ void PropertiesPanel::renderPropertiesPanel()
 
         if (ImGui::Selectable("BoxCollider2D"))
         {
-            int width = go->getWidth();
-            int height = go->getHeight();
-            go->addComponent<BoxCollider2D>(width, height);
+            go->addComponent<BoxCollider2D>(go->getWidth(), go->getHeight());
             m_ctx.sceneManager.getActiveScene().getPhysics2d().addRigidbody(*go);
         }
 
@@ -171,104 +197,134 @@ void PropertiesPanel::renderPropertiesPanel()
 
         if (ImGui::Selectable("Animator"))
         {
-            // You’ll need to pick an animation set first
             if (!m_ctx.selectedTextureJsonPath.empty())
             {
                 auto animMap = AssetManager::instance().getAnimationMap(m_ctx.selectedTextureJsonPath);
-                go->addComponent<Animator>(animMap, "run"); // Default anim
+                go->addComponent<Animator>(animMap, "run");
             }
             else
             {
                 ImGui::OpenPopup("MissingAnimationPopup");
             }
         }
+        ImGui::EndCombo();
+    }
+}
 
+void PropertiesPanel::drawRigidBodySettings(GameObject *go)
+{
+    if (!go->hasComponent<RigidBody2D>())
+        return;
+
+    RigidBody2D &rb = go->getComponent<RigidBody2D>();
+    if (ImGui::BeginCombo("Rigidbody 2D Type", rb.getBodyType().c_str()))
+    {
+        if (ImGui::Selectable("Static"))
+            rb.setType(BodyType::Static);
+        if (ImGui::Selectable("Dynamic"))
+            rb.setType(BodyType::Dynamic);
+        if (ImGui::Selectable("Kinematic"))
+            rb.setType(BodyType::Kinematic);
+        ImGui::EndCombo();
+    }
+}
+
+void PropertiesPanel::drawBoxColliderSettings(GameObject *go)
+{
+    if (!go->hasComponent<BoxCollider2D>())
+        return;
+
+    auto &box = go->getComponent<BoxCollider2D>();
+    ImGui::Text("Box Collider 2D");
+
+    SetFieldWidth();
+    ImGui::DragFloat("Density", &box.m_density, 0.01f, 0.0f);
+
+    SetFieldWidth();
+    ImGui::DragFloat("Friction", &box.m_friction, 0.01f, 0.0f, 1.0f);
+
+    SetFieldWidth();
+    ImGui::DragFloat("Restitution", &box.m_restitution, 0.01f, 0.0f, 1.0f);
+}
+
+void PropertiesPanel::drawAnimatorSettings(GameObject *go)
+{
+    if (!go->hasComponent<Animator>())
+        return;
+
+    auto &animator = go->getComponent<Animator>();
+
+    ImGui::Separator();
+    ImGui::Text("Animator");
+
+    ImGui::Text("Current Animation: %s", animator.currentAnimation.c_str());
+
+    SetFieldWidth(150);
+    if (ImGui::BeginCombo("Animation", animator.currentAnimation.c_str()))
+    {
+        for (auto &[name, anim] : animator.animationMap->getAnimations())
+        {
+            bool selected = (name == animator.currentAnimation);
+            if (ImGui::Selectable(name.c_str(), selected))
+            {
+                animator.play(name, anim.loop);
+            }
+            if (selected)
+                ImGui::SetItemDefaultFocus();
+        }
         ImGui::EndCombo();
     }
 
-    // If the active game object have rigid body 2d, we should be able to
-    // edit whether it should be static, dynamic or kinematics
-    if (go->hasComponent<RigidBody2D>())
+    if (ImGui::Button(animator.animationPlayer.isPlaying() ? "Pause" : "Play"))
     {
-        RigidBody2D &rb = go->getComponent<RigidBody2D>();
-        if (ImGui::BeginCombo("Rigidbody 2D Type", rb.getBodyType().c_str()))
-        {
-            if (ImGui::Selectable("Static"))
-                rb.setType(BodyType::Static);
-
-            if (ImGui::Selectable("Dynamic"))
-                rb.setType(BodyType::Dynamic);
-
-            if (ImGui::Selectable("Kinematic"))
-                rb.setType(BodyType::Kinematic);
-
-            ImGui::EndCombo();
-        }
+        if (animator.animationPlayer.isPlaying())
+            animator.animationPlayer.pause();
+        else
+            animator.animationPlayer.play(animator.animationMap->getAnimation(animator.currentAnimation), true);
     }
 
-    if (go->hasComponent<BoxCollider2D>())
-    {
-        auto &box = go->getComponent<BoxCollider2D>();
-        ImGui::Text("Box Collider 2D");
-        // ImGui::DragFloat2("Size", glm::value_ptr(box.m_size), 0.1f);
-        // ImGui::DragFloat2("Offset", glm::value_ptr(box.m_offset), 0.1f);
-        ImGui::DragFloat("Density", &box.m_density, 0.01f, 0.0f);
-        ImGui::DragFloat("Friction", &box.m_friction, 0.01f, 0.0f, 1.0f);
-        ImGui::DragFloat("Restitution", &box.m_restitution, 0.01f, 0.0f, 1.0f);
-    }
+    ImGui::SameLine();
+    if (ImGui::Button("Stop"))
+        animator.animationPlayer.stop();
+}
 
-    if (go->hasComponent<Animator>())
+void PropertiesPanel::drawPopups()
+{
+    // Missing texture
+    if (ImGui::BeginPopupModal("MissingTexturePopup", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
-        auto &animator = go->getComponent<Animator>();
-
+        ImGui::Text("Please select a texture first!");
         ImGui::Separator();
-        ImGui::Text("Animator");
-
-        // Show current animation
-        ImGui::Text("Current Animation: %s", animator.currentAnimation.c_str());
-
-        // Dropdown for all animations in the map
-        if (ImGui::BeginCombo("Animation", animator.currentAnimation.c_str()))
-        {
-            for (auto &[name, anim] : animator.animationMap->getAnimations())
-            {
-                bool selected = (name == animator.currentAnimation);
-                if (ImGui::Selectable(name.c_str(), selected))
-                {
-                    animator.play(name, anim.loop);
-                }
-                if (selected)
-                    ImGui::SetItemDefaultFocus();
-            }
-            ImGui::EndCombo();
-        }
-
-        // Play/Pause buttons
-        if (ImGui::Button(animator.animationPlayer.isPlaying() ? "Pause" : "Play"))
-        {
-            if (animator.animationPlayer.isPlaying())
-                animator.animationPlayer.pause();
-            else
-                animator.animationPlayer.play(animator.animationMap->getAnimation(animator.currentAnimation), true);
-        }
-
-        ImGui::SameLine();
-
-        if (ImGui::Button("Stop"))
-            animator.animationPlayer.stop();
+        if (ImGui::Button("OK", ImVec2(120, 0)))
+            ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
     }
 
-    // TODO: not showing? why??
-    // if (ImGui::BeginPopupModal("MissingAnimationPopup", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-    // {
-    //     ImGui::Text("Please select an animation JSON first!");
-    //     ImGui::Separator();
+    // Sprite picker
+    if (ImGui::BeginPopupModal("Select Sprite", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        m_texturePanel.renderSelectedTexSheetPanel(true, [&](Sprite &sprite)
+                                                   {
+            if (auto go = m_ctx.sceneManager.getActiveScene().getActiveGameObject()) {
+                if (go->hasComponent<Sprite>())
+                    go->removeComponent<Sprite>();
 
-    //     if (ImGui::Button("OK", ImVec2(120, 0)))
-    //         ImGui::CloseCurrentPopup();
+                go->addComponent<Sprite>(
+                    getTexturePathFromJson(m_ctx.selectedTextureJsonPath),
+                    sprite.getTextureCoordinates());
+            } });
+        if (ImGui::Button("Cancel"))
+            ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+    }
 
-    //     ImGui::EndPopup();
-    // }
-
-    ImGui::End();
+    // Missing animation
+    if (ImGui::BeginPopupModal("MissingAnimationPopup", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::Text("Please select an animation JSON first!");
+        ImGui::Separator();
+        if (ImGui::Button("OK", ImVec2(120, 0)))
+            ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+    }
 }

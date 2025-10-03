@@ -70,6 +70,28 @@ void EditorMouseController::Update(
         }
     }
 
+    // handle right-click for to bringup properties editor
+    if (mouse->wasMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
+    {
+        ctx.showPropertiesPopup = false;
+
+        for (const GameObject &obj : gameObjects)
+        {
+            if (obj.containsPoint(mouseWorldPos))
+            {
+                scene.setActiveGameObject(obj.getEntityId());
+                ctx.showPropertiesPopup = true;
+
+                // store popup position
+                ImVec2 mousePos = ImGui::GetMousePos();
+                ctx.propertiesPopupPos = ImVec2(mousePos.x + 15, mousePos.y);
+
+                ImGui::OpenPopup("PropertiesPopup");
+                break;
+            }
+        }
+    }
+
     // handle object being dragged
     bool draggingOnGameObject = mouse->isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT) && activeGameObject;
     if (draggingOnGameObject)
@@ -117,7 +139,7 @@ void EditorMouseController::moveCamera(EditorContext &ctx, int framebufferWidth,
 {
     Scene &scene = ctx.sceneManager.getActiveScene();
     std::shared_ptr<Camera> camera = scene.getCamera();
-    
+
     // Scale screen (window) coordinates to framebuffer space
     int winWidth, winHeight;
     glfwGetWindowSize(ctx.window.getGlfwWindow(), &winWidth, &winHeight);

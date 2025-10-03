@@ -18,4 +18,16 @@ private:
 
 private:
     void renderPropertiesPanel();
+    void renderPropertiesInWindow();
+    void renderPropertiesInPopup();
+
+    void drawSize(GameObject *go);
+    void drawTransform(GameObject *go);
+    void drawLayer(GameObject *go);
+    void drawSpriteSettings(GameObject *go);
+    void drawAddComponentCombo(GameObject *go);
+    void drawRigidBodySettings(GameObject *go);
+    void drawBoxColliderSettings(GameObject *go);
+    void drawAnimatorSettings(GameObject *go);
+    void drawPopups();
 };
