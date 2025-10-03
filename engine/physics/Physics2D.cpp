@@ -145,7 +145,7 @@ void Physics2D::syncTransforms(const std::vector<GameObject> &gameObjects)
         if (b2Body_IsValid(rb.m_runtimeBody))
         {
             b2Transform t = b2Body_GetTransform(rb.m_runtimeBody);
-            transform.setPosition(t.p.x, t.p.y, 0);
+            transform.setPosition(t.p.x, t.p.y, transform.getPosition()->z);
             // transform.getRotation()->z = glm::degrees(t.q.angle);
         }
     }

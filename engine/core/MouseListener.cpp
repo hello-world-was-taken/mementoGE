@@ -41,10 +41,12 @@ void MouseListener::mouseButtonCallback(GLFWwindow *window, int button, int acti
     {
         listener->m_buttonStates[button] = true;
         listener->m_buttonPressed[button] = true;
+        listener->m_buttonReleased[button] = false;
     }
     else if (action == GLFW_RELEASE)
     {
         listener->m_buttonStates[button] = false;
+        listener->m_buttonPressed[button] = false;
         listener->m_buttonReleased[button] = true;
     }
 }

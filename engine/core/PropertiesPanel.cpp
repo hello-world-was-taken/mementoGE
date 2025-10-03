@@ -200,7 +200,7 @@ void PropertiesPanel::drawAddComponentCombo(GameObject *go)
             if (!m_ctx.selectedTextureJsonPath.empty())
             {
                 auto animMap = AssetManager::instance().getAnimationMap(m_ctx.selectedTextureJsonPath);
-                go->addComponent<Animator>(animMap, "run");
+                go->addComponent<Animator>(animMap, "idle");
             }
             else
             {

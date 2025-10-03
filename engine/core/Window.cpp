@@ -38,6 +38,7 @@ Window::Window(float width, float height)
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_DEPTH_TEST);
 }
 
 // TODO: Remove all the resources we used

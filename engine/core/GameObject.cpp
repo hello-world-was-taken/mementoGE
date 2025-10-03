@@ -117,8 +117,10 @@ std::vector<glm::vec3> GameObject::getWorldCoordinateQuad() const
 {
     Transform transform = getComponent<Transform>();
     glm::mat4x4 modelMatrix = transform.getModelMatrix();
+
     std::vector<glm::vec3> quad = getQuad();
     std::vector<glm::vec3> transformedQuad = quad;
+
     for (int i = 0; i < quad.size(); i++)
     {
         transformedQuad[i] = modelMatrix * glm::vec4(quad[i], 1.0f);

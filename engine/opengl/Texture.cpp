@@ -27,7 +27,8 @@ Texture::Texture(const char *texture_path, int texture_unit, bool isTextureAtlas
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, this->m_width, this->m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_texture_buffer);
+    GLenum format = (m_nrChannels == 4) ? GL_RGBA : GL_RGB;
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, this->m_width, this->m_height, 0, format, GL_UNSIGNED_BYTE, m_texture_buffer);
 
     if (m_texture_buffer)
     {
@@ -66,7 +67,7 @@ void Texture::bind() const
 
 void Texture::unbind() const
 {
-    // glBindTexture(GL_TEXTURE_2D, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 // TODO: Add other properties to serialize

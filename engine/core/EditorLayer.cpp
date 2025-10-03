@@ -65,7 +65,7 @@ void EditorLayer::update()
 
             // clearing our off screen frame buffer before each render
             glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-            glClear(GL_COLOR_BUFFER_BIT);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             renderGrid();
             m_ctx.sceneManager.update();
@@ -177,12 +177,59 @@ void EditorLayer::renderEditorProperties()
     ImGui::Separator();
     ImGui::Checkbox("Draw Grid", &m_drawGrid);
 
+    drawMouseDebugPanel();
+
     ImGui::End();
 }
 
 void EditorLayer::handleSceneInteraction()
 {
     // Use mouseListener and viewport coordinates to select or modify objects
+}
+
+void EditorLayer::drawMouseDebugPanel()
+{
+    ImGui::Separator();
+    ImGui::Text("Mouse Debug");
+
+    MouseListener *mouse = MouseListener::instance();
+
+    // Current position
+    glm::vec2 pos = mouse->getMouseScreenPosition();
+    glm::vec2 prev = mouse->getPrevMouseScreenPosition();
+    glm::vec2 delta = mouse->getMouseDelta();
+    glm::vec2 scroll = mouse->getScrollDelta();
+
+    ImGui::Text("Mouse Position: (%.1f, %.1f)", pos.x, pos.y);
+    ImGui::Text("Previous Position: (%.1f, %.1f)", prev.x, prev.y);
+    ImGui::Text("Delta: (%.1f, %.1f)", delta.x, delta.y);
+    ImGui::Text("Scroll Delta: (%.1f, %.1f)", scroll.x, scroll.y);
+
+    ImGui::Separator();
+
+    // Show states for common mouse buttons
+    struct ButtonInfo
+    {
+        int id;
+        const char *name;
+    };
+    std::vector<ButtonInfo> buttons = {
+        {GLFW_MOUSE_BUTTON_LEFT, "Left"},
+        {GLFW_MOUSE_BUTTON_RIGHT, "Right"},
+        {GLFW_MOUSE_BUTTON_MIDDLE, "Middle"}};
+
+    for (const auto &btn : buttons)
+    {
+        bool held = mouse->isMouseButtonHeld(btn.id);
+        bool pressed = mouse->wasMouseButtonPressed(btn.id);
+        bool released = mouse->wasMouseButtonReleased(btn.id);
+
+        ImGui::Text("%s Button: Held=%s, Pressed=%s, Released=%s",
+                    btn.name,
+                    held ? "true" : "false",
+                    pressed ? "true" : "false",
+                    released ? "true" : "false");
+    }
 }
 
 void EditorLayer::handleEvents()

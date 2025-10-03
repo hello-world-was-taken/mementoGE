@@ -38,7 +38,7 @@ void EditorMouseController::Update(
     std::shared_ptr<Camera> camera = scene.getCamera();
 
     auto &gameObjects = scene.getGameObjects();
-    auto activeGameObject = scene.getActiveGameObject();
+    auto prevActiveGameObject = scene.getActiveGameObject();
 
     MouseListener *mouse = MouseListener::instance();
     glm::vec2 mouseWorldPos = getWorldCoordinate(camera, imagePos, imageSize, framebufferWidth, framebufferHeight);
@@ -46,27 +46,24 @@ void EditorMouseController::Update(
     // check for button click on an object
     if (mouse->wasMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT))
     {
-        for (const GameObject &obj : gameObjects)
-        {
-            if (obj.containsPoint(mouseWorldPos))
-            {
-                scene.setActiveGameObject(obj.getEntityId());
-                auto activeGameObject = scene.getActiveGameObject();
+        auto clickedObject = getGameObjectAt(scene, mouseWorldPos);
 
-                // store offset between object origin and mouse world position to avoid initial sharp mov't
-                if (activeGameObject)
-                {
-                    glm::vec3 *objPos = activeGameObject->getComponent<Transform>().getPosition();
-                    m_dragOffset = glm::vec2(objPos->x, objPos->y) - mouseWorldPos;
-                }
-                break;
-            }
-            else
+        if (clickedObject)
+        {
+            scene.setActiveGameObject(clickedObject->get().getEntityId());
+            auto activeGameObject = scene.getActiveGameObject();
+
+            // store offset between object origin and mouse world position to avoid initial sharp mov't
+            if (activeGameObject)
             {
-                // the user clicked on empty space
-                scene.setActiveGameObject(entt::null);
-                activeGameObject = nullptr;
+                glm::vec3 *objPos = activeGameObject->getComponent<Transform>().getPosition();
+                m_dragOffset = glm::vec2(objPos->x, objPos->y) - mouseWorldPos;
             }
+        }
+        else
+        {
+            // the user clicked on empty space
+            scene.setActiveGameObject(entt::null);
         }
     }
 
@@ -74,32 +71,32 @@ void EditorMouseController::Update(
     if (mouse->wasMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
     {
         ctx.showPropertiesPopup = false;
+        auto clickedObject = getGameObjectAt(scene, mouseWorldPos);
 
-        for (const GameObject &obj : gameObjects)
+        if (clickedObject)
         {
-            if (obj.containsPoint(mouseWorldPos))
-            {
-                scene.setActiveGameObject(obj.getEntityId());
-                ctx.showPropertiesPopup = true;
+            scene.setActiveGameObject(clickedObject->get().getEntityId());
+            ctx.showPropertiesPopup = true;
 
-                // store popup position
-                ImVec2 mousePos = ImGui::GetMousePos();
-                ctx.propertiesPopupPos = ImVec2(mousePos.x + 15, mousePos.y);
+            // store popup position
+            ImVec2 mousePos = ImGui::GetMousePos();
+            ctx.propertiesPopupPos = ImVec2(mousePos.x + 15, mousePos.y);
 
-                ImGui::OpenPopup("PropertiesPopup");
-                break;
-            }
+            ImGui::OpenPopup("PropertiesPopup");
         }
     }
 
     // handle object being dragged
-    bool draggingOnGameObject = mouse->isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT) && activeGameObject;
+    auto currActiveGameObject = scene.getActiveGameObject();
+    bool similarGameObjectClicked = (prevActiveGameObject && currActiveGameObject) && (prevActiveGameObject->getEntityId() == currActiveGameObject->getEntityId());
+
+    bool draggingOnGameObject = mouse->isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT) && similarGameObjectClicked;
     if (draggingOnGameObject)
     {
-        moveGameObject(activeGameObject, mouseWorldPos);
+        moveGameObject(currActiveGameObject, mouseWorldPos);
     }
 
-    bool draggingOnEmptySpace = mouse->isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT) && !activeGameObject;
+    bool draggingOnEmptySpace = mouse->isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT) && !currActiveGameObject;
     if (draggingOnEmptySpace)
     {
         moveCamera(ctx, framebufferWidth, framebufferHeight);
@@ -124,14 +121,15 @@ void EditorMouseController::moveGameObject(GameObject *activeGameObject, glm::ve
         float snappedX = std::floor(mouseWorldPos.x / gridSize) * gridSize;
         float snappedY = std::floor(mouseWorldPos.y / gridSize) * gridSize;
 
-        activeGameObject->getComponent<Transform>().setPosition(snappedX, snappedY, 0.0f);
+        Transform &transform = activeGameObject->getComponent<Transform>();
+        transform.setPosition(snappedX, snappedY, transform.getPosition()->z);
     }
     else if (m_movementMode == MovementMode::Free)
     {
         glm::vec2 newPos = mouseWorldPos + m_dragOffset;
-        Transform &transform = activeGameObject->getComponent<Transform>();
 
-        activeGameObject->getComponent<Transform>().setPosition(newPos.x, newPos.y, 0.0f);
+        Transform &transform = activeGameObject->getComponent<Transform>();
+        transform.setPosition(newPos.x, newPos.y, transform.getPosition()->z);
     }
 }
 
@@ -150,6 +148,35 @@ void EditorMouseController::moveCamera(EditorContext &ctx, int framebufferWidth,
     glm::vec2 dragDelta = MouseListener::instance()->getMouseDelta();
 
     camera->setPosition(camera->getPosition() - glm::vec3(dragDelta.x * scaleX, dragDelta.y * scaleY, 0.0f));
+}
+
+std::optional<std::reference_wrapper<const GameObject>>
+EditorMouseController::getGameObjectAt(Scene &scene, glm::vec2 mouseWorldPos)
+{
+    for (const auto &obj : scene.getGameObjects())
+    {
+        const GameObject *topObject = nullptr;
+        float topZ = -std::numeric_limits<float>::infinity();
+
+        for (const auto &obj : scene.getGameObjects())
+        {
+            if (obj.containsPoint(mouseWorldPos))
+            {
+                Transform &transform = obj.getComponent<Transform>();
+                float z = transform.getPosition()->z;
+
+                if (z > topZ) // pick the object with the highest z
+                {
+                    topZ = z;
+                    topObject = &obj;
+                }
+            }
+        }
+
+        if (topObject)
+            return *topObject; // reference_wrapper auto-constructed
+    }
+    return std::nullopt;
 }
 
 glm::vec2 EditorMouseController::getWorldCoordinate(std::shared_ptr<Camera> camera, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight)

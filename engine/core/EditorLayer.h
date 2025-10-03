@@ -26,7 +26,7 @@ public:
 
     void prepare();
     void update();
-    void drawEditorUI();          // Render ImGui windows here
+    void drawEditorUI(); // Render ImGui windows here
 
     void setScene(std::shared_ptr<Scene> scene);
 
@@ -35,6 +35,7 @@ private:
     void renderGrid();
     void renderPerformancePanel();
     void renderEditorProperties();
+    void drawMouseDebugPanel();
 
     void handleSceneInteraction();
     void handleEvents();

@@ -36,6 +36,6 @@ private:
     glm::vec2 m_scrollDelta = {0.0f, 0.0f};
 
     std::unordered_map<int, bool> m_buttonStates;   // current frame state
-    std::unordered_map<int, bool> m_buttonPressed;  // pressed this frame
-    std::unordered_map<int, bool> m_buttonReleased; // released this frame
+    std::unordered_map<int, bool> m_buttonPressed;  // pressed after previous render
+    std::unordered_map<int, bool> m_buttonReleased; // released after previous render
 };
