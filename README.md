@@ -122,8 +122,5 @@ The engine now supports basic 2D sprite animations via JSON-defined animation ma
 Currently, each sprite’s JSON **must include an animation named `idle`**, as this is used as the default animation when an Animator component is added to a GameObject.
 
 
-Contributing
+### Contributing
 Feel free to fork and contribute via pull requests! Bug fixes, improvements, and new features are all welcome.
-
-License
-MIT License © 2025 hello_world_was_taken
