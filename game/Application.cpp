@@ -9,12 +9,12 @@
 #include "engine/core/Scene.h"
 #include "engine/core/Sprite.h"
 #include "engine/core/Event.h"
+#include "engine/core/Constants.h"
 
 #include "util/Time.h"
 
 Application::Application(bool editorMode)
-    : // using 16:9 for window size to match our virtual screen setup
-      mWindow{1280, 720},
+    : mWindow{WINDOW_WIDTH, WINDOW_HEIGHT},
       mSceneManager{&mWindow},
       m_editorMode{editorMode},
       m_editorLayer{mWindow}

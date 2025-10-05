@@ -7,7 +7,7 @@ in vec2 v_texture_coordinate;
 in float v_tex_index;
 
 uniform vec4 our_color;
-uniform sampler2D textures[8];
+uniform sampler2D textures[16];
 
 void main()
 {
@@ -17,7 +17,7 @@ void main()
         // Use only vertex color (for colliders or non-textured geometry)
         FragColor = v_color;
         return;
-    } else if (slot > 7) {
+    } else if (slot > 15) {
         FragColor = v_color; // fallback
         return;
     }

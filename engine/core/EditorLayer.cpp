@@ -9,6 +9,7 @@
 #include "core/SpriteSheet.h"
 #include "core/PropertiesPanel.h"
 #include "core/EditorMouseController.h"
+#include "core/Constants.h"
 
 #include "physics/BoxCollider2D.h"
 #include "physics/CircleCollider2D.h"
@@ -31,8 +32,8 @@ EditorLayer::EditorLayer(Window &window)
       m_scenePanel{m_ctx},
       m_texturePanel{m_ctx},
       m_propertiesPanel{m_ctx, m_texturePanel},
-      m_gridRenderer{static_cast<int>(m_screen_width),
-                     static_cast<int>(m_screen_height), 32, m_ctx.editorCamera}
+      m_gridRenderer{static_cast<int>(LOGICAL_WIDTH),
+                     static_cast<int>(LOGICAL_HEIGHT), 32, m_ctx.editorCamera}
 {
     m_ctx.sceneManager.deserialize();
     m_ctx.sceneManager.prepare();
@@ -59,6 +60,8 @@ void EditorLayer::update()
     ImGuiWrapper::ImGuiFrame(
         [&]()
         {
+            m_ctx.frameBuffer.resize();
+
             m_ctx.frameBuffer.bind();
 
             ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);

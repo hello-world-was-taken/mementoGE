@@ -51,10 +51,6 @@ private:
     MovementMode m_movementMode = MovementMode::Free;
     bool m_drawGrid = false;
 
-    // logical game world screen size. Should be kept in sync with scene.h
-    float m_screen_width = 32.0f * 16.0f; // 16 tiles of 32 pixels = 512 pixels
-    float m_screen_height = 32.0f * 9.0f; // 9 tiles of 32 pixels = 288 pixels
-
     GridRenderer m_gridRenderer;
     PhysicsRenderer m_physicsRenderer{};
 };

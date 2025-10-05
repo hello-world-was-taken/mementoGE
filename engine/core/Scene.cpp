@@ -41,8 +41,6 @@ Scene::Scene(const YAML::Node &&serializedScene)
 Scene::Scene(Scene &&other) noexcept
     : m_registry{std::move(other.m_registry)}
 {
-    m_screen_height = other.m_screen_height;
-    m_screen_width = other.m_screen_width;
     m_camera = std::move(other.m_camera);
     m_textures = std::move(other.m_textures);
     mTag = std::move(other.mTag);
@@ -66,8 +64,6 @@ Scene::Scene(Scene &&other) noexcept
 
 Scene &Scene::operator=(Scene &&other)
 {
-    m_screen_height = other.m_screen_height;
-    m_screen_width = other.m_screen_width;
     m_registry = std::move(other.m_registry);
     m_gameObjects = std::move(other.m_gameObjects);
     m_camera = std::move(other.m_camera);

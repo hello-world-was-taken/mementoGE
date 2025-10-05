@@ -19,8 +19,16 @@ public:
     FrameBuffer(float width, float height);
     ~FrameBuffer();
 
+    void init();
+    void destory();
+
     void bind() const;
     void unbind() const;
+
+    void updateSize(int width, int height);
+    void resize();
+
+    bool shouldResize() const;
 
     /**
      * @brief Gets the color texture associated with the framebuffer.
@@ -32,8 +40,9 @@ public:
     unsigned int getColorTexture() const;
 
 private:
-    unsigned int m_fbo;                // Framebuffer object
+    unsigned int m_fbo;
     unsigned int m_textureColorBuffer; // Color texture attached to the framebuffer
     unsigned int m_rbo;                // Renderbuffer for depth/stencil
-    float m_width, m_height;             // Dimensions of the framebuffer
+    float m_width, m_height;
+    bool m_shouldResize;
 };

@@ -27,29 +27,23 @@ std::shared_ptr<SpriteSheet> SpriteSheet::fromJson(const std::filesystem::path &
     std::shared_ptr<SpriteSheet> spriteSheet = std::make_shared<SpriteSheet>(tex);
     spriteSheet->m_jsonPath = jsonPath;
 
-    spriteSheet->m_spriteW = data["spriteWidth"];
-    spriteSheet->m_spriteH = data["spriteHeight"];
-    spriteSheet->m_spriteGapX = data["spriteGapX"];
-    spriteSheet->m_spriteGapY = data["spriteGapY"];
-
-    spriteSheet->m_columns = data["columns"];
-    spriteSheet->m_spriteCount = data["spriteCount"];
-
-    for (int i = 0; i < spriteSheet->m_spriteCount; i++)
+    for (auto &[frameName, frameInfo] : data["frames"].items())
     {
-
-        int col = i % spriteSheet->m_columns;
-        int row = i / spriteSheet->m_columns;
-
-        Sprite s{};
-        float x = col * (spriteSheet->m_spriteW + spriteSheet->m_spriteGapX);
-        float y = row * (spriteSheet->m_spriteH + spriteSheet->m_spriteGapY);
-
-        spriteSheet->addSprite(Sprite(
+        const auto &frame = frameInfo["frame"];
+        Sprite s{
             texturePath,
-            glm::vec2{x, y},
-            spriteSheet->m_spriteW,
-            spriteSheet->m_spriteH));
+            {frame["x"].get<float>(),
+             frame["y"].get<float>()},
+            frame["w"].get<float>(),
+            frame["h"].get<float>()};
+
+        spriteSheet->addSprite(
+            Sprite{
+                texturePath,
+                {frame["x"].get<float>(),
+                 frame["y"].get<float>()},
+                frame["w"].get<float>(),
+                frame["h"].get<float>()});
     }
 
     return spriteSheet;

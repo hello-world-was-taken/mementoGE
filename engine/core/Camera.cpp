@@ -1,8 +1,9 @@
+#include "core/Camera.h"
+#include "core/Constants.h"
+
 #include <iostream>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
-
-#include "core/Camera.h"
 
 Camera::Camera(float width, float height) : m_width(width), m_height(height)
 {
@@ -27,39 +28,23 @@ void Camera::updateView()
     m_view = glm::translate(glm::mat4(1.0f), -glm::vec3(m_position, 0.0f));
 }
 
-// using virtual aspect ratio to avoid squishing and stretching
 void Camera::updateProjection(float fbWidth, float fbHeight)
 {
-    float aspectFramebuffer = fbWidth / fbHeight;
-    float aspectVirtual = m_width / m_height;
+    // game world units per pixel
+    float unitsPerPixelX = m_width / WINDOW_WIDTH;
+    float unitsPerPixelY = m_height / WINDOW_HEIGHT;
 
-    float newWidth = m_width;
-    float newHeight = m_height;
-
-    if (aspectFramebuffer > aspectVirtual)
-    {
-        // Framebuffer is wider than virtual
-        newWidth = m_height * aspectFramebuffer;
-    }
-    else
-    {
-        // Framebuffer is taller than virtual
-        newHeight = m_width / aspectFramebuffer;
-    }
-
-    // apply zooming
-    newHeight *= m_zoom;
-    newWidth = newHeight * aspectFramebuffer;
+    float newLogicalWidth = unitsPerPixelX * fbWidth;
+    float newLogicalHeight = unitsPerPixelY * fbHeight;
 
     m_projection = glm::ortho(
-        0.0f, newWidth,
-        0.0f, newHeight,
+        0.0f, newLogicalWidth,
+        0.0f, newLogicalHeight,
         -100.0f, 100.0f);
 }
 
 void Camera::onWindowResize(int framebufferWidth, int framebufferHeight)
 {
-    // TODO: is this needed when using a custom frame buffer
     updateProjection(static_cast<float>(framebufferWidth), static_cast<float>(framebufferHeight));
 }
 

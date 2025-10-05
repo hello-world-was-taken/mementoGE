@@ -16,23 +16,23 @@
 class Window
 {
 public:
-    // TODO: default width height needs to go
-    Window(float m_width = 1280, float m_height = 720);
+    Window(float m_width, float m_height);
     ~Window();
+
+    static void frameBufferSizeResizeCallback(GLFWwindow *window, int width, int height);
+    static float getWindowTime();
 
     void initializeWindow();
     void run(const std::function<void()> &frameFunc, const std::function<void()> &cleanupFunc);
 
     void setupCallBack() const;
+    void setUserData(Camera *c);
     GLFWwindow *getGlfwWindow();
-    static void frameBufferSizeResizeCallback(GLFWwindow *window, int width, int height);
-    void updateViewPort();
+
     float getWidth() const;
     float getHeight() const;
-    void closeWindow();
-    void setUserData(Camera *c);
 
-    static float getWindowTime();
+    void closeWindow();
 
 public:
     float m_width;

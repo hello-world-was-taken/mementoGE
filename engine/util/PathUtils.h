@@ -58,5 +58,5 @@ inline std::filesystem::path getTexturePathFromJson(const std::string &jsonTextu
     nlohmann::json data;
     file >> data;
 
-    return getFilePath("assets/texture") / data["texture"];
+    return getFilePath("assets/texture") / data["meta"]["texture"];
 }

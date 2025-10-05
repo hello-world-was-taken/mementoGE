@@ -23,40 +23,41 @@ std::shared_ptr<AnimationMap> AnimationMap::fromJson(const std::filesystem::path
     auto animMap = std::make_shared<AnimationMap>(tex);
     animMap->setJsonPath(jsonPath);
 
-    float spriteW = data["spriteWidth"];
-    float spriteH = data["spriteHeight"];
-    float spriteGapX = data["spriteGapX"];
-    float spriteGapY = data["spriteGapY"];
+    // parse the frames
+    std::unordered_map<std::string, Frame> frameLookup;
+    for (auto &[frameName, frameInfo] : data["frames"].items())
+    {
+        const auto &frame = frameInfo["frame"];
+        Frame f;
+        f.sprite = Sprite{
+            texturePath,
+            {frame["x"].get<float>(),
+             frame["y"].get<float>()},
+            frame["w"].get<float>(),
+            frame["h"].get<float>()};
 
-    int columns = data["columns"];
+        f.duration = 0.1; // todo: should we make this part of the frame in our metadata?
+        frameLookup[frameName] = f;
+    }
 
-    for (auto &[name, animData] : data["animations"].items())
+    // build animations
+    for (auto &[animName, animInfo] : data["animations"].items())
     {
         Animation anim;
-        anim.name = name;
-        anim.loop = animData["loop"];
+        anim.name = animName;
 
-        int startFrame = animData["startFrame"];
-        int count = animData["frameCount"];
-        float duration = animData["duration"];
-
-        for (int i = 0; i < count; i++)
+        // Each animation lists frame *keys* (e.g. "run01", "run02", etc.)
+        for (auto &frameEntry : animInfo["frames"])
         {
-            int frameIndex = startFrame + i;
+            std::string frameKey;
+            frameKey = frameEntry.get<std::string>();
 
-            int col = frameIndex % columns;
-            int row = frameIndex / columns;
+            auto it = frameLookup.find(frameKey);
+            if (it == frameLookup.end())
+                continue;
 
-            Frame f;
-            // TODO: handle initial frame gaps
-            float x = col * (spriteW + spriteGapX);
-            float y = row * (spriteH + spriteGapY);
-
-            f.sprite = Sprite{texturePath, {x, y}, spriteW, spriteH};
-            f.duration = duration;
-
-            // TODO: emplace_back perhaps
-            anim.frames.push_back(f);
+            const Frame &frame = it->second;
+            anim.frames.push_back(frame);
         }
 
         animMap->addAnimation(anim);

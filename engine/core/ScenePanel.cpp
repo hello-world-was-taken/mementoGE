@@ -77,11 +77,19 @@ void ScenePanel::renderSceneViewport()
     }
 
     // Inside ImGui window
-    ImVec2 imGuiWindowSize = ImGui::GetContentRegionAvail();
+    ImVec2 imGuiWindowSize = ImGui::GetContentRegionAvail(); // logical units
+    ImGuiIO &io = ImGui::GetIO();
+    int pixelWidth = (int)(imGuiWindowSize.x * io.DisplayFramebufferScale.x + 0.5f);
+    int pixelHeight = (int)(imGuiWindowSize.y * io.DisplayFramebufferScale.y + 0.5f);
+
+    // fallback to at least 1x1
+    pixelWidth = std::max(1, pixelWidth);
+    pixelHeight = std::max(1, pixelHeight);
+
+    m_ctx.frameBuffer.updateSize(pixelWidth, pixelHeight);
 
     m_ctx.sceneManager.getActiveScene().getCamera()->updateProjection(
-        imGuiWindowSize.x, imGuiWindowSize.y);
-    // Render framebuffer texture (off-screen rendered texture)
+        pixelWidth, pixelHeight);
     unsigned int framebufferTexture = m_ctx.frameBuffer.getColorTexture();
     ImGui::Image(framebufferTexture, imGuiWindowSize, ImVec2{0, 1}, ImVec2{1, 0});
 

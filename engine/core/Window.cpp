@@ -15,8 +15,6 @@ Window::Window(float width, float height)
     setupWindowHints();
 
     m_glfw_window = glfwCreateWindow(m_width, m_height, m_title, NULL, NULL);
-    // TODO: This isn't doing anything right now.
-    updateViewPort();
 
     glfwMakeContextCurrent(m_glfw_window);
     glfwSetFramebufferSizeCallback(m_glfw_window, frameBufferSizeResizeCallback);
@@ -83,7 +81,7 @@ void Window::setupWindowHints() const
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    // glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
@@ -125,28 +123,6 @@ void Window::frameBufferSizeResizeCallback(GLFWwindow *window, int width, int he
     {
         cam->onWindowResize(fbWidth, fbHeight);
     }
-}
-
-/*
-    On high DPI displays and Retina Displays, the framebuffer size may be different from the window size. The code below retrieves the size, in pixels, of the framebuffer of the specified window.
-    Therefore when we map our frustum to the screen with our field of view, we use the framebuffer size. If you wish to retrieve the size of the window in screen coordinates, see glfwGetWindowSize.
-
-    Initially when the window is created, glViewPort is set to the size of the window. This shouldn't be
-    the case, as mentioned above, we should set the viewport to the framebuffer size. This is why we should
-    call this function once after the window is created.
-
-    As for when it is resized, Window::frameBufferSizeResizeCallback will update the view port to the new
-    framebuffer size.
-
-    https://www.glfw.org/docs/3.3/window_guide.html#window_fbsize
-
-    NOTE: we are now using our own framebuffer to render to with imgui docking. For now the glfwGetFramebufferSize is the same as our custom frame buffer size it is okay.
-*/
-void Window::updateViewPort()
-{
-    int vpSize[2];
-    glfwGetFramebufferSize(getGlfwWindow(), &vpSize[0], &vpSize[1]);
-    glViewport(0, 0, vpSize[0], vpSize[1]);
 }
 
 void Window::closeWindow()

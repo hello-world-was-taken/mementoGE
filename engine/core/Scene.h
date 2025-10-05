@@ -9,6 +9,7 @@
 #include "core/GameObject.h"
 #include "core/Transform.h"
 #include "core/Camera.h"
+#include "core/Constants.h"
 
 #include "physics/Physics2D.h"
 
@@ -61,10 +62,6 @@ public:
     Physics2D &getPhysics2d();
 
 private:
-    // logical game world screen size
-    float m_screen_width = 32.0f * 16.0f; // 16 tiles of 32 pixels = 512 pixels
-    float m_screen_height = 32.0f * 9.0f; // 9 tiles of 32 pixels = 288 pixels
-
     bool m_play;
 
     Physics2D m_physicsWorld{{0.0f, -9.8f}};
@@ -72,7 +69,7 @@ private:
 
     entt::registry m_registry;
     std::vector<GameObject> m_gameObjects;
-    std::shared_ptr<Camera> m_camera = std::make_shared<Camera>(m_screen_width, m_screen_height);
+    std::shared_ptr<Camera> m_camera = std::make_shared<Camera>(LOGICAL_WIDTH, LOGICAL_HEIGHT);
 
     std::vector<std::shared_ptr<Texture>> m_textures;
     std::optional<entt::entity> m_activeEntityId;

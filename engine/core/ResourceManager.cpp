@@ -4,6 +4,7 @@
 #include "opengl/Texture.h"
 
 #include <memory>
+#include <stdexcept>
 
 ResourceManager &ResourceManager::instance()
 {
@@ -33,6 +34,12 @@ std::shared_ptr<Shader> ResourceManager::getShaderProgram(const std::string &ver
 std::shared_ptr<Texture> ResourceManager::getTexture(const std::string &texturePath,
                                                      bool isSpriteSheet)
 {
+    if (textureUnit == 16)
+    {
+        // we use textureUnit 16 for framebuffer texture
+        throw std::runtime_error("mementoGE: Max texture limit reached!");
+    }
+
     auto it = textures.find(texturePath);
     if (it == textures.end())
     {
