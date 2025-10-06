@@ -5,16 +5,14 @@
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 
-Camera::Camera(float width, float height) : m_width(width), m_height(height)
+Camera::Camera()
 {
     m_projection = glm::mat4(1.0f);
     m_view = glm::mat4(1.0f);
     m_position = glm::vec3(0.0f);
 
     updateView();
-    // TODO: this is not using the framebuffer when we
-    // instantiate it in the scene
-    updateProjection(width, height);
+    // Note: projection is updated in Window::setUserData for initial projection update
 }
 
 Camera::~Camera()
@@ -31,16 +29,23 @@ void Camera::updateView()
 void Camera::updateProjection(float fbWidth, float fbHeight)
 {
     // game world units per pixel
-    float unitsPerPixelX = m_width / WINDOW_WIDTH;
-    float unitsPerPixelY = m_height / WINDOW_HEIGHT;
+    float unitsPerPixelX = LOGICAL_WIDTH / WINDOW_WIDTH;
+    float unitsPerPixelY = LOGICAL_HEIGHT / WINDOW_HEIGHT;
 
     float newLogicalWidth = unitsPerPixelX * fbWidth;
     float newLogicalHeight = unitsPerPixelY * fbHeight;
 
+    // for the editor
     m_projection = glm::ortho(
         0.0f, newLogicalWidth,
         0.0f, newLogicalHeight,
         -100.0f, 100.0f);
+
+    // for the game
+    // m_projection = glm::ortho(
+    //     0.0f, LOGICAL_WIDTH,
+    //     0.0f, LOGICAL_HEIGHT,
+    //     -100.0f, 100.0f);
 }
 
 void Camera::onWindowResize(int framebufferWidth, int framebufferHeight)

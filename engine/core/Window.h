@@ -16,7 +16,7 @@
 class Window
 {
 public:
-    Window(float m_width, float m_height);
+    Window();
     ~Window();
 
     static void frameBufferSizeResizeCallback(GLFWwindow *window, int width, int height);
@@ -34,12 +34,7 @@ public:
 
     void closeWindow();
 
-public:
-    float m_width;
-    float m_height;
-
 private:
     GLFWwindow *m_glfw_window;
-    const char *m_title = "MementoGE";
     void setupWindowHints() const;
 };

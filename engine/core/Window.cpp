@@ -2,11 +2,11 @@
 #include "core/MouseListener.h"
 #include "core/EventHandler.h"
 #include "core/Camera.h"
+#include "core/Constants.h"
 
 #include "util/Time.h"
 
-Window::Window(float width, float height)
-    : m_width(width), m_height(height)
+Window::Window()
 {
     /* Init GLFW */
     if (!glfwInit())
@@ -14,7 +14,7 @@ Window::Window(float width, float height)
 
     setupWindowHints();
 
-    m_glfw_window = glfwCreateWindow(m_width, m_height, m_title, NULL, NULL);
+    m_glfw_window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, NULL, NULL);
 
     glfwMakeContextCurrent(m_glfw_window);
     glfwSetFramebufferSizeCallback(m_glfw_window, frameBufferSizeResizeCallback);
@@ -67,12 +67,12 @@ void Window::run(const std::function<void()> &frameFunc, const std::function<voi
 
 float Window::getWidth() const
 {
-    return m_width;
+    return WINDOW_WIDTH;
 }
 
 float Window::getHeight() const
 {
-    return m_height;
+    return WINDOW_HEIGHT;
 }
 
 void Window::setupWindowHints() const
@@ -135,4 +135,9 @@ void Window::closeWindow()
 void Window::setUserData(Camera *c)
 {
     glfwSetWindowUserPointer(m_glfw_window, c);
+
+    // Trigger initial projection update
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(m_glfw_window, &fbWidth, &fbHeight);
+    c->onWindowResize(fbWidth, fbHeight);
 }

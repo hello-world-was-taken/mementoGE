@@ -35,7 +35,6 @@ EditorLayer::EditorLayer(Window &window)
       m_gridRenderer{static_cast<int>(LOGICAL_WIDTH),
                      static_cast<int>(LOGICAL_HEIGHT), 32, m_ctx.editorCamera}
 {
-    m_ctx.sceneManager.deserialize();
     m_ctx.sceneManager.prepare();
 }
 

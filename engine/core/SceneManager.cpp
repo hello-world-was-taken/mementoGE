@@ -14,6 +14,7 @@
 SceneManager::SceneManager(Window *window)
     : m_window{window}
 {
+    deserialize();
 }
 
 SceneManager::~SceneManager()
@@ -24,7 +25,7 @@ SceneManager::~SceneManager()
 
 void SceneManager::prepare()
 {
-    // TODO: improve the it to avoid such a gymnastics
+    // TODO: what happens when user adds another scene?
     std::shared_ptr<Camera> camera = getActiveScene().getCamera();
     m_window->setUserData(camera.get());
 }

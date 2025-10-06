@@ -4,10 +4,10 @@
 
 #include "core/Camera.h"
 
-
-class Camera {
+class Camera
+{
 public:
-    Camera(float width, float height);
+    Camera();
     ~Camera();
 
     void update(float deltaTime, glm::vec2 translationVector);
@@ -31,9 +31,6 @@ public:
     void updateProjection(float newWidth, float newHeight);
 
 private:
-    float m_width;
-    float m_height;
-
     glm::mat4 m_projection;
     glm::mat4 m_view;
     glm::vec2 m_position; // 2D camera position

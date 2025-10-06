@@ -9,7 +9,6 @@
 #include "core/GameObject.h"
 #include "core/Transform.h"
 #include "core/Camera.h"
-#include "core/Constants.h"
 
 #include "physics/Physics2D.h"
 
@@ -69,7 +68,7 @@ private:
 
     entt::registry m_registry;
     std::vector<GameObject> m_gameObjects;
-    std::shared_ptr<Camera> m_camera = std::make_shared<Camera>(LOGICAL_WIDTH, LOGICAL_HEIGHT);
+    std::shared_ptr<Camera> m_camera = std::make_shared<Camera>();
 
     std::vector<std::shared_ptr<Texture>> m_textures;
     std::optional<entt::entity> m_activeEntityId;

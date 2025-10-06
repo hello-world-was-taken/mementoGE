@@ -14,7 +14,7 @@
 #include "util/Time.h"
 
 Application::Application(bool editorMode)
-    : mWindow{WINDOW_WIDTH, WINDOW_HEIGHT},
+    : mWindow{},
       mSceneManager{&mWindow},
       m_editorMode{editorMode},
       m_editorLayer{mWindow}
@@ -33,7 +33,6 @@ void Application::setup()
     }
     else
     {
-        mSceneManager.deserialize();
         mSceneManager.prepare();
     }
 }

@@ -16,8 +16,8 @@ struct EditorContext
     Window &window;
     SceneManager sceneManager{&window};
 
-    float viewportWidth = 1280.0f * 2;
-    float viewportHeight = 720.0f * 2;
+    float viewportWidth = 1280.0f;
+    float viewportHeight = 720.0f;
 
     bool drawGrid = false;
     std::string selectedTextureJsonPath;
@@ -28,7 +28,7 @@ struct EditorContext
     // TODO: do we need activeScene? we can get it from scene manager
     std::shared_ptr<Scene> activeScene;
     // TODO: seems like only the gridRenderer uses this?
-    std::shared_ptr<Camera> editorCamera{std::make_shared<Camera>(viewportWidth, viewportHeight)};
+    std::shared_ptr<Camera> editorCamera{std::make_shared<Camera>()};
 
     EditorMouseController editorMouseController;
     FrameBuffer frameBuffer{viewportWidth, viewportHeight};
