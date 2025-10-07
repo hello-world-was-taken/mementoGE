@@ -1,14 +1,14 @@
 #pragma once
 
-#include "util/log_error.h"
-#include "opengl/Shader.h"
-
-#include "renderer/SpriteRenderer.h"
-
 #include "core/GLIncludes.h"
 #include "core/GameObject.h"
 #include "core/Transform.h"
-#include "core/Camera.h"
+#include "core/SceneCamera.h"
+
+#include "util/log_error.h"
+
+#include "opengl/Shader.h"
+#include "opengl/Texture.h"
 
 #include "physics/Physics2D.h"
 
@@ -37,7 +37,6 @@ public:
 
     Scene clone(std::string tag);
 
-    void prepare();
     void update();
 
     void play();
@@ -52,7 +51,7 @@ public:
     void setGraivty(glm::vec2 gravity);
 
     const std::vector<GameObject> &getGameObjects();
-    std::shared_ptr<Camera> getCamera() const;
+    SceneCamera &getCamera();
     GameObject *getActiveGameObject();
 
     const std::string &getTag() const;
@@ -64,11 +63,10 @@ private:
     bool m_play;
 
     Physics2D m_physicsWorld{{0.0f, -9.8f}};
-    SpriteRenderer m_spriteRenderer{};
 
     entt::registry m_registry;
     std::vector<GameObject> m_gameObjects;
-    std::shared_ptr<Camera> m_camera = std::make_shared<Camera>();
+    SceneCamera m_sceneCamera;
 
     std::vector<std::shared_ptr<Texture>> m_textures;
     std::optional<entt::entity> m_activeEntityId;

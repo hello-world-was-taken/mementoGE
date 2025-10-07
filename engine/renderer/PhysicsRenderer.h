@@ -22,17 +22,16 @@ public:
     ~PhysicsRenderer();
 
     void render(
-        const std::shared_ptr<Camera> &camera,
+        const Camera &camera,
         const std::vector<GameObject> &gameObjects);
 
 private:
     void updateVertices(
-        const std::shared_ptr<Camera> &camera,
+        const Camera &camera,
         const std::vector<GameObject> &gameObjects);
     void generateIndexArray();
 
 private:
-    std::shared_ptr<Camera> m_camera;
     std::unique_ptr<RenderBatch> m_batch;
     std::vector<GameObject> *m_gameObjects = nullptr;
 

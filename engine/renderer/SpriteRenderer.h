@@ -1,3 +1,5 @@
+#pragma once
+
 #include "core/Camera.h"
 #include "core/GameObject.h"
 
@@ -13,14 +15,8 @@ public:
     SpriteRenderer();
     ~SpriteRenderer();
 
-    void render(
-        const std::shared_ptr<Camera> &camera,
-        const std::vector<GameObject> &gameObjects);
-
-    void updateVertices(
-        const std::shared_ptr<Camera> &camera,
-        const std::vector<GameObject> &gameObjects);
-
+    void render(const Camera &camera, const std::vector<GameObject> &gameObjects);
+    void updateVertices(const Camera &camera, const std::vector<GameObject> &gameObjects);
     void generateIndexArray();
 
 private:

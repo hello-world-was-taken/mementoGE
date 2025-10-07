@@ -14,7 +14,6 @@ public:
     SceneManager(Window *window);
     ~SceneManager();
 
-    void prepare();
     void update();
 
     void loadScene(std::string sceneName);

@@ -14,10 +14,10 @@
 #include "util/Time.h"
 
 Application::Application(bool editorMode)
-    : mWindow{},
-      mSceneManager{&mWindow},
+    : m_window{},
+      m_sceneManager{&m_window},
       m_editorMode{editorMode},
-      m_editorLayer{mWindow}
+      m_editorLayer{m_window}
 {
 }
 
@@ -25,21 +25,8 @@ Application::~Application()
 {
 }
 
-void Application::setup()
-{
-    if (m_editorMode)
-    {
-        m_editorLayer.prepare();
-    }
-    else
-    {
-        mSceneManager.prepare();
-    }
-}
-
 void Application::start()
 {
-    setup();
     processInput();
     update();
 }
@@ -48,15 +35,17 @@ void Application::processInput()
 {
     if (m_editorMode)
     {
-        mWindow.setupCallBack();
+        m_window.setupCallBack();
     }
 }
 
 void Application::update()
 {
-    mWindow.run(
+    m_window.run(
         [&]()
         {
+            // TODO: can we make this compile time branching and would that help us remove
+            // all the editor specific code from our game?
             if (m_editorMode)
             {
                 m_editorLayer.update();
@@ -64,19 +53,30 @@ void Application::update()
             }
             else
             {
+                // TODO: do we need to bind default buffer
+                // (initially added since we used a custom buffer in the editor)
                 glBindFramebuffer(GL_FRAMEBUFFER, 0);
-                ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
 
-                glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
+                glClearColor(0.0f, 0.0f, 0.0f, 1.00f);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-                mSceneManager.update();
+                m_sceneManager.update();
+                render();
             }
         },
         [&]()
         {
             destroy();
         });
+}
+
+void Application::render()
+{
+    // TODO: return const reference not shared_ptr. It is owned by the scene and is not shared.
+    const Camera &cam = m_sceneManager.getActiveScene().getCamera();
+    const std::vector<GameObject> &gameObjects = m_sceneManager.getActiveScene().getGameObjects();
+
+    m_spriteRenderer.render(cam, gameObjects);
 }
 
 void Application::destroy()

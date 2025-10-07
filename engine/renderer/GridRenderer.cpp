@@ -9,13 +9,9 @@
 #include <filesystem>
 #include <stdexcept>
 
-GridRenderer::GridRenderer(int width, int height, int tileSize, std::shared_ptr<Camera> camera)
+GridRenderer::GridRenderer(int width, int height, int tileSize, const Camera &camera)
     : m_width(width), m_height(height), m_tileSize(tileSize)
 {
-    if(camera.get() == nullptr) {
-        throw std::runtime_error("Camera needs to be defined.");
-    };
-
     generateGridLines(camera);
 
     m_vao = new VertexArray();
@@ -39,7 +35,7 @@ GridRenderer::~GridRenderer()
     delete m_vao;
 }
 
-void GridRenderer::generateGridLines(std::shared_ptr<Camera> camera)
+void GridRenderer::generateGridLines(const Camera &camera)
 {
     m_vertices.clear();
 
@@ -49,7 +45,7 @@ void GridRenderer::generateGridLines(std::shared_ptr<Camera> camera)
     float texIndex = 0.0f;
 
     // to support grid rendering while zooming and camera move
-    glm::mat4 invViewProj = glm::inverse(camera->getProjectionMatrix() * camera->getViewMatrix());
+    glm::mat4 invViewProj = glm::inverse(camera.getProjectionMatrix() * camera.getViewMatrix());
 
     // TODO: review this more!
     glm::vec4 corners[2] = {
@@ -81,11 +77,11 @@ void GridRenderer::generateGridLines(std::shared_ptr<Camera> camera)
     }
 }
 
-void GridRenderer::render(std::shared_ptr<Camera> camera)
+void GridRenderer::render(const Camera &camera)
 {
     m_shader->use();
-    m_shader->setUniform4fv("u_view_matrix", camera->getViewMatrix());
-    m_shader->setUniform4fv("u_projection_matrix", camera->getProjectionMatrix());
+    m_shader->setUniform4fv("u_view_matrix", camera.getViewMatrix());
+    m_shader->setUniform4fv("u_projection_matrix", camera.getProjectionMatrix());
 
     // TODO: we can avoid generating grids by caching previous camera position
     generateGridLines(camera);

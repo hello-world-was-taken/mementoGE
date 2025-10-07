@@ -18,6 +18,8 @@ add_library(${PROJECT_NAME} STATIC
     core/Window.cpp
     core/Transform.cpp
     core/Camera.cpp
+    core/SceneCamera.cpp
+    core/EditorCamera.cpp
     core/GameObject.cpp
     core/SceneManager.cpp
     core/Scene.cpp

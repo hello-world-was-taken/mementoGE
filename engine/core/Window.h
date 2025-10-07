@@ -2,7 +2,7 @@
 
 #include "core/GLIncludes.h"
 #include "util/Time.h"
-#include "core/Camera.h"
+#include "core/EditorCamera.h"
 
 #include <iostream>
 #include <imgui.h>
@@ -26,7 +26,7 @@ public:
     void run(const std::function<void()> &frameFunc, const std::function<void()> &cleanupFunc);
 
     void setupCallBack() const;
-    void setUserData(Camera *c);
+    void setUserData(EditorCamera *c);
     GLFWwindow *getGlfwWindow();
 
     float getWidth() const;

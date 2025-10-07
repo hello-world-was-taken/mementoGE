@@ -23,13 +23,6 @@ SceneManager::~SceneManager()
     serialize();
 }
 
-void SceneManager::prepare()
-{
-    // TODO: what happens when user adds another scene?
-    std::shared_ptr<Camera> camera = getActiveScene().getCamera();
-    m_window->setUserData(camera.get());
-}
-
 void SceneManager::update()
 {
     getActiveScene().update();
@@ -41,7 +34,6 @@ void SceneManager::loadScene(std::string sceneName)
     if (it != m_scenes.end())
     {
         m_activeSceneName = sceneName;
-        getActiveScene().prepare();
         return;
     }
 

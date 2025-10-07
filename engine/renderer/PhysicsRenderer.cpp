@@ -24,7 +24,7 @@ PhysicsRenderer::~PhysicsRenderer()
 }
 
 void PhysicsRenderer::render(
-    const std::shared_ptr<Camera> &camera,
+    const Camera &camera,
     const std::vector<GameObject> &gameObjects)
 {
 
@@ -39,7 +39,7 @@ void PhysicsRenderer::render(
 }
 
 void PhysicsRenderer::updateVertices(
-    const std::shared_ptr<Camera> &camera,
+    const Camera &camera,
     const std::vector<GameObject> &gameObjects)
 {
     m_vertices.clear();
@@ -121,4 +121,3 @@ void PhysicsRenderer::generateIndexArray()
         m_indices[i * 8 + 7] = i * 4;
     }
 }
-

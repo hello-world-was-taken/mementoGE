@@ -15,6 +15,7 @@
 
 #include "renderer/GridRenderer.h"
 #include "renderer/PhysicsRenderer.h"
+#include "renderer/SpriteRenderer.h"
 
 #include "opengl/FrameBuffer.h"
 
@@ -24,11 +25,11 @@ public:
     EditorLayer(Window &window);
     ~EditorLayer();
 
-    void prepare();
     void update();
     void drawEditorUI(); // Render ImGui windows here
 
     void setScene(std::shared_ptr<Scene> scene);
+    EditorContext &getEditorContext();
 
 private:
     // imgui panels
@@ -52,5 +53,6 @@ private:
     bool m_drawGrid = false;
 
     GridRenderer m_gridRenderer;
-    PhysicsRenderer m_physicsRenderer{};
+    PhysicsRenderer m_physicsRenderer;
+    SpriteRenderer m_spriteRenderer;
 };

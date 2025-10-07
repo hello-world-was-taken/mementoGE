@@ -12,7 +12,7 @@ SpriteRenderer::~SpriteRenderer()
 }
 
 void SpriteRenderer::render(
-    const std::shared_ptr<Camera> &camera,
+    const Camera &camera,
     const std::vector<GameObject> &gameObjects)
 {
     if (m_batch == nullptr)
@@ -29,7 +29,7 @@ void SpriteRenderer::render(
 // TODO: once we start to use more textures and exceed the amount we can bind to openGL
 // at a time, we need to batch our calls per texture units
 void SpriteRenderer::updateVertices(
-    const std::shared_ptr<Camera> &camera,
+    const Camera &camera,
     const std::vector<GameObject> &gameObjects)
 {
     m_vertices.clear();

@@ -76,7 +76,6 @@ void ScenePanel::renderSceneViewport()
         ImGui::EndMenuBar();
     }
 
-    // Inside ImGui window
     ImVec2 imGuiWindowSize = ImGui::GetContentRegionAvail(); // logical units
     ImGuiIO &io = ImGui::GetIO();
     int pixelWidth = (int)(imGuiWindowSize.x * io.DisplayFramebufferScale.x + 0.5f);
@@ -87,9 +86,8 @@ void ScenePanel::renderSceneViewport()
     pixelHeight = std::max(1, pixelHeight);
 
     m_ctx.frameBuffer.updateSize(pixelWidth, pixelHeight);
+    m_ctx.editorCamera.onViewportResize(imGuiWindowSize.x, imGuiWindowSize.y);
 
-    m_ctx.sceneManager.getActiveScene().getCamera()->updateProjection(
-        pixelWidth, pixelHeight);
     unsigned int framebufferTexture = m_ctx.frameBuffer.getColorTexture();
     ImGui::Image(framebufferTexture, imGuiWindowSize, ImVec2{0, 1}, ImVec2{1, 0});
 
@@ -101,7 +99,7 @@ void ScenePanel::renderSceneViewport()
             int spriteIndex = ((SpritePayload *)payload->Data)->spriteIndex;
 
             // Convert current mouse to world position
-            std::shared_ptr<Camera> cam = m_ctx.sceneManager.getActiveScene().getCamera();
+            const Camera &cam = m_ctx.editorCamera;
 
             std::filesystem::path texturePath = getTexturePathFromJson(m_ctx.selectedTextureJsonPath);
             std::shared_ptr<SpriteSheet> spriteSheet = AssetManager::instance().getSpriteSheet(m_ctx.selectedTextureJsonPath);
@@ -194,9 +192,8 @@ glm::vec2 ScenePanel::getScreenCoordinate(glm::vec2 worldPos)
 
 glm::vec2 ScenePanel::worldToFrameBuffer(glm::vec2 worldPos)
 {
-    std::shared_ptr<Camera> camera = m_ctx.sceneManager.getActiveScene().getCamera();
-
-    glm::mat4 viewProj = camera->getProjectionMatrix() * camera->getViewMatrix();
+    const Camera &camera = m_ctx.sceneManager.getActiveScene().getCamera();
+    glm::mat4 viewProj = camera.getProjectionMatrix() * camera.getViewMatrix();
 
     // transform world position to clip space
     glm::vec4 clipSpaceCoords = viewProj * glm::vec4(worldPos, 0.0f, 1.0f);

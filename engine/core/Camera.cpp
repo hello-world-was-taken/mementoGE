@@ -8,75 +8,35 @@
 Camera::Camera()
 {
     m_projection = glm::mat4(1.0f);
-    m_view = glm::mat4(1.0f);
     m_position = glm::vec3(0.0f);
+    m_view = glm::translate(glm::mat4(1.0f), -glm::vec3(m_position));
 
-    updateView();
     // Note: projection is updated in Window::setUserData for initial projection update
 }
 
-Camera::~Camera()
-{
-}
+// Camera::~Camera()
+// {
+// }
 
-// TODO: How can we improve the view?
-void Camera::updateView()
-{
-    // Treat position as bottom-left of the viewport
-    m_view = glm::translate(glm::mat4(1.0f), -glm::vec3(m_position, 0.0f));
-}
-
-void Camera::updateProjection(float fbWidth, float fbHeight)
-{
-    // game world units per pixel
-    float unitsPerPixelX = LOGICAL_WIDTH / WINDOW_WIDTH;
-    float unitsPerPixelY = LOGICAL_HEIGHT / WINDOW_HEIGHT;
-
-    float newLogicalWidth = unitsPerPixelX * fbWidth;
-    float newLogicalHeight = unitsPerPixelY * fbHeight;
-
-    // for the editor
-    m_projection = glm::ortho(
-        0.0f, newLogicalWidth,
-        0.0f, newLogicalHeight,
-        -100.0f, 100.0f);
-
-    // for the game
-    // m_projection = glm::ortho(
-    //     0.0f, LOGICAL_WIDTH,
-    //     0.0f, LOGICAL_HEIGHT,
-    //     -100.0f, 100.0f);
-}
-
-void Camera::onWindowResize(int framebufferWidth, int framebufferHeight)
-{
-    updateProjection(static_cast<float>(framebufferWidth), static_cast<float>(framebufferHeight));
-}
-
-glm::mat4 Camera::getViewMatrix() const
+const glm::mat4 &Camera::getViewMatrix() const
 {
     return m_view;
 }
 
-glm::mat4 Camera::getProjectionMatrix() const
+const glm::mat4 &Camera::getProjectionMatrix() const
 {
     return m_projection;
 }
 
-glm::vec3 Camera::getPosition()
+void Camera::setPosition(const glm::vec3 &position)
 {
-    return glm::vec3(m_position, 0.0f);
-}
-void Camera::setPosition(glm::vec2 newPos)
-{
-    m_position = newPos;
-    updateView();
+    m_position = position;
+    m_view = glm::translate(glm::mat4(1.0f), -glm::vec3(m_position));
 }
 
-void Camera::update(float deltaTime, glm::vec2 translationVector)
+glm::vec3 Camera::getPosition() const
 {
-    m_position = glm::vec3(m_position, 0.0f) + glm::vec3(translationVector * deltaTime, 0.0f);
-    updateView();
+    return m_position;
 }
 
 void Camera::adjustZoom(float delta)

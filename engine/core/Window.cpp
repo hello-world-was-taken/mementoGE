@@ -1,7 +1,7 @@
 #include "core/Window.h"
 #include "core/MouseListener.h"
 #include "core/EventHandler.h"
-#include "core/Camera.h"
+#include "core/EditorCamera.h"
 #include "core/Constants.h"
 
 #include "util/Time.h"
@@ -118,10 +118,11 @@ void Window::frameBufferSizeResizeCallback(GLFWwindow *window, int width, int he
     glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
     glViewport(0, 0, fbWidth, fbHeight);
 
-    Camera *cam = static_cast<Camera *>(glfwGetWindowUserPointer(window));
+    // for now resizing is only allowed in editor view
+    EditorCamera *cam = static_cast<EditorCamera *>(glfwGetWindowUserPointer(window));
     if (cam != nullptr)
     {
-        cam->onWindowResize(fbWidth, fbHeight);
+        cam->onViewportResize(fbWidth, fbHeight);
     }
 }
 
@@ -132,12 +133,12 @@ void Window::closeWindow()
 
 // Set pointers to the camera object, so that we'll be able
 // to use it inside glfw callback functions like resizing.
-void Window::setUserData(Camera *c)
+void Window::setUserData(EditorCamera *c)
 {
     glfwSetWindowUserPointer(m_glfw_window, c);
 
     // Trigger initial projection update
     int fbWidth, fbHeight;
     glfwGetFramebufferSize(m_glfw_window, &fbWidth, &fbHeight);
-    c->onWindowResize(fbWidth, fbHeight);
+    c->onViewportResize(fbWidth, fbHeight);
 }

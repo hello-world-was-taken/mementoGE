@@ -80,7 +80,7 @@ void RenderBatch::setIndexData(std::vector<unsigned int> indices)
     m_ibo->updateIndicesData(m_indices.data(), m_indices.size());
 }
 
-void RenderBatch::render(const std::shared_ptr<Camera> &camera, std::shared_ptr<Shader> customShader)
+void RenderBatch::render(const Camera &camera, std::shared_ptr<Shader> customShader)
 {
     auto vertexShaderPath = getFilePath("assets/shader/vertex.shader");
     auto fragmentShaderPath = getFilePath("assets/shader/fragment.shader");
@@ -90,8 +90,8 @@ void RenderBatch::render(const std::shared_ptr<Camera> &camera, std::shared_ptr<
                               : ResourceManager::instance().getShaderProgram(vertexShaderPath, fragmentShaderPath);
 
     shader->use();
-    shader->setUniform4fv("u_view_matrix", camera->getViewMatrix());
-    shader->setUniform4fv("u_projection_matrix", camera->getProjectionMatrix());
+    shader->setUniform4fv("u_view_matrix", camera.getViewMatrix());
+    shader->setUniform4fv("u_projection_matrix", camera.getProjectionMatrix());
     shader->setMultipleTextureUnits("textures", m_textureUnits.data(), m_textureUnits.size());
 
     m_vao->bind();

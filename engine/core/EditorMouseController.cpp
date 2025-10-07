@@ -4,6 +4,7 @@
 #include "core/SceneManager.h"
 #include "core/EditorMouseController.h"
 #include "core/EditorContext.h"
+#include "core/EditorCamera.h"
 
 #include "util/Time.h"
 
@@ -35,13 +36,13 @@ void EditorMouseController::Update(
         return;
 
     Scene &scene = ctx.sceneManager.getActiveScene();
-    std::shared_ptr<Camera> camera = scene.getCamera();
+    EditorCamera &editorCamera = ctx.editorCamera;
 
     auto &gameObjects = scene.getGameObjects();
     auto prevActiveGameObject = scene.getActiveGameObject();
 
     MouseListener *mouse = MouseListener::instance();
-    glm::vec2 mouseWorldPos = getWorldCoordinate(camera, imagePos, imageSize, framebufferWidth, framebufferHeight);
+    glm::vec2 mouseWorldPos = getWorldCoordinate(editorCamera, imagePos, imageSize, framebufferWidth, framebufferHeight);
 
     // check for button click on an object
     if (mouse->wasMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT))
@@ -106,8 +107,8 @@ void EditorMouseController::Update(
 
     // handle zooming in and out of the editor
     // TODO: improve the camera API
-    camera->adjustZoom(mouse->getScrollDelta().x);
-    camera->updateProjection(framebufferWidth, framebufferHeight);
+    editorCamera.adjustZoom(mouse->getScrollDelta().x);
+    editorCamera.onViewportResize(framebufferWidth, framebufferHeight);
 }
 
 void EditorMouseController::moveGameObject(GameObject *activeGameObject, glm::vec2 mouseWorldPos)
@@ -135,8 +136,7 @@ void EditorMouseController::moveGameObject(GameObject *activeGameObject, glm::ve
 
 void EditorMouseController::moveCamera(EditorContext &ctx, int framebufferWidth, int framebufferHeight)
 {
-    Scene &scene = ctx.sceneManager.getActiveScene();
-    std::shared_ptr<Camera> camera = scene.getCamera();
+    EditorCamera &editorCamera = ctx.editorCamera;
 
     // Scale screen (window) coordinates to framebuffer space
     int winWidth, winHeight;
@@ -147,7 +147,7 @@ void EditorMouseController::moveCamera(EditorContext &ctx, int framebufferWidth,
 
     glm::vec2 dragDelta = MouseListener::instance()->getMouseDelta();
 
-    camera->setPosition(camera->getPosition() - glm::vec3(dragDelta.x * scaleX, dragDelta.y * scaleY, 0.0f));
+    editorCamera.setPosition(editorCamera.getPosition() - glm::vec3(dragDelta.x * scaleX, dragDelta.y * scaleY, 0.0f));
 }
 
 std::optional<std::reference_wrapper<const GameObject>>
@@ -179,7 +179,7 @@ EditorMouseController::getGameObjectAt(Scene &scene, glm::vec2 mouseWorldPos)
     return std::nullopt;
 }
 
-glm::vec2 EditorMouseController::getWorldCoordinate(std::shared_ptr<Camera> camera, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight)
+glm::vec2 EditorMouseController::getWorldCoordinate(const Camera &camera, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight)
 {
     MouseListener *listener = MouseListener::instance();
 
@@ -215,7 +215,7 @@ glm::vec2 EditorMouseController::localToFrameBuffer(glm::vec2 localPos, glm::vec
     return {fbX, fbY};
 }
 
-glm::vec2 EditorMouseController::frameBufferToWorld(std::shared_ptr<Camera> camera, glm::vec2 fbPos, int framebufferWidth, int framebufferHeight)
+glm::vec2 EditorMouseController::frameBufferToWorld(const Camera &camera, glm::vec2 fbPos, int framebufferWidth, int framebufferHeight)
 {
     // Convert to Normalized Device Coordinates (NDC)
     float ndcX = (fbPos.x / framebufferWidth) * 2.0f - 1.0f;
@@ -224,7 +224,7 @@ glm::vec2 EditorMouseController::frameBufferToWorld(std::shared_ptr<Camera> came
     // TODO: do we need to update z to layer images over one another?
     glm::vec4 clipCoords = glm::vec4(ndcX, ndcY, 0.0f, 1.0f);
 
-    glm::mat4 viewProj = camera->getProjectionMatrix() * camera->getViewMatrix();
+    glm::mat4 viewProj = camera.getProjectionMatrix() * camera.getViewMatrix();
     glm::mat4 invViewProj = glm::inverse(viewProj);
 
     glm::vec4 worldCoords = invViewProj * clipCoords;

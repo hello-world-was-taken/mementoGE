@@ -35,7 +35,7 @@ EditorLayer::EditorLayer(Window &window)
       m_gridRenderer{static_cast<int>(LOGICAL_WIDTH),
                      static_cast<int>(LOGICAL_HEIGHT), 32, m_ctx.editorCamera}
 {
-    m_ctx.sceneManager.prepare();
+    ImGuiWrapper::setupImgui(m_ctx.window);
 }
 
 EditorLayer::~EditorLayer()
@@ -43,16 +43,10 @@ EditorLayer::~EditorLayer()
     m_ctx.sceneManager.serialize();
 }
 
-void EditorLayer::prepare()
+EditorContext &EditorLayer::getEditorContext()
 {
-    ImGuiWrapper::setupImgui(m_ctx.window);
-    m_ctx.sceneManager.getActiveScene().prepare();
+    return m_ctx;
 }
-
-// void EditorLayer::setScene(std::shared_ptr<Scene> scene)
-// {
-//     m_sceneManager.setActiveScene(scene->);
-// }
 
 void EditorLayer::update()
 {
@@ -60,21 +54,24 @@ void EditorLayer::update()
         [&]()
         {
             m_ctx.frameBuffer.resize();
-
             m_ctx.frameBuffer.bind();
 
-            ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
-
             // clearing our off screen frame buffer before each render
-            glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
+            glClearColor(0.0f, 0.0f, 0.0f, 1.00f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+            // render grid
             renderGrid();
+
+            // render scene
             m_ctx.sceneManager.update();
+            m_spriteRenderer.render(
+                m_ctx.editorCamera,
+                m_ctx.sceneManager.getActiveScene().getGameObjects());
 
             handleEvents();
-
             drawEditorUI();
+
             m_ctx.frameBuffer.unbind();
         });
 }
@@ -152,14 +149,14 @@ void EditorLayer::renderPerformancePanel()
 
 void EditorLayer::renderGrid()
 {
-    std::shared_ptr<Camera> cam = m_ctx.sceneManager.getActiveScene().getCamera();
+    const Camera &cam = m_ctx.editorCamera;
 
     m_physicsRenderer.render(cam, m_ctx.sceneManager.getActiveScene().getGameObjects());
 
     if (!m_drawGrid)
         return;
 
-    m_gridRenderer.render(cam);
+    m_gridRenderer.render(m_ctx.editorCamera);
 }
 
 void EditorLayer::renderEditorProperties()

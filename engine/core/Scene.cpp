@@ -41,7 +41,7 @@ Scene::Scene(const YAML::Node &&serializedScene)
 Scene::Scene(Scene &&other) noexcept
     : m_registry{std::move(other.m_registry)}
 {
-    m_camera = std::move(other.m_camera);
+    m_sceneCamera = std::move(other.m_sceneCamera);
     m_textures = std::move(other.m_textures);
     mTag = std::move(other.mTag);
 
@@ -66,7 +66,7 @@ Scene &Scene::operator=(Scene &&other)
 {
     m_registry = std::move(other.m_registry);
     m_gameObjects = std::move(other.m_gameObjects);
-    m_camera = std::move(other.m_camera);
+    m_sceneCamera = std::move(other.m_sceneCamera);
     m_textures = std::move(other.m_textures);
     m_activeEntityId = other.m_activeEntityId;
     mTag = std::move(other.mTag);
@@ -96,10 +96,6 @@ Scene Scene::clone(std::string tag)
     return Scene{std::move(serializedScene)};
 }
 
-void Scene::prepare()
-{
-}
-
 void Scene::update()
 {
     if (m_play)
@@ -108,7 +104,6 @@ void Scene::update()
         m_physicsWorld.syncTransforms(m_gameObjects);
     }
     animate();
-    m_spriteRenderer.render(m_camera, getGameObjects());
 }
 
 void Scene::play()
@@ -146,9 +141,9 @@ const std::vector<GameObject> &Scene::getGameObjects()
     return m_gameObjects;
 }
 
-std::shared_ptr<Camera> Scene::getCamera() const
+SceneCamera &Scene::getCamera()
 {
-    return m_camera;
+    return m_sceneCamera;
 }
 
 GameObject *Scene::getActiveGameObject()
