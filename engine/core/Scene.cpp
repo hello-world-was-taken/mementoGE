@@ -118,14 +118,30 @@ void Scene::pause()
 
 void Scene::animate()
 {
-    auto view = m_registry.view<Animator, Sprite>();
+    auto view = m_registry.view<Animator>();
     for (auto entity : view)
     {
         auto &animator = view.get<Animator>(entity);
-        auto &sprite = view.get<Sprite>(entity);
 
+        // Check if the entity has a Sprite. Create one if not present
+        // TODO: should we remove this check for the actual game? Perf improvement
+        if (!m_registry.any_of<Sprite>(entity))
+        {
+            m_registry.emplace<Sprite>(entity);
+        }
         animator.update();
+
+        auto &sprite = m_registry.get<Sprite>(entity);
+        const Sprite &animatedSprite = animator.getCurrentSprite();
+
+        bool flipX = sprite.isFlippedX();
+        bool flipY = sprite.isFlippedY();
+
         sprite = animator.getCurrentSprite();
+
+        // Restore flip values
+        sprite.setFlipX(flipX);
+        sprite.setFlipY(flipY);
     }
 }
 
