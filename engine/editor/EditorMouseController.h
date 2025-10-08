@@ -24,8 +24,13 @@ public:
     void Update(EditorContext &ctx, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight);
     std::optional<std::reference_wrapper<const GameObject>> getGameObjectAt(Scene &scene, glm::vec2 mouseWorldPos);
 
-    glm::vec2 getWorldCoordinate(const Camera &camera, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight);
+    // handlers
+    void handleLeftClickSelection(EditorContext &ctx, Scene &scene, glm::vec2 mouseWorldPos);
+    void handleRightClickPopup(EditorContext &ctx, Scene &scene, glm::vec2 mouseWorldPos);
+    void handleZoom(EditorCamera &camera, int framebufferWidth, int framebufferHeight);
+    void handleDragging(EditorContext &ctx, Scene &scene, glm::vec2 mouseWorldPos, int framebufferWidth, int framebufferHeight);
 
+    glm::vec2 getWorldCoordinate(const Camera &camera, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight);
     /*
      * screen here is glfw window
      * local here is scene preview imgui window

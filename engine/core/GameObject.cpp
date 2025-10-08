@@ -28,9 +28,12 @@ GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGam
     addComponent<Transform>(glm::vec3(0.0f, 0.0f, 0.0f));
     getComponent<Transform>().deserialize(serializedGameObject);
 
-    // Deserialize Sprite Component of the Game Object
-    addComponent<Sprite>();
-    getComponent<Sprite>().deserialize(serializedGameObject);
+    // Deserialize Sprite
+    if (serializedGameObject["Sprite"])
+    {
+        addComponent<Sprite>();
+        getComponent<Sprite>().deserialize(serializedGameObject);
+    }
 
     // Deserialize RigidBody2D
     if (serializedGameObject["RigidBody2D"])

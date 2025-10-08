@@ -38,6 +38,8 @@ private:
     void renderGrid();
     void renderPerformancePanel();
     void renderEditorProperties();
+    void renderAddNewObjectPopup();
+
     void drawMouseDebugPanel();
 
     void handleSceneInteraction();

@@ -89,7 +89,50 @@ void EditorLayer::drawEditorUI()
 
     renderPerformancePanel();
     renderEditorProperties();
+    renderAddNewObjectPopup();
+
     ImGui::ShowMetricsWindow();
+}
+
+void EditorLayer::renderAddNewObjectPopup()
+{
+    if (!m_ctx.showCreateObjectPopup)
+        return;
+
+    ImGui::SetNextWindowPos(m_ctx.createObjectPopupPos, ImGuiCond_Always);
+    if (ImGui::BeginPopup("CreateObjectPopup"))
+    {
+        static char tagBuffer[64] = "";
+
+        ImGui::Text("Create New Object");
+        ImGui::Separator();
+        ImGui::InputText("Tag", tagBuffer, IM_ARRAYSIZE(tagBuffer));
+
+        if (ImGui::Button("Create"))
+        {
+            // TODO: might be worth extracting this out to a function
+            Scene &scene = m_ctx.sceneManager.getActiveScene();
+
+            scene.addGameObject(32, 32, tagBuffer);
+            auto newObj = m_ctx.sceneManager.getActiveScene().getActiveGameObject();
+            newObj->getComponent<Transform>().setPosition(
+                m_ctx.createObjectWorldPos.x,
+                m_ctx.createObjectWorldPos.y, 0.0f);
+
+            tagBuffer[0] = '\0'; // clear input for next time
+            m_ctx.showCreateObjectPopup = false;
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel"))
+        {
+            m_ctx.showCreateObjectPopup = false;
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
 }
 
 void EditorLayer::renderPerformancePanel()

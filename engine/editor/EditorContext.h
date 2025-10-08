@@ -23,9 +23,14 @@ struct EditorContext
 
     bool drawGrid = false;
     bool sceneImageHovered = false;
+
     bool showPropertiesPopup = false;
+    bool showCreateObjectPopup = false;
 
     ImVec2 propertiesPopupPos;
+    ImVec2 createObjectPopupPos;
+    glm::vec2 createObjectWorldPos;
+
     std::string selectedTextureJsonPath;
 
     EditorCamera editorCamera;

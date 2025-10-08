@@ -149,8 +149,12 @@ void ScenePanel::renderGizmos()
     }
     Transform &transform = go->getComponent<Transform>();
     glm::vec3 *pos = transform.getPosition();
+    glm::vec2 posCenter = {
+        pos->x + (go->getWidth() / 2),
+        pos->y + (go->getHeight() /2)
+    };
 
-    glm::vec2 screenPos = getScreenCoordinate({pos->x, pos->y});
+    glm::vec2 screenPos = getScreenCoordinate({posCenter.x, posCenter.y});
     ImDrawList *drawList = ImGui::GetWindowDrawList();
 
     // Length of gizmo axis
@@ -193,7 +197,7 @@ glm::vec2 ScenePanel::getScreenCoordinate(glm::vec2 worldPos)
 
 glm::vec2 ScenePanel::worldToFrameBuffer(glm::vec2 worldPos)
 {
-    const Camera &camera = m_ctx.sceneManager.getActiveScene().getCamera();
+    const Camera &camera = m_ctx.editorCamera;
     glm::mat4 viewProj = camera.getProjectionMatrix() * camera.getViewMatrix();
 
     // transform world position to clip space

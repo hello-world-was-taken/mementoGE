@@ -45,72 +45,101 @@ void EditorMouseController::Update(
     MouseListener *mouse = MouseListener::instance();
     glm::vec2 mouseWorldPos = getWorldCoordinate(editorCamera, imagePos, imageSize, framebufferWidth, framebufferHeight);
 
-    // check for button click on an object
-    if (mouse->wasMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT))
+    handleLeftClickSelection(ctx, scene, mouseWorldPos);
+    handleRightClickPopup(ctx, scene, mouseWorldPos);
+    handleDragging(ctx, scene, mouseWorldPos, framebufferWidth, framebufferHeight);
+    handleZoom(editorCamera, framebufferWidth, framebufferHeight);
+}
+
+void EditorMouseController::handleLeftClickSelection(EditorContext &ctx, Scene &scene, glm::vec2 mouseWorldPos)
+{
+    MouseListener *mouse = MouseListener::instance();
+    if (!mouse->wasMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT))
+        return;
+
+    auto clickedObject = getGameObjectAt(scene, mouseWorldPos);
+    if (clickedObject)
     {
-        auto clickedObject = getGameObjectAt(scene, mouseWorldPos);
+        scene.setActiveGameObject(clickedObject->get().getEntityId());
+        auto activeGameObject = scene.getActiveGameObject();
 
-        if (clickedObject)
+        if (activeGameObject)
         {
-            scene.setActiveGameObject(clickedObject->get().getEntityId());
-            auto activeGameObject = scene.getActiveGameObject();
-
-            // store offset between object origin and mouse world position to avoid initial sharp mov't
-            if (activeGameObject)
-            {
-                glm::vec3 *objPos = activeGameObject->getComponent<Transform>().getPosition();
-                m_dragOffset = glm::vec2(objPos->x, objPos->y) - mouseWorldPos;
-            }
-        }
-        else
-        {
-            // the user clicked on empty space
-            scene.setActiveGameObject(entt::null);
+            glm::vec3 *objPos = activeGameObject->getComponent<Transform>().getPosition();
+            m_dragOffset = glm::vec2(objPos->x, objPos->y) - mouseWorldPos;
         }
     }
-
-    // handle right-click for to bringup properties editor
-    if (mouse->wasMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
+    else
     {
-        ctx.showPropertiesPopup = false;
-        auto clickedObject = getGameObjectAt(scene, mouseWorldPos);
-
-        if (clickedObject)
-        {
-            scene.setActiveGameObject(clickedObject->get().getEntityId());
-            ctx.showPropertiesPopup = true;
-
-            // store popup position
-            ImVec2 mousePos = ImGui::GetMousePos();
-            ctx.propertiesPopupPos = ImVec2(mousePos.x + 15, mousePos.y);
-
-            ImGui::OpenPopup("PropertiesPopup");
-        }
+        scene.setActiveGameObject(entt::null);
     }
+}
 
-    // handle object being dragged
+void EditorMouseController::handleRightClickPopup(EditorContext &ctx, Scene &scene, glm::vec2 mouseWorldPos)
+{
+    MouseListener *mouse = MouseListener::instance();
+    if (!mouse->wasMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
+        return;
+
+    ctx.showPropertiesPopup = false;
+    ImVec2 mousePos = ImGui::GetMousePos();
+    auto clickedObject = getGameObjectAt(scene, mouseWorldPos);
+
+    if (clickedObject)
+    {
+        scene.setActiveGameObject(clickedObject->get().getEntityId());
+        ctx.showPropertiesPopup = true;
+
+        ctx.propertiesPopupPos = ImVec2(mousePos.x + 15, mousePos.y);
+        ImGui::OpenPopup("PropertiesPopup");
+    }
+    else
+    {
+        scene.setActiveGameObject(entt::null);
+        ctx.showCreateObjectPopup = true;
+        ctx.createObjectPopupPos = ImVec2(mousePos.x, mousePos.y);
+        ctx.createObjectWorldPos = mouseWorldPos;
+        ImGui::OpenPopup("CreateObjectPopup");
+    }
+}
+
+void EditorMouseController::handleZoom(EditorCamera &camera, int framebufferWidth, int framebufferHeight)
+{
+    MouseListener *mouse = MouseListener::instance();
+
+    // Adjust zoom level
+    camera.adjustZoom(mouse->getScrollDelta().x);
+    camera.onViewportResize(framebufferWidth, framebufferHeight);
+}
+
+void EditorMouseController::handleDragging(
+    EditorContext &ctx,
+    Scene &scene,
+    glm::vec2 mouseWorldPos,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    MouseListener *mouse = MouseListener::instance();
+
+    auto prevActiveGameObject = scene.getActiveGameObject();
     auto currActiveGameObject = scene.getActiveGameObject();
-    bool similarGameObjectClicked = (prevActiveGameObject && currActiveGameObject) && (prevActiveGameObject->getEntityId() == currActiveGameObject->getEntityId());
+    bool similarGameObjectClicked =
+        (prevActiveGameObject && currActiveGameObject) &&
+        (prevActiveGameObject->getEntityId() == currActiveGameObject->getEntityId());
 
     bool draggingOnGameObject = mouse->isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT) && similarGameObjectClicked;
+    bool draggingOnEmptySpace = mouse->isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT) && !currActiveGameObject;
+
     if (draggingOnGameObject)
     {
         moveGameObject(currActiveGameObject, mouseWorldPos);
     }
-
-    bool draggingOnEmptySpace = mouse->isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT) && !currActiveGameObject;
-    if (draggingOnEmptySpace)
+    else if (draggingOnEmptySpace)
     {
         moveCamera(ctx, framebufferWidth, framebufferHeight);
     }
-
-    bool leftButtonClicked = mouse->wasMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) || mouse->isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT);
-
-    // handle zooming in and out of the editor
-    // TODO: improve the camera API
-    editorCamera.adjustZoom(mouse->getScrollDelta().x);
-    editorCamera.onViewportResize(framebufferWidth, framebufferHeight);
 }
+
 
 void EditorMouseController::moveGameObject(GameObject *activeGameObject, glm::vec2 mouseWorldPos)
 {

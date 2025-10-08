@@ -96,7 +96,7 @@ glm::vec2 MouseListener::getMouseDelta() const
 
     return {
         listener->m_mousePos.x - listener->m_previMousePos.x,
-        listener->m_mousePos.y - listener->m_previMousePos.y};
+        listener->m_previMousePos.y - listener->m_mousePos.y};
 }
 
 glm::vec2 MouseListener::getScrollDelta() const
