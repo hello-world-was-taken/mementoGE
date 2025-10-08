@@ -1,5 +1,6 @@
 #include "core/SceneCamera.h"
-#include "core/Constants.h"
+
+#include "editor/Constants.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

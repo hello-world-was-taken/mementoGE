@@ -1,5 +1,5 @@
-#include "core/EditorContext.h"
-#include "core/EditorPanel.h"
+#include "editor/EditorContext.h"
+#include "editor/EditorPanel.h"
 
 #include "opengl/FrameBuffer.h"
 

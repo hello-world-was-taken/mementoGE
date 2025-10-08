@@ -1,14 +1,17 @@
+#pragma once
+
 #include "engine/core/Window.h"
 #include "engine/core/SceneManager.h"
-#include "engine/core/EditorLayer.h"
+
+#include "engine/editor/EditorLayer.h"
+
 #include "engine/renderer/SpriteRenderer.h"
 
-// TODO: should the name of the class be changed to Game?
-class Application
+class Game
 {
 public:
-    Application(bool editorMode = false);
-    ~Application();
+    Game(bool editorMode = false);
+    ~Game();
 
     /**
      * @brief start is the entry point of our app/game

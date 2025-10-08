@@ -1,7 +1,9 @@
 #pragma once
-#include "core/EditorPanel.h"
-#include "core/EditorContext.h"
+
 #include "core/Sprite.h"
+
+#include "editor/EditorPanel.h"
+#include "editor/EditorContext.h"
 
 #include <functional>
 

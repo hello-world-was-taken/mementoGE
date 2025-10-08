@@ -1,10 +1,11 @@
-#include "core/ScenePanel.h"
-#include "core/EditorPanel.h"
-#include "core/EditorContext.h"
-#include "core/SpritePayload.h"
 #include "core/SpriteSheet.h"
 #include "core/AssetManager.h"
 #include "core/Sprite.h"
+
+#include "editor/ScenePanel.h"
+#include "editor/EditorPanel.h"
+#include "editor/EditorContext.h"
+#include "editor/SpritePayload.h"
 
 #include "util/PathUtils.h"
 

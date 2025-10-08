@@ -10,7 +10,7 @@ add_executable(${PROJECT_NAME}
     main.cpp
 
     # game files
-    game/Application.cpp
+    game/Game.cpp
 )
 
 target_include_directories(${PROJECT_NAME}

@@ -19,7 +19,6 @@ add_library(${PROJECT_NAME} STATIC
     core/Transform.cpp
     core/Camera.cpp
     core/SceneCamera.cpp
-    core/EditorCamera.cpp
     core/GameObject.cpp
     core/SceneManager.cpp
     core/Scene.cpp
@@ -29,16 +28,19 @@ add_library(${PROJECT_NAME} STATIC
     core/MouseListener.cpp
     core/Event.cpp
     core/EventHandler.cpp
-    core/EditorMouseController.cpp
-    core/EditorLayer.cpp
-    core/ScenePanel.cpp
-    core/PropertiesPanel.cpp
-    core/TexturePanel.cpp
     core/ResourceManager.cpp
     core/AnimationMap.cpp
     core/AssetManager.cpp
     core/AnimationPlayer.cpp
     core/Animator.cpp
+
+    # editor
+    editor/EditorLayer.cpp
+    editor/ScenePanel.cpp
+    editor/PropertiesPanel.cpp
+    editor/TexturePanel.cpp
+    editor/EditorMouseController.cpp
+    editor/EditorCamera.cpp
 
     # renderer
     renderer/RenderBatch.cpp

@@ -1,8 +1,10 @@
 #pragma once
 
 #include "core/GLIncludes.h"
+
+#include "editor/EditorCamera.h"
+
 #include "util/Time.h"
-#include "core/EditorCamera.h"
 
 #include <iostream>
 #include <imgui.h>

@@ -1,10 +1,11 @@
-#include "core/TexturePanel.h"
 #include "core/SpriteSheet.h"
-#include "core/SpritePayload.h"
 #include "core/AnimationMap.h"
 #include "core/AnimationPlayer.h"
 #include "core/AssetManager.h"
 #include "core/Sprite.h"
+
+#include "editor/TexturePanel.h"
+#include "editor/SpritePayload.h"
 
 #include "util/PathUtils.h"
 #include "util/Time.h"

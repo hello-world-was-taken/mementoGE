@@ -1,7 +1,5 @@
-#include <memory>
-#include <iostream>
+#include "Game.h"
 
-#include "Application.h"
 #include "engine/core/GameObject.h"
 #include "engine/core/Window.h"
 #include "engine/core/MouseListener.h"
@@ -9,11 +7,14 @@
 #include "engine/core/Scene.h"
 #include "engine/core/Sprite.h"
 #include "engine/core/Event.h"
-#include "engine/core/Constants.h"
+#include "engine/editor/Constants.h"
 
 #include "util/Time.h"
 
-Application::Application(bool editorMode)
+#include <memory>
+#include <iostream>
+
+Game::Game(bool editorMode)
     : m_window{},
       m_sceneManager{&m_window},
       m_editorMode{editorMode},
@@ -21,17 +22,17 @@ Application::Application(bool editorMode)
 {
 }
 
-Application::~Application()
+Game::~Game()
 {
 }
 
-void Application::start()
+void Game::start()
 {
     processInput();
     update();
 }
 
-void Application::processInput()
+void Game::processInput()
 {
     if (m_editorMode)
     {
@@ -39,7 +40,7 @@ void Application::processInput()
     }
 }
 
-void Application::update()
+void Game::update()
 {
     m_window.run(
         [&]()
@@ -70,7 +71,7 @@ void Application::update()
         });
 }
 
-void Application::render()
+void Game::render()
 {
     // TODO: return const reference not shared_ptr. It is owned by the scene and is not shared.
     const Camera &cam = m_sceneManager.getActiveScene().getCamera();
@@ -79,6 +80,6 @@ void Application::render()
     m_spriteRenderer.render(cam, gameObjects);
 }
 
-void Application::destroy()
+void Game::destroy()
 {
 }

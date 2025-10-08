@@ -1,5 +1,5 @@
-#include "core/EditorCamera.h"
-#include "core/Constants.h"
+#include "editor/EditorCamera.h"
+#include "editor/Constants.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 

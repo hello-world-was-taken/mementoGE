@@ -3,13 +3,14 @@
 #endif
 
 #include "core/Camera.h"
-#include "core/EditorLayer.h"
 #include "core/ImGuiWrapper.h"
 #include "core/MovementMode.h"
 #include "core/SpriteSheet.h"
-#include "core/PropertiesPanel.h"
-#include "core/EditorMouseController.h"
-#include "core/Constants.h"
+
+#include "editor/EditorLayer.h"
+#include "editor/PropertiesPanel.h"
+#include "editor/EditorMouseController.h"
+#include "editor/Constants.h"
 
 #include "physics/BoxCollider2D.h"
 #include "physics/CircleCollider2D.h"

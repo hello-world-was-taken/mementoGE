@@ -1,23 +1,24 @@
 #pragma once
 
-#include <memory>
-
 #include "core/Scene.h"
 #include "core/SceneManager.h"
 #include "core/Camera.h"
 #include "core/Window.h"
 #include "core/EventHandler.h"
 #include "core/MovementMode.h"
-#include "core/EditorContext.h"
-#include "core/ScenePanel.h"
-#include "core/PropertiesPanel.h"
-#include "core/TexturePanel.h"
+
+#include "editor/EditorContext.h"
+#include "editor/ScenePanel.h"
+#include "editor/PropertiesPanel.h"
+#include "editor/TexturePanel.h"
 
 #include "renderer/GridRenderer.h"
 #include "renderer/PhysicsRenderer.h"
 #include "renderer/SpriteRenderer.h"
 
 #include "opengl/FrameBuffer.h"
+
+#include <memory>
 
 class EditorLayer
 {

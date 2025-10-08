@@ -1,10 +1,10 @@
 #include <iostream>
-#include "game/Application.h"
+#include "game/Game.h"
 
 int main()
 {
     std::cout << "MementoGE" << std::endl;
-    Application app{true};
+    Game app{true};
     app.start();
     return 0;
 }

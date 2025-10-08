@@ -1,8 +1,9 @@
 #include "core/Window.h"
 #include "core/MouseListener.h"
 #include "core/EventHandler.h"
-#include "core/EditorCamera.h"
-#include "core/Constants.h"
+
+#include "editor/EditorCamera.h"
+#include "editor/Constants.h"
 
 #include "util/Time.h"
 

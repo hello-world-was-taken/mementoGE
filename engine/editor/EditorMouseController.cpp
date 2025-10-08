@@ -2,9 +2,10 @@
 #include "core/Scene.h"
 #include "core/Transform.h"
 #include "core/SceneManager.h"
-#include "core/EditorMouseController.h"
-#include "core/EditorContext.h"
-#include "core/EditorCamera.h"
+
+#include "editor/EditorMouseController.h"
+#include "editor/EditorContext.h"
+#include "editor/EditorCamera.h"
 
 #include "util/Time.h"
 

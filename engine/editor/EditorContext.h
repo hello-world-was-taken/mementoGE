@@ -3,8 +3,9 @@
 #include "core/Scene.h"
 #include "core/SceneManager.h"
 #include "core/Camera.h"
-#include "core/EditorMouseController.h"
-#include "core/Constants.h"
+
+#include "editor/EditorMouseController.h"
+#include "editor/Constants.h"
 
 #include <memory>
 #include <string>

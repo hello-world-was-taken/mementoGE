@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Camera.h"
+#include "core/Camera.h"
 
 #include <glm/glm.hpp>
 

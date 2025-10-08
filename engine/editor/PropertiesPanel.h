@@ -1,8 +1,8 @@
 #pragma once
 
-#include "core/EditorContext.h"
-#include "core/EditorPanel.h"
-#include "core/TexturePanel.h"
+#include "editor/TexturePanel.h"
+#include "editor/EditorContext.h"
+#include "editor/EditorPanel.h"
 
 class PropertiesPanel : public EditorPanel
 {

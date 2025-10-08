@@ -1,11 +1,12 @@
-#include "core/PropertiesPanel.h"
-#include "core/EditorPanel.h"
-#include "core/TexturePanel.h"
-#include "core/EditorContext.h"
 #include "core/SpriteSheet.h"
 #include "core/AssetManager.h"
 #include "core/Sprite.h"
 #include "core/Animator.h"
+
+#include "editor/PropertiesPanel.h"
+#include "editor/EditorPanel.h"
+#include "editor/TexturePanel.h"
+#include "editor/EditorContext.h"
 
 #include "physics/CircleCollider2D.h"
 
