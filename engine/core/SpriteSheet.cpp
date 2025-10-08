@@ -1,6 +1,6 @@
 #include "core/SpriteSheet.h"
 #include "core/Sprite.h"
-#include "core/ResourceManager.h"
+#include "core/GlResourceManager.h"
 
 #include "opengl/Texture.h"
 
@@ -23,7 +23,7 @@ std::shared_ptr<SpriteSheet> SpriteSheet::fromJson(const std::filesystem::path &
     file >> data;
 
     std::filesystem::path texturePath = getTexturePathFromJson(jsonPath);
-    std::shared_ptr<Texture> tex = ResourceManager::instance().getTexture(texturePath, true);
+    std::shared_ptr<Texture> tex = GlResourceManager::instance().getTexture(texturePath, true);
     std::shared_ptr<SpriteSheet> spriteSheet = std::make_shared<SpriteSheet>(tex);
     spriteSheet->m_jsonPath = jsonPath;
 

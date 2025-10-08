@@ -28,7 +28,7 @@ add_library(${PROJECT_NAME} STATIC
     core/MouseListener.cpp
     core/Event.cpp
     core/EventHandler.cpp
-    core/ResourceManager.cpp
+    core/GlResourceManager.cpp
     core/AnimationMap.cpp
     core/AssetManager.cpp
     core/AnimationPlayer.cpp

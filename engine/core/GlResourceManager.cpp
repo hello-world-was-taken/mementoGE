@@ -1,4 +1,4 @@
-#include "core/ResourceManager.h"
+#include "core/GlResourceManager.h"
 
 #include "opengl/Shader.h"
 #include "opengl/Texture.h"
@@ -6,14 +6,14 @@
 #include <memory>
 #include <stdexcept>
 
-ResourceManager &ResourceManager::instance()
+GlResourceManager &GlResourceManager::instance()
 {
-    static ResourceManager rm;
+    static GlResourceManager rm;
     return rm;
 }
 
-std::shared_ptr<Shader> ResourceManager::getShaderProgram(const std::string &vertexShaderPath,
-                                                          const std::string &fragmentShaderPath)
+std::shared_ptr<Shader> GlResourceManager::getShaderProgram(const std::string &vertexShaderPath,
+                                                            const std::string &fragmentShaderPath)
 {
     std::string fullShaderPath = vertexShaderPath + fragmentShaderPath;
 
@@ -31,8 +31,8 @@ std::shared_ptr<Shader> ResourceManager::getShaderProgram(const std::string &ver
 
 // TODO: can we remove the isSpriteSheet bool here.
 // we have two d/t classes now. SpriteSheet.h and just Sprite.h
-std::shared_ptr<Texture> ResourceManager::getTexture(const std::string &texturePath,
-                                                     bool isSpriteSheet)
+std::shared_ptr<Texture> GlResourceManager::getTexture(const std::string &texturePath,
+                                                       bool isSpriteSheet)
 {
     if (textureUnit == 16)
     {

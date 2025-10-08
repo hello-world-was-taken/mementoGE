@@ -1,5 +1,5 @@
 #include "core/GLIncludes.h"
-#include "core/ResourceManager.h"
+#include "core/GlResourceManager.h"
 #include "core/Sprite.h"
 
 #include "opengl/Vertex.h"
@@ -87,7 +87,7 @@ void RenderBatch::render(const Camera &camera, std::shared_ptr<Shader> customSha
 
     std::shared_ptr<Shader>
         shader = customShader ? customShader
-                              : ResourceManager::instance().getShaderProgram(vertexShaderPath, fragmentShaderPath);
+                              : GlResourceManager::instance().getShaderProgram(vertexShaderPath, fragmentShaderPath);
 
     shader->use();
     shader->setUniform4fv("u_view_matrix", camera.getViewMatrix());

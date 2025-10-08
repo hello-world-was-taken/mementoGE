@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core/Animation.h"
-#include "core/ResourceManager.h"
+#include "core/GlResourceManager.h"
 
 #include "opengl/Texture.h"
 

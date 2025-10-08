@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include "core/Sprite.h"
-#include "core/ResourceManager.h"
+#include "core/GlResourceManager.h"
 
 Sprite::Sprite(
     std::string texturePath,
@@ -11,7 +11,7 @@ Sprite::Sprite(
     : m_width{width},
       m_height{height}
 {
-    m_texture = ResourceManager::instance().getTexture(texturePath, false);
+    m_texture = GlResourceManager::instance().getTexture(texturePath, false);
 
     if (m_texture->isTextureAtlas())
     {
@@ -39,7 +39,7 @@ Sprite::Sprite(
     std::string texturePath,
     std::vector<glm::vec2> textureCoordinates)
     : m_textureCoordinates{textureCoordinates},
-      m_texture{ResourceManager::instance().getTexture(texturePath, false)}
+      m_texture{GlResourceManager::instance().getTexture(texturePath, false)}
 {
 }
 
@@ -162,7 +162,7 @@ void Sprite::deserialize(const YAML::Node &in)
     auto texture = in["Sprite"]["Texture"];
     std::string filePath = texture["FilePath"].as<std::string>();
     bool isTextureAtlas = texture["isTextureAtlas"].as<bool>();
-    m_texture = ResourceManager::instance().getTexture(filePath, isTextureAtlas);
+    m_texture = GlResourceManager::instance().getTexture(filePath, isTextureAtlas);
     m_texture.get()->bind();
 
     m_flipX = in["Sprite"]["FlipX"] ? in["Sprite"]["FlipX"].as<bool>() : false;

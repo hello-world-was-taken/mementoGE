@@ -47,6 +47,10 @@ void SpriteRenderer::updateVertices(
             Sprite sprite = gameObject.getComponent<Sprite>();
             for (int i = 0; i < transformedQuad.size(); i++)
             {
+                // TODO: in scenarios where sprite width and height are different
+                // from gameObject, sprite should take precedence. In fact, if a
+                // game object has a sprite attached to it, the width and height
+                // should be taken from the sprite.
                 m_vertices.push_back({transformedQuad[i],
                                       sprite.getColor(),
                                       sprite.getTextureCoordinates()[i], // TODO: do we need to retrieve this from the sprite renderer?
