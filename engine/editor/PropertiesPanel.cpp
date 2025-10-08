@@ -84,6 +84,7 @@ void PropertiesPanel::renderPropertiesPanel()
         return;
     }
 
+    drawIdentity(go);
     drawSize(go);
     drawTransform(go);
     drawLayer(go);
@@ -95,6 +96,27 @@ void PropertiesPanel::renderPropertiesPanel()
 
     // Popups (global)
     drawPopups();
+}
+
+void PropertiesPanel::drawIdentity(GameObject *go)
+{
+    ImGui::Separator();
+    ImGui::Text("Identity");
+
+    // Display Entity ID (non-editable)
+    ImGui::Text("Entity ID: %u", (unsigned int)go->getEntityId());
+
+    // TODO: there is a way we can directly support string.
+    static char tagBuffer[128];
+    std::string tag = go->getTag();
+    strncpy(tagBuffer, tag.c_str(), sizeof(tagBuffer));
+    tagBuffer[sizeof(tagBuffer) - 1] = '\0';
+
+    SetFieldWidth(200);
+    if (ImGui::InputText("Tag", tagBuffer, IM_ARRAYSIZE(tagBuffer)))
+    {
+        go->setTag(std::string(tagBuffer));
+    }
 }
 
 void PropertiesPanel::drawSize(GameObject *go)

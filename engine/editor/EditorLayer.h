@@ -11,6 +11,7 @@
 #include "editor/ScenePanel.h"
 #include "editor/PropertiesPanel.h"
 #include "editor/TexturePanel.h"
+#include "editor/SceneHierarchyPanel.h"
 
 #include "renderer/GridRenderer.h"
 #include "renderer/PhysicsRenderer.h"
@@ -47,6 +48,7 @@ private:
 private:
     EditorContext m_ctx;
     ScenePanel m_scenePanel;
+    SceneHierarchyPanel m_sceneHierarchyPanel;
     TexturePanel m_texturePanel;
     PropertiesPanel m_propertiesPanel;
 

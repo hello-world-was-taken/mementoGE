@@ -37,6 +37,7 @@ add_library(${PROJECT_NAME} STATIC
     # editor
     editor/EditorLayer.cpp
     editor/ScenePanel.cpp
+    editor/SceneHierarchyPanel.cpp
     editor/PropertiesPanel.cpp
     editor/TexturePanel.cpp
     editor/EditorMouseController.cpp

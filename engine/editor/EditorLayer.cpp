@@ -31,6 +31,7 @@ namespace fs = std::filesystem;
 EditorLayer::EditorLayer(Window &window)
     : m_ctx{window},
       m_scenePanel{m_ctx},
+      m_sceneHierarchyPanel{m_ctx},
       m_texturePanel{m_ctx},
       m_propertiesPanel{m_ctx, m_texturePanel},
       m_gridRenderer{static_cast<int>(LOGICAL_WIDTH),
@@ -82,6 +83,7 @@ void EditorLayer::drawEditorUI()
     ImGuiWrapper::beginDockspace();
 
     m_scenePanel.draw();
+    m_sceneHierarchyPanel.draw();
     m_propertiesPanel.draw();
     m_texturePanel.draw();
 

@@ -21,6 +21,7 @@ private:
     void renderPropertiesInWindow();
     void renderPropertiesInPopup();
 
+    void drawIdentity(GameObject *go);
     void drawSize(GameObject *go);
     void drawTransform(GameObject *go);
     void drawLayer(GameObject *go);

@@ -60,9 +60,9 @@ public:
     const int getWidth() const;
     const int getHeight() const;
 
+    void setTag(const std::string& newTag);
     const std::string &getTag() const;
 
-    // TODO: why are we returning a copy here?
     std::vector<glm::vec3> getQuad() const;
     std::vector<glm::vec3> getWorldCoordinateQuad() const;
 

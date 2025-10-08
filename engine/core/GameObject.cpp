@@ -98,6 +98,11 @@ const int GameObject::getHeight() const
     return m_height;
 }
 
+void GameObject::setTag(const std::string &newTag)
+{
+    mTag = newTag;
+}
+
 const std::string &GameObject::getTag() const
 {
     return mTag;
