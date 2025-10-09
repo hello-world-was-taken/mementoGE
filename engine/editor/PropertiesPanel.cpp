@@ -7,6 +7,7 @@
 #include "editor/EditorPanel.h"
 #include "editor/TexturePanel.h"
 #include "editor/EditorContext.h"
+#include "editor/SpritePayload.h"
 
 #include "physics/CircleCollider2D.h"
 
@@ -121,6 +122,7 @@ void PropertiesPanel::drawIdentity(GameObject *go)
 
 void PropertiesPanel::drawSize(GameObject *go)
 {
+    ImGui::Separator();
     ImGui::Text("Size");
     int width = go->getWidth();
     int height = go->getHeight();
@@ -197,6 +199,7 @@ void PropertiesPanel::drawSpriteSettings(GameObject *go)
 
 void PropertiesPanel::drawAddComponentCombo(GameObject *go)
 {
+    ImGui::Separator();
     SetFieldWidth(150);
     if (ImGui::BeginCombo("Add Component", "Select..."))
     {
@@ -220,15 +223,7 @@ void PropertiesPanel::drawAddComponentCombo(GameObject *go)
 
         if (ImGui::Selectable("Animator"))
         {
-            if (!m_ctx.selectedTextureJsonPath.empty())
-            {
-                auto animMap = AssetManager::instance().getAnimationMap(m_ctx.selectedTextureJsonPath);
-                go->addComponent<Animator>(animMap, "idle");
-            }
-            else
-            {
-                ImGui::OpenPopup("MissingAnimationPopup");
-            }
+            go->addComponent<Animator>();
         }
         ImGui::EndCombo();
     }
@@ -240,6 +235,8 @@ void PropertiesPanel::drawRigidBodySettings(GameObject *go)
         return;
 
     RigidBody2D &rb = go->getComponent<RigidBody2D>();
+
+    ImGui::Separator();
     if (ImGui::BeginCombo("Rigidbody 2D Type", rb.getBodyType().c_str()))
     {
         if (ImGui::Selectable("Static"))
@@ -258,6 +255,8 @@ void PropertiesPanel::drawBoxColliderSettings(GameObject *go)
         return;
 
     auto &box = go->getComponent<BoxCollider2D>();
+
+    ImGui::Separator();
     ImGui::Text("Box Collider 2D");
 
     SetFieldWidth();
@@ -278,6 +277,7 @@ void PropertiesPanel::drawAnimatorSettings(GameObject *go)
     auto &animator = go->getComponent<Animator>();
 
     ImGui::Separator();
+    ImGui::BeginChild("AnimatorBox", ImVec2(0, 150), true, ImGuiWindowFlags_NoScrollbar);
     ImGui::Text("Animator");
 
     ImGui::Text("Current Animation: %s", animator.currentAnimation.c_str());
@@ -285,12 +285,13 @@ void PropertiesPanel::drawAnimatorSettings(GameObject *go)
     SetFieldWidth(150);
     if (ImGui::BeginCombo("Animation", animator.currentAnimation.c_str()))
     {
-        for (auto &[name, anim] : animator.animationMap->getAnimations())
+        for (auto &[name, animJsonPath] : animator.animationSourceMap)
         {
             bool selected = (name == animator.currentAnimation);
             if (ImGui::Selectable(name.c_str(), selected))
             {
-                animator.play(name, anim.loop);
+                // TODO: do we need the loop?
+                animator.play(name, true);
             }
             if (selected)
                 ImGui::SetItemDefaultFocus();
@@ -303,12 +304,28 @@ void PropertiesPanel::drawAnimatorSettings(GameObject *go)
         if (animator.animationPlayer.isPlaying())
             animator.animationPlayer.pause();
         else
-            animator.animationPlayer.play(animator.animationMap->getAnimation(animator.currentAnimation), true);
+            animator.play(animator.currentAnimation); // TODO: why pass it, just use it inside
     }
 
     ImGui::SameLine();
     if (ImGui::Button("Stop"))
+    {
         animator.animationPlayer.stop();
+    }
+
+    ImGui::EndChild();
+    if (ImGui::BeginDragDropTarget())
+    {
+        if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("ANIMATION"))
+        {
+            IM_ASSERT(payload->DataSize == sizeof(AnimationPayload));
+            AnimationPayload animPayload = *((AnimationPayload *)payload->Data);
+
+            auto *go = m_ctx.sceneManager.getActiveScene().getActiveGameObject();
+            go->getComponent<Animator>().animationSourceMap[animPayload.animationName] = animPayload.animationJsonPath;
+        }
+        ImGui::EndDragDropTarget();
+    }
 }
 
 void PropertiesPanel::drawPopups()
@@ -337,16 +354,6 @@ void PropertiesPanel::drawPopups()
                     sprite.getTextureCoordinates());
             } });
         if (ImGui::Button("Cancel"))
-            ImGui::CloseCurrentPopup();
-        ImGui::EndPopup();
-    }
-
-    // Missing animation
-    if (ImGui::BeginPopupModal("MissingAnimationPopup", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-    {
-        ImGui::Text("Please select an animation JSON first!");
-        ImGui::Separator();
-        if (ImGui::Button("OK", ImVec2(120, 0)))
             ImGui::CloseCurrentPopup();
         ImGui::EndPopup();
     }

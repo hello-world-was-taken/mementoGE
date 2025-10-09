@@ -24,6 +24,7 @@ public:
 
 public:
     // TODO: update - public for testing purposes
+    // TODO: we no longer need these since we started json load
     float m_spriteW;
     float m_spriteH;
     float m_spriteGapX;

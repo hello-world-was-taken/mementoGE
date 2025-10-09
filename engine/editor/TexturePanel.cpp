@@ -151,6 +151,17 @@ void TexturePanel::renderAnimationPanel()
         {
         }
 
+        if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+        {
+            AnimationPayload payload{};
+            strncpy(payload.animationName, animName.c_str(), sizeof(payload.animationName) - 1);
+            strncpy(payload.animationJsonPath, m_ctx.selectedTextureJsonPath.c_str(), sizeof(payload.animationJsonPath) - 1);
+
+            ImGui::SetDragDropPayload("ANIMATION", &payload, sizeof(AnimationPayload));
+            ImGui::Text("Dragging animation %s", animName.c_str());
+            ImGui::EndDragDropSource();
+        }
+
         ImGui::PopID();
         imguiId++;
 
@@ -189,22 +200,6 @@ void TexturePanel::renderSelectedTexSheetPanel(bool isInModal, std::function<voi
     }
 
     std::shared_ptr<SpriteSheet> spriteSheet = AssetManager::instance().getSpriteSheet(m_ctx.selectedTextureJsonPath);
-
-    bool changed = false;
-
-    ImGui::PushItemWidth(80);
-    changed |= ImGui::DragFloat("W", &spriteSheet->m_spriteW);
-    ImGui::SameLine();
-    changed |= ImGui::DragFloat("H", &spriteSheet->m_spriteH);
-    ImGui::SameLine();
-    changed |= ImGui::DragFloat("GapX", &spriteSheet->m_spriteGapX);
-    ImGui::SameLine();
-    changed |= ImGui::DragFloat("GapY", &spriteSheet->m_spriteGapY);
-
-    if (changed)
-    {
-        spriteSheet->updateSpriteSizes();
-    }
 
     std::shared_ptr<Texture> spriteSheetTexture = spriteSheet->getTexture();
     int id = 0;

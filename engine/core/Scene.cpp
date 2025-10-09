@@ -123,6 +123,12 @@ void Scene::animate()
     {
         auto &animator = view.get<Animator>(entity);
 
+        // No animation selected or empty animator component
+        if(animator.currentAnimation.empty())
+        {
+            return;
+        }
+
         // Check if the entity has a Sprite. Create one if not present
         // TODO: should we remove this check for the actual game? Perf improvement
         if (!m_registry.any_of<Sprite>(entity))

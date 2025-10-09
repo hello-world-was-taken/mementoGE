@@ -1,19 +1,22 @@
 #include "core/Animator.h"
+#include "core/AssetManager.h"
 
 #include <memory>
 #include <string>
 
-Animator::Animator(std::shared_ptr<AnimationMap> animMap, const std::string &defaultAnim)
-    : animationMap{animMap},
-      currentAnimation{defaultAnim},
-      animationPlayer{animationMap->getAnimation(defaultAnim)}
-{
-}
-
 void Animator::play(const std::string &name, bool loop)
 {
+    auto it = animationSourceMap.find(name);
+    if(it == animationSourceMap.end())
+    {
+        throw std::runtime_error("Animation '" + name + "' not found in Animator");
+    }
+
+    std::string jsonPath = animationSourceMap[name];
+    auto animMap = AssetManager::instance().getAnimationMap(jsonPath);
+
     currentAnimation = name;
-    animationPlayer.play(animationMap->getAnimation(name), loop);
+    animationPlayer.play(animMap->getAnimation(name), loop);
 }
 
 void Animator::update()
@@ -31,8 +34,15 @@ void Animator::serialize(YAML::Emitter &out) const
     out << YAML::Key << "Animator";
     out << YAML::Value << YAML::BeginMap;
 
-    out << YAML::Key << "AnimationMapJsonPath" << YAML::Value << animationMap->getJsonPath();
     out << YAML::Key << "CurrentAnimation" << YAML::Value << currentAnimation;
+
+    out << YAML::Key << "Animations";
+    out << YAML::Value << YAML::BeginMap;
+    for (auto &[animationName, animationPath] : animationSourceMap)
+    {
+        out << YAML::Key << animationName << YAML::Value << animationPath;
+    }
+    out << YAML::EndMap;
 
     out << YAML::EndMap;
 }
@@ -42,9 +52,18 @@ void Animator::deserialize(const YAML::Node &node)
     if (!node["Animator"])
         return;
 
-    auto animPath = node["Animator"]["AnimationMapJsonPath"].as<std::string>();
-    animationMap = AnimationMap::fromJson(animPath);
+    auto animationsMap = node["Animator"]["Animations"];
+    for (YAML::const_iterator it = animationsMap.begin(); it != animationsMap.end(); it++)
+    {
+        auto animationName = it->first.as<std::string>();
+        auto animationJsonPath = it->second.as<std::string>();
+
+        animationSourceMap[animationName] = animationJsonPath;
+    }
 
     currentAnimation = node["Animator"]["CurrentAnimation"].as<std::string>();
-    animationPlayer.play(animationMap->getAnimation(currentAnimation), true);
+    if (!currentAnimation.empty())
+    {
+        play(currentAnimation, true);
+    }
 }

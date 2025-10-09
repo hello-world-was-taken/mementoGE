@@ -11,7 +11,6 @@ class Animator
 {
 public:
     Animator() = default;
-    Animator(std::shared_ptr<AnimationMap> animMap, const std::string &defaultAnim);
 
     void play(const std::string &name, bool loop = true);
     void update();
@@ -22,7 +21,7 @@ public:
 
 // private:
     // TODO: making them public to display on imgui
-    std::shared_ptr<AnimationMap> animationMap;
+    std::map<std::string, std::string> animationSourceMap; // "walk" -> "assets/character.json"
     std::string currentAnimation;
     AnimationPlayer animationPlayer;
 };
