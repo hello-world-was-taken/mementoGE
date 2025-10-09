@@ -7,6 +7,8 @@
 #include "engine/core/Scene.h"
 #include "engine/core/Sprite.h"
 #include "engine/core/Event.h"
+#include "engine/core/Animator.h"
+
 #include "engine/editor/Constants.h"
 
 #include "util/Time.h"
@@ -28,15 +30,45 @@ Game::~Game()
 
 void Game::start()
 {
-    processInput();
+    if (m_editorMode)
+    {
+        m_window.setupCallBack();
+    }
     update();
 }
 
 void Game::processInput()
 {
-    if (m_editorMode)
+    auto *eventHandler = EventHandler::instance();
+    if (eventHandler->hasActiveEvent())
     {
-        m_window.setupCallBack();
+        Event e = eventHandler->getCurrentEvent();
+
+        // TODO: if an object is not selected, it'll crash. Fix.
+        if (e.getEventType() == EventType::Key || e.getEventType() == EventType::KeyRepeat)
+        {
+            KeyType keyType = e.getKeyType();
+
+            if (keyType == KeyType::RightArrow)
+            {
+                auto *go = m_editorLayer.getEditorContext().sceneManager.getActiveScene().getActiveGameObject();
+                go->getComponent<Transform>().translate(200.0f * Time::deltaTime(), 0.0f, 0.0f);
+                go->getComponent<Animator>().play("slash");
+            }
+            else if (keyType == KeyType::LeftArrow)
+            {
+                auto *go = m_editorLayer.getEditorContext().sceneManager.getActiveScene().getActiveGameObject();
+                go->getComponent<Transform>().translate(-200.0f * Time::deltaTime(), 0.0f, 0.0f);
+                go->getComponent<Animator>().play("duck");
+            }
+        }
+    }
+    else
+    {
+        if(auto *go = m_editorLayer.getEditorContext().sceneManager.getActiveScene().getActiveGameObject())
+        {
+            go->getComponent<Animator>().play("idle");
+        }
     }
 }
 
@@ -50,6 +82,7 @@ void Game::update()
             if (m_editorMode)
             {
                 m_editorLayer.update();
+                processInput();
                 MouseListener::instance()->beginFrame();
             }
             else

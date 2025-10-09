@@ -43,7 +43,6 @@ private:
     void drawMouseDebugPanel();
 
     void handleSceneInteraction();
-    void handleEvents();
 
     std::vector<std::string> getTextureFiles(const std::string &folderPath);
 

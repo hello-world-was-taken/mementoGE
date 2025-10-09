@@ -9,7 +9,7 @@
 class EventHandler
 {
 public:
-    static EventHandler *get();
+    static EventHandler *instance();
 
     bool hasActiveEvent();
     const Event getCurrentEvent();

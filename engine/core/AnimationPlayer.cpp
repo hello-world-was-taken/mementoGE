@@ -32,6 +32,13 @@ void AnimationPlayer::update()
 
 void AnimationPlayer::play(const Animation &animation, bool loop)
 {
+    // TODO: what if two the two animations are from a d/t json?
+    // Hmm, that would also cause a problem in Animator
+    if(mp_animation && mp_animation->name == animation.name)
+    {
+        return;
+    }
+
     mp_animation = &animation;
     m_looping = loop;
     m_playing = true;

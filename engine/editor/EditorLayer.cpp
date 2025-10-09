@@ -71,7 +71,6 @@ void EditorLayer::update()
                 m_ctx.editorCamera,
                 m_ctx.sceneManager.getActiveScene().getGameObjects());
 
-            handleEvents();
             drawEditorUI();
 
             m_ctx.frameBuffer.unbind();
@@ -274,41 +273,5 @@ void EditorLayer::drawMouseDebugPanel()
                     held ? "true" : "false",
                     pressed ? "true" : "false",
                     released ? "true" : "false");
-    }
-}
-
-void EditorLayer::handleEvents()
-{
-    auto *eventHandler = EventHandler::get();
-    if (eventHandler->hasActiveEvent())
-    {
-        Event e = eventHandler->getCurrentEvent();
-
-        if (e.getEventType() == EventType::Key)
-        {
-            KeyType keyType = e.getKeyType();
-
-            if (keyType == KeyType::Escape)
-            {
-                m_ctx.window.closeWindow();
-                std::cout << "Escape" << std::endl;
-            }
-            else if (keyType == KeyType::RightArrow)
-            {
-                m_ctx.sceneManager.getActiveScene().getActiveGameObject()->getComponent<Transform>().translate(500.0f * Time::deltaTime(), 0.0f, 0.0f);
-            }
-            else if (keyType == KeyType::LeftArrow)
-            {
-                m_ctx.sceneManager.getActiveScene().getActiveGameObject()->getComponent<Transform>().translate(-500.0f * Time::deltaTime(), 0.0f, 0.0f);
-            }
-            else if (keyType == KeyType::DownArrow)
-            {
-                m_ctx.sceneManager.getActiveScene().getActiveGameObject()->getComponent<Transform>().translate(0.0f, -500.0f * Time::deltaTime(), 0.0f);
-            }
-            else if (keyType == KeyType::UpArrow)
-            {
-                m_ctx.sceneManager.getActiveScene().getActiveGameObject()->getComponent<Transform>().translate(0.0f, 500.0f * Time::deltaTime(), 0.0f);
-            }
-        }
     }
 }

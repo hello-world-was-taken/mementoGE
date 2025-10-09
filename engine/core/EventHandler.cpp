@@ -3,7 +3,7 @@
 #include <iostream>
 #include <imgui.h>
 
-EventHandler *EventHandler::get()
+EventHandler *EventHandler::instance()
 {
     static EventHandler instance;
     return &instance;
@@ -11,12 +11,7 @@ EventHandler *EventHandler::get()
 
 void EventHandler::glfwKeyCallBack(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
-    auto *listener = EventHandler::get();
-    // ImGuiIO &io = ImGui::GetIO();
-    // if (io.WantCaptureKeyboard)
-    // {
-    //     return;
-    // }
+    auto *listener = EventHandler::instance();
 
     listener->m_hasActiveEvent = (action == GLFW_PRESS || action == GLFW_REPEAT);
 
