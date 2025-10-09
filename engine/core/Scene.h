@@ -45,6 +45,7 @@ public:
     void animate();
 
     void addGameObject(unsigned int width, unsigned int height, std::string &&tag);
+    void removeGameObject(entt::entity);
     void setActiveGameObject(entt::entity entityId);
 
     void addRigidBody2DToWorld();

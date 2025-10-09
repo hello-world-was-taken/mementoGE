@@ -124,7 +124,7 @@ void Scene::animate()
         auto &animator = view.get<Animator>(entity);
 
         // No animation selected or empty animator component
-        if(animator.currentAnimation.empty())
+        if (animator.currentAnimation.empty())
         {
             return;
         }
@@ -156,6 +156,19 @@ void Scene::addGameObject(unsigned int width, unsigned int height, std::string &
     auto go = GameObject{m_registry, std::move(tag), width, height};
     m_activeEntityId = go.getEntityId();
     m_gameObjects.push_back(std::move(go));
+}
+
+void Scene::removeGameObject(entt::entity gameObject)
+{
+    auto it = std::find_if(m_gameObjects.begin(), m_gameObjects.end(),
+                           [&](GameObject &go)
+                           { return go.getEntityId() == gameObject; });
+
+    if(it != m_gameObjects.end())
+    {
+        m_gameObjects.erase(it);
+    }
+    m_registry.destroy(gameObject);
 }
 
 const std::vector<GameObject> &Scene::getGameObjects()

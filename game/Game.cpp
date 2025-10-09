@@ -39,33 +39,52 @@ void Game::start()
 
 void Game::processInput()
 {
+    auto *go = m_editorLayer.getEditorContext().sceneManager.getActiveScene().getActiveGameObject();
+    if (!go)
+    {
+        return;
+    }
+
     auto *eventHandler = EventHandler::instance();
     if (eventHandler->hasActiveEvent())
     {
         Event e = eventHandler->getCurrentEvent();
 
-        // TODO: if an object is not selected, it'll crash. Fix.
         if (e.getEventType() == EventType::Key || e.getEventType() == EventType::KeyRepeat)
         {
             KeyType keyType = e.getKeyType();
 
             if (keyType == KeyType::RightArrow)
             {
-                auto *go = m_editorLayer.getEditorContext().sceneManager.getActiveScene().getActiveGameObject();
-                go->getComponent<Transform>().translate(200.0f * Time::deltaTime(), 0.0f, 0.0f);
-                go->getComponent<Animator>().play("slash");
+                go->getComponent<Transform>().translate(50.0f * Time::deltaTime(), 0.0f, 0.0f);
+                if(go->hasComponent<Sprite>())
+                {
+                    go->getComponent<Sprite>().setFlipX(true);
+                }
+
+                if(go->hasComponent<Animator>())
+                {
+                    go->getComponent<Animator>().play("run");
+                }
             }
             else if (keyType == KeyType::LeftArrow)
             {
-                auto *go = m_editorLayer.getEditorContext().sceneManager.getActiveScene().getActiveGameObject();
-                go->getComponent<Transform>().translate(-200.0f * Time::deltaTime(), 0.0f, 0.0f);
-                go->getComponent<Animator>().play("duck");
+                go->getComponent<Transform>().translate(-50.0f * Time::deltaTime(), 0.0f, 0.0f);
+                if (go->hasComponent<Sprite>())
+                {
+                    go->getComponent<Sprite>().setFlipX(false);
+                }
+
+                if (go->hasComponent<Animator>())
+                {
+                    go->getComponent<Animator>().play("run");
+                }
             }
         }
     }
     else
     {
-        if(auto *go = m_editorLayer.getEditorContext().sceneManager.getActiveScene().getActiveGameObject())
+        if(go->hasComponent<Animator>())
         {
             go->getComponent<Animator>().play("idle");
         }

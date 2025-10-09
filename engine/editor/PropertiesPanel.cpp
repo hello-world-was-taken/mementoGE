@@ -95,6 +95,12 @@ void PropertiesPanel::renderPropertiesPanel()
     drawBoxColliderSettings(go);
     drawAnimatorSettings(go);
 
+    ImGui::Separator();
+    if (ImGui::Button("Delete Object"))
+    {
+        m_ctx.sceneManager.getActiveScene().removeGameObject(go->getEntityId());
+    }
+
     // Popups (global)
     drawPopups();
 }
@@ -304,7 +310,12 @@ void PropertiesPanel::drawAnimatorSettings(GameObject *go)
         if (animator.animationPlayer.isPlaying())
             animator.animationPlayer.pause();
         else
-            animator.play(animator.currentAnimation); // TODO: why pass it, just use it inside
+        {
+            if (!animator.currentAnimation.empty())
+            {
+                animator.play(animator.currentAnimation); // TODO: why pass it, just use it inside
+            }
+        }
     }
 
     ImGui::SameLine();
