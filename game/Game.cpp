@@ -39,11 +39,7 @@ void Game::start()
 
 void Game::processInput()
 {
-    auto *go = m_editorLayer.getEditorContext().sceneManager.getActiveScene().getActiveGameObject();
-    if (!go)
-    {
-        return;
-    }
+    auto &go = m_editorLayer.getEditorContext().sceneManager.getActiveScene().getPlayer();
 
     auto *eventHandler = EventHandler::instance();
     if (eventHandler->hasActiveEvent())
@@ -56,38 +52,21 @@ void Game::processInput()
 
             if (keyType == KeyType::RightArrow)
             {
-                go->getComponent<Transform>().translate(50.0f * Time::deltaTime(), 0.0f, 0.0f);
-                if(go->hasComponent<Sprite>())
-                {
-                    go->getComponent<Sprite>().setFlipX(true);
-                }
-
-                if(go->hasComponent<Animator>())
-                {
-                    go->getComponent<Animator>().play("run");
-                }
+                go.getComponent<Transform>().translate(50.0f * Time::deltaTime(), 0.0f, 0.0f);
+                go.getComponent<Sprite>().setFlipX(true);
+                go.getComponent<Animator>().play("run");
             }
             else if (keyType == KeyType::LeftArrow)
             {
-                go->getComponent<Transform>().translate(-50.0f * Time::deltaTime(), 0.0f, 0.0f);
-                if (go->hasComponent<Sprite>())
-                {
-                    go->getComponent<Sprite>().setFlipX(false);
-                }
-
-                if (go->hasComponent<Animator>())
-                {
-                    go->getComponent<Animator>().play("run");
-                }
+                go.getComponent<Transform>().translate(-50.0f * Time::deltaTime(), 0.0f, 0.0f);
+                go.getComponent<Sprite>().setFlipX(false);
+                go.getComponent<Animator>().play("run");
             }
         }
     }
     else
     {
-        if(go->hasComponent<Animator>())
-        {
-            go->getComponent<Animator>().play("idle");
-        }
+        go.getComponent<Animator>().play("idle");
     }
 }
 
@@ -101,7 +80,10 @@ void Game::update()
             if (m_editorMode)
             {
                 m_editorLayer.update();
-                processInput();
+                if (m_editorLayer.getEditorContext().sceneManager.isPlaying())
+                {
+                    processInput();
+                }
                 MouseListener::instance()->beginFrame();
             }
             else
@@ -114,6 +96,8 @@ void Game::update()
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
                 m_sceneManager.update();
+                // TODO: we need to set the player as active game object in game mode
+                processInput();
                 render();
             }
         },

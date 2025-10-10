@@ -266,6 +266,18 @@ void PropertiesPanel::drawBoxColliderSettings(GameObject *go)
     ImGui::Text("Box Collider 2D");
 
     SetFieldWidth();
+    ImGui::DragFloat("Box Width", &box.m_size.x, 0.01f, 0.0f);
+
+    SetFieldWidth();
+    ImGui::DragFloat("Box Height", &box.m_size.y, 0.01f, 0.0f);
+
+    SetFieldWidth();
+    ImGui::DragFloat("Offset X", &box.m_offset.x, 0.01f, 0.0f);
+
+    SetFieldWidth();
+    ImGui::DragFloat("Offset Y", &box.m_offset.y, 0.01f, 0.0f);
+
+    SetFieldWidth();
     ImGui::DragFloat("Density", &box.m_density, 0.01f, 0.0f);
 
     SetFieldWidth();

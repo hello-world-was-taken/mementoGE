@@ -102,8 +102,8 @@ void Scene::update()
     {
         m_physicsWorld.simulate(Time::deltaTime(), m_gameObjects);
         m_physicsWorld.syncTransforms(m_gameObjects);
+        animate();
     }
-    animate();
 }
 
 void Scene::play()
@@ -179,6 +179,19 @@ const std::vector<GameObject> &Scene::getGameObjects()
 SceneCamera &Scene::getCamera()
 {
     return m_sceneCamera;
+}
+
+GameObject &Scene::getPlayer()
+{
+    for (auto &go : m_gameObjects)
+    {
+        if (go.getTag() == m_playerTag)
+        {
+            return go;
+        }
+    }
+
+    throw std::runtime_error("Player not found");
 }
 
 GameObject *Scene::getActiveGameObject()

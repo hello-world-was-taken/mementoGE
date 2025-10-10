@@ -44,6 +44,8 @@ public:
 
     void animate();
 
+    GameObject &getPlayer();
+
     void addGameObject(unsigned int width, unsigned int height, std::string &&tag);
     void removeGameObject(entt::entity);
     void setActiveGameObject(entt::entity entityId);
@@ -53,6 +55,8 @@ public:
 
     const std::vector<GameObject> &getGameObjects();
     SceneCamera &getCamera();
+
+    // TODO: move this out to editor context
     GameObject *getActiveGameObject();
 
     const std::string &getTag() const;
@@ -70,6 +74,8 @@ private:
     SceneCamera m_sceneCamera;
 
     std::vector<std::shared_ptr<Texture>> m_textures;
+    // TODO: move this out to editor context
     std::optional<entt::entity> m_activeEntityId;
+    std::string m_playerTag = "Player";
     std::string mTag;
 };

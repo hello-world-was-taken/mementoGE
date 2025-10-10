@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <box2d/box2d.h>
 
+// TODO: add serialization and desrialization logic
 class BoxCollider2D
 {
 public:
