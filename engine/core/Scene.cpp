@@ -100,8 +100,12 @@ void Scene::update()
 {
     if (m_play)
     {
+        m_enemySystem.update(m_gameObjects);
+
+        // physics should be updated last as other systems make updates to it
         m_physicsWorld.simulate(Time::deltaTime(), m_gameObjects);
         m_physicsWorld.syncTransforms(m_gameObjects);
+
         animate();
     }
 }
@@ -140,14 +144,14 @@ void Scene::animate()
         auto &sprite = m_registry.get<Sprite>(entity);
         const Sprite &animatedSprite = animator.getCurrentSprite();
 
-        bool flipX = sprite.isFlippedX();
-        bool flipY = sprite.isFlippedY();
+        bool flipX = sprite.flipX;
+        bool flipY = sprite.flipY;
 
         sprite = animator.getCurrentSprite();
 
         // Restore flip values
-        sprite.setFlipX(flipX);
-        sprite.setFlipY(flipY);
+        sprite.flipX = flipX;
+        sprite.flipY = flipY;
     }
 }
 
@@ -166,6 +170,7 @@ void Scene::removeGameObject(entt::entity gameObject)
 
     if(it != m_gameObjects.end())
     {
+        std::cout << "game object deleted" << std::endl;
         m_gameObjects.erase(it);
     }
     m_registry.destroy(gameObject);

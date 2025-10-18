@@ -4,6 +4,7 @@
 #include "core/GameObject.h"
 #include "core/Transform.h"
 #include "core/SceneCamera.h"
+#include "core/EnemySystem.h"
 
 #include "util/log_error.h"
 
@@ -72,6 +73,7 @@ private:
     entt::registry m_registry;
     std::vector<GameObject> m_gameObjects;
     SceneCamera m_sceneCamera;
+    EnemySystem m_enemySystem;
 
     std::vector<std::shared_ptr<Texture>> m_textures;
     // TODO: move this out to editor context

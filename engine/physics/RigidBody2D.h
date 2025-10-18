@@ -1,6 +1,9 @@
 #pragma once
 
 #include <box2d/box2d.h>
+#include <string>
+#include <yaml-cpp/yaml.h>
+#include <glm/glm.hpp>
 
 enum class BodyType
 {
@@ -13,47 +16,16 @@ class RigidBody2D
 {
 public:
     BodyType m_type = BodyType::Static;
+    b2BodyId m_runtimeBody = b2_nullBodyId;
+    glm::vec2 velocity;
     bool m_fixedRotation = false;
 
-    b2BodyId m_runtimeBody = b2_nullBodyId;
+    void setType(BodyType type);
+    void setVelocity(float velocityX, float velocityY);
 
-    void setType(BodyType type)
-    {
-        m_type = type;
+    std::string getBodyType();
+    glm::vec2 &getVelocity();
 
-        if (b2Body_IsValid(m_runtimeBody))
-        {
-            b2BodyType box2dType = (type == BodyType::Static)    ? b2_staticBody
-                                   : (type == BodyType::Dynamic) ? b2_dynamicBody
-                                                                 : b2_kinematicBody;
-
-            b2Body_SetType(m_runtimeBody, box2dType);
-        }
-    }
-
-    std::string getBodyType()
-    {
-        return (m_type == BodyType::Static) ? "Static" : (m_type == BodyType::Dynamic) ? "Dynamic"
-                                                                                       : "Kinematic";
-    }
-
-    // TODO: move these to cpp file
-    void serialize(YAML::Emitter &out)
-    {
-        out << YAML::Key << "RigidBody2D";
-        out << YAML::Value << YAML::BeginMap;
-        out << YAML::Key << "BodyType" << YAML::Value << static_cast<int>(m_type);
-        out << YAML::Key << "FixedRotation" << YAML::Value << m_fixedRotation;
-        out << YAML::EndMap;
-    }
-
-    // TODO: move these to cpp file
-    void deserialize(const YAML::Node &node)
-    {
-        if (!node["RigidBody2D"])
-            return;
-        const auto &data = node["RigidBody2D"];
-        m_type = static_cast<BodyType>(data["BodyType"].as<int>());
-        m_fixedRotation = data["FixedRotation"].as<bool>();
-    }
+    void serialize(YAML::Emitter &out);
+    void deserialize(const YAML::Node &node);
 };

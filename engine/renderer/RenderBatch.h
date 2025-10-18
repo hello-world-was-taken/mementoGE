@@ -30,7 +30,7 @@ public:
 
     void setVertexData(std::vector<Vertex> vertices);
     void setIndexData(std::vector<unsigned int> indices);
-    void render(const Camera &camera, std::shared_ptr<Shader> customShader = nullptr);
+    void render(const Camera &camera, int drawCount = 1000 * 6, std::shared_ptr<Shader> customShader = nullptr);
 
 private:
     void setupBuffers();

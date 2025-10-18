@@ -30,11 +30,10 @@ std::shared_ptr<AnimationMap> AnimationMap::fromJson(const std::filesystem::path
         const auto &frame = frameInfo["frame"];
         Frame f;
         f.sprite = Sprite{
-            texturePath,
-            {frame["x"].get<float>(),
-             frame["y"].get<float>()},
+            {frame["x"].get<float>(), frame["y"].get<float>()},
             frame["w"].get<float>(),
-            frame["h"].get<float>()};
+            frame["h"].get<float>(),
+            tex};
 
         f.duration = 0.1; // todo: should we make this part of the frame in our metadata?
         frameLookup[frameName] = f;

@@ -30,20 +30,13 @@ std::shared_ptr<SpriteSheet> SpriteSheet::fromJson(const std::filesystem::path &
     for (auto &[frameName, frameInfo] : data["frames"].items())
     {
         const auto &frame = frameInfo["frame"];
-        Sprite s{
-            texturePath,
-            {frame["x"].get<float>(),
-             frame["y"].get<float>()},
-            frame["w"].get<float>(),
-            frame["h"].get<float>()};
-
         spriteSheet->addSprite(
-            Sprite{
-                texturePath,
-                {frame["x"].get<float>(),
-                 frame["y"].get<float>()},
+            {
+                {frame["x"].get<float>(), frame["y"].get<float>()},
                 frame["w"].get<float>(),
-                frame["h"].get<float>()});
+                frame["h"].get<float>(),
+                tex
+            });
     }
 
     return spriteSheet;
@@ -66,7 +59,7 @@ void SpriteSheet::updateSpriteSizes()
         float h = m_spriteH;
 
         // TODO: emplace_back?
-        m_sprites.push_back(Sprite(m_texture->getFilePath(), glm::vec2{x, y}, w, h));
+        m_sprites.push_back(Sprite{glm::vec2{x, y}, w, h, m_texture});
     }
 }
 

@@ -2,6 +2,7 @@
 #include "core/AssetManager.h"
 #include "core/Sprite.h"
 #include "core/Animator.h"
+#include "core/EnemySystem.h"
 
 #include "editor/PropertiesPanel.h"
 #include "editor/EditorPanel.h"
@@ -85,6 +86,7 @@ void PropertiesPanel::renderPropertiesPanel()
         return;
     }
 
+    // TODO: look into entt::meta
     drawIdentity(go);
     drawSize(go);
     drawTransform(go);
@@ -179,26 +181,22 @@ void PropertiesPanel::drawSpriteSettings(GameObject *go)
     ImGui::Separator();
     ImGui::Text("Sprite Settings");
 
-    static bool flipX = sprite.isFlippedX();
-    static bool flipY = sprite.isFlippedY();
-    if (ImGui::Checkbox("Flip Horizontally", &flipX))
-        sprite.setFlipX(flipX);
-    if (ImGui::Checkbox("Flip Vertically", &flipY))
-        sprite.setFlipY(flipY);
+    if (ImGui::Checkbox("Flip Horizontally", &sprite.flipX))
+        if (ImGui::Checkbox("Flip Vertically", &sprite.flipY))
 
-    if (ImGui::Button("Change Sprite"))
-    {
-        if (m_ctx.selectedTextureJsonPath.empty())
-        {
-            ImGui::OpenPopup("MissingTexturePopup");
-        }
-        else
-        {
-            ImGui::OpenPopup("Select Sprite");
-        }
-    }
+            if (ImGui::Button("Change Sprite"))
+            {
+                if (m_ctx.selectedTextureJsonPath.empty())
+                {
+                    ImGui::OpenPopup("MissingTexturePopup");
+                }
+                else
+                {
+                    ImGui::OpenPopup("Select Sprite");
+                }
+            }
 
-    std::string texPath = sprite.getTexturePath();
+    std::string texPath = sprite.texture->getFilePath();
     ImGui::Text("Current Sprite:");
     ImGui::TextWrapped("%s", texPath.c_str());
 }
@@ -230,6 +228,11 @@ void PropertiesPanel::drawAddComponentCombo(GameObject *go)
         if (ImGui::Selectable("Animator"))
         {
             go->addComponent<Animator>();
+        }
+
+        if (ImGui::Selectable("EnemyState"))
+        {
+            go->addComponent<EnemyAiState>();
         }
         ImGui::EndCombo();
     }
@@ -289,6 +292,11 @@ void PropertiesPanel::drawBoxColliderSettings(GameObject *go)
 
 void PropertiesPanel::drawAnimatorSettings(GameObject *go)
 {
+    if (go->hasComponent<EnemyAiState>())
+    {
+        ImGui::Separator();
+        ImGui::Text("has enemyAiState");
+    }
     if (!go->hasComponent<Animator>())
         return;
 
@@ -373,11 +381,27 @@ void PropertiesPanel::drawPopups()
                     go->removeComponent<Sprite>();
 
                 go->addComponent<Sprite>(
-                    getTexturePathFromJson(m_ctx.selectedTextureJsonPath),
-                    sprite.getTextureCoordinates());
+                    sprite.topLeft,
+                    sprite.width,
+                    sprite.height,
+                    sprite.texture);
             } });
         if (ImGui::Button("Cancel"))
             ImGui::CloseCurrentPopup();
         ImGui::EndPopup();
     }
 }
+
+// template <typename T>
+// void drawComponent(const std::string &name, Entity entity)
+// {
+//     if (entity.hasComponent<T>())
+//     {
+//         auto &component = entity.getComponent<T>();
+//         if (ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+//             component.onImGuiRender();
+//     }
+// }
+
+// drawComponent<Sprite>("Sprite", entity);
+// drawComponent<Transform>("Transform", entity);

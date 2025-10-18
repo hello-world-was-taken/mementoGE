@@ -114,10 +114,10 @@ void ScenePanel::renderSceneViewport()
 
             // Create object here
             Sprite sprite = spriteSheet->getSprites()[spriteIndex];
-            const float aspectRatio = sprite.getWidth() / sprite.getHeight();
+            const float aspectRatio = sprite.width / sprite.height;
             m_ctx.sceneManager.getActiveScene().addGameObject(32 * aspectRatio, 32, "_new");
             auto newObj = m_ctx.sceneManager.getActiveScene().getActiveGameObject();
-            newObj->addComponent<Sprite>(texturePath, sprite.getTextureCoordinates());
+            newObj->addComponent<Sprite>(sprite.topLeft, sprite.width, sprite.height, sprite.texture);
             newObj->getComponent<Transform>().setPosition(worldPos.x, worldPos.y, 0.0f);
         }
         ImGui::EndDragDropTarget();

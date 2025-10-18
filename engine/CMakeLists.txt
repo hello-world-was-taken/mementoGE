@@ -33,6 +33,8 @@ add_library(${PROJECT_NAME} STATIC
     core/AssetManager.cpp
     core/AnimationPlayer.cpp
     core/Animator.cpp
+    core/EnemySystem.cpp
+    core/MovementSystem.cpp
 
     # editor
     editor/EditorLayer.cpp
@@ -51,6 +53,7 @@ add_library(${PROJECT_NAME} STATIC
 
     # physics
     physics/Physics2D.cpp
+    physics/RigidBody2D.cpp
 
     # utils
     util/log_error.cpp
@@ -79,6 +82,9 @@ target_link_libraries(${PROJECT_NAME}
     ${OPENGL_LIBRARIES}
     opengl # wrapper of opengl calls
 )
+
+# comment out for release builds
+target_compile_definitions(${PROJECT_NAME} PRIVATE EDITOR_BUILD)
 
 # Configure for MacOs
 if(APPLE)

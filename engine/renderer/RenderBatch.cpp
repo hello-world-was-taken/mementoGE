@@ -80,7 +80,7 @@ void RenderBatch::setIndexData(std::vector<unsigned int> indices)
     m_ibo->updateIndicesData(m_indices.data(), m_indices.size());
 }
 
-void RenderBatch::render(const Camera &camera, std::shared_ptr<Shader> customShader)
+void RenderBatch::render(const Camera &camera, int drawCount, std::shared_ptr<Shader> customShader)
 {
     auto vertexShaderPath = getFilePath("assets/shader/vertex.shader");
     auto fragmentShaderPath = getFilePath("assets/shader/fragment.shader");
@@ -98,7 +98,7 @@ void RenderBatch::render(const Camera &camera, std::shared_ptr<Shader> customSha
     glClearError();
     if (m_drawMode == GL_TRIANGLES)
     {
-        glDrawElements(GL_TRIANGLES, BATCH_SIZE * INDICES_PER_QUAD, GL_UNSIGNED_INT, nullptr);
+        glDrawElements(GL_TRIANGLES, drawCount, GL_UNSIGNED_INT, nullptr);
         glCheckError("glDrawTriangles", __FILE__, __LINE__);
     }
     else if (m_drawMode == GL_LINES)

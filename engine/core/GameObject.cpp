@@ -32,7 +32,7 @@ GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGam
     if (serializedGameObject["Sprite"])
     {
         addComponent<Sprite>();
-        getComponent<Sprite>().deserialize(serializedGameObject);
+        EditorExtensions::deserializeSprite(serializedGameObject, getComponent<Sprite>());
     }
 
     // Deserialize RigidBody2D
@@ -174,7 +174,7 @@ bool GameObject::serialize(YAML::Emitter &out)
     if (hasComponent<Sprite>())
     {
         Sprite &sprite = getComponent<Sprite>();
-        sprite.serialize(out);
+        EditorExtensions::serializeSprite(out, sprite);
     }
 
     // RIGIDBODY2D COMPONENT

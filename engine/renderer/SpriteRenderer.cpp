@@ -21,9 +21,7 @@ void SpriteRenderer::render(
     updateVertices(camera, gameObjects);
     m_batch->setVertexData(m_vertices);
     m_batch->setIndexData(m_indices);
-
-    // std::cout << "vertex size: " << m_vertices.size() << " index size: " << m_indices.size()  << std::endl;
-    m_batch->render(camera);
+    m_batch->render(camera, m_vertices.size() / 4 * 6);
 }
 
 // TODO: once we start to use more textures and exceed the amount we can bind to openGL
@@ -52,9 +50,9 @@ void SpriteRenderer::updateVertices(
                 // game object has a sprite attached to it, the width and height
                 // should be taken from the sprite.
                 m_vertices.push_back({transformedQuad[i],
-                                      sprite.getColor(),
-                                      sprite.getTextureCoordinates()[i], // TODO: do we need to retrieve this from the sprite renderer?
-                                      (float)sprite.getTexture()->getTextureUnit()});
+                                      sprite.color,
+                                      sprite.getNormalizedTextureCoordinates()[i], // TODO: do we need to retrieve this from the sprite renderer?
+                                      (float)sprite.texture->getTextureUnit()});
             }
         }
     }

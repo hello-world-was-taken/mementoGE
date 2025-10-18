@@ -1,62 +1,36 @@
 #pragma once
 
-#include <vector>
-#include <string>
-#include <glm/glm.hpp>
 #include <memory>
-#include <yaml-cpp/yaml.h>
-
+#include <vector>
+#include <glm/glm.hpp>
 #include "opengl/Texture.h"
 
-class Sprite
+#ifdef EDITOR_BUILD
+#include <yaml-cpp/yaml.h>
+#include <imgui.h>
+#endif
+
+struct Sprite
 {
-public:
-    Sprite(
-        std::string texturePath,
-        std::vector<glm::vec2> textureCoordinates);
-    Sprite(
-        std::string texturePath,
-        glm::vec2 topLeft,
-        float width,
-        float height);
+    glm::vec2 topLeft;
+    float width = 0.0f;
+    float height = 0.0f;
 
-    Sprite(); // TODO: Should only be used for serialization and Frame creation
-    ~Sprite();
+    std::shared_ptr<Texture> texture;
+    glm::vec4 color = {1.0f, 1.0f, 1.0f, 1.0f}; // white
 
-    glm::vec4 getColor();
+    bool flipX = false;
+    bool flipY = false;
 
-    std::vector<glm::vec2> getTextureCoordinates() const;
-    std::shared_ptr<Texture> getTexture();
-    std::string getTexturePath();
-
-    void setFlipX(bool flip);
-    void setFlipY(bool flip);
-
-    bool isFlippedX() const;
-    bool isFlippedY() const;
-
-    float getWidth() const;
-    float getHeight() const;
-
-    void serialize(YAML::Emitter &out);
-    void deserialize(const YAML::Node &in);
-
-private:
-    std::shared_ptr<Texture> m_texture;
-    std::vector<glm::vec2> m_textureCoordinates = {
-        {0.0f, 1.0f}, // top left
-        {0.0f, 0.0f}, // bottom left
-        {1.0f, 0.0f}, // bottom right
-        {1.0f, 1.0f}, // top right
-    };
-
-    glm::vec4 m_color = {1.0f, 1.0f, 1.0f, 1.0f}; // white
-
-    bool m_flipX = false;
-    bool m_flipY = false;
-
-    float m_width;
-    float m_height;
-
-    // TODO: a sprite could just be a color as well
+    // TODO: think more about this
+    std::array<glm::vec2, 4> getNormalizedTextureCoordinates() const;
 };
+
+#ifdef EDITOR_BUILD
+namespace EditorExtensions
+{
+    void serializeSprite(YAML::Emitter &out, const Sprite &sprite);
+    void deserializeSprite(const YAML::Node &in, Sprite &sprite);
+    void drawSpriteInspector(Sprite &sprite);
+}
+#endif

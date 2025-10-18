@@ -134,6 +134,12 @@ void Physics2D::syncTransforms(const std::vector<GameObject> &gameObjects)
 {
     for (auto &go : gameObjects)
     {
+        // TODO: remove. for testing purposes
+        // if (go.getTag() == "Player" || !go.hasComponent<RigidBody2D>())
+        // {
+        //     continue;
+        // }
+
         if (!go.hasComponent<RigidBody2D>())
         {
             continue;

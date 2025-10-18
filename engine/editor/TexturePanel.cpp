@@ -132,7 +132,7 @@ void TexturePanel::renderAnimationPanel()
         }
         animationPlayerMap[animName].update();
 
-        std::vector<glm::vec2> texCoord = animationPlayerMap[animName].getCurrentFrame().sprite.getTextureCoordinates();
+        std::array<glm::vec2, 4> texCoord = animationPlayerMap[animName].getCurrentFrame().sprite.getNormalizedTextureCoordinates();
         ImVec2 topLeft = ImVec2(texCoord[0].x, texCoord[0].y);
         ImVec2 bottomRight = ImVec2(texCoord[2].x, texCoord[2].y);
 
@@ -207,7 +207,7 @@ void TexturePanel::renderSelectedTexSheetPanel(bool isInModal, std::function<voi
     {
         float imgButtonWidth = 64;
         float imgButtonHeight = 64;
-        std::vector<glm::vec2> textureCoordinates = sprite.getTextureCoordinates();
+        std::array<glm::vec2, 4> textureCoordinates = sprite.getNormalizedTextureCoordinates();
         ImTextureID texId = (ImTextureID)(uintptr_t)spriteSheetTexture->getTextureId();
 
         // TODO: Add sprite IDs and use those to identify which sprite was clicked
