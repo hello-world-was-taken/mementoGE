@@ -1,8 +1,9 @@
 #pragma once
 
+#include "core/components/Sprite.h"
+
 #include "core/AnimationPlayer.h"
 #include "core/AnimationMap.h"
-#include "core/Sprite.h"
 
 #include <memory>
 #include <string>

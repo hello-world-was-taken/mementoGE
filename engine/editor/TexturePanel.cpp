@@ -1,8 +1,9 @@
+#include "core/components/Sprite.h"
+
 #include "core/SpriteSheet.h"
 #include "core/AnimationMap.h"
 #include "core/AnimationPlayer.h"
 #include "core/AssetManager.h"
-#include "core/Sprite.h"
 
 #include "editor/TexturePanel.h"
 #include "editor/SpritePayload.h"

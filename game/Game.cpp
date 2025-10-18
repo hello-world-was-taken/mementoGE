@@ -5,7 +5,7 @@
 #include "engine/core/MouseListener.h"
 #include "engine/core/SceneManager.h"
 #include "engine/core/Scene.h"
-#include "engine/core/Sprite.h"
+#include "engine/core/components/Sprite.h"
 #include "engine/core/Event.h"
 #include "engine/core/Animator.h"
 

@@ -1,7 +1,7 @@
+#include "core/components/Transform.h"
+
 #include <iostream>
 #include <yaml-cpp/yaml.h>
-
-#include "core/Transform.h"
 
 Transform::Transform(glm::vec3 position)
 {

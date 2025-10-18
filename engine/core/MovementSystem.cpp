@@ -1,7 +1,8 @@
+#include "core/components/Sprite.h"
+#include "core/components/Transform.h"
+
 #include "core/MovementSystem.h"
 #include "core/GameObject.h"
-#include "core/Sprite.h"
-#include "core/Transform.h"
 
 #include "physics/RigidBody2D.h"
 

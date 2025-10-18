@@ -1,6 +1,7 @@
+#include "core/components/Sprite.h"
+
 #include "core/Scene.h"
 #include "core/Animator.h"
-#include "core/Sprite.h"
 
 #include "renderer/RenderBatch.h"
 

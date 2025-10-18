@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/Sprite.h"
+#include "core/components/Sprite.h"
 
 #include "editor/EditorPanel.h"
 #include "editor/EditorContext.h"

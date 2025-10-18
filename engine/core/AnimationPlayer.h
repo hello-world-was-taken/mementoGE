@@ -1,5 +1,5 @@
 #pragma once
-#include "core/Animation.h"
+#include "core/components/Animation.h"
 
 class AnimationPlayer
 {

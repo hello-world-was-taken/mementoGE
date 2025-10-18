@@ -1,5 +1,5 @@
 #include "core/SceneManager.h"
-#include "core/Sprite.h"
+#include "core/components/Sprite.h"
 #include "core/SpriteSheet.h"
 #include "core/GameObject.h"
 #include "core/Camera.h"

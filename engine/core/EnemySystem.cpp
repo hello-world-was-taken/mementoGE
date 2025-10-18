@@ -1,6 +1,7 @@
+#include "core/components/Transform.h"
+#include "core/components/Sprite.h"
+
 #include "core/EnemySystem.h"
-#include "core/Transform.h"
-#include "core/Sprite.h"
 #include "core/GameObject.h"
 
 #include "physics/RigidBody2D.h"

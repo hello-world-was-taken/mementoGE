@@ -15,15 +15,16 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/opengl)
 
 add_library(${PROJECT_NAME} STATIC
     # core
+    core/components/Transform.cpp
+    core/components/Sprite.cpp
+    # core/components/Animation.cpp
     core/Window.cpp
-    core/Transform.cpp
     core/Camera.cpp
     core/SceneCamera.cpp
     core/GameObject.cpp
     core/SceneManager.cpp
     core/Scene.cpp
     core/ImGuiWrapper.cpp
-    core/Sprite.cpp
     core/SpriteSheet.cpp
     core/MouseListener.cpp
     core/Event.cpp

@@ -1,6 +1,7 @@
+#include "core/components/Sprite.h"
+
 #include "renderer/SpriteRenderer.h"
 
-#include "core/Sprite.h"
 
 SpriteRenderer::SpriteRenderer()
 {

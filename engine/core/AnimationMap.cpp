@@ -1,5 +1,5 @@
+#include "core/components/Animation.h"
 #include "core/AnimationMap.h"
-#include "core/Animation.h"
 
 #include "opengl/Texture.h"
 

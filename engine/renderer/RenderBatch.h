@@ -1,10 +1,11 @@
 #pragma once
 
+#include "core/components/Transform.h"
+
 #include "core/GLIncludes.h"
 #include "core/Camera.h"
 #include "core/Camera.h"
 #include "core/GameObject.h"
-#include "core/Transform.h"
 
 #include "opengl/Vertex.h"
 #include "opengl/VertexArray.h"

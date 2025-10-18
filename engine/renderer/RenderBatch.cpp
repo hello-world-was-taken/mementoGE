@@ -1,6 +1,7 @@
+#include "core/components/Sprite.h"
+
 #include "core/GLIncludes.h"
 #include "core/GlResourceManager.h"
-#include "core/Sprite.h"
 
 #include "opengl/Vertex.h"
 #include "opengl/VertexBuffer.h"

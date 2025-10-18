@@ -1,5 +1,6 @@
+#include "core/components/Sprite.h"
+
 #include "core/SpriteSheet.h"
-#include "core/Sprite.h"
 #include "core/GlResourceManager.h"
 
 #include "opengl/Texture.h"

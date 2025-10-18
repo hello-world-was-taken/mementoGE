@@ -1,6 +1,8 @@
 #pragma once
+
+#include "core/components/Sprite.h"
+
 #include "opengl/Texture.h"
-#include "core/Sprite.h"
 
 #include <memory>
 #include <filesystem>

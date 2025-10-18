@@ -1,6 +1,7 @@
+#include "core/components/Sprite.h"
+
 #include "core/SpriteSheet.h"
 #include "core/AssetManager.h"
-#include "core/Sprite.h"
 
 #include "editor/ScenePanel.h"
 #include "editor/EditorPanel.h"
