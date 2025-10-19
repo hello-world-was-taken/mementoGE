@@ -52,13 +52,13 @@ void Game::processInput()
 
             if (keyType == KeyType::RightArrow)
             {
-                go.getComponent<Transform>().translate(50.0f * Time::deltaTime(), 0.0f, 0.0f);
+                go.getComponent<Transform>().position += glm::vec3{50.0f * Time::deltaTime(), 0.0f, 0.0f};
                 go.getComponent<Sprite>().flipX = true;
                 go.getComponent<Animator>().play("run");
             }
             else if (keyType == KeyType::LeftArrow)
             {
-                go.getComponent<Transform>().translate(-50.0f * Time::deltaTime(), 0.0f, 0.0f);
+                go.getComponent<Transform>().position += glm::vec3{-50.0f * Time::deltaTime(), 0.0f, 0.0f};
                 go.getComponent<Sprite>().flipX = false;
                 go.getComponent<Animator>().play("run");
             }

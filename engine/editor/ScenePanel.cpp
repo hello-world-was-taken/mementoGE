@@ -1,4 +1,5 @@
 #include "core/components/Sprite.h"
+#include "core/components/Transform.h"
 
 #include "core/SpriteSheet.h"
 #include "core/AssetManager.h"
@@ -119,7 +120,7 @@ void ScenePanel::renderSceneViewport()
             m_ctx.sceneManager.getActiveScene().addGameObject(32 * aspectRatio, 32, "_new");
             auto newObj = m_ctx.sceneManager.getActiveScene().getActiveGameObject();
             newObj->addComponent<Sprite>(sprite.topLeft, sprite.width, sprite.height, sprite.texture);
-            newObj->getComponent<Transform>().setPosition(worldPos.x, worldPos.y, 0.0f);
+            newObj->getComponent<Transform>().position = {worldPos.x, worldPos.y, 0.0f};
         }
         ImGui::EndDragDropTarget();
     }
@@ -149,10 +150,10 @@ void ScenePanel::renderGizmos()
         return;
     }
     Transform &transform = go->getComponent<Transform>();
-    glm::vec3 *pos = transform.getPosition();
+    glm::vec3 pos = transform.position;
     glm::vec2 posCenter = {
-        pos->x + (go->getWidth() / 2),
-        pos->y + (go->getHeight() /2)
+        pos.x + (go->getWidth() / 2),
+        pos.y + (go->getHeight() /2)
     };
 
     glm::vec2 screenPos = getScreenCoordinate({posCenter.x, posCenter.y});

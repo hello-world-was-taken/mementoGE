@@ -24,7 +24,6 @@ private:
     void drawIdentity(GameObject *go);
     void drawSize(GameObject *go);
     void drawTransform(GameObject *go);
-    void drawLayer(GameObject *go);
     void drawSpriteSettings(GameObject *go);
     void drawAddComponentCombo(GameObject *go);
     void drawRigidBodySettings(GameObject *go);

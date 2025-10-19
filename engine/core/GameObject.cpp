@@ -13,7 +13,7 @@
 GameObject::GameObject(entt::registry &registry, std::string &&tag, unsigned int width, unsigned int height) : m_registry{&registry}, mTag{tag}, m_width{width}, m_height{height}
 {
     m_entity = m_registry->create();
-    addComponent<Transform>(glm::vec3(0.0f, 0.0f, 0.0f));
+    addComponent<Transform>();
 }
 
 GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGameObject, Physics2D &physics) : m_registry{&registry}
@@ -26,7 +26,7 @@ GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGam
     m_height = serializedGameObject["Height"].as<unsigned int>();
 
     // Deserializing Transform Component of the Game Object
-    addComponent<Transform>(glm::vec3(0.0f, 0.0f, 0.0f));
+    addComponent<Transform>();
     getComponent<Transform>().deserialize(serializedGameObject);
 
     // Deserialize Sprite

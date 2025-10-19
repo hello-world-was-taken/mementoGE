@@ -85,8 +85,8 @@ b2BodyId Physics2D::createBodyHelper(GameObject &obj)
     // TODO: box2d uses the center of the object, and we have been using the bottom left
     // we need to synchronize them in a better way
     glm::vec2 gameObjectCenter = {
-        transform.getPosition()->x + obj.getWidth() * 0.5,
-        transform.getPosition()->y + obj.getHeight() * 0.5};
+        transform.position.x + obj.getWidth() * 0.5,
+        transform.position.y + obj.getHeight() * 0.5};
 
     bodyDef.position = {gameObjectCenter.x, gameObjectCenter.y};
     bodyDef.fixedRotation = rb.fixedRotation;
@@ -153,7 +153,7 @@ void Physics2D::syncTransforms(const std::vector<GameObject> &gameObjects)
         if (b2Body_IsValid(rb.bodyId))
         {
             b2Transform t = b2Body_GetTransform(rb.bodyId);
-            transform.setPosition(t.p.x, t.p.y, transform.getPosition()->z);
+            transform.position = {t.p.x, t.p.y, transform.position.z};
             // transform.getRotation()->z = glm::degrees(t.q.angle);
         }
     }

@@ -75,8 +75,8 @@ void MovementSystem::updateFollow(GameObject &go, MovementComponent &movement)
     // TODO: FIX THIS
     GameObject *player = nullptr;
 
-    float playerX = player->getComponent<Transform>().getPosition()->x;
-    float enemyX = transform.getPosition()->x;
+    float playerX = player->getComponent<Transform>().position.x;
+    float enemyX = transform.position.x;
     float distance = playerX - enemyX;
 
     if (std::abs(distance) < data.followRange)
@@ -100,5 +100,5 @@ void MovementSystem::updateFlying(GameObject &go, MovementComponent &movement)
 
     data.elapsed += Time::deltaTime();
     float yOffset = std::sin(data.elapsed * data.frequency) * data.amplitude;
-    transform.translate(movement.direction * movement.speed * Time::deltaTime(), yOffset * Time::deltaTime(), 0);
+    transform.position += glm::vec3(movement.direction * movement.speed * Time::deltaTime(), yOffset * Time::deltaTime(), 0);
 }

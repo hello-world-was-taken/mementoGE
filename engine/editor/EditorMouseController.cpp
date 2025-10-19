@@ -66,8 +66,8 @@ void EditorMouseController::handleLeftClickSelection(EditorContext &ctx, Scene &
 
         if (activeGameObject)
         {
-            glm::vec3 *objPos = activeGameObject->getComponent<Transform>().getPosition();
-            m_dragOffset = glm::vec2(objPos->x, objPos->y) - mouseWorldPos;
+            glm::vec3 objPos = activeGameObject->getComponent<Transform>().position;
+            m_dragOffset = glm::vec2(objPos.x, objPos.y) - mouseWorldPos;
         }
     }
     else
@@ -154,14 +154,14 @@ void EditorMouseController::moveGameObject(GameObject *activeGameObject, glm::ve
         float snappedY = std::floor(mouseWorldPos.y / gridSize) * gridSize;
 
         Transform &transform = activeGameObject->getComponent<Transform>();
-        transform.setPosition(snappedX, snappedY, transform.getPosition()->z);
+        transform.position = {snappedX, snappedY, transform.position.z};
     }
     else if (m_movementMode == MovementMode::Free)
     {
         glm::vec2 newPos = mouseWorldPos + m_dragOffset;
 
         Transform &transform = activeGameObject->getComponent<Transform>();
-        transform.setPosition(newPos.x, newPos.y, transform.getPosition()->z);
+        transform.position = {newPos.x, newPos.y, transform.position.z};
     }
 }
 
@@ -194,7 +194,7 @@ EditorMouseController::getGameObjectAt(Scene &scene, glm::vec2 mouseWorldPos)
             if (obj.containsPoint(mouseWorldPos))
             {
                 Transform &transform = obj.getComponent<Transform>();
-                float z = transform.getPosition()->z;
+                float z = transform.position.z;
 
                 if (z > topZ) // pick the object with the highest z
                 {

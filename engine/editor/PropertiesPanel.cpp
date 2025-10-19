@@ -1,4 +1,5 @@
 #include "core/components/CircleCollider2D.h"
+#include "core/components/Transform.h"
 #include "core/components/Sprite.h"
 
 #include "core/SpriteSheet.h"
@@ -91,7 +92,6 @@ void PropertiesPanel::renderPropertiesPanel()
     drawIdentity(go);
     drawSize(go);
     drawTransform(go);
-    drawLayer(go);
     drawSpriteSettings(go);
     drawAddComponentCombo(go);
     drawRigidBodySettings(go);
@@ -148,28 +148,10 @@ void PropertiesPanel::drawSize(GameObject *go)
 void PropertiesPanel::drawTransform(GameObject *go)
 {
     ImGui::Separator();
+
     ImGui::Text("Transform");
     Transform &transform = go->getComponent<Transform>();
-    glm::vec3 *pos = transform.getPosition();
-
-    SetFieldWidth();
-    ImGui::DragFloat("x", &pos->x);
-
-    SetFieldWidth();
-    ImGui::DragFloat("y", &pos->y);
-}
-
-void PropertiesPanel::drawLayer(GameObject *go)
-{
-    ImGui::Separator();
-    ImGui::Text("Layer");
-    Transform &transform = go->getComponent<Transform>();
-    glm::vec3 *pos = transform.getPosition();
-    int layer = static_cast<int>(pos->z);
-
-    SetFieldWidth();
-    if (ImGui::DragInt("Layer", &layer))
-        pos->z = static_cast<float>(layer);
+    transform.drawInspector();
 }
 
 void PropertiesPanel::drawSpriteSettings(GameObject *go)

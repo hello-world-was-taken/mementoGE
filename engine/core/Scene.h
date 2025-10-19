@@ -1,7 +1,5 @@
 #pragma once
 
-#include "core/components/Transform.h"
-
 #include "core/GLIncludes.h"
 #include "core/GameObject.h"
 #include "core/SceneCamera.h"

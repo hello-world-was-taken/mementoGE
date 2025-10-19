@@ -112,9 +112,7 @@ void EditorLayer::renderAddNewObjectPopup()
 
             scene.addGameObject(32, 32, tagBuffer);
             auto newObj = m_ctx.sceneManager.getActiveScene().getActiveGameObject();
-            newObj->getComponent<Transform>().setPosition(
-                m_ctx.createObjectWorldPos.x,
-                m_ctx.createObjectWorldPos.y, 0.0f);
+            newObj->getComponent<Transform>().position = {m_ctx.createObjectWorldPos.x, m_ctx.createObjectWorldPos.y, 0.0f};
 
             tagBuffer[0] = '\0'; // clear input for next time
             m_ctx.showCreateObjectPopup = false;

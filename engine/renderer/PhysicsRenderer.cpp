@@ -55,7 +55,7 @@ void PhysicsRenderer::updateVertices(
 
         float width = collider.size.x;
         float height = collider.size.y;
-        glm::vec2 bottomLeftPos = glm::vec2{transform.getPosition()->x, transform.getPosition()->y} + collider.offset;
+        glm::vec2 bottomLeftPos = glm::vec2{transform.position.x, transform.position.y} + collider.offset;
 
         glm::vec3 bottomLeft = {bottomLeftPos.x, bottomLeftPos.y, 0.0f};
         glm::vec3 bottomRight = {bottomLeftPos.x + width, bottomLeftPos.y, 0.0f};
