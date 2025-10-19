@@ -1,3 +1,4 @@
+#include "core/components/CircleCollider2D.h"
 #include "core/components/Sprite.h"
 
 #include "core/SpriteSheet.h"
@@ -11,7 +12,6 @@
 #include "editor/EditorContext.h"
 #include "editor/SpritePayload.h"
 
-#include "physics/CircleCollider2D.h"
 
 #include "util/PathUtils.h"
 
@@ -246,9 +246,9 @@ void PropertiesPanel::drawRigidBodySettings(GameObject *go)
 
     RigidBody2D &rb = go->getComponent<RigidBody2D>();
 
-    std::string type = (rb.type == BodyType::Static) ? "Static"
-                : (rb.type == BodyType::Dynamic) ? "Dynamic"
-                                              : "Kinematic";
+    std::string type = (rb.type == BodyType::Static)    ? "Static"
+                       : (rb.type == BodyType::Dynamic) ? "Dynamic"
+                                                        : "Kinematic";
     ImGui::Separator();
     if (ImGui::BeginCombo("Rigidbody 2D Type", type.c_str()))
     {

@@ -1,9 +1,9 @@
 #pragma once
 
+#include "core/components/BoxCollider2D.h"
 #include "core/components/Transform.h"
 #include "core/components/RigidBody2D.h"
 
-#include "physics/BoxCollider2D.h"
 
 #include <memory>
 #include <entt/entt.hpp>

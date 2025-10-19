@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <box2d/box2d.h>
 
+// TODO: add serialization
 class EdgeCollider2D
 {
 public:

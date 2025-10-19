@@ -1,4 +1,5 @@
 #include "core/components/Sprite.h"
+#include "core/components/BoxCollider2D.h"
 
 #include "core/GLIncludes.h"
 
@@ -6,7 +7,6 @@
 #include "opengl/VertexBuffer.h"
 #include "opengl/VertexAttribute.h"
 
-#include "physics/BoxCollider2D.h"
 
 #include "renderer/PhysicsRenderer.h"
 #include "util/log_error.h"

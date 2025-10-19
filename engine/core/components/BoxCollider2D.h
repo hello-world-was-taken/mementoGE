@@ -12,7 +12,7 @@ public:
         m_size = {width, height};
     }
 
-    glm::vec2 m_size;
+    glm::vec2 m_size; // width, size
     glm::vec2 m_offset = {0.0f, 0.0f};
 
     float m_density = 1.0f;

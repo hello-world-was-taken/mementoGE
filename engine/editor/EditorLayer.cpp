@@ -3,6 +3,9 @@
 #endif
 
 #include "core/components/RigidBody2D.h"
+#include "core/components/BoxCollider2D.h"
+#include "core/components/CircleCollider2D.h"
+
 #include "core/Camera.h"
 #include "core/ImGuiWrapper.h"
 #include "core/MovementMode.h"
@@ -12,11 +15,6 @@
 #include "editor/PropertiesPanel.h"
 #include "editor/EditorMouseController.h"
 #include "editor/Constants.h"
-
-#include "physics/BoxCollider2D.h"
-#include "physics/CircleCollider2D.h"
-#include "physics/EdgeCollider2D.h"
-#include "physics/PolygonCollider2D.h"
 
 #include "util/PathUtils.h"
 
