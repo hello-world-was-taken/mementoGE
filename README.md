@@ -86,22 +86,33 @@ The engine now supports basic 2D sprite animations via JSON-defined animation ma
 
 ```json
 {
-  "texture": "jojo.png",
-  "spriteWidth": 120,
-  "spriteHeight": 150,
-  "spriteGapX": 93,
-  "spriteGapY": 0,
-  "spriteCount": 144,
-  "columns": 16,
+  "meta": { "texture": "name.png" },
+  "frames": {
+    "sprite-1-1": { "x": 0, "y": 0, "rotation": 0, "w": 13, "h": 4 },
+    "sprite-1-2": { "x": 13, "y": 0, "rotation": 0, "w": 15, "h": 5 },
+    "sprite-1-3": { "x": 28, "y": 0, "rotation": 0, "w": 8, "h": 5 },
+    "sprite-1-4": { "x": 36, "y": 0, "rotation": 0, "w": 24, "h": 6 },
+    "sprite-1-5": { "x": 60, "y": 0, "rotation": 0, "w": 11, "h": 6 },
+    "sprite-1-6": { "x": 71, "y": 0, "rotation": 0, "w": 5, "h": 7 },
+    "sprite-1-7": { "x": 76, "y": 0, "rotation": 0, "w": 18, "h": 7 },
+    "sprite-1-8": { "x": 94, "y": 0, "rotation": 0, "w": 5, "h": 7 },
+  },
   "animations": {
     "idle": {
-      "startFrame": 0,
-      "frameCount": 8,
-      "duration": 0.1,
-      "loop": true
+      "frames": [
+        "sprite-1-1",
+        "sprite-1-2",
+        "sprite-1-3",
+        "sprite-1-4",
+        "sprite-1-5",
+        "sprite-1-6",
+        "sprite-1-7",
+        "sprite-1-8"
+      ]
     }
   }
 }
+
 ```
 
 #### JSON Fields

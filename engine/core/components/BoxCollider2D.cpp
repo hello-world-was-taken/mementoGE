@@ -50,16 +50,10 @@ void BoxCollider2D::drawInspector()
     ImGui::Text("Box Collider 2D");
 
     SetFieldWidth();
-    ImGui::DragFloat("Box Width", &size.x, 0.01f, 0.0f);
+    ImGui::DragFloat2("Size", &size.x, 0.01f, 0.0f);
 
     SetFieldWidth();
-    ImGui::DragFloat("Box Height", &size.y, 0.01f, 0.0f);
-
-    SetFieldWidth();
-    ImGui::DragFloat("Offset X", &offset.x, 0.01f, 0.0f);
-
-    SetFieldWidth();
-    ImGui::DragFloat("Offset Y", &offset.y, 0.01f, 0.0f);
+    ImGui::DragFloat2("Offset", &offset.x, 0.01f, 0.0f);
 
     SetFieldWidth();
     ImGui::DragFloat("Density", &density, 0.01f, 0.0f);
