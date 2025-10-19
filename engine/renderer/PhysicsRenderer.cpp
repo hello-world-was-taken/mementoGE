@@ -53,9 +53,9 @@ void PhysicsRenderer::updateVertices(
         Transform &transform = gameObject.getComponent<Transform>();
         const BoxCollider2D &collider = gameObject.getComponent<BoxCollider2D>();
 
-        float width = collider.m_size.x;
-        float height = collider.m_size.y;
-        glm::vec2 bottomLeftPos = glm::vec2{transform.getPosition()->x, transform.getPosition()->y} + collider.m_offset;
+        float width = collider.size.x;
+        float height = collider.size.y;
+        glm::vec2 bottomLeftPos = glm::vec2{transform.getPosition()->x, transform.getPosition()->y} + collider.offset;
 
         glm::vec3 bottomLeft = {bottomLeftPos.x, bottomLeftPos.y, 0.0f};
         glm::vec3 bottomRight = {bottomLeftPos.x + width, bottomLeftPos.y, 0.0f};

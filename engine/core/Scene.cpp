@@ -28,9 +28,9 @@ Scene::Scene(const YAML::Node &&serializedScene)
 
         YAML::Node gameObjects = it->second["Game Objects"];
 
-        for (YAML::const_iterator it = gameObjects.begin(); it != gameObjects.end(); ++it)
+        for (const auto &it : gameObjects)
         {
-            GameObject gameObj{m_registry, it->second, m_physicsWorld};
+            GameObject gameObj{m_registry, it.second, m_physicsWorld};
             m_gameObjects.push_back(std::move(gameObj));
         }
 

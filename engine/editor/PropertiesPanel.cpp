@@ -216,7 +216,8 @@ void PropertiesPanel::drawAddComponentCombo(GameObject *go)
 
         if (ImGui::Selectable("BoxCollider2D"))
         {
-            go->addComponent<BoxCollider2D>(go->getWidth(), go->getHeight());
+            go->addComponent<BoxCollider2D>();
+            go->getComponent<BoxCollider2D>().size = {go->getWidth(), go->getHeight()};
             m_ctx.sceneManager.getActiveScene().getPhysics2d().addRigidbody(*go);
         }
 
@@ -245,21 +246,7 @@ void PropertiesPanel::drawRigidBodySettings(GameObject *go)
         return;
 
     RigidBody2D &rb = go->getComponent<RigidBody2D>();
-
-    std::string type = (rb.type == BodyType::Static)    ? "Static"
-                       : (rb.type == BodyType::Dynamic) ? "Dynamic"
-                                                        : "Kinematic";
-    ImGui::Separator();
-    if (ImGui::BeginCombo("Rigidbody 2D Type", type.c_str()))
-    {
-        if (ImGui::Selectable("Static"))
-            rb.type = BodyType::Static;
-        if (ImGui::Selectable("Dynamic"))
-            rb.type = BodyType::Dynamic;
-        if (ImGui::Selectable("Kinematic"))
-            rb.type = BodyType::Kinematic;
-        ImGui::EndCombo();
-    }
+    rb.drawInspector();
 }
 
 void PropertiesPanel::drawBoxColliderSettings(GameObject *go)
@@ -269,29 +256,7 @@ void PropertiesPanel::drawBoxColliderSettings(GameObject *go)
 
     auto &box = go->getComponent<BoxCollider2D>();
 
-    ImGui::Separator();
-    ImGui::Text("Box Collider 2D");
-
-    SetFieldWidth();
-    ImGui::DragFloat("Box Width", &box.m_size.x, 0.01f, 0.0f);
-
-    SetFieldWidth();
-    ImGui::DragFloat("Box Height", &box.m_size.y, 0.01f, 0.0f);
-
-    SetFieldWidth();
-    ImGui::DragFloat("Offset X", &box.m_offset.x, 0.01f, 0.0f);
-
-    SetFieldWidth();
-    ImGui::DragFloat("Offset Y", &box.m_offset.y, 0.01f, 0.0f);
-
-    SetFieldWidth();
-    ImGui::DragFloat("Density", &box.m_density, 0.01f, 0.0f);
-
-    SetFieldWidth();
-    ImGui::DragFloat("Friction", &box.m_friction, 0.01f, 0.0f, 1.0f);
-
-    SetFieldWidth();
-    ImGui::DragFloat("Restitution", &box.m_restitution, 0.01f, 0.0f, 1.0f);
+    box.drawInspector();
 }
 
 void PropertiesPanel::drawAnimatorSettings(GameObject *go)

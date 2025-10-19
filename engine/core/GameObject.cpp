@@ -36,6 +36,13 @@ GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGam
         EditorExtensions::deserializeSprite(serializedGameObject, getComponent<Sprite>());
     }
 
+    // Deserialize BoxCollider2D
+    if (serializedGameObject["BoxCollider2D"])
+    {
+        addComponent<BoxCollider2D>();
+        getComponent<BoxCollider2D>().deserialize(serializedGameObject);
+    }
+
     // Deserialize RigidBody2D
     if (serializedGameObject["RigidBody2D"])
     {
@@ -183,6 +190,13 @@ bool GameObject::serialize(YAML::Emitter &out)
     {
         RigidBody2D &rb = getComponent<RigidBody2D>();
         rb.serialize(out);
+    }
+
+    // BOXCOLLIDER2D COMPONENT
+    if (hasComponent<BoxCollider2D>())
+    {
+        BoxCollider2D &bc = getComponent<BoxCollider2D>();
+        bc.serialize(out);
     }
 
     // ANIMATOR COMPONENT

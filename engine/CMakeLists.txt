@@ -18,8 +18,9 @@ add_library(${PROJECT_NAME} STATIC
     core/components/Transform.cpp
     core/components/Sprite.cpp
     core/components/RigidBody2D.cpp
+    core/components/BoxCollider2D.cpp
     # core/components/Animation.cpp
-    
+
     core/Window.cpp
     core/Camera.cpp
     core/SceneCamera.cpp

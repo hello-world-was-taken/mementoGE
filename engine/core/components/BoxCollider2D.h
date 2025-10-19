@@ -3,21 +3,26 @@
 #include <glm/glm.hpp>
 #include <box2d/box2d.h>
 
-// TODO: add serialization and desrialization logic
-class BoxCollider2D
+#ifdef EDITOR_BUILD
+#include <imgui.h>
+#include <yaml-cpp/yaml.h>
+#endif
+
+struct BoxCollider2D
 {
-public:
-    BoxCollider2D(float width, float height)
-    {
-        m_size = {width, height};
-    }
 
-    glm::vec2 m_size; // width, size
-    glm::vec2 m_offset = {0.0f, 0.0f};
+    glm::vec2 size; // width, size
+    glm::vec2 offset;
 
-    float m_density = 1.0f;
-    float m_friction = 0.3f;
-    float m_restitution = 0.0f;
+    float density = 1.0f;
+    float friction = 0.3f;
+    float restitution = 0.0f;
 
-    b2ShapeId m_runtimeFixture = b2_nullShapeId;
+    b2ShapeId runtimeFixture = b2_nullShapeId;
+
+#ifdef EDITOR_BUILD
+    void serialize(YAML::Emitter &out);
+    void deserialize(const YAML::Node &out);
+    void drawInspector();
+#endif
 };

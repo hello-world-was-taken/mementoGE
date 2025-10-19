@@ -27,6 +27,6 @@ struct RigidBody2D
 #ifdef EDITOR_BUILD
     void serialize(YAML::Emitter &out);
     void deserialize(const YAML::Node &node);
-    void drawPropertyInspector();
+    void drawInspector();
 #endif
 };

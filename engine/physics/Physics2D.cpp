@@ -108,18 +108,19 @@ void Physics2D::attachShapeHelper(b2BodyId bodyId, GameObject &obj)
     {
         int width = obj.getWidth();
         int height = obj.getHeight();
-        obj.addComponent<BoxCollider2D>(width, height);
+        obj.addComponent<BoxCollider2D>();
+        obj.getComponent<BoxCollider2D>().size = {width, height};
     }
 
     BoxCollider2D &box = obj.getComponent<BoxCollider2D>();
 
-    b2Polygon b2Shape = b2MakeBox(box.m_size.x * 0.5f, box.m_size.y * 0.5f);
+    b2Polygon b2Shape = b2MakeBox(box.size.x * 0.5f, box.size.y * 0.5f);
     b2Transform shapeTransform = b2Transform_identity;
-    shapeTransform.p = {box.m_offset.x, box.m_offset.y};
+    shapeTransform.p = {box.offset.x, box.offset.y};
 
     b2ShapeDef shapeDef = b2DefaultShapeDef();
-    shapeDef.density = box.m_density;
-    shapeDef.material.friction = box.m_friction;
+    shapeDef.density = box.density;
+    shapeDef.material.friction = box.friction;
     // shapeDef.material.restitution = box.m_restitution;
     b2ShapeId shapeId = b2CreatePolygonShape(bodyId, &shapeDef, &b2Shape);
 
@@ -128,7 +129,7 @@ void Physics2D::attachShapeHelper(b2BodyId bodyId, GameObject &obj)
         std::cerr << "Failed to attach shape to body: " << obj.getTag() << std::endl;
     }
 
-    box.m_runtimeFixture = shapeId;
+    box.runtimeFixture = shapeId;
 }
 
 void Physics2D::syncTransforms(const std::vector<GameObject> &gameObjects)
