@@ -1,10 +1,9 @@
-#include "core/components/Sprite.h"
 #include "core/components/Transform.h"
+#include "core/components/RigidBody2D.h"
+#include "core/components/Sprite.h"
 
 #include "core/MovementSystem.h"
 #include "core/GameObject.h"
-
-#include "physics/RigidBody2D.h"
 
 #include "util/Time.h"
 
@@ -48,7 +47,7 @@ void MovementSystem::updatePatrol(GameObject &go, MovementComponent &movement)
     auto &sprite = go.getComponent<Sprite>();
 
     float delta = Time::deltaTime();
-    rb.setVelocity(movement.direction * movement.speed, rb.getVelocity().y);
+    rb.velocity = {movement.direction * movement.speed, rb.velocity.y};
     data.traveled += movement.speed * delta;
 
     sprite.flipX = movement.direction < 0;
@@ -83,11 +82,11 @@ void MovementSystem::updateFollow(GameObject &go, MovementComponent &movement)
     if (std::abs(distance) < data.followRange)
     {
         movement.direction = (distance > 0) ? 1 : -1;
-        rb.setVelocity(movement.direction * movement.speed, rb.getVelocity().y);
+        rb.velocity = {movement.direction * movement.speed, rb.velocity.y};
     }
     else
     {
-        rb.setVelocity(0, rb.getVelocity().y);
+        rb.velocity = {0, rb.velocity.y};
     }
 }
 

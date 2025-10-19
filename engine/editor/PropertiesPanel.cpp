@@ -246,15 +246,18 @@ void PropertiesPanel::drawRigidBodySettings(GameObject *go)
 
     RigidBody2D &rb = go->getComponent<RigidBody2D>();
 
+    std::string type = (rb.type == BodyType::Static) ? "Static"
+                : (rb.type == BodyType::Dynamic) ? "Dynamic"
+                                              : "Kinematic";
     ImGui::Separator();
-    if (ImGui::BeginCombo("Rigidbody 2D Type", rb.getBodyType().c_str()))
+    if (ImGui::BeginCombo("Rigidbody 2D Type", type.c_str()))
     {
         if (ImGui::Selectable("Static"))
-            rb.setType(BodyType::Static);
+            rb.type = BodyType::Static;
         if (ImGui::Selectable("Dynamic"))
-            rb.setType(BodyType::Dynamic);
+            rb.type = BodyType::Dynamic;
         if (ImGui::Selectable("Kinematic"))
-            rb.setType(BodyType::Kinematic);
+            rb.type = BodyType::Kinematic;
         ImGui::EndCombo();
     }
 }

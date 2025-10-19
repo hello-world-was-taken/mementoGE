@@ -17,7 +17,9 @@ add_library(${PROJECT_NAME} STATIC
     # core
     core/components/Transform.cpp
     core/components/Sprite.cpp
+    core/components/RigidBody2D.cpp
     # core/components/Animation.cpp
+    
     core/Window.cpp
     core/Camera.cpp
     core/SceneCamera.cpp
@@ -54,7 +56,6 @@ add_library(${PROJECT_NAME} STATIC
 
     # physics
     physics/Physics2D.cpp
-    physics/RigidBody2D.cpp
 
     # utils
     util/log_error.cpp

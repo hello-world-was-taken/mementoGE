@@ -30,12 +30,11 @@ std::shared_ptr<SpriteSheet> SpriteSheet::fromJson(const std::filesystem::path &
 
     for (auto &[frameName, frameInfo] : data["frames"].items())
     {
-        const auto &frame = frameInfo["frame"];
         spriteSheet->addSprite(
             {
-                {frame["x"].get<float>(), frame["y"].get<float>()},
-                frame["w"].get<float>(),
-                frame["h"].get<float>(),
+                {frameInfo["x"].get<float>(), frameInfo["y"].get<float>()},
+                frameInfo["w"].get<float>(),
+                frameInfo["h"].get<float>(),
                 tex
             });
     }

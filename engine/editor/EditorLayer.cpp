@@ -2,6 +2,7 @@
 #include <mach/mach.h>
 #endif
 
+#include "core/components/RigidBody2D.h"
 #include "core/Camera.h"
 #include "core/ImGuiWrapper.h"
 #include "core/MovementMode.h"
@@ -16,7 +17,6 @@
 #include "physics/CircleCollider2D.h"
 #include "physics/EdgeCollider2D.h"
 #include "physics/PolygonCollider2D.h"
-#include "physics/RigidBody2D.h"
 
 #include "util/PathUtils.h"
 
@@ -59,7 +59,7 @@ void EditorLayer::update()
             m_ctx.frameBuffer.bind();
 
             // clearing our off screen frame buffer before each render
-            glClearColor(0.0f, 0.0f, 0.0f, 1.00f);
+            glClearColor(0.41176f, 0.41176f, 0.41176f, 1.00f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             // render grid

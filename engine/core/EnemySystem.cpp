@@ -1,10 +1,10 @@
 #include "core/components/Transform.h"
+#include "core/components/RigidBody2D.h"
 #include "core/components/Sprite.h"
 
 #include "core/EnemySystem.h"
 #include "core/GameObject.h"
 
-#include "physics/RigidBody2D.h"
 #include "util/Time.h"
 
 void EnemySystem::update(std::vector<GameObject> &gameObjects)
@@ -15,7 +15,7 @@ void EnemySystem::update(std::vector<GameObject> &gameObjects)
 
     for (auto &go : gameObjects)
     {
-        if(!go.hasComponent<EnemyAiState>())
+        if (!go.hasComponent<EnemyAiState>())
         {
             continue;
         }
@@ -32,7 +32,7 @@ void EnemySystem::update(std::vector<GameObject> &gameObjects)
         const float delta = Time::deltaTime();
 
         // Apply velocity
-        rb.setVelocity(ai.direction * moveSpeed, rb.getVelocity().y);
+        rb.velocity = {ai.direction * moveSpeed, rb.velocity.y};
 
         // Track how far we've moved this direction
         ai.currentTraveled += moveSpeed * delta;

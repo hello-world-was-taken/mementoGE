@@ -1,11 +1,11 @@
 #include "core/components/Transform.h"
+#include "core/components/RigidBody2D.h"
 #include "core/components/Sprite.h"
 
 #include "core/GameObject.h"
 #include "core/Animator.h"
 
 #include "physics/Physics2D.h"
-#include "physics/RigidBody2D.h"
 
 #include <yaml-cpp/yaml.h>
 #include <string>

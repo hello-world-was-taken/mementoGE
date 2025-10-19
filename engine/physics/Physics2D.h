@@ -1,8 +1,8 @@
 #pragma once
 
 #include "core/components/Transform.h"
+#include "core/components/RigidBody2D.h"
 
-#include "physics/RigidBody2D.h"
 #include "physics/BoxCollider2D.h"
 
 #include <memory>

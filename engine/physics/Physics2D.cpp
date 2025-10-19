@@ -1,7 +1,7 @@
 #include "core/components/Transform.h"
+#include "core/components/RigidBody2D.h"
 
 #include "physics/Physics2D.h"
-#include "physics/RigidBody2D.h"
 #include "physics/BoxCollider2D.h"
 
 #include "core/Scene.h"
@@ -79,9 +79,9 @@ b2BodyId Physics2D::createBodyHelper(GameObject &obj)
     RigidBody2D &rb = obj.getComponent<RigidBody2D>();
 
     b2BodyDef bodyDef = b2DefaultBodyDef();
-    bodyDef.type = (rb.m_type == BodyType::Static)    ? b2_staticBody
-                   : (rb.m_type == BodyType::Dynamic) ? b2_dynamicBody
-                                                      : b2_kinematicBody;
+    bodyDef.type = (rb.type == BodyType::Static)    ? b2_staticBody
+                   : (rb.type == BodyType::Dynamic) ? b2_dynamicBody
+                                                    : b2_kinematicBody;
     // TODO: box2d uses the center of the object, and we have been using the bottom left
     // we need to synchronize them in a better way
     glm::vec2 gameObjectCenter = {
@@ -89,14 +89,14 @@ b2BodyId Physics2D::createBodyHelper(GameObject &obj)
         transform.getPosition()->y + obj.getHeight() * 0.5};
 
     bodyDef.position = {gameObjectCenter.x, gameObjectCenter.y};
-    bodyDef.fixedRotation = rb.m_fixedRotation;
+    bodyDef.fixedRotation = rb.fixedRotation;
 
     b2BodyId bodyId = b2CreateBody(m_worldId, &bodyDef);
     if (!b2Body_IsValid(bodyId))
     {
         std::cerr << "[Physics2D] Failed to create body for GameObject: " << obj.getTag() << std::endl;
     }
-    rb.m_runtimeBody = bodyId;
+    rb.bodyId = bodyId;
 
     return bodyId;
 }
@@ -149,9 +149,9 @@ void Physics2D::syncTransforms(const std::vector<GameObject> &gameObjects)
         auto &rb = go.getComponent<RigidBody2D>();
         auto &transform = go.getComponent<Transform>();
 
-        if (b2Body_IsValid(rb.m_runtimeBody))
+        if (b2Body_IsValid(rb.bodyId))
         {
-            b2Transform t = b2Body_GetTransform(rb.m_runtimeBody);
+            b2Transform t = b2Body_GetTransform(rb.bodyId);
             transform.setPosition(t.p.x, t.p.y, transform.getPosition()->z);
             // transform.getRotation()->z = glm::degrees(t.q.angle);
         }

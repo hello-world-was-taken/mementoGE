@@ -27,12 +27,11 @@ std::shared_ptr<AnimationMap> AnimationMap::fromJson(const std::filesystem::path
     std::unordered_map<std::string, Frame> frameLookup;
     for (auto &[frameName, frameInfo] : data["frames"].items())
     {
-        const auto &frame = frameInfo["frame"];
         Frame f;
         f.sprite = Sprite{
-            {frame["x"].get<float>(), frame["y"].get<float>()},
-            frame["w"].get<float>(),
-            frame["h"].get<float>(),
+            {frameInfo["x"].get<float>(), frameInfo["y"].get<float>()},
+            frameInfo["w"].get<float>(),
+            frameInfo["h"].get<float>(),
             tex};
 
         f.duration = 0.1; // todo: should we make this part of the frame in our metadata?
