@@ -101,7 +101,10 @@ void Scene::update()
 {
     if (m_play)
     {
-        m_enemySystem.update(m_gameObjects);
+        for(auto &system : m_systems)
+        {
+            system->update(m_gameObjects);
+        }
 
         // physics should be updated last as other systems make updates to it
         m_physicsWorld.simulate(Time::deltaTime(), m_gameObjects);
@@ -154,6 +157,11 @@ void Scene::animate()
         sprite.flipX = flipX;
         sprite.flipY = flipY;
     }
+}
+
+void Scene::registerSystem(std::unique_ptr<ISystem> system)
+{
+    m_systems.push_back(std::move(system));
 }
 
 void Scene::addGameObject(unsigned int width, unsigned int height, std::string &&tag)

@@ -11,6 +11,7 @@ add_executable(${PROJECT_NAME}
 
     # game files
     game/Game.cpp
+    game/systems/EnemySystem.cpp
 )
 
 target_include_directories(${PROJECT_NAME}
