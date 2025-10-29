@@ -19,6 +19,7 @@ add_library(${PROJECT_NAME} STATIC
     core/components/Sprite.cpp
     core/components/RigidBody2D.cpp
     core/components/BoxCollider2D.cpp
+    core/components/EnemyStats.cpp
     # core/components/Animation.cpp
 
     core/Window.cpp
@@ -37,7 +38,6 @@ add_library(${PROJECT_NAME} STATIC
     core/AssetManager.cpp
     core/AnimationPlayer.cpp
     core/Animator.cpp
-    core/EnemySystem.cpp
     core/MovementSystem.cpp
 
     # editor

@@ -82,13 +82,8 @@ b2BodyId Physics2D::createBodyHelper(GameObject &obj)
     bodyDef.type = (rb.type == BodyType::Static)    ? b2_staticBody
                    : (rb.type == BodyType::Dynamic) ? b2_dynamicBody
                                                     : b2_kinematicBody;
-    // TODO: box2d uses the center of the object, and we have been using the bottom left
-    // we need to synchronize them in a better way
-    glm::vec2 gameObjectCenter = {
-        transform.position.x + obj.getWidth() * 0.5,
-        transform.position.y + obj.getHeight() * 0.5};
 
-    bodyDef.position = {gameObjectCenter.x, gameObjectCenter.y};
+    bodyDef.position = {transform.position.x, transform.position.y};
     bodyDef.fixedRotation = rb.fixedRotation;
 
     b2BodyId bodyId = b2CreateBody(m_worldId, &bodyDef);
