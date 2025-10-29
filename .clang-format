@@ -1,0 +1,14 @@
+BasedOnStyle: LLVM
+IndentWidth: 4
+UseTab: Never
+BreakBeforeBraces: Allman
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+ColumnLimit: 120
+
+# Keep lambdas compact but break before the body brace
+LambdaBodyIndentation: Signature
+AllowShortLambdasOnASingleLine: None
+AlignAfterOpenBracket: DontAlign
+BinPackParameters: false
