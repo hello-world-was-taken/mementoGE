@@ -1,6 +1,8 @@
 #include "core/components/BoxCollider2D.h"
 
 #ifdef EDITOR_BUILD
+#include "core/ImGuiWrapper.h"
+
 #include <imgui.h>
 #include <yaml-cpp/yaml.h>
 #endif
@@ -45,23 +47,23 @@ void BoxCollider2D::deserialize(const YAML::Node &node)
 
 void BoxCollider2D::drawInspector()
 {
+    ImGuiWrapper::Collapsable("Box Collider 2D",
+        [&]
+        {
+            SetFieldWidth();
+            ImGui::DragFloat2("Size", &size.x, 0.01f, 0.0f);
 
-    ImGui::Separator();
-    ImGui::Text("Box Collider 2D");
+            SetFieldWidth();
+            ImGui::DragFloat2("Offset", &offset.x, 0.01f, 0.0f);
 
-    SetFieldWidth();
-    ImGui::DragFloat2("Size", &size.x, 0.01f, 0.0f);
+            SetFieldWidth();
+            ImGui::DragFloat("Density", &density, 0.01f, 0.0f);
 
-    SetFieldWidth();
-    ImGui::DragFloat2("Offset", &offset.x, 0.01f, 0.0f);
+            SetFieldWidth();
+            ImGui::DragFloat("Friction", &friction, 0.01f, 0.0f, 1.0f);
 
-    SetFieldWidth();
-    ImGui::DragFloat("Density", &density, 0.01f, 0.0f);
-
-    SetFieldWidth();
-    ImGui::DragFloat("Friction", &friction, 0.01f, 0.0f, 1.0f);
-
-    SetFieldWidth();
-    ImGui::DragFloat("Restitution", &restitution, 0.01f, 0.0f, 1.0f);
+            SetFieldWidth();
+            ImGui::DragFloat("Restitution", &restitution, 0.01f, 0.0f, 1.0f);
+        });
 }
 #endif

@@ -14,23 +14,14 @@ void ImGuiWrapper::setupImgui(Window &window)
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
     (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // Enable Docking
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
     // TODO: disabling now because of window positioning mismatch
     // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;   // Enable Multi-Viewport
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     // TODO: for now
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
-
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-
-    // Viewport style tweaks
-    ImGuiStyle &style = ImGui::GetStyle();
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-    {
-        style.WindowRounding = 0.0f;
-        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-    }
+    
+    SetupStyle();
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(window.getGlfwWindow(), true);
@@ -45,7 +36,7 @@ void ImGuiWrapper::beginDockspace()
     static bool opt_padding = false;
     static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
 
-    ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking;
     if (opt_fullscreen)
     {
         const ImGuiViewport *viewport = ImGui::GetMainViewport();
@@ -100,4 +91,65 @@ void ImGuiWrapper::ImGuiFrame(const std::function<void()> &func)
         ImGui::RenderPlatformWindowsDefault();
         glfwMakeContextCurrent(backup_current_context);
     }
+}
+
+void ImGuiWrapper::SetupStyle()
+{
+    ImGuiStyle &style = ImGui::GetStyle();
+
+    // Flatness & rounding
+    style.FrameRounding = 4.0f; // roundness for frames (buttons, sliders ...)
+    style.WindowRounding = 6.0f;
+    style.PopupRounding = 4.0f;
+    style.GrabRounding = 4.0f; // Slider grabber
+    style.ScrollbarRounding = 12.0f;
+
+    // Spacing & padding
+    style.WindowPadding = ImVec2(10.0f, 10.0f);
+    style.FramePadding = ImVec2(6.0f, 4.0f);
+    style.ItemSpacing = ImVec2(6.0f, 6.0f);
+    style.ItemInnerSpacing = ImVec2(6.0f, 4.0f);
+
+    // To minimize borders for a flatter look
+    style.WindowBorderSize = 0.0f;
+    style.FrameBorderSize = 0.0f;
+    style.PopupBorderSize = 0.0f;
+    style.TabBorderSize = 0.0f;
+
+    // Color palette (normalized color values (0.0 to 1.0))
+    ImVec4 accent_color = ImVec4(0.49412f, 0.63137f, 0.41961f, 1.00f);
+    ImVec4 bg_dark = ImVec4(0.10f, 0.10f, 0.12f, 1.00f);
+    ImVec4 bg_medium = ImVec4(0.18f, 0.18f, 0.20f, 1.00f);
+    ImVec4 bg_light = ImVec4(0.49412f, 0.63137f, 0.41961f, 1.00f);
+    ImVec4 text_main = ImVec4(0.85f, 0.85f, 0.85f, 1.00f);
+
+    // Windows
+    style.Colors[ImGuiCol_WindowBg] = bg_dark;
+    style.Colors[ImGuiCol_TitleBgActive] = bg_medium;
+    style.Colors[ImGuiCol_TitleBg] = bg_dark;
+    style.Colors[ImGuiCol_Text] = text_main;
+
+    // Frames (Buttons, Checkboxes, Sliders)
+    style.Colors[ImGuiCol_FrameBg] = bg_medium;
+    style.Colors[ImGuiCol_FrameBgHovered] = bg_light;
+    style.Colors[ImGuiCol_FrameBgActive] = bg_light;
+
+    // Buttons (using the accent color)
+    style.Colors[ImGuiCol_Button] = accent_color;
+    style.Colors[ImGuiCol_ButtonHovered] = ImVec4(accent_color.x + 0.1f, accent_color.y + 0.1f, accent_color.z + 0.1f, 1.0f); // Slightly brighter
+    style.Colors[ImGuiCol_ButtonActive] = accent_color;
+
+    // Tab-Specific Colors:
+    style.Colors[ImGuiCol_Tab] = bg_medium;
+    style.Colors[ImGuiCol_TabHovered] = accent_color;
+    style.Colors[ImGuiCol_TabActive] = accent_color;
+    style.Colors[ImGuiCol_TabUnfocused] = bg_medium;
+    style.Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(accent_color.x * 0.7f, accent_color.y * 0.7f, accent_color.z * 0.7f, 1.0f); // Darker/desaturated accent
+
+    // Scrollbar/Check Mark/Grab
+    style.Colors[ImGuiCol_ScrollbarBg] = bg_dark;
+    style.Colors[ImGuiCol_ScrollbarGrab] = bg_light;
+    style.Colors[ImGuiCol_CheckMark] = accent_color;
+    style.Colors[ImGuiCol_SliderGrab] = accent_color;
+    style.Colors[ImGuiCol_SliderGrabActive] = accent_color;
 }

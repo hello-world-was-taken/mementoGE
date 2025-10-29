@@ -1,11 +1,11 @@
 #include "core/components/CircleCollider2D.h"
 #include "core/components/Transform.h"
 #include "core/components/Sprite.h"
+#include "core/components/EnemyStats.h"
 
 #include "core/SpriteSheet.h"
 #include "core/AssetManager.h"
 #include "core/Animator.h"
-#include "core/EnemySystem.h"
 
 #include "editor/PropertiesPanel.h"
 #include "editor/EditorPanel.h"
@@ -91,11 +91,11 @@ void PropertiesPanel::renderPropertiesPanel()
     // TODO: look into entt::meta
     drawIdentity(go);
     drawSize(go);
-    drawTransform(go);
+    drawComponentInspector<Transform>(*go);
+    drawComponentInspector<BoxCollider2D>(*go);
+    drawComponentInspector<RigidBody2D>(*go);
     drawSpriteSettings(go);
     drawAddComponentCombo(go);
-    drawRigidBodySettings(go);
-    drawBoxColliderSettings(go);
     drawAnimatorSettings(go);
 
     ImGui::Separator();
@@ -143,13 +143,6 @@ void PropertiesPanel::drawSize(GameObject *go)
     SetFieldWidth();
     if (ImGui::DragInt("Height", &height))
         go->setHeight(height);
-}
-
-void PropertiesPanel::drawTransform(GameObject *go)
-{
-    ImGui::Separator();
-    Transform &transform = go->getComponent<Transform>();
-    transform.drawInspector();
 }
 
 void PropertiesPanel::drawSpriteSettings(GameObject *go)
@@ -212,9 +205,9 @@ void PropertiesPanel::drawAddComponentCombo(GameObject *go)
             go->addComponent<Animator>();
         }
 
-        if (ImGui::Selectable("EnemyState"))
+        if (ImGui::Selectable("Enemy Stats"))
         {
-            go->addComponent<EnemyAiState>();
+            go->addComponent<EnemyStats>();
         }
         ImGui::EndCombo();
     }
@@ -229,19 +222,9 @@ void PropertiesPanel::drawRigidBodySettings(GameObject *go)
     rb.drawInspector();
 }
 
-void PropertiesPanel::drawBoxColliderSettings(GameObject *go)
-{
-    if (!go->hasComponent<BoxCollider2D>())
-        return;
-
-    auto &box = go->getComponent<BoxCollider2D>();
-
-    box.drawInspector();
-}
-
 void PropertiesPanel::drawAnimatorSettings(GameObject *go)
 {
-    if (go->hasComponent<EnemyAiState>())
+    if (go->hasComponent<EnemyStats>())
     {
         ImGui::Separator();
         ImGui::Text("has enemyAiState");
@@ -340,17 +323,3 @@ void PropertiesPanel::drawPopups()
         ImGui::EndPopup();
     }
 }
-
-// template <typename T>
-// void drawComponent(const std::string &name, Entity entity)
-// {
-//     if (entity.hasComponent<T>())
-//     {
-//         auto &component = entity.getComponent<T>();
-//         if (ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
-//             component.onImGuiRender();
-//     }
-// }
-
-// drawComponent<Sprite>("Sprite", entity);
-// drawComponent<Transform>("Transform", entity);

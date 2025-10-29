@@ -3,6 +3,8 @@
 #include <iostream>
 
 #ifdef EDITOR_BUILD
+#include "core/ImGuiWrapper.h"
+
 #include <imgui.h>
 #include <yaml-cpp/yaml.h>
 #endif
@@ -71,20 +73,21 @@ void Transform::deserialize(const YAML::Node &in)
 
 void Transform::drawInspector()
 {
-    ImGui::Separator();
-    ImGui::Text("Transform");
+    ImGuiWrapper::Collapsable("Transform",
+        [&]
+        {
+            SetFieldWidth();
+            ImGui::DragFloat3("Position", &position.x, 0.1f);
 
-    SetFieldWidth();
-    ImGui::DragFloat3("Position", &position.x, 0.1f);
+            ImGui::Spacing();
 
-    ImGui::Spacing();
+            SetFieldWidth();
+            ImGui::DragFloat3("Rotation (Deg)", &rotation.x, 1.0f);
 
-    SetFieldWidth();
-    ImGui::DragFloat3("Rotation (Deg)", &rotation.x, 1.0f);
+            ImGui::Spacing();
 
-    ImGui::Spacing();
-
-    SetFieldWidth();
-    ImGui::DragFloat3("Scale", &scale.x, 0.1f, 0.0f, FLT_MAX);
+            SetFieldWidth();
+            ImGui::DragFloat3("Scale", &scale.x, 0.1f, 0.0f, FLT_MAX);
+        });
 }
 #endif
