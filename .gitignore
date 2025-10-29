@@ -51,6 +51,7 @@ out
 # exclude mac related file configs
 lib/.DS_Store
 .DS_Store
+.git
 
 # exclude test game textures
 assets/texture

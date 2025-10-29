@@ -20,3 +20,6 @@
 [submodule "engine/lib/box2d"]
 	path = engine/lib/box2d
 	url = git@github.com:hello-world-was-taken/box2d.git
+[submodule "engine/lib/sawyer"]
+	path = engine/lib/sawyer
+	url = git@github.com:hello-world-was-taken/sawyer.git

@@ -148,8 +148,6 @@ void PropertiesPanel::drawSize(GameObject *go)
 void PropertiesPanel::drawTransform(GameObject *go)
 {
     ImGui::Separator();
-
-    ImGui::Text("Transform");
     Transform &transform = go->getComponent<Transform>();
     transform.drawInspector();
 }

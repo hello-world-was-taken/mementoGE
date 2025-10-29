@@ -75,7 +75,7 @@ After compiling, you can run the engine like so:
 - [x] Hot-reload shaders and assets during runtime
 - [x] Cross-platform support (Window/MacOS)
 - [x] Sprite based animation
-- [ ] Proper logging system
+- [x] Proper logging system
 
 ## Development Notes
 ### Animation Support
