@@ -86,10 +86,15 @@ Scene::~Scene()
 Scene Scene::clone(std::string tag)
 {
     YAML::Emitter out;
+
     std::string sceneTag = mTag;
+
+    // before serializing change the passed in tag
     mTag = tag;
 
     serialize(out);
+
+    // restore scene tag
     mTag = sceneTag;
 
     YAML::Node serializedScene = YAML::Load(out.c_str());
@@ -101,6 +106,7 @@ void Scene::update()
 {
     if (m_play)
     {
+        std::cout << "systems: " << m_systems.size() << std::endl;
         for(auto &system : m_systems)
         {
             system->update(m_gameObjects);

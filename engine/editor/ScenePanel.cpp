@@ -150,11 +150,7 @@ void ScenePanel::renderGizmos()
         return;
     }
     Transform &transform = go->getComponent<Transform>();
-    glm::vec3 pos = transform.position;
-    glm::vec2 posCenter = {
-        pos.x + (go->getWidth() / 2),
-        pos.y + (go->getHeight() /2)
-    };
+    glm::vec3 posCenter = transform.position;
 
     glm::vec2 screenPos = getScreenCoordinate({posCenter.x, posCenter.y});
     ImDrawList *drawList = ImGui::GetWindowDrawList();

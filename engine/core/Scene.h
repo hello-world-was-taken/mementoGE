@@ -89,6 +89,6 @@ class Scene
 template <typename T, typename... Args> void Scene::addSystem(Args &&...args)
 {
     static_assert(std::is_base_of_v<ISystem, T>, "T must derive from ISystem");
-    T system = std::make_unique<T>(std::forward<Args>(args)...);
-    m_systems.emplace_back(std::move(system));
+    auto system = std::make_unique<T>(std::forward<Args>(args)...);
+    m_systems.push_back(std::unique_ptr<ISystem>(system.release()));
 }

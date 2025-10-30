@@ -24,13 +24,10 @@ struct Sprite
 
     // TODO: think more about this
     std::array<glm::vec2, 4> getNormalizedTextureCoordinates() const;
-};
 
 #ifdef EDITOR_BUILD
-namespace EditorExtensions
-{
-    void serializeSprite(YAML::Emitter &out, const Sprite &sprite);
-    void deserializeSprite(const YAML::Node &in, Sprite &sprite);
-    void drawSpriteInspector(Sprite &sprite);
-}
+    void serialize(YAML::Emitter &out);
+    void deserialize(const YAML::Node &in);
+    void drawInspector(Sprite &sprite);
 #endif
+};

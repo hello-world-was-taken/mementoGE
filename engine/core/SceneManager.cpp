@@ -82,8 +82,6 @@ void SceneManager::startRuntimeScene()
     }
     m_activeSceneName = "runtime_scene";
     getActiveScene().play();
-    std::cout
-        << "startRuntimeScene tag: " << getActiveScene().getTag() << std::endl;
     m_isPlaying = true;
 }
 

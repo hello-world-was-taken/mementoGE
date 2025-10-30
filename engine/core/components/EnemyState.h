@@ -22,18 +22,10 @@ enum class EnemyType
     Boss
 };
 
-struct CurrentAiState
-{
-    AiState state = AiState::Idle;
-
-    int direction = 1;
-    float currentTraveled = 0.0f;
-    float timeSinceLastAttack = 0.0f;
-};
-
-struct EnemyStats
+struct EnemyState
 {
     EnemyType type = EnemyType::Minion;
+    AiState state = AiState::Idle;
 
     float health = 100.0f;
     float moveSpeed = 50.0f;
@@ -43,9 +35,6 @@ struct EnemyStats
 
     float detectionRadius = 150.0f;
     float attackRange = 30.0f;
-
-    float moveLeftDistance = 64.0f;
-    float moveRightDistance = 64.0f;
 
 #ifdef EDITOR_BUILD
     void serialize(YAML::Emitter &out);

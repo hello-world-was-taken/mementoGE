@@ -32,60 +32,55 @@ std::array<glm::vec2, 4> Sprite::getNormalizedTextureCoordinates() const
 #ifdef EDITOR_BUILD
 #include "core/GlResourceManager.h"
 
-void EditorExtensions::serializeSprite(YAML::Emitter &out, const Sprite &sprite)
+void Sprite::serialize(YAML::Emitter &out)
 {
     out << YAML::Key << "Sprite";
     out << YAML::Value << YAML::BeginMap;
 
     // Serialize top-left position and size
-    out << YAML::Key << "TopLeft" << YAML::Value
-        << YAML::BeginSeq << sprite.topLeft.x << sprite.topLeft.y << YAML::EndSeq;
-    out << YAML::Key << "Width" << YAML::Value << sprite.width;
-    out << YAML::Key << "Height" << YAML::Value << sprite.height;
+    out << YAML::Key << "TopLeft" << YAML::Value << YAML::BeginSeq << topLeft.x << topLeft.y << YAML::EndSeq;
+    out << YAML::Key << "Width" << YAML::Value << width;
+    out << YAML::Key << "Height" << YAML::Value << height;
 
     // Serialize color
-    out << YAML::Key << "Color" << YAML::Value
-        << YAML::BeginSeq << sprite.color.r << sprite.color.g << sprite.color.b << sprite.color.a << YAML::EndSeq;
+    out << YAML::Key << "Color" << YAML::Value << YAML::BeginSeq << color.r << color.g << color.b << color.a
+        << YAML::EndSeq;
 
     // Serialize flip flags
-    out << YAML::Key << "FlipX" << YAML::Value << sprite.flipX;
-    out << YAML::Key << "FlipY" << YAML::Value << sprite.flipY;
+    out << YAML::Key << "FlipX" << YAML::Value << flipX;
+    out << YAML::Key << "FlipY" << YAML::Value << flipY;
 
-    if (sprite.texture)
-        sprite.texture->serialize(out);
+    if (texture)
+        texture->serialize(out);
 
     out << YAML::EndMap;
 }
 
-void EditorExtensions::deserializeSprite(const YAML::Node &in, Sprite &sprite)
+void Sprite::deserialize(const YAML::Node &in)
 {
     // Deserialize top-left, width, height
     auto topLeftNode = in["Sprite"]["TopLeft"];
-    sprite.topLeft = {topLeftNode[0].as<float>(), topLeftNode[1].as<float>()};
-    sprite.width = in["Sprite"]["Width"].as<float>();
-    sprite.height = in["Sprite"]["Height"].as<float>();
+    topLeft = {topLeftNode[0].as<float>(), topLeftNode[1].as<float>()};
+    width = in["Sprite"]["Width"].as<float>();
+    height = in["Sprite"]["Height"].as<float>();
 
     // Deserialize color
     auto colorNode = in["Sprite"]["Color"];
-    sprite.color = {
-        colorNode[0].as<float>(),
-        colorNode[1].as<float>(),
-        colorNode[2].as<float>(),
-        colorNode[3].as<float>()};
+    color = {colorNode[0].as<float>(), colorNode[1].as<float>(), colorNode[2].as<float>(), colorNode[3].as<float>()};
 
     // Deserialize flip flags
-    sprite.flipX = in["Sprite"]["FlipX"] ? in["Sprite"]["FlipX"].as<bool>() : false;
-    sprite.flipY = in["Sprite"]["FlipY"] ? in["Sprite"]["FlipY"].as<bool>() : false;
+    flipX = in["Sprite"]["FlipX"] ? in["Sprite"]["FlipX"].as<bool>() : false;
+    flipY = in["Sprite"]["FlipY"] ? in["Sprite"]["FlipY"].as<bool>() : false;
 
     // Deserialize texture
     auto textureNode = in["Sprite"]["Texture"];
     std::string filePath = textureNode["FilePath"].as<std::string>();
     bool isTextureAtlas = textureNode["isTextureAtlas"].as<bool>();
-    sprite.texture = GlResourceManager::instance().getTexture(filePath, isTextureAtlas);
-    sprite.texture->bind();
+    texture = GlResourceManager::instance().getTexture(filePath, isTextureAtlas);
+    texture->bind();
 }
 
-void EditorExtensions::drawSpriteInspector(Sprite &sprite)
+void Sprite::drawInspector(Sprite &sprite)
 {
     if (ImGui::CollapsingHeader("Sprite Component", ImGuiTreeNodeFlags_DefaultOpen))
     {

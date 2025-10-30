@@ -4,13 +4,14 @@
 #include "engine/core/ISystem.h"
 
 #include <entt/entt.hpp>
+#include <vector>
 
-class EnemySystem : ISystem
+class PatrolSystem : public ISystem
 {
-public:
+  public:
     void update(std::vector<GameObject> &gameObjects) override;
 
-private:
+  private:
     void updateAnimation();
     void move();
 };

@@ -1,18 +1,18 @@
 #include "core/components/CircleCollider2D.h"
-#include "core/components/Transform.h"
+#include "core/components/EnemyState.h"
+#include "core/components/Patrol.h"
 #include "core/components/Sprite.h"
-#include "core/components/EnemyStats.h"
+#include "core/components/Transform.h"
 
-#include "core/SpriteSheet.h"
-#include "core/AssetManager.h"
 #include "core/Animator.h"
+#include "core/AssetManager.h"
+#include "core/SpriteSheet.h"
 
-#include "editor/PropertiesPanel.h"
-#include "editor/EditorPanel.h"
-#include "editor/TexturePanel.h"
 #include "editor/EditorContext.h"
+#include "editor/EditorPanel.h"
+#include "editor/PropertiesPanel.h"
 #include "editor/SpritePayload.h"
-
+#include "editor/TexturePanel.h"
 
 #include "util/PathUtils.h"
 
@@ -30,9 +30,7 @@ inline void SetFieldWidth(float w = 120.0f)
 }
 
 PropertiesPanel::PropertiesPanel(EditorContext &ctx, TexturePanel &texturePanel)
-    : EditorPanel{ctx},
-      m_ctx{ctx},
-      m_texturePanel{texturePanel}
+    : EditorPanel{ctx}, m_ctx{ctx}, m_texturePanel{texturePanel}
 {
 }
 
@@ -94,6 +92,8 @@ void PropertiesPanel::renderPropertiesPanel()
     drawComponentInspector<Transform>(*go);
     drawComponentInspector<BoxCollider2D>(*go);
     drawComponentInspector<RigidBody2D>(*go);
+    drawComponentInspector<EnemyState>(*go);
+    drawComponentInspector<Patrol>(*go);
     drawSpriteSettings(go);
     drawAddComponentCombo(go);
     drawAnimatorSettings(go);
@@ -179,6 +179,7 @@ void PropertiesPanel::drawAddComponentCombo(GameObject *go)
 {
     ImGui::Separator();
     SetFieldWidth(150);
+    // TODO: make them selectable at the component level like the other editor extensions
     if (ImGui::BeginCombo("Add Component", "Select..."))
     {
         if (ImGui::Selectable("Rigidbody2D"))
@@ -207,7 +208,12 @@ void PropertiesPanel::drawAddComponentCombo(GameObject *go)
 
         if (ImGui::Selectable("Enemy Stats"))
         {
-            go->addComponent<EnemyStats>();
+            go->addComponent<EnemyState>();
+        }
+
+        if (ImGui::Selectable("Patrol"))
+        {
+            go->addComponent<Patrol>();
         }
         ImGui::EndCombo();
     }
@@ -224,7 +230,7 @@ void PropertiesPanel::drawRigidBodySettings(GameObject *go)
 
 void PropertiesPanel::drawAnimatorSettings(GameObject *go)
 {
-    if (go->hasComponent<EnemyStats>())
+    if (go->hasComponent<EnemyState>())
     {
         ImGui::Separator();
         ImGui::Text("has enemyAiState");
@@ -306,18 +312,17 @@ void PropertiesPanel::drawPopups()
     // Sprite picker
     if (ImGui::BeginPopupModal("Select Sprite", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
-        m_texturePanel.renderSelectedTexSheetPanel(true, [&](Sprite &sprite)
-                                                   {
-            if (auto go = m_ctx.sceneManager.getActiveScene().getActiveGameObject()) {
-                if (go->hasComponent<Sprite>())
-                    go->removeComponent<Sprite>();
+        m_texturePanel.renderSelectedTexSheetPanel(true,
+            [&](Sprite &sprite)
+            {
+                if (auto go = m_ctx.sceneManager.getActiveScene().getActiveGameObject())
+                {
+                    if (go->hasComponent<Sprite>())
+                        go->removeComponent<Sprite>();
 
-                go->addComponent<Sprite>(
-                    sprite.topLeft,
-                    sprite.width,
-                    sprite.height,
-                    sprite.texture);
-            } });
+                    go->addComponent<Sprite>(sprite.topLeft, sprite.width, sprite.height, sprite.texture);
+                }
+            });
         if (ImGui::Button("Cancel"))
             ImGui::CloseCurrentPopup();
         ImGui::EndPopup();

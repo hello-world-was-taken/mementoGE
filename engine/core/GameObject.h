@@ -2,55 +2,34 @@
 
 #include "physics/Physics2D.h"
 
-#include <iostream>
-#include <memory>
-#include <vector>
-#include <string>
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
-#include <typeinfo>
+#include <iostream>
+#include <memory>
+#include <string>
 #include <type_traits>
+#include <typeinfo>
+#include <vector>
 #include <yaml-cpp/yaml.h>
 
 class GameObject
 {
-public:
+  public:
     GameObject(entt::registry &registry, std::string &&tag, unsigned int width = 0, unsigned int height = 0);
     GameObject(entt::registry &registry, const YAML::Node &serializedGameObject, Physics2D &physics);
     GameObject(GameObject &&other);
     GameObject &operator=(GameObject &&other);
     ~GameObject();
 
-    template <typename Component, typename... Args>
-    void addComponent(Args &&...args)
-    {
-        m_registry->emplace<Component>(m_entity, std::forward<Args>(args)...);
-    }
-
+    template <typename Component, typename... Args> void addComponent(Args &&...args);
+    template <typename Component> bool hasComponent() const;
+    template <typename Component> Component &getComponent() const;
+    template <typename Component> void removeComponent();
+    template <typename Component> void serializeComponent(YAML::Emitter &out);
     template <typename Component>
-    bool hasComponent() const
-    {
-        return m_registry->all_of<Component>(m_entity);
-    }
-
-    template <typename Component>
-    Component &getComponent() const
-    {
-        if (!hasComponent<Component>())
-        {
-            // TODO: Use the demangled name of the type using -> abi::__cxa_demangle from cxxabi.h
-            //       after setting up a proper logging system.
-            std::cerr << "ERROR: Component " << typeid(Component).name() << " does not exist for the Game Object" << std::endl;
-            throw std::runtime_error("Component does not exist");
-        }
-        return m_registry->get<Component>(m_entity);
-    }
-
-    template <typename Component>
-    void removeComponent()
-    {
-        m_registry->remove<Component>(m_entity);
-    }
+    void deserializeComponent(const YAML::Node &serializedGameObject,
+        const std::string &componentName,
+        std::optional<std::reference_wrapper<Physics2D>> physics = std::nullopt);
 
     void destroy();
 
@@ -60,7 +39,7 @@ public:
     const int getWidth() const;
     const int getHeight() const;
 
-    void setTag(const std::string& newTag);
+    void setTag(const std::string &newTag);
     const std::string &getTag() const;
 
     std::array<glm::vec3, 4> getQuad() const;
@@ -71,7 +50,8 @@ public:
 
     entt::entity getEntityId() const
     {
-        // std::cout << "Entity ID: " << entt::to_entity(m_entity) << " Version: " << entt::to_version(m_entity) << std::endl;
+        // std::cout << "Entity ID: " << entt::to_entity(m_entity) << " Version: " << entt::to_version(m_entity) <<
+        // std::endl;
         return m_entity;
     }
 
@@ -79,8 +59,7 @@ public:
 
     bool serialize(YAML::Emitter &out);
 
-private:
-    // TODO: we should change this to unique_ptr
+  private:
     // We take registry as a reference and internally use it as a pointer to support
     // assignment operation
     entt::registry *m_registry;
@@ -88,8 +67,64 @@ private:
     unsigned int m_width = 0;
     unsigned int m_height = 0;
 
-    std::string mTag; // human readable name of game object
-
-    // TODO: we should add a constructor that takes in serialized gameobject YAML::Node.
+    std::string mTag;
     entt::entity m_entity;
 };
+
+template <typename Component, typename... Args> void GameObject::addComponent(Args &&...args)
+{
+    m_registry->emplace<Component>(m_entity, std::forward<Args>(args)...);
+}
+
+template <typename Component> bool GameObject::hasComponent() const
+{
+    return m_registry->all_of<Component>(m_entity);
+}
+
+template <typename Component> Component &GameObject::getComponent() const
+{
+    if (!hasComponent<Component>())
+    {
+        // TODO: Use the demangled name of the type using -> abi::__cxa_demangle from cxxabi.h
+        //       after setting up a proper logging system.
+        std::cerr << "ERROR: Component " << typeid(Component).name() << " does not exist for the Game Object"
+                  << std::endl;
+        throw std::runtime_error("Component does not exist");
+    }
+    return m_registry->get<Component>(m_entity);
+}
+
+template <typename Component> void GameObject::removeComponent()
+{
+    m_registry->remove<Component>(m_entity);
+}
+
+template <typename Component> void GameObject::serializeComponent(YAML::Emitter &out)
+{
+    if (hasComponent<Component>())
+    {
+        // TODO: add static assert to make sure serialize exists
+        Component &component = getComponent<Component>();
+        component.serialize(out);
+    }
+}
+
+template <typename Component>
+void GameObject::deserializeComponent(const YAML::Node &serializedGameObject,
+    const std::string &componentName,
+    std::optional<std::reference_wrapper<Physics2D>> physics)
+{
+    if (serializedGameObject[componentName])
+    {
+        addComponent<Component>();
+        getComponent<Component>().deserialize(serializedGameObject);
+
+        if constexpr (std::is_same_v<Component, RigidBody2D>)
+        {
+            if (physics)
+            {
+                physics->get().addRigidbody(*this);
+            }
+        }
+    }
+}

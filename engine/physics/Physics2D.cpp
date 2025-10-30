@@ -1,6 +1,6 @@
 #include "core/components/BoxCollider2D.h"
-#include "core/components/Transform.h"
 #include "core/components/RigidBody2D.h"
+#include "core/components/Transform.h"
 
 #include "physics/Physics2D.h"
 
@@ -8,10 +8,10 @@
 
 #include "util/Time.h"
 
-#include <vector>
 #include <box2d/box2d.h>
-#include <memory>
 #include <iostream>
+#include <memory>
+#include <vector>
 
 Physics2D::Physics2D(const glm::vec2 &gravity)
 {
@@ -29,8 +29,7 @@ Physics2D::~Physics2D()
     std::cout << "Physics2D destructor called: " << m_worldId.index1 << std::endl;
 }
 
-Physics2D::Physics2D(Physics2D &&other) noexcept
-    : m_worldId(other.m_worldId)
+Physics2D::Physics2D(Physics2D &&other) noexcept : m_worldId(other.m_worldId)
 {
     other.m_worldId = b2_nullWorldId;
 }
@@ -52,6 +51,17 @@ Physics2D &Physics2D::operator=(Physics2D &&other) noexcept
 
 void Physics2D::simulate(float timestep, const std::vector<GameObject> &gameObjects)
 {
+    for (auto &go : gameObjects)
+    {
+        if (!go.hasComponent<RigidBody2D>())
+        {
+            continue;
+        }
+
+        auto &rb = go.getComponent<RigidBody2D>();
+        b2Body_SetLinearVelocity(rb.bodyId, {rb.velocity.x, rb.velocity.y});
+    }
+
     b2World_Step(m_worldId, Time::deltaTime(), 4);
 }
 
@@ -131,12 +141,6 @@ void Physics2D::syncTransforms(const std::vector<GameObject> &gameObjects)
 {
     for (auto &go : gameObjects)
     {
-        // TODO: remove. for testing purposes
-        // if (go.getTag() == "Player" || !go.hasComponent<RigidBody2D>())
-        // {
-        //     continue;
-        // }
-
         if (!go.hasComponent<RigidBody2D>())
         {
             continue;

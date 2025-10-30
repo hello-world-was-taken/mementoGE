@@ -1,26 +1,23 @@
-#include "Game.h"
+#include "game/Game.h"
+#include "game/systems/PatrolSystem.h"
 
-#include "engine/core/GameObject.h"
-#include "engine/core/Window.h"
-#include "engine/core/MouseListener.h"
-#include "engine/core/SceneManager.h"
-#include "engine/core/Scene.h"
-#include "engine/core/components/Sprite.h"
-#include "engine/core/Event.h"
 #include "engine/core/Animator.h"
+#include "engine/core/Event.h"
+#include "engine/core/GameObject.h"
+#include "engine/core/MouseListener.h"
+#include "engine/core/Scene.h"
+#include "engine/core/SceneManager.h"
+#include "engine/core/Window.h"
+#include "engine/core/components/Sprite.h"
 
 #include "engine/editor/Constants.h"
 
 #include "util/Time.h"
 
-#include <memory>
 #include <iostream>
+#include <memory>
 
-Game::Game(bool editorMode)
-    : m_window{},
-      m_sceneManager{&m_window},
-      m_editorMode{editorMode},
-      m_editorLayer{m_window}
+Game::Game(bool editorMode) : m_window{}, m_sceneManager{&m_window}, m_editorMode{editorMode}, m_editorLayer{m_window}
 {
 }
 
@@ -72,6 +69,8 @@ void Game::processInput()
 
 void Game::update()
 {
+    // TODO: REMOVE
+    bool static test = false;
     m_window.run(
         [&]()
         {
@@ -82,6 +81,12 @@ void Game::update()
                 m_editorLayer.update();
                 if (m_editorLayer.getEditorContext().sceneManager.isPlaying())
                 {
+                    if (!test)
+                    {
+                        test = true;
+                        m_editorLayer.getEditorContext().sceneManager.getActiveScene().addSystem<PatrolSystem>();
+                    }
+
                     processInput();
                 }
                 MouseListener::instance()->beginFrame();

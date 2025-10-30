@@ -1,6 +1,8 @@
+#include "core/components/Patrol.h"
 #include "core/components/RigidBody2D.h"
 #include "core/components/Sprite.h"
 #include "core/components/Transform.h"
+#include "core/components/EnemyState.h"
 
 #include "core/Animator.h"
 #include "core/GameObject.h"
@@ -27,38 +29,14 @@ GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGam
     m_width = serializedGameObject["Width"].as<unsigned int>();
     m_height = serializedGameObject["Height"].as<unsigned int>();
 
-    // Deserializing Transform Component of the Game Object
-    addComponent<Transform>();
-    getComponent<Transform>().deserialize(serializedGameObject);
-
-    // Deserialize Sprite
-    if (serializedGameObject["Sprite"])
-    {
-        addComponent<Sprite>();
-        EditorExtensions::deserializeSprite(serializedGameObject, getComponent<Sprite>());
-    }
-
-    // Deserialize BoxCollider2D
-    if (serializedGameObject["BoxCollider2D"])
-    {
-        addComponent<BoxCollider2D>();
-        getComponent<BoxCollider2D>().deserialize(serializedGameObject);
-    }
-
-    // Deserialize RigidBody2D
-    if (serializedGameObject["RigidBody2D"])
-    {
-        addComponent<RigidBody2D>();
-        getComponent<RigidBody2D>().deserialize(serializedGameObject);
-        physics.addRigidbody(*this);
-    }
-
-    // Deserialize Animator
-    if (serializedGameObject["Animator"])
-    {
-        addComponent<Animator>();
-        getComponent<Animator>().deserialize(serializedGameObject);
-    }
+    // Deserialize Components
+    deserializeComponent<Transform>(serializedGameObject, "Transform");
+    deserializeComponent<Sprite>(serializedGameObject, "Sprite");
+    deserializeComponent<BoxCollider2D>(serializedGameObject, "BoxCollider2D");
+    deserializeComponent<RigidBody2D>(serializedGameObject, "RigidBody2D", physics);
+    deserializeComponent<Animator>(serializedGameObject, "Animator");
+    deserializeComponent<EnemyState>(serializedGameObject, "EnemyState");
+    deserializeComponent<Patrol>(serializedGameObject, "Patrol");
 }
 
 GameObject::GameObject(GameObject &&other) : m_registry{other.m_registry}
@@ -120,14 +98,6 @@ const std::string &GameObject::getTag() const
     return mTag;
 }
 
-// std::vector<glm::vec3> GameObject::getQuad() const
-// {
-//     return std::vector<glm::vec3>({{0.0f, 1.0f * m_height, 0.0f},             // top left
-//                                    {0.0f, 0.0f, 0.0f},                        // bottom left
-//                                    {1.0f * m_width, 0.0f, 0.0f},              // bottom right
-//                                    {1.0f * m_width, 1.0f * m_height, 0.0f}}); // top right
-// }
-
 std::array<glm::vec3, 4> GameObject::getQuad() const
 {
     float halfWidth = m_width * 0.5f;
@@ -185,40 +155,14 @@ bool GameObject::serialize(YAML::Emitter &out)
     out << YAML::Key << "Height";
     out << YAML::Value << m_height;
 
-    // TRANSFORM COMPONENT
-    if (hasComponent<Transform>())
-    {
-        Transform &transform = getComponent<Transform>();
-        transform.serialize(out);
-    }
-
-    // SPRITE COMPONENT
-    if (hasComponent<Sprite>())
-    {
-        Sprite &sprite = getComponent<Sprite>();
-        EditorExtensions::serializeSprite(out, sprite);
-    }
-
-    // RIGIDBODY2D COMPONENT
-    if (hasComponent<RigidBody2D>())
-    {
-        RigidBody2D &rb = getComponent<RigidBody2D>();
-        rb.serialize(out);
-    }
-
-    // BOXCOLLIDER2D COMPONENT
-    if (hasComponent<BoxCollider2D>())
-    {
-        BoxCollider2D &bc = getComponent<BoxCollider2D>();
-        bc.serialize(out);
-    }
-
-    // ANIMATOR COMPONENT
-    if (hasComponent<Animator>())
-    {
-        Animator &anim = getComponent<Animator>();
-        anim.serialize(out);
-    }
+    serializeComponent<Transform>(out);
+    serializeComponent<Sprite>(out);
+    serializeComponent<RigidBody2D>(out);
+    serializeComponent<BoxCollider2D>(out);
+    serializeComponent<Animator>(out);
+    serializeComponent<Animator>(out);
+    serializeComponent<EnemyState>(out);
+    serializeComponent<Patrol>(out);
 
     out << YAML::EndMap;
 
