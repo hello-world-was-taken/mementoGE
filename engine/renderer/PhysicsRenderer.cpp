@@ -1,12 +1,11 @@
-#include "core/components/Sprite.h"
 #include "core/components/BoxCollider2D.h"
+#include "core/components/Sprite.h"
 
 #include "core/GLIncludes.h"
 
 #include "opengl/Vertex.h"
-#include "opengl/VertexBuffer.h"
 #include "opengl/VertexAttribute.h"
-
+#include "opengl/VertexBuffer.h"
 
 #include "renderer/PhysicsRenderer.h"
 #include "util/log_error.h"
@@ -24,9 +23,7 @@ PhysicsRenderer::~PhysicsRenderer()
     std::cout << "PhysicsRenderer destructor called" << std::endl;
 }
 
-void PhysicsRenderer::render(
-    const Camera &camera,
-    const std::vector<GameObject> &gameObjects)
+void PhysicsRenderer::render(const Camera &camera, const std::vector<GameObject> &gameObjects)
 {
 
     if (m_batch == nullptr)
@@ -39,9 +36,7 @@ void PhysicsRenderer::render(
     m_batch->render(camera);
 }
 
-void PhysicsRenderer::updateVertices(
-    const Camera &camera,
-    const std::vector<GameObject> &gameObjects)
+void PhysicsRenderer::updateVertices(const Camera &camera, const std::vector<GameObject> &gameObjects)
 {
     m_vertices.clear();
 
@@ -53,22 +48,22 @@ void PhysicsRenderer::updateVertices(
         Transform &transform = gameObject.getComponent<Transform>();
         const BoxCollider2D &collider = gameObject.getComponent<BoxCollider2D>();
 
-        float width = collider.size.x;
-        float height = collider.size.y;
-        glm::vec2 bottomLeftPos = glm::vec2{transform.position.x, transform.position.y} + collider.offset;
+        float halfWidth = collider.size.x * 0.5f;
+        float halfHeight = collider.size.y * 0.5f;
 
-        glm::vec3 bottomLeft = {bottomLeftPos.x, bottomLeftPos.y, 0.0f};
-        glm::vec3 bottomRight = {bottomLeftPos.x + width, bottomLeftPos.y, 0.0f};
-        glm::vec3 topRight = {bottomLeftPos.x + width, bottomLeftPos.y + height, 0.0f};
-        glm::vec3 topLeft = {bottomLeftPos.x, bottomLeftPos.y + height, 0.0f};
+        glm::vec2 centerPos = glm::vec2{transform.position.x, transform.position.y} + collider.offset;
+
+        glm::vec3 bottomLeft = {centerPos.x - halfWidth, centerPos.y - halfHeight, 0.0f};
+        glm::vec3 bottomRight = {centerPos.x + halfWidth, centerPos.y - halfHeight, 0.0f};
+        glm::vec3 topRight = {centerPos.x + halfWidth, centerPos.y + halfHeight, 0.0f};
+        glm::vec3 topLeft = {centerPos.x - halfWidth, centerPos.y + halfHeight, 0.0f};
 
         glm::vec4 borderColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f); // red
 
         auto makeVertex = [&](const glm::vec3 &pos) -> Vertex
         {
             return Vertex{
-                pos,
-                borderColor,
+                pos, borderColor,
                 glm::vec2(0.0f), // no texture
                 -1.0f            // sentinel tex index
             };

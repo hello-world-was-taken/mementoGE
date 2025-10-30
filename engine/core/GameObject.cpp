@@ -1,22 +1,24 @@
-#include "core/components/Transform.h"
 #include "core/components/RigidBody2D.h"
 #include "core/components/Sprite.h"
+#include "core/components/Transform.h"
 
-#include "core/GameObject.h"
 #include "core/Animator.h"
+#include "core/GameObject.h"
 
 #include "physics/Physics2D.h"
 
-#include <yaml-cpp/yaml.h>
 #include <string>
+#include <yaml-cpp/yaml.h>
 
-GameObject::GameObject(entt::registry &registry, std::string &&tag, unsigned int width, unsigned int height) : m_registry{&registry}, mTag{tag}, m_width{width}, m_height{height}
+GameObject::GameObject(entt::registry &registry, std::string &&tag, unsigned int width, unsigned int height)
+    : m_registry{&registry}, mTag{tag}, m_width{width}, m_height{height}
 {
     m_entity = m_registry->create();
     addComponent<Transform>();
 }
 
-GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGameObject, Physics2D &physics) : m_registry{&registry}
+GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGameObject, Physics2D &physics)
+    : m_registry{&registry}
 {
     m_entity = m_registry->create();
 
@@ -59,8 +61,7 @@ GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGam
     }
 }
 
-GameObject::GameObject(GameObject &&other)
-    : m_registry{other.m_registry}
+GameObject::GameObject(GameObject &&other) : m_registry{other.m_registry}
 {
     m_entity = other.m_entity;
     m_width = other.m_width;
@@ -119,23 +120,36 @@ const std::string &GameObject::getTag() const
     return mTag;
 }
 
-std::vector<glm::vec3> GameObject::getQuad() const
+// std::vector<glm::vec3> GameObject::getQuad() const
+// {
+//     return std::vector<glm::vec3>({{0.0f, 1.0f * m_height, 0.0f},             // top left
+//                                    {0.0f, 0.0f, 0.0f},                        // bottom left
+//                                    {1.0f * m_width, 0.0f, 0.0f},              // bottom right
+//                                    {1.0f * m_width, 1.0f * m_height, 0.0f}}); // top right
+// }
+
+std::array<glm::vec3, 4> GameObject::getQuad() const
 {
-    return std::vector<glm::vec3>({{0.0f, 1.0f * m_height, 0.0f},             // top left
-                                   {0.0f, 0.0f, 0.0f},                        // bottom left
-                                   {1.0f * m_width, 0.0f, 0.0f},              // bottom right
-                                   {1.0f * m_width, 1.0f * m_height, 0.0f}}); // top right
+    float halfWidth = m_width * 0.5f;
+    float halfHeight = m_height * 0.5f;
+
+    glm::vec3 topLeft = {-halfWidth, halfHeight, 0.0f};
+    glm::vec3 bottomLeft = {-halfWidth, -halfHeight, 0.0f};
+    glm::vec3 bottomRight = {halfWidth, -halfHeight, 0.0f};
+    glm::vec3 topRight = {halfWidth, halfHeight, 0.0f};
+
+    return std::array{topLeft, bottomLeft, bottomRight, topRight};
 }
 
 // TODO: shouldn't this be done in the GPU? It shouldn't matter that much for 2D, but as a principle.
 // Also is it possible to do that if we want to draw the batch in a single draw call?
-std::vector<glm::vec3> GameObject::getWorldCoordinateQuad() const
+std::array<glm::vec3, 4> GameObject::getWorldCoordinateQuad() const
 {
     Transform transform = getComponent<Transform>();
     glm::mat4x4 modelMatrix = transform.getModelMatrix();
 
-    std::vector<glm::vec3> quad = getQuad();
-    std::vector<glm::vec3> transformedQuad = quad;
+    std::array<glm::vec3, 4> quad = getQuad();
+    std::array<glm::vec3, 4> transformedQuad = quad;
 
     for (int i = 0; i < quad.size(); i++)
     {
@@ -153,10 +167,10 @@ void GameObject::updateEntityReference(entt::registry &registry)
 // TODO: we can update this to use spatial grid or quadtree as an optimization
 bool GameObject::containsPoint(glm::vec2 worldPoint) const
 {
-    std::vector<glm::vec3> worldQuad = getWorldCoordinateQuad();
+    std::array<glm::vec3, 4> worldQuad = getWorldCoordinateQuad();
     glm::vec2 topLeft = worldQuad[0];
-    return topLeft.x <= worldPoint.x && worldPoint.x <= topLeft.x + m_width &&
-           topLeft.y >= worldPoint.y && worldPoint.y >= topLeft.y - m_height;
+    return topLeft.x <= worldPoint.x && worldPoint.x <= topLeft.x + m_width && topLeft.y >= worldPoint.y &&
+           worldPoint.y >= topLeft.y - m_height;
 }
 
 bool GameObject::serialize(YAML::Emitter &out)

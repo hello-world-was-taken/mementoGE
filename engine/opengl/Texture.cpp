@@ -1,14 +1,13 @@
 #include "Texture.h"
 
-#include <yaml-cpp/yaml.h>
-#include <stb_image/stb_image.h>
 #include <GL/glew.h>
 #include <iostream>
+#include <stb_image/stb_image.h>
 #include <stdexcept>
+#include <yaml-cpp/yaml.h>
 
 Texture::Texture(const char *texture_path, int texture_unit, bool isTextureAtlas)
-    : m_texture_unit(texture_unit),
-      m_is_texture_atlas(isTextureAtlas)
+    : m_texture_unit(texture_unit), m_is_texture_atlas(isTextureAtlas)
 {
     this->m_texture_path = texture_path;
     // stbi_set_flip_vertically_on_load(true);
@@ -27,11 +26,12 @@ Texture::Texture(const char *texture_path, int texture_unit, bool isTextureAtlas
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    //TODO: tightly packed. Do we need this only when nrChannels is 3?
+    // TODO: tightly packed. Do we need this only when nrChannels is 3?
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     GLenum format = (m_nrChannels == 4) ? GL_RGBA : GL_RGB;
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, this->m_width, this->m_height, 0, format, GL_UNSIGNED_BYTE, m_texture_buffer);
+    glTexImage2D(
+        GL_TEXTURE_2D, 0, GL_RGBA8, this->m_width, this->m_height, 0, format, GL_UNSIGNED_BYTE, m_texture_buffer);
 
     // restore default alignment
     glPixelStorei(GL_UNPACK_ALIGNMENT, 4);

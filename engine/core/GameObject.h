@@ -63,8 +63,8 @@ public:
     void setTag(const std::string& newTag);
     const std::string &getTag() const;
 
-    std::vector<glm::vec3> getQuad() const;
-    std::vector<glm::vec3> getWorldCoordinateQuad() const;
+    std::array<glm::vec3, 4> getQuad() const;
+    std::array<glm::vec3, 4> getWorldCoordinateQuad() const;
 
     // mouse press detection
     bool containsPoint(glm::vec2 worldPoint) const;

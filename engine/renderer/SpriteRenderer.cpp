@@ -2,7 +2,6 @@
 
 #include "renderer/SpriteRenderer.h"
 
-
 SpriteRenderer::SpriteRenderer()
 {
     generateIndexArray();
@@ -12,9 +11,7 @@ SpriteRenderer::~SpriteRenderer()
 {
 }
 
-void SpriteRenderer::render(
-    const Camera &camera,
-    const std::vector<GameObject> &gameObjects)
+void SpriteRenderer::render(const Camera &camera, const std::vector<GameObject> &gameObjects)
 {
     if (m_batch == nullptr)
         m_batch = std::make_unique<RenderBatch>(m_indices, GL_TRIANGLES);
@@ -27,34 +24,33 @@ void SpriteRenderer::render(
 
 // TODO: once we start to use more textures and exceed the amount we can bind to openGL
 // at a time, we need to batch our calls per texture units
-void SpriteRenderer::updateVertices(
-    const Camera &camera,
-    const std::vector<GameObject> &gameObjects)
+void SpriteRenderer::updateVertices(const Camera &camera, const std::vector<GameObject> &gameObjects)
 {
     m_vertices.clear();
 
     for (const GameObject &gameObject : gameObjects)
     {
-
-        Transform transform = gameObject.getComponent<Transform>();
-
         // The world coordinate is model matrix * local quad.
-        std::vector<glm::vec3> transformedQuad = gameObject.getWorldCoordinateQuad();
+        std::array<glm::vec3, 4> transformedQuad = gameObject.getWorldCoordinateQuad();
+        auto makeVertex = [&](const glm::vec3 &pos, const glm::vec4 &color, const glm::vec2 &texCoord,
+                              unsigned int texUnit) -> Vertex
+        {
+            return Vertex{pos, color, texCoord, float(texUnit)};
+        };
 
         if (gameObject.hasComponent<Sprite>())
         {
             Sprite sprite = gameObject.getComponent<Sprite>();
-            for (int i = 0; i < transformedQuad.size(); i++)
-            {
-                // TODO: in scenarios where sprite width and height are different
-                // from gameObject, sprite should take precedence. In fact, if a
-                // game object has a sprite attached to it, the width and height
-                // should be taken from the sprite.
-                m_vertices.push_back({transformedQuad[i],
-                                      sprite.color,
-                                      sprite.getNormalizedTextureCoordinates()[i], // TODO: do we need to retrieve this from the sprite renderer?
-                                      (float)sprite.texture->getTextureUnit()});
-            }
+            auto [topLeft, bottomLeft, bottomRight, topRight] = transformedQuad;
+
+            auto texCoords = sprite.getNormalizedTextureCoordinates();
+            float textureUnit = static_cast<float>(sprite.texture->getTextureUnit());
+
+            // Push all 4 vertices — one for each corner
+            m_vertices.push_back(makeVertex(topLeft, sprite.color, texCoords[0], textureUnit));
+            m_vertices.push_back(makeVertex(bottomLeft, sprite.color, texCoords[1], textureUnit));
+            m_vertices.push_back(makeVertex(bottomRight, sprite.color, texCoords[2], textureUnit));
+            m_vertices.push_back(makeVertex(topRight, sprite.color, texCoords[3], textureUnit));
         }
     }
 }
