@@ -27,8 +27,7 @@ ScenePanel::~ScenePanel()
 
 void ScenePanel::draw()
 {
-    m_ctx.editorMouseController.Update(
-        m_ctx, m_upperLeft, m_previewAreaSize, m_ctx.viewportWidth, m_ctx.viewportHeight);
+    m_ctx.editorMouseController.update(m_ctx);
 
     renderSceneViewport();
 }
@@ -147,8 +146,7 @@ void ScenePanel::renderSceneViewport()
             glfwGetFramebufferSize(m_ctx.window.getGlfwWindow(), &fbWidth, &fbHeight);
 
             MouseListener *mouse = MouseListener::instance();
-            glm::vec2 worldPos = m_ctx.editorMouseController.getWorldCoordinate(
-                cam, m_upperLeft, m_previewAreaSize, fbWidth, fbHeight, mouse->getMouseScreenPosition());
+            glm::vec2 worldPos = m_ctx.getWorldCoordinate(mouse->getMouseScreenPosition());
 
             // Create object here
             Sprite sprite = spriteSheet->getSprites()[spriteIndex];
@@ -160,8 +158,8 @@ void ScenePanel::renderSceneViewport()
         ImGui::EndDragDropTarget();
     }
 
-    m_upperLeft = ImGui::GetItemRectMin();
-    m_previewAreaSize = ImGui::GetItemRectSize();
+    m_ctx.scenePanelTopLeftPos = ImGui::GetItemRectMin();
+    m_ctx.scenePanelSize = ImGui::GetItemRectSize();
 
     // render gizmos in the same imgui Begin-End window
     renderGizmos();
@@ -183,7 +181,7 @@ void ScenePanel::renderGizmos()
     Transform &transform = go.getComponent<Transform>();
     glm::vec3 posCenter = transform.position;
 
-    glm::vec2 screenPos = getScreenCoordinate({posCenter.x, posCenter.y});
+    glm::vec2 screenPos = m_ctx.getScreenCoordinate({posCenter.x, posCenter.y});
     ImDrawList *drawList = ImGui::GetWindowDrawList();
 
     // Length of gizmo axis
@@ -208,56 +206,4 @@ void ScenePanel::renderGizmos()
         IM_COL32(0, 0, 255, 255));
     // Label for Y
     drawList->AddText(ImVec2(yEnd.x + 4, yEnd.y - 10), IM_COL32(0, 0, 255, 255), "Y");
-}
-
-glm::vec2 ScenePanel::getScreenCoordinate(glm::vec2 worldPos)
-{
-    glm::vec2 frameBufferPos = worldToFrameBuffer(worldPos);
-    glm::vec2 localPos = frameBufferToLocal(frameBufferPos);
-
-    return localToScreen(localPos);
-}
-
-glm::vec2 ScenePanel::worldToFrameBuffer(glm::vec2 worldPos)
-{
-    const Camera &camera = m_ctx.editorCamera;
-    glm::mat4 viewProj = camera.getProjectionMatrix() * camera.getViewMatrix();
-
-    // transform world position to clip space
-    glm::vec4 clipSpaceCoords = viewProj * glm::vec4(worldPos, 0.0f, 1.0f);
-
-    // check if w is zero (could be for certain cases like points at infinity)
-    if (clipSpaceCoords.w == 0.0f)
-    {
-        std::cout << "Warning: Invalid transformation, w = 0!" << std::endl;
-        return glm::vec2(0.0f, 0.0f);
-    }
-
-    // convert clip space to normalized device coordinates (NDC)
-    glm::vec3 ndcCoords = clipSpaceCoords / clipSpaceCoords.w;
-
-    // map NDC to screen space (viewport coordinates)
-    glm::vec2 framebufferCoords;
-    framebufferCoords.x = (ndcCoords.x + 1.0f) * 0.5f * m_ctx.viewportWidth;
-    framebufferCoords.y = (1.0f - ndcCoords.y) * 0.5f * m_ctx.viewportHeight; // flip Y-axis for imgui
-
-    // std::cout << "World Pos: (" << worldPos.x << ", " << worldPos.y << std::endl;
-    // std::cout << "Framebuffer Coords: (" << framebufferCoords.x << ", " << framebufferCoords.y << std::endl;
-
-    return framebufferCoords;
-}
-
-glm::vec2 ScenePanel::frameBufferToLocal(glm::vec2 frameBufferPos)
-{
-    float localPosX = (frameBufferPos.x / m_ctx.viewportWidth) * m_previewAreaSize.x;
-    float localPosY = (frameBufferPos.y / m_ctx.viewportHeight) * m_previewAreaSize.y;
-
-    return {localPosX, localPosY};
-}
-
-glm::vec2 ScenePanel::localToScreen(glm::vec2 localPos)
-{
-    glm::vec2 screenPos = localPos + glm::vec2{m_upperLeft.x, m_upperLeft.y};
-
-    return screenPos;
 }

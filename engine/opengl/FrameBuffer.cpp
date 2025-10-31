@@ -94,6 +94,16 @@ void FrameBuffer::destory()
     m_rbo = 0;
 }
 
+float FrameBuffer::getWidth()
+{
+    return m_width;
+}
+
+float FrameBuffer::getHeight()
+{
+    return m_height;
+}
+
 bool FrameBuffer::shouldResize() const
 {
     return m_shouldResize;

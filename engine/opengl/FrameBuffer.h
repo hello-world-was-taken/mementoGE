@@ -28,6 +28,9 @@ public:
     void updateSize(int width, int height);
     void resize();
 
+    float getWidth();
+    float getHeight();
+
     bool shouldResize() const;
 
     /**
