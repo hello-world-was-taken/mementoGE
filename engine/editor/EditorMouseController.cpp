@@ -25,8 +25,7 @@ void EditorMouseController::setMovementMode(MovementMode mode)
     m_movementMode = mode;
 }
 
-void EditorMouseController::update(
-    EditorContext &ctx)
+void EditorMouseController::update(EditorContext &ctx)
 {
     if (!ctx.sceneImageHovered)
         return;
@@ -101,10 +100,8 @@ void EditorMouseController::handleZoom(EditorContext &ctx)
     ctx.editorCamera.onViewportResize(ctx.frameBuffer.getWidth(), ctx.frameBuffer.getHeight());
 }
 
-void EditorMouseController::handleDragging(EditorContext &ctx,
-    Scene &scene,
-    glm::vec2 dragStartPos,
-    glm::vec2 mouseWorldPos)
+void EditorMouseController::handleDragging(
+    EditorContext &ctx, Scene &scene, glm::vec2 dragStartPos, glm::vec2 mouseWorldPos)
 {
     MouseListener *mouse = MouseListener::instance();
 

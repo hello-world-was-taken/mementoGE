@@ -12,6 +12,7 @@ add_executable(${PROJECT_NAME}
     # game files
     game/Game.cpp
     game/systems/PatrolSystem.cpp
+    game/systems/PlayerControllerSystem.cpp
 )
 
 target_include_directories(${PROJECT_NAME}

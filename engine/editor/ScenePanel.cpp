@@ -173,8 +173,7 @@ void ScenePanel::renderSceneViewport()
 
 void ScenePanel::renderGizmos()
 {
-    // TODO: if selected game objects is greater than one, we shouldn't show gizmos
-    if (m_ctx.selectedObjects.empty())
+    if (m_ctx.selectedObjects.size() != 1)
         return;
 
     GameObject &go = m_ctx.selectedObjects.back();

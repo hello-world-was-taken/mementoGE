@@ -1,5 +1,6 @@
 #include "game/Game.h"
 #include "game/systems/PatrolSystem.h"
+#include "game/systems/PlayerControllerSystem.h"
 
 #include "engine/core/Animator.h"
 #include "engine/core/Event.h"
@@ -32,6 +33,7 @@ void Game::start()
     {
         // register systems
         SystemRegistry::instance().registerSystem<PatrolSystem>("PatrolSystem");
+        SystemRegistry::instance().registerSystem<PlayerControllerSystem>("PlayerControllerSystem");
 
         m_editorLayer.getEditorContext().sceneManager.deserialize();
         m_editorLayer.getEditorContext().sceneManager.getActiveScene().addSystem("PatrolSystem");
@@ -39,39 +41,6 @@ void Game::start()
         m_window.setupCallBack();
     }
     update();
-}
-
-void Game::processInput()
-{
-    auto &go = m_editorLayer.getEditorContext().sceneManager.getActiveScene().getPlayer();
-
-    auto *eventHandler = EventHandler::instance();
-    if (eventHandler->hasActiveEvent())
-    {
-        Event e = eventHandler->getCurrentEvent();
-
-        if (e.getEventType() == EventType::Key || e.getEventType() == EventType::KeyRepeat)
-        {
-            KeyType keyType = e.getKeyType();
-
-            if (keyType == KeyType::RightArrow)
-            {
-                go.getComponent<Transform>().position += glm::vec3{50.0f * Time::deltaTime(), 0.0f, 0.0f};
-                go.getComponent<Sprite>().flipX = true;
-                go.getComponent<Animator>().play("run");
-            }
-            else if (keyType == KeyType::LeftArrow)
-            {
-                go.getComponent<Transform>().position += glm::vec3{-50.0f * Time::deltaTime(), 0.0f, 0.0f};
-                go.getComponent<Sprite>().flipX = false;
-                go.getComponent<Animator>().play("run");
-            }
-        }
-    }
-    else
-    {
-        go.getComponent<Animator>().play("idle");
-    }
 }
 
 void Game::update()
@@ -86,7 +55,7 @@ void Game::update()
                 m_editorLayer.update();
                 if (m_editorLayer.getEditorContext().sceneManager.isPlaying())
                 {
-                    processInput();
+                    m_editorLayer.getEditorContext().sceneManager.getActiveScene().addSystem("PlayerControllerSystem");
                 }
                 MouseListener::instance()->beginFrame();
             }
@@ -101,7 +70,7 @@ void Game::update()
 
                 m_sceneManager.update();
                 // TODO: we need to set the player as active game object in game mode
-                processInput();
+                m_editorLayer.getEditorContext().sceneManager.getActiveScene().addSystem("PlayerControllerSystem");
                 render();
             }
         },

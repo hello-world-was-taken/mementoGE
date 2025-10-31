@@ -18,7 +18,6 @@ public:
      * will process userinput, update our state and render.
      */
     void start();
-    void processInput();
     void update();
     void render();
     void destroy();
