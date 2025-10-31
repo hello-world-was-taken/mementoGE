@@ -79,21 +79,22 @@ void PropertiesPanel::renderPropertiesPanel()
     if (m_ctx.sceneManager.getActiveScene().getGameObjects().empty())
         return;
 
-    GameObject *go = m_ctx.sceneManager.getActiveScene().getActiveGameObject();
-    if (!go)
+    if (m_ctx.selectedObjects.empty())
     {
         ImGui::Text("No game object selected");
         return;
     }
 
+    GameObject &go = m_ctx.selectedObjects.back().get();
+
     // TODO: look into entt::meta
     drawIdentity(go);
     drawSize(go);
-    drawComponentInspector<Transform>(*go);
-    drawComponentInspector<BoxCollider2D>(*go);
-    drawComponentInspector<RigidBody2D>(*go);
-    drawComponentInspector<EnemyState>(*go);
-    drawComponentInspector<Patrol>(*go);
+    drawComponentInspector<Transform>(go);
+    drawComponentInspector<BoxCollider2D>(go);
+    drawComponentInspector<RigidBody2D>(go);
+    drawComponentInspector<EnemyState>(go);
+    drawComponentInspector<Patrol>(go);
     drawSpriteSettings(go);
     drawAddComponentCombo(go);
     drawAnimatorSettings(go);
@@ -101,56 +102,56 @@ void PropertiesPanel::renderPropertiesPanel()
     ImGui::Separator();
     if (ImGui::Button("Delete Object"))
     {
-        m_ctx.sceneManager.getActiveScene().removeGameObject(go->getEntityId());
+        m_ctx.sceneManager.getActiveScene().removeGameObject(go.getEntityId());
     }
 
     // Popups (global)
     drawPopups();
 }
 
-void PropertiesPanel::drawIdentity(GameObject *go)
+void PropertiesPanel::drawIdentity(GameObject &go)
 {
     ImGui::Separator();
     ImGui::Text("Identity");
 
     // Display Entity ID (non-editable)
-    ImGui::Text("Entity ID: %u", (unsigned int)go->getEntityId());
+    ImGui::Text("Entity ID: %u", (unsigned int)go.getEntityId());
 
     // TODO: there is a way we can directly support string.
     static char tagBuffer[128];
-    std::string tag = go->getTag();
+    std::string tag = go.getTag();
     strncpy(tagBuffer, tag.c_str(), sizeof(tagBuffer));
     tagBuffer[sizeof(tagBuffer) - 1] = '\0';
 
     SetFieldWidth(200);
     if (ImGui::InputText("Tag", tagBuffer, IM_ARRAYSIZE(tagBuffer)))
     {
-        go->setTag(std::string(tagBuffer));
+        go.setTag(std::string(tagBuffer));
     }
 }
 
-void PropertiesPanel::drawSize(GameObject *go)
+void PropertiesPanel::drawSize(GameObject &go)
 {
     ImGui::Separator();
     ImGui::Text("Size");
-    int width = go->getWidth();
-    int height = go->getHeight();
+    int width = go.getWidth();
+    int height = go.getHeight();
 
     SetFieldWidth();
     if (ImGui::DragInt("Width", &width))
-        go->setWidth(width);
+        go.setWidth(width);
 
     SetFieldWidth();
     if (ImGui::DragInt("Height", &height))
-        go->setHeight(height);
+        go.setHeight(height);
 }
 
-void PropertiesPanel::drawSpriteSettings(GameObject *go)
+void PropertiesPanel::drawSpriteSettings(GameObject &go)
 {
-    if (!go->hasComponent<Sprite>())
+    if (!go.hasComponent<Sprite>())
         return;
 
-    Sprite &sprite = go->getComponent<Sprite>();
+    Sprite &sprite = go.getComponent<Sprite>();
 
     ImGui::Separator();
     ImGui::Text("Sprite Settings");
@@ -175,7 +176,7 @@ void PropertiesPanel::drawSpriteSettings(GameObject *go)
     ImGui::TextWrapped("%s", texPath.c_str());
 }
 
-void PropertiesPanel::drawAddComponentCombo(GameObject *go)
+void PropertiesPanel::drawAddComponentCombo(GameObject &go)
 {
     ImGui::Separator();
     SetFieldWidth(150);
@@ -184,61 +185,61 @@ void PropertiesPanel::drawAddComponentCombo(GameObject *go)
     {
         if (ImGui::Selectable("Rigidbody2D"))
         {
-            go->addComponent<RigidBody2D>();
-            m_ctx.sceneManager.getActiveScene().getPhysics2d().addRigidbody(*go);
+            go.addComponent<RigidBody2D>();
+            m_ctx.sceneManager.getActiveScene().getPhysics2d().addRigidbody(go);
         }
 
         if (ImGui::Selectable("BoxCollider2D"))
         {
-            go->addComponent<BoxCollider2D>();
-            go->getComponent<BoxCollider2D>().size = {go->getWidth(), go->getHeight()};
-            m_ctx.sceneManager.getActiveScene().getPhysics2d().addRigidbody(*go);
+            go.addComponent<BoxCollider2D>();
+            go.getComponent<BoxCollider2D>().size = {go.getWidth(), go.getHeight()};
+            m_ctx.sceneManager.getActiveScene().getPhysics2d().addRigidbody(go);
         }
 
         if (ImGui::Selectable("CircleCollider2D"))
         {
-            go->addComponent<CircleCollider2D>();
-            m_ctx.sceneManager.getActiveScene().getPhysics2d().addRigidbody(*go);
+            go.addComponent<CircleCollider2D>();
+            m_ctx.sceneManager.getActiveScene().getPhysics2d().addRigidbody(go);
         }
 
         if (ImGui::Selectable("Animator"))
         {
-            go->addComponent<Animator>();
+            go.addComponent<Animator>();
         }
 
         if (ImGui::Selectable("Enemy Stats"))
         {
-            go->addComponent<EnemyState>();
+            go.addComponent<EnemyState>();
         }
 
         if (ImGui::Selectable("Patrol"))
         {
-            go->addComponent<Patrol>();
+            go.addComponent<Patrol>();
         }
         ImGui::EndCombo();
     }
 }
 
-void PropertiesPanel::drawRigidBodySettings(GameObject *go)
+void PropertiesPanel::drawRigidBodySettings(GameObject &go)
 {
-    if (!go->hasComponent<RigidBody2D>())
+    if (!go.hasComponent<RigidBody2D>())
         return;
 
-    RigidBody2D &rb = go->getComponent<RigidBody2D>();
+    RigidBody2D &rb = go.getComponent<RigidBody2D>();
     rb.drawInspector();
 }
 
-void PropertiesPanel::drawAnimatorSettings(GameObject *go)
+void PropertiesPanel::drawAnimatorSettings(GameObject &go)
 {
-    if (go->hasComponent<EnemyState>())
+    if (go.hasComponent<EnemyState>())
     {
         ImGui::Separator();
         ImGui::Text("has enemyAiState");
     }
-    if (!go->hasComponent<Animator>())
+    if (!go.hasComponent<Animator>())
         return;
 
-    auto &animator = go->getComponent<Animator>();
+    auto &animator = go.getComponent<Animator>();
 
     ImGui::Separator();
     ImGui::BeginChild("AnimatorBox", ImVec2(0, 150), true, ImGuiWindowFlags_NoScrollbar);
@@ -290,8 +291,13 @@ void PropertiesPanel::drawAnimatorSettings(GameObject *go)
             IM_ASSERT(payload->DataSize == sizeof(AnimationPayload));
             AnimationPayload animPayload = *((AnimationPayload *)payload->Data);
 
-            auto *go = m_ctx.sceneManager.getActiveScene().getActiveGameObject();
-            go->getComponent<Animator>().animationSourceMap[animPayload.animationName] = animPayload.animationJsonPath;
+            if (m_ctx.selectedObjects.empty())
+            {
+                std::cout << "No game object selected" << std::endl;
+                return;
+            }
+            GameObject &go = m_ctx.selectedObjects.back();
+            go.getComponent<Animator>().animationSourceMap[animPayload.animationName] = animPayload.animationJsonPath;
         }
         ImGui::EndDragDropTarget();
     }
@@ -315,12 +321,15 @@ void PropertiesPanel::drawPopups()
         m_texturePanel.renderSelectedTexSheetPanel(true,
             [&](Sprite &sprite)
             {
-                if (auto go = m_ctx.sceneManager.getActiveScene().getActiveGameObject())
+                if (m_ctx.selectedObjects.empty())
                 {
-                    if (go->hasComponent<Sprite>())
-                        go->removeComponent<Sprite>();
+                    GameObject &go = m_ctx.selectedObjects.back();
+                    if (go.hasComponent<Sprite>())
+                    {
+                        go.removeComponent<Sprite>();
+                    }
 
-                    go->addComponent<Sprite>(sprite.topLeft, sprite.width, sprite.height, sprite.texture);
+                    go.addComponent<Sprite>(sprite.topLeft, sprite.width, sprite.height, sprite.texture);
                 }
             });
         if (ImGui::Button("Cancel"))

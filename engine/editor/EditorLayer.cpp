@@ -2,19 +2,19 @@
 #include <mach/mach.h>
 #endif
 
-#include "core/components/RigidBody2D.h"
 #include "core/components/BoxCollider2D.h"
 #include "core/components/CircleCollider2D.h"
+#include "core/components/RigidBody2D.h"
 
 #include "core/Camera.h"
 #include "core/ImGuiWrapper.h"
 #include "core/MovementMode.h"
 #include "core/SpriteSheet.h"
 
-#include "editor/EditorLayer.h"
-#include "editor/PropertiesPanel.h"
-#include "editor/EditorMouseController.h"
 #include "editor/Constants.h"
+#include "editor/EditorLayer.h"
+#include "editor/EditorMouseController.h"
+#include "editor/PropertiesPanel.h"
 
 #include "util/PathUtils.h"
 
@@ -27,13 +27,9 @@
 namespace fs = std::filesystem;
 
 EditorLayer::EditorLayer(Window &window)
-    : m_ctx{window},
-      m_scenePanel{m_ctx},
-      m_sceneHierarchyPanel{m_ctx},
-      m_texturePanel{m_ctx},
+    : m_ctx{window}, m_scenePanel{m_ctx}, m_sceneHierarchyPanel{m_ctx}, m_texturePanel{m_ctx},
       m_propertiesPanel{m_ctx, m_texturePanel},
-      m_gridRenderer{static_cast<int>(LOGICAL_WIDTH),
-                     static_cast<int>(LOGICAL_HEIGHT), 32, m_ctx.editorCamera}
+      m_gridRenderer{static_cast<int>(LOGICAL_WIDTH), static_cast<int>(LOGICAL_HEIGHT), 32, m_ctx.editorCamera}
 {
     ImGuiWrapper::setupImgui(m_ctx.window);
 }
@@ -65,9 +61,10 @@ void EditorLayer::update()
 
             // render scene
             m_ctx.sceneManager.update();
-            m_spriteRenderer.render(
-                m_ctx.editorCamera,
-                m_ctx.sceneManager.getActiveScene().getGameObjects());
+            m_spriteRenderer.render(m_ctx.editorCamera, m_ctx.sceneManager.getActiveScene().getGameObjects());
+
+            // render selection outline
+            m_selectionRenderer.render(m_ctx.editorCamera, m_ctx.selectedObjects);
 
             drawEditorUI();
 
@@ -110,9 +107,9 @@ void EditorLayer::renderAddNewObjectPopup()
             // TODO: might be worth extracting this out to a function
             Scene &scene = m_ctx.sceneManager.getActiveScene();
 
-            scene.addGameObject(32, 32, tagBuffer);
-            auto newObj = m_ctx.sceneManager.getActiveScene().getActiveGameObject();
-            newObj->getComponent<Transform>().position = {m_ctx.createObjectWorldPos.x, m_ctx.createObjectWorldPos.y, 0.0f};
+            auto &newObj = scene.addGameObject(32, 32, tagBuffer);
+            newObj.getComponent<Transform>().position = {
+                m_ctx.createObjectWorldPos.x, m_ctx.createObjectWorldPos.y, 0.0f};
 
             tagBuffer[0] = '\0'; // clear input for next time
             m_ctx.showCreateObjectPopup = false;
@@ -148,7 +145,8 @@ void EditorLayer::renderPerformancePanel()
     ImGui::Text("Frame Time: %.3f ms", 1000.0f / io.Framerate);
     ImGui::Text("Delta Time: %.4f s", io.DeltaTime);
 
-    ImGui::PlotLines("Frame Time (ms)", frameTimes, IM_ARRAYSIZE(frameTimes), frameIndex, nullptr, 0.0f, 50.0f, ImVec2(0, 80));
+    ImGui::PlotLines(
+        "Frame Time (ms)", frameTimes, IM_ARRAYSIZE(frameTimes), frameIndex, nullptr, 0.0f, 50.0f, ImVec2(0, 80));
 
 #ifdef _WIN32
     // Windows-specific memory usage
@@ -163,21 +161,12 @@ void EditorLayer::renderPerformancePanel()
     mach_task_basic_info info;
     mach_msg_type_number_t infoCount = MACH_TASK_BASIC_INFO_COUNT;
 
-    if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO,
-                  (task_info_t)&info, &infoCount) == KERN_SUCCESS)
+    if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t)&info, &infoCount) == KERN_SUCCESS)
     {
         double memUsedMB = static_cast<double>(info.resident_size) / (1024.0 * 1024.0);
         ImGui::Text("Memory Usage: %.2f MB", memUsedMB);
     }
 #endif
-
-    // int g_drawCallCount;
-    // int g_renderedSpriteCount;
-    // size_t g_activeGameObjects;
-
-    // ImGui::Text("Draw Calls: %d", g_drawCallCount);
-    // ImGui::Text("Rendered Sprites: %d", g_renderedSpriteCount);
-    // ImGui::Text("Active GameObjects: %zu", g_activeGameObjects);
 
     // UI demo controls (optional, useful for toggles)
     ImGui::Separator();
@@ -254,9 +243,7 @@ void EditorLayer::drawMouseDebugPanel()
         const char *name;
     };
     std::vector<ButtonInfo> buttons = {
-        {GLFW_MOUSE_BUTTON_LEFT, "Left"},
-        {GLFW_MOUSE_BUTTON_RIGHT, "Right"},
-        {GLFW_MOUSE_BUTTON_MIDDLE, "Middle"}};
+        {GLFW_MOUSE_BUTTON_LEFT, "Left"}, {GLFW_MOUSE_BUTTON_RIGHT, "Right"}, {GLFW_MOUSE_BUTTON_MIDDLE, "Middle"}};
 
     for (const auto &btn : buttons)
     {
@@ -264,10 +251,7 @@ void EditorLayer::drawMouseDebugPanel()
         bool pressed = mouse->wasMouseButtonPressed(btn.id);
         bool released = mouse->wasMouseButtonReleased(btn.id);
 
-        ImGui::Text("%s Button: Held=%s, Pressed=%s, Released=%s",
-                    btn.name,
-                    held ? "true" : "false",
-                    pressed ? "true" : "false",
-                    released ? "true" : "false");
+        ImGui::Text("%s Button: Held=%s, Pressed=%s, Released=%s", btn.name, held ? "true" : "false",
+            pressed ? "true" : "false", released ? "true" : "false");
     }
 }

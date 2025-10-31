@@ -55,6 +55,7 @@ add_library(${PROJECT_NAME} STATIC
     renderer/SpriteRenderer.cpp
     renderer/GridRenderer.cpp
     renderer/PhysicsRenderer.cpp
+    renderer/SelectionRenderer.cpp
 
     # physics
     physics/Physics2D.cpp

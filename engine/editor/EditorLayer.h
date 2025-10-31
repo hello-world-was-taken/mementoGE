@@ -15,6 +15,7 @@
 
 #include "renderer/GridRenderer.h"
 #include "renderer/PhysicsRenderer.h"
+#include "renderer/SelectionRenderer.h"
 #include "renderer/SpriteRenderer.h"
 
 #include "opengl/FrameBuffer.h"
@@ -58,5 +59,6 @@ private:
 
     GridRenderer m_gridRenderer;
     PhysicsRenderer m_physicsRenderer;
+    SelectionRenderer m_selectionRenderer;
     SpriteRenderer m_spriteRenderer;
 };

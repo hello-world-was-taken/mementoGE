@@ -37,11 +37,8 @@ void ScenePanel::draw()
     renderSceneViewport();
 }
 
-void ScenePanel::renderSceneViewport()
+void ScenePanel::renderPlayPause()
 {
-    ImGui::PushStyleColor(ImGuiCol_MenuBarBg, IM_COL32(0, 0, 0, 255));
-    ImGui::Begin("Scene", nullptr, ImGuiWindowFlags_MenuBar);
-    ImGui::PopStyleColor();
     if (ImGui::BeginMenuBar())
     {
         // Trying to center the components
@@ -78,6 +75,48 @@ void ScenePanel::renderSceneViewport()
 
         ImGui::EndMenuBar();
     }
+}
+
+void ScenePanel::renderMovementMode()
+{
+    if (ImGui::BeginMenuBar())
+    {
+        bool isSelection = m_ctx.interactionMode == EditorInteractionMode::Selection;
+        bool isGliding = m_ctx.interactionMode == EditorInteractionMode::Gliding;
+        bool isMove = m_ctx.interactionMode == EditorInteractionMode::MoveObjects;
+
+        // Selection Mode
+        if (ImGui::Button("Select"))
+        {
+            m_ctx.interactionMode = EditorInteractionMode::Selection;
+        }
+        ImGui::SameLine();
+
+        // Gliding Mode
+        if (ImGui::Button("Glide"))
+        {
+            m_ctx.interactionMode = EditorInteractionMode::Gliding;
+        }
+        ImGui::SameLine();
+
+        // Move Mode
+        if (ImGui::Button("Move"))
+        {
+            m_ctx.interactionMode = EditorInteractionMode::MoveObjects;
+        }
+
+        ImGui::EndMenuBar();
+    }
+}
+
+void ScenePanel::renderSceneViewport()
+{
+    ImGui::PushStyleColor(ImGuiCol_MenuBarBg, IM_COL32(0, 0, 0, 255));
+    ImGui::Begin("Scene", nullptr, ImGuiWindowFlags_MenuBar);
+    ImGui::PopStyleColor();
+
+    renderPlayPause();
+    renderMovementMode();
 
     ImVec2 imGuiWindowSize = ImGui::GetContentRegionAvail(); // logical units
     ImGuiIO &io = ImGui::GetIO();
@@ -117,10 +156,9 @@ void ScenePanel::renderSceneViewport()
             // Create object here
             Sprite sprite = spriteSheet->getSprites()[spriteIndex];
             const float aspectRatio = sprite.width / sprite.height;
-            m_ctx.sceneManager.getActiveScene().addGameObject(32 * aspectRatio, 32, "_new");
-            auto newObj = m_ctx.sceneManager.getActiveScene().getActiveGameObject();
-            newObj->addComponent<Sprite>(sprite.topLeft, sprite.width, sprite.height, sprite.texture);
-            newObj->getComponent<Transform>().position = {worldPos.x, worldPos.y, 0.0f};
+            GameObject &newObj = m_ctx.sceneManager.getActiveScene().addGameObject(32 * aspectRatio, 32, "_new");
+            newObj.addComponent<Sprite>(sprite.topLeft, sprite.width, sprite.height, sprite.texture);
+            newObj.getComponent<Transform>().position = {worldPos.x, worldPos.y, 0.0f};
         }
         ImGui::EndDragDropTarget();
     }
@@ -140,16 +178,12 @@ void ScenePanel::renderSceneViewport()
 
 void ScenePanel::renderGizmos()
 {
-    if (m_ctx.sceneManager.getActiveScene().getGameObjects().empty())
+    // TODO: if selected game objects is greater than one, we shouldn't show gizmos
+    if (m_ctx.selectedObjects.empty())
         return;
 
-    GameObject *go = m_ctx.sceneManager.getActiveScene().getActiveGameObject();
-    if (!go)
-    {
-        // std::cout << "renderGizmos - No active game object selected" << std::endl;
-        return;
-    }
-    Transform &transform = go->getComponent<Transform>();
+    GameObject &go = m_ctx.selectedObjects.back();
+    Transform &transform = go.getComponent<Transform>();
     glm::vec3 posCenter = transform.position;
 
     glm::vec2 screenPos = getScreenCoordinate({posCenter.x, posCenter.y});

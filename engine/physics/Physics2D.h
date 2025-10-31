@@ -1,20 +1,19 @@
 #pragma once
 
+#include "core/Camera.h"
 #include "core/components/BoxCollider2D.h"
 #include "core/components/RigidBody2D.h"
 
-
-#include <memory>
+#include <box2d/box2d.h>
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
-#include <box2d/box2d.h>
+#include <memory>
 
 class GameObject;
 
 class Physics2D
 {
 public:
-    // TODO: rule of 5
     Physics2D(const glm::vec2 &gravity);
     ~Physics2D();
 
