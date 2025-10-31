@@ -7,6 +7,7 @@
 #include "engine/core/MouseListener.h"
 #include "engine/core/Scene.h"
 #include "engine/core/SceneManager.h"
+#include "engine/core/SystemRegistry.h"
 #include "engine/core/Window.h"
 #include "engine/core/components/Sprite.h"
 
@@ -29,6 +30,12 @@ void Game::start()
 {
     if (m_editorMode)
     {
+        // register systems
+        SystemRegistry::instance().registerSystem<PatrolSystem>("PatrolSystem");
+
+        m_editorLayer.getEditorContext().sceneManager.deserialize();
+        m_editorLayer.getEditorContext().sceneManager.getActiveScene().addSystem("PatrolSystem");
+
         m_window.setupCallBack();
     }
     update();
@@ -69,8 +76,6 @@ void Game::processInput()
 
 void Game::update()
 {
-    // TODO: REMOVE
-    bool static test = false;
     m_window.run(
         [&]()
         {
@@ -81,12 +86,6 @@ void Game::update()
                 m_editorLayer.update();
                 if (m_editorLayer.getEditorContext().sceneManager.isPlaying())
                 {
-                    if (!test)
-                    {
-                        test = true;
-                        m_editorLayer.getEditorContext().sceneManager.getActiveScene().addSystem<PatrolSystem>();
-                    }
-
                     processInput();
                 }
                 MouseListener::instance()->beginFrame();

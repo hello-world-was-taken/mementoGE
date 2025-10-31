@@ -1,49 +1,35 @@
-#include "core/components/Sprite.h"
-
 #include "core/Scene.h"
 #include "core/Animator.h"
+#include "core/SystemRegistry.h"
+#include "core/components/Sprite.h"
 
 #include "renderer/RenderBatch.h"
 
 #include "util/Time.h"
 
-#include <iostream>
-#include <string>
+#include <algorithm>
 #include <entt/entt.hpp>
-#include <yaml-cpp/yaml.h>
+#include <iostream>
 #include <stdexcept>
+#include <string>
+#include <yaml-cpp/yaml.h>
 
-Scene::Scene(std::string &&tag)
-    : mTag{tag}, m_play{false}
+Scene::Scene(std::string &&tag) : mTag{tag}, m_play{false}
 {
 }
 
-Scene::Scene(const YAML::Node &&serializedScene)
-    : m_registry{}
+Scene::Scene(const YAML::Node &&serializedScene) : m_registry{}
 {
-    // Deserializing
-    for (YAML::const_iterator it = serializedScene.begin(); it != serializedScene.end(); ++it)
-    {
-        mTag = it->first.as<std::string>();
-
-        YAML::Node gameObjects = it->second["Game Objects"];
-
-        for (const auto &it : gameObjects)
-        {
-            GameObject gameObj{m_registry, it.second, m_physicsWorld};
-            m_gameObjects.push_back(std::move(gameObj));
-        }
-
-        // TODO: FIX THIS! Exception is thrown when scene.yaml doesn't have any objects
-        m_activeEntityId = m_gameObjects.back().getEntityId();
-    }
+    deserialize(serializedScene);
 }
 
-Scene::Scene(Scene &&other) noexcept
-    : m_registry{std::move(other.m_registry)}
+Scene::Scene(Scene &&other) noexcept : m_registry{std::move(other.m_registry)}
 {
     m_sceneCamera = std::move(other.m_sceneCamera);
     m_textures = std::move(other.m_textures);
+    m_systemNames = std::move(other.m_systemNames);
+    m_systems = std::move(other.m_systems);
+
     mTag = std::move(other.mTag);
 
     for (GameObject &g : other.m_gameObjects)
@@ -69,6 +55,8 @@ Scene &Scene::operator=(Scene &&other)
     m_gameObjects = std::move(other.m_gameObjects);
     m_sceneCamera = std::move(other.m_sceneCamera);
     m_textures = std::move(other.m_textures);
+    m_systemNames = std::move(other.m_systemNames);
+    m_systems = std::move(other.m_systems);
     m_activeEntityId = other.m_activeEntityId;
     mTag = std::move(other.mTag);
 
@@ -107,7 +95,7 @@ void Scene::update()
     if (m_play)
     {
         std::cout << "systems: " << m_systems.size() << std::endl;
-        for(auto &system : m_systems)
+        for (auto &system : m_systems)
         {
             system->update(m_gameObjects);
         }
@@ -165,11 +153,6 @@ void Scene::animate()
     }
 }
 
-void Scene::registerSystem(std::unique_ptr<ISystem> system)
-{
-    m_systems.push_back(std::move(system));
-}
-
 void Scene::addGameObject(unsigned int width, unsigned int height, std::string &&tag)
 {
     auto go = GameObject{m_registry, std::move(tag), width, height};
@@ -180,10 +163,12 @@ void Scene::addGameObject(unsigned int width, unsigned int height, std::string &
 void Scene::removeGameObject(entt::entity gameObject)
 {
     auto it = std::find_if(m_gameObjects.begin(), m_gameObjects.end(),
-                           [&](GameObject &go)
-                           { return go.getEntityId() == gameObject; });
+        [&](GameObject &go)
+        {
+            return go.getEntityId() == gameObject;
+        });
 
-    if(it != m_gameObjects.end())
+    if (it != m_gameObjects.end())
     {
         std::cout << "game object deleted" << std::endl;
         m_gameObjects.erase(it);
@@ -256,13 +241,21 @@ const std::string &Scene::getTag() const
     return mTag;
 }
 
+void Scene::addSystem(const std::string &systemName)
+{
+    auto it = std::find(m_systemNames.begin(), m_systemNames.end(), systemName);
+    std::unique_ptr<ISystem> system = SystemRegistry::instance().create(systemName)(); // create returns a lamda
+    m_systems.push_back(std::unique_ptr<ISystem>(system.release()));
+    m_systemNames.push_back(systemName);
+}
+
 bool Scene::serialize(YAML::Emitter &out)
 {
     out << YAML::BeginMap;
     out << YAML::Key << mTag;
     out << YAML::Value << YAML::BeginMap;
 
-    out << YAML::Key << "Game Objects";
+    out << YAML::Key << "GameObjects";
     out << YAML::Value << YAML::BeginMap;
 
     for (GameObject &gameObject : m_gameObjects)
@@ -271,9 +264,47 @@ bool Scene::serialize(YAML::Emitter &out)
     }
 
     out << YAML::EndMap;
+
+    out << YAML::Key << "Systems" << YAML::Value << YAML::Flow << YAML::BeginSeq;
+    for (const auto &systemName : m_systemNames)
+    {
+        out << systemName;
+    }
+    out << YAML::EndSeq;
+
     out << YAML::EndMap;
     out << YAML::EndMap;
 
     // TODO: Do we need this to return bool?
     return true;
+}
+
+void Scene::deserialize(const YAML::Node &in)
+{
+    for (YAML::const_iterator it = in.begin(); it != in.end(); ++it)
+    {
+        std::cout << "Deserializing Scene: " << it->first.as<std::string>() << std::endl;
+        mTag = it->first.as<std::string>();
+
+        // Deserializing Game Objects
+        YAML::Node gameObjects = it->second["GameObjects"];
+        for (const auto &it : gameObjects)
+        {
+            GameObject gameObj{m_registry, it.second, m_physicsWorld};
+            m_gameObjects.push_back(std::move(gameObj));
+        }
+
+        // Deserializing Systems
+        if (it->second["Systems"])
+        {
+            YAML::Node systems = it->second["Systems"];
+            for (const auto &system : systems)
+            {
+                addSystem(system.as<std::string>());
+            }
+        }
+
+        // TODO: FIX THIS! Exception is thrown when scene.yaml doesn't have any objects
+        m_activeEntityId = m_gameObjects.back().getEntityId();
+    }
 }

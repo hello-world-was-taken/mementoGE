@@ -1,7 +1,7 @@
 #pragma once
 
-#include "engine/core/Window.h"
 #include "engine/core/SceneManager.h"
+#include "engine/core/Window.h"
 
 #include "engine/editor/EditorLayer.h"
 

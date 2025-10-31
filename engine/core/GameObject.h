@@ -14,7 +14,7 @@
 
 class GameObject
 {
-  public:
+public:
     GameObject(entt::registry &registry, std::string &&tag, unsigned int width = 0, unsigned int height = 0);
     GameObject(entt::registry &registry, const YAML::Node &serializedGameObject, Physics2D &physics);
     GameObject(GameObject &&other);
@@ -59,7 +59,7 @@ class GameObject
 
     bool serialize(YAML::Emitter &out);
 
-  private:
+private:
     // We take registry as a reference and internally use it as a pointer to support
     // assignment operation
     entt::registry *m_registry;

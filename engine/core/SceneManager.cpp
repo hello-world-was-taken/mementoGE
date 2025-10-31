@@ -14,7 +14,8 @@
 SceneManager::SceneManager(Window *window)
     : m_window{window}
 {
-    deserialize();
+    // systems must be registed first
+    // deserialize();
 }
 
 SceneManager::~SceneManager()

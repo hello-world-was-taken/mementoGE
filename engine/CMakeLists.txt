@@ -39,6 +39,7 @@ add_library(${PROJECT_NAME} STATIC
     core/AssetManager.cpp
     core/AnimationPlayer.cpp
     core/Animator.cpp
+    core/SystemRegistry.cpp
 
     # editor
     editor/EditorLayer.cpp
