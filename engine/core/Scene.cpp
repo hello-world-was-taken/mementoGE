@@ -153,11 +153,13 @@ void Scene::animate()
     }
 }
 
-void Scene::addGameObject(unsigned int width, unsigned int height, std::string &&tag)
+GameObject &Scene::addGameObject(unsigned int width, unsigned int height, std::string &&tag)
 {
     auto go = GameObject{m_registry, std::move(tag), width, height};
     m_activeEntityId = go.getEntityId();
     m_gameObjects.push_back(std::move(go));
+
+    return m_gameObjects.back();
 }
 
 void Scene::removeGameObject(entt::entity gameObject)
@@ -176,7 +178,7 @@ void Scene::removeGameObject(entt::entity gameObject)
     m_registry.destroy(gameObject);
 }
 
-const std::vector<GameObject> &Scene::getGameObjects()
+std::vector<GameObject> &Scene::getGameObjects()
 {
     return m_gameObjects;
 }
@@ -199,20 +201,6 @@ GameObject &Scene::getPlayer()
     throw std::runtime_error("Player not found");
 }
 
-GameObject *Scene::getActiveGameObject()
-{
-    // TODO: once we start having thousands of gameobjects in a single
-    // scene this will become costly. Improve it.
-    for (auto &go : m_gameObjects)
-    {
-        if (go.getEntityId() == m_activeEntityId)
-        {
-            return &go;
-        }
-    }
-
-    return nullptr;
-}
 
 Physics2D &Scene::getPhysics2d()
 {
@@ -224,17 +212,13 @@ void Scene::setGraivty(glm::vec2 gravity)
     m_physicsWorld.setGravity(gravity);
 }
 
-void Scene::setActiveGameObject(entt::entity entityId)
-{
-    m_activeEntityId = entityId;
-}
 
 // TODO: this adds rigid bodies again and again. Fix it
-void Scene::addRigidBody2DToWorld()
-{
-    GameObject *go = getActiveGameObject();
-    m_physicsWorld.addRigidbody(*go);
-}
+// void Scene::addRigidBody2DToWorld()
+// {
+//     GameObject *go = getActiveGameObject();
+//     m_physicsWorld.addRigidbody(*go);
+// }
 
 const std::string &Scene::getTag() const
 {
@@ -244,6 +228,11 @@ const std::string &Scene::getTag() const
 void Scene::addSystem(const std::string &systemName)
 {
     auto it = std::find(m_systemNames.begin(), m_systemNames.end(), systemName);
+    if (it != m_systemNames.end())
+    {
+        return;
+    }
+
     std::unique_ptr<ISystem> system = SystemRegistry::instance().create(systemName)(); // create returns a lamda
     m_systems.push_back(std::unique_ptr<ISystem>(system.release()));
     m_systemNames.push_back(systemName);

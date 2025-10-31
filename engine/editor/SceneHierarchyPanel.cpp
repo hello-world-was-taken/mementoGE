@@ -1,13 +1,12 @@
-#include "core/Scene.h"
 #include "core/GameObject.h"
+#include "core/Scene.h"
 
-#include "editor/SceneHierarchyPanel.h"
 #include "editor/EditorContext.h"
+#include "editor/SceneHierarchyPanel.h"
 
 #include <imgui.h>
 
-SceneHierarchyPanel::SceneHierarchyPanel(EditorContext &ctx)
-    : EditorPanel(ctx)
+SceneHierarchyPanel::SceneHierarchyPanel(EditorContext &ctx) : EditorPanel(ctx)
 {
 }
 
@@ -31,21 +30,28 @@ void SceneHierarchyPanel::drawSceneHierarchy()
     // Allow clicking on empty space to deselect
     if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
     {
-        m_ctx.sceneManager.getActiveScene().setActiveGameObject(entt::null);
+        m_ctx.selectedObjects.clear();
     }
 }
 
-void SceneHierarchyPanel::drawGameObjectNode(const GameObject &go)
+void SceneHierarchyPanel::drawGameObjectNode(GameObject &go)
 {
-    ImGuiTreeNodeFlags flags =
-        ((m_ctx.sceneManager.getActiveScene().getActiveGameObject() == &go) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+    bool isSelectedGameObject = false;
+    if (!m_ctx.selectedObjects.empty())
+    {
+        GameObject &activeGameObject = m_ctx.selectedObjects.back();
+        isSelectedGameObject = activeGameObject.getEntityId() == go.getEntityId();
+    }
+    ImGuiTreeNodeFlags flags = (isSelectedGameObject ? ImGuiTreeNodeFlags_Selected : 0) |
+                               ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
 
     bool opened = ImGui::TreeNodeEx((void *)&go, flags, "%s", go.getTag().c_str());
 
     // Selection handling
     if (ImGui::IsItemClicked())
     {
-        m_ctx.sceneManager.getActiveScene().setActiveGameObject(go.getEntityId());
+        m_ctx.selectedObjects.clear();
+        m_ctx.selectedObjects.push_back(go);
     }
 
     if (opened)

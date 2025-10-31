@@ -1,13 +1,14 @@
 #pragma once
 
-#include "core/MouseListener.h"
-#include "core/GameObject.h"
-#include "core/Scene.h"
-#include "core/MovementMode.h"
 #include "core/Camera.h"
+#include "core/GameObject.h"
+#include "core/MouseListener.h"
+#include "core/MovementMode.h"
+#include "core/Scene.h"
 
-#include <memory>
+#include <functional>
 #include <imgui.h>
+#include <memory>
 
 class EditorContext;
 
@@ -22,15 +23,27 @@ public:
     // camera required for world-space conversion
     // game object required for selection detection
     void Update(EditorContext &ctx, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight);
-    std::optional<std::reference_wrapper<const GameObject>> getGameObjectAt(Scene &scene, glm::vec2 mouseWorldPos);
+    std::optional<std::reference_wrapper<GameObject>> getGameObjectAt(Scene &scene, glm::vec2 mouseWorldPos);
 
     // handlers
     void handleLeftClickSelection(EditorContext &ctx, Scene &scene, glm::vec2 mouseWorldPos);
     void handleRightClickPopup(EditorContext &ctx, Scene &scene, glm::vec2 mouseWorldPos);
     void handleZoom(EditorCamera &camera, int framebufferWidth, int framebufferHeight);
-    void handleDragging(EditorContext &ctx, Scene &scene, glm::vec2 mouseWorldPos, int framebufferWidth, int framebufferHeight);
+    void handleDragging(EditorContext &ctx,
+        Scene &scene,
+        glm::vec2 dragStartPos,
+        glm::vec2 mouseWorldPos,
+        int framebufferWidth,
+        int framebufferHeight);
 
-    glm::vec2 getWorldCoordinate(const Camera &camera, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight);
+    void selectObjectsInDrag(EditorContext &ctx, Scene &scene, glm::vec2 worldDragStart, glm::vec2 mouseWorldPos);
+
+    glm::vec2 getWorldCoordinate(const Camera &camera,
+        ImVec2 imagePos,
+        ImVec2 imageSize,
+        int framebufferWidth,
+        int framebufferHeight,
+        glm::vec2 mouseScreenCoords);
     /*
      * screen here is glfw window
      * local here is scene preview imgui window
@@ -41,7 +54,7 @@ public:
 
 private:
     // based on m_mode, move the game object to snap to grid or free
-    void moveGameObject(GameObject *activeGameObject, glm::vec2 mouseWorldPos);
+    void moveSelectedGameObjects(EditorContext &ctx, glm::vec2 mouseWorldPos);
     void moveCamera(EditorContext &ctx, int framebufferWidth, int framebufferHeight);
 
     MovementMode m_movementMode = MovementMode::Free;

@@ -1,10 +1,5 @@
-/*  TODO:
-    Should implement a dedicated Event System to handle mouse events
-    and make it available via mementoGE core api.
-*/
-
-#include "core/Window.h"
 #include "core/MouseListener.h"
+#include "core/Window.h"
 
 MouseListener *MouseListener::instance()
 {
@@ -30,15 +25,16 @@ void MouseListener::mouseButtonCallback(GLFWwindow *window, int button, int acti
 {
     ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
 
-    // TODO: the below one doesn't work with the custom
-    // frame buffer. Use a different one.
-    // if (ImGui::GetIO().WantCaptureMouse)
-    //     return;
-
     auto *listener = MouseListener::instance();
 
     if (action == GLFW_PRESS)
     {
+        // button states is used to track clicks across renders (like dragging)
+        // if it is a new button click update dragstart
+        if (!listener->m_buttonStates[button])
+        {
+            listener->m_dragStart = listener->m_mousePos;
+        }
         listener->m_buttonStates[button] = true;
         listener->m_buttonPressed[button] = true;
         listener->m_buttonReleased[button] = false;
@@ -55,11 +51,6 @@ void MouseListener::cursorPositionCallback(GLFWwindow *window, double xPos, doub
 {
     ImGui_ImplGlfw_CursorPosCallback(window, xPos, yPos);
 
-    // TODO: the below one doesn't work with the custom
-    // frame buffer. Use a different one.
-    // if (ImGui::GetIO().WantCaptureMouse)
-    //     return;
-
     auto *listener = MouseListener::instance();
     glm::vec2 newMousePos = {static_cast<float>(xPos), static_cast<float>(yPos)};
 
@@ -71,14 +62,14 @@ void MouseListener::scrollCallback(GLFWwindow *window, double xOffset, double yO
 {
     ImGui_ImplGlfw_ScrollCallback(window, xOffset, yOffset);
 
-    // TODO: the below one doesn't work with the custom
-    // frame buffer. Use a different one.
-    // if (ImGui::GetIO().WantCaptureMouse)
-    //     return;
     auto *listener = MouseListener::instance();
     listener->m_scrollDelta = {static_cast<float>(xOffset), static_cast<float>(yOffset)};
 }
 
+glm::vec2 MouseListener::getDragStart() const
+{
+    return m_dragStart;
+}
 glm::vec2 MouseListener::getMouseScreenPosition() const
 {
     return m_mousePos;
@@ -94,9 +85,7 @@ glm::vec2 MouseListener::getMouseDelta() const
 {
     auto *listener = MouseListener::instance();
 
-    return {
-        listener->m_mousePos.x - listener->m_previMousePos.x,
-        listener->m_previMousePos.y - listener->m_mousePos.y};
+    return {listener->m_mousePos.x - listener->m_previMousePos.x, listener->m_previMousePos.y - listener->m_mousePos.y};
 }
 
 glm::vec2 MouseListener::getScrollDelta() const

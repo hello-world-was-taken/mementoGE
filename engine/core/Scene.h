@@ -45,17 +45,15 @@ public:
     GameObject &getPlayer();
     Scene clone(std::string tag);
 
-    void addGameObject(unsigned int width, unsigned int height, std::string &&tag);
+    GameObject &addGameObject(unsigned int width, unsigned int height, std::string &&tag);
     void removeGameObject(entt::entity);
-    void setActiveGameObject(entt::entity entityId);
 
     void addSystem(const std::string &systemName);
     void addRigidBody2DToWorld();
     void setGraivty(glm::vec2 gravity);
 
-    const std::vector<GameObject> &getGameObjects();
+    std::vector<GameObject> &getGameObjects();
     SceneCamera &getCamera();
-    GameObject *getActiveGameObject();
 
     const std::string &getTag() const;
     bool serialize(YAML::Emitter &out);

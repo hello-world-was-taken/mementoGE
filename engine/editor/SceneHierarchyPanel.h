@@ -12,5 +12,5 @@ public:
 
 private:
     void drawSceneHierarchy();
-    void drawGameObjectNode(const GameObject &go);
+    void drawGameObjectNode(GameObject &go);
 };

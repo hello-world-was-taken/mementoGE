@@ -1,20 +1,21 @@
 #include "core/components/Sprite.h"
 #include "core/components/Transform.h"
 
-#include "core/SpriteSheet.h"
 #include "core/AssetManager.h"
+#include "core/MouseListener.h"
+#include "core/SpriteSheet.h"
 
-#include "editor/ScenePanel.h"
-#include "editor/EditorPanel.h"
 #include "editor/EditorContext.h"
+#include "editor/EditorPanel.h"
+#include "editor/ScenePanel.h"
 #include "editor/SpritePayload.h"
 
 #include "util/PathUtils.h"
 
-#include <imgui.h>
-#include <nlohmann/json.h>
 #include <fstream>
+#include <imgui.h>
 #include <memory>
+#include <nlohmann/json.h>
 
 ScenePanel::ScenePanel(EditorContext &ctx) : EditorPanel(ctx), m_ctx{ctx}
 {
@@ -26,22 +27,14 @@ ScenePanel::~ScenePanel()
 
 void ScenePanel::draw()
 {
-    m_ctx.editorMouseController
-        .Update(
-            m_ctx,
-            m_upperLeft,
-            m_previewAreaSize,
-            m_ctx.viewportWidth,
-            m_ctx.viewportHeight);
+    m_ctx.editorMouseController.Update(
+        m_ctx, m_upperLeft, m_previewAreaSize, m_ctx.viewportWidth, m_ctx.viewportHeight);
 
     renderSceneViewport();
 }
 
-void ScenePanel::renderSceneViewport()
+void ScenePanel::renderPlayPause()
 {
-    ImGui::PushStyleColor(ImGuiCol_MenuBarBg, IM_COL32(0, 0, 0, 255));
-    ImGui::Begin("Scene", nullptr, ImGuiWindowFlags_MenuBar);
-    ImGui::PopStyleColor();
     if (ImGui::BeginMenuBar())
     {
         // Trying to center the components
@@ -78,6 +71,48 @@ void ScenePanel::renderSceneViewport()
 
         ImGui::EndMenuBar();
     }
+}
+
+void ScenePanel::renderMovementMode()
+{
+    if (ImGui::BeginMenuBar())
+    {
+        bool isSelection = m_ctx.interactionMode == EditorInteractionMode::Selection;
+        bool isGliding = m_ctx.interactionMode == EditorInteractionMode::Gliding;
+        bool isMove = m_ctx.interactionMode == EditorInteractionMode::MoveObjects;
+
+        // Selection Mode
+        if (ImGui::Button("Select"))
+        {
+            m_ctx.interactionMode = EditorInteractionMode::Selection;
+        }
+        ImGui::SameLine();
+
+        // Gliding Mode
+        if (ImGui::Button("Glide"))
+        {
+            m_ctx.interactionMode = EditorInteractionMode::Gliding;
+        }
+        ImGui::SameLine();
+
+        // Move Mode
+        if (ImGui::Button("Move"))
+        {
+            m_ctx.interactionMode = EditorInteractionMode::MoveObjects;
+        }
+
+        ImGui::EndMenuBar();
+    }
+}
+
+void ScenePanel::renderSceneViewport()
+{
+    ImGui::PushStyleColor(ImGuiCol_MenuBarBg, IM_COL32(0, 0, 0, 255));
+    ImGui::Begin("Scene", nullptr, ImGuiWindowFlags_MenuBar);
+    ImGui::PopStyleColor();
+
+    renderPlayPause();
+    renderMovementMode();
 
     ImVec2 imGuiWindowSize = ImGui::GetContentRegionAvail(); // logical units
     ImGuiIO &io = ImGui::GetIO();
@@ -105,22 +140,22 @@ void ScenePanel::renderSceneViewport()
             const Camera &cam = m_ctx.editorCamera;
 
             std::filesystem::path texturePath = getTexturePathFromJson(m_ctx.selectedTextureJsonPath);
-            std::shared_ptr<SpriteSheet> spriteSheet = AssetManager::instance().getSpriteSheet(m_ctx.selectedTextureJsonPath);
+            std::shared_ptr<SpriteSheet> spriteSheet =
+                AssetManager::instance().getSpriteSheet(m_ctx.selectedTextureJsonPath);
 
             int fbWidth, fbHeight;
             glfwGetFramebufferSize(m_ctx.window.getGlfwWindow(), &fbWidth, &fbHeight);
 
+            MouseListener *mouse = MouseListener::instance();
             glm::vec2 worldPos = m_ctx.editorMouseController.getWorldCoordinate(
-                cam, m_upperLeft, m_previewAreaSize,
-                fbWidth, fbHeight);
+                cam, m_upperLeft, m_previewAreaSize, fbWidth, fbHeight, mouse->getMouseScreenPosition());
 
             // Create object here
             Sprite sprite = spriteSheet->getSprites()[spriteIndex];
             const float aspectRatio = sprite.width / sprite.height;
-            m_ctx.sceneManager.getActiveScene().addGameObject(32 * aspectRatio, 32, "_new");
-            auto newObj = m_ctx.sceneManager.getActiveScene().getActiveGameObject();
-            newObj->addComponent<Sprite>(sprite.topLeft, sprite.width, sprite.height, sprite.texture);
-            newObj->getComponent<Transform>().position = {worldPos.x, worldPos.y, 0.0f};
+            GameObject &newObj = m_ctx.sceneManager.getActiveScene().addGameObject(32 * aspectRatio, 32, "_new");
+            newObj.addComponent<Sprite>(sprite.topLeft, sprite.width, sprite.height, sprite.texture);
+            newObj.getComponent<Transform>().position = {worldPos.x, worldPos.y, 0.0f};
         }
         ImGui::EndDragDropTarget();
     }
@@ -140,16 +175,12 @@ void ScenePanel::renderSceneViewport()
 
 void ScenePanel::renderGizmos()
 {
-    if (m_ctx.sceneManager.getActiveScene().getGameObjects().empty())
+    // TODO: if selected game objects is greater than one, we shouldn't show gizmos
+    if (m_ctx.selectedObjects.empty())
         return;
 
-    GameObject *go = m_ctx.sceneManager.getActiveScene().getActiveGameObject();
-    if (!go)
-    {
-        // std::cout << "renderGizmos - No active game object selected" << std::endl;
-        return;
-    }
-    Transform &transform = go->getComponent<Transform>();
+    GameObject &go = m_ctx.selectedObjects.back();
+    Transform &transform = go.getComponent<Transform>();
     glm::vec3 posCenter = transform.position;
 
     glm::vec2 screenPos = getScreenCoordinate({posCenter.x, posCenter.y});
@@ -163,10 +194,7 @@ void ScenePanel::renderGizmos()
     ImVec2 xEnd = ImVec2(screenPos.x + axisLength, screenPos.y);
     drawList->AddLine(xStart, xEnd, IM_COL32(0, 255, 0, 255), 2.0f);
     // Arrowhead for X
-    drawList->AddTriangleFilled(
-        ImVec2(xEnd.x, xEnd.y),
-        ImVec2(xEnd.x - 6, xEnd.y - 4),
-        ImVec2(xEnd.x - 6, xEnd.y + 4),
+    drawList->AddTriangleFilled(ImVec2(xEnd.x, xEnd.y), ImVec2(xEnd.x - 6, xEnd.y - 4), ImVec2(xEnd.x - 6, xEnd.y + 4),
         IM_COL32(0, 255, 0, 255));
     // Label for X
     drawList->AddText(ImVec2(xEnd.x + 4, xEnd.y - 6), IM_COL32(0, 255, 0, 255), "X");
@@ -176,10 +204,7 @@ void ScenePanel::renderGizmos()
     ImVec2 yEnd = ImVec2(screenPos.x, screenPos.y - axisLength);
     drawList->AddLine(yStart, yEnd, IM_COL32(0, 0, 255, 255), 2.0f);
     // Arrowhead for Y
-    drawList->AddTriangleFilled(
-        ImVec2(yEnd.x, yEnd.y),
-        ImVec2(yEnd.x - 4, yEnd.y + 6),
-        ImVec2(yEnd.x + 4, yEnd.y + 6),
+    drawList->AddTriangleFilled(ImVec2(yEnd.x, yEnd.y), ImVec2(yEnd.x - 4, yEnd.y + 6), ImVec2(yEnd.x + 4, yEnd.y + 6),
         IM_COL32(0, 0, 255, 255));
     // Label for Y
     drawList->AddText(ImVec2(yEnd.x + 4, yEnd.y - 10), IM_COL32(0, 0, 255, 255), "Y");

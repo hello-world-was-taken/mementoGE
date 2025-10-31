@@ -19,6 +19,7 @@ public:
     void beginFrame();
     void endFrame();
 
+    glm::vec2 getDragStart() const;
     glm::vec2 getMouseScreenPosition() const;
     glm::vec2 getPrevMouseScreenPosition() const;
     glm::vec2 getMouseDelta() const;
@@ -34,8 +35,9 @@ private:
     glm::vec2 m_mousePos = {0.0f, 0.0f};
     glm::vec2 m_previMousePos = {0.0f, 0.0f};
     glm::vec2 m_scrollDelta = {0.0f, 0.0f};
+    glm::vec2 m_dragStart;
 
-    std::unordered_map<int, bool> m_buttonStates;   // current frame state
+    std::unordered_map<int, bool> m_buttonStates;   // track button state across renderes (like dragging)
     std::unordered_map<int, bool> m_buttonPressed;  // pressed after previous render
     std::unordered_map<int, bool> m_buttonReleased; // released after previous render
 };

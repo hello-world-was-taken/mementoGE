@@ -4,15 +4,17 @@
 #include "core/Scene.h"
 #include "core/SceneManager.h"
 
-#include "editor/EditorMouseController.h"
-#include "editor/EditorContext.h"
 #include "editor/EditorCamera.h"
+#include "editor/EditorContext.h"
+#include "editor/EditorInteractionMode.h"
+#include "editor/EditorMouseController.h"
 
 #include "util/Time.h"
 
-#include <iostream>
+#include <algorithm>
 #include <cmath>
 #include <imgui.h>
+#include <iostream>
 
 EditorMouseController::EditorMouseController()
 {
@@ -28,11 +30,7 @@ void EditorMouseController::SetActiveObject(GameObject &object)
 }
 
 void EditorMouseController::Update(
-    EditorContext &ctx,
-    ImVec2 imagePos,
-    ImVec2 imageSize,
-    int framebufferWidth,
-    int framebufferHeight)
+    EditorContext &ctx, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight)
 {
     if (!ctx.sceneImageHovered)
         return;
@@ -41,14 +39,16 @@ void EditorMouseController::Update(
     EditorCamera &editorCamera = ctx.editorCamera;
 
     auto &gameObjects = scene.getGameObjects();
-    auto prevActiveGameObject = scene.getActiveGameObject();
 
     MouseListener *mouse = MouseListener::instance();
-    glm::vec2 mouseWorldPos = getWorldCoordinate(editorCamera, imagePos, imageSize, framebufferWidth, framebufferHeight);
+    glm::vec2 mouseWorldPos = getWorldCoordinate(
+        editorCamera, imagePos, imageSize, framebufferWidth, framebufferHeight, mouse->getMouseScreenPosition());
+    glm::vec2 dragStartPos = getWorldCoordinate(
+        editorCamera, imagePos, imageSize, framebufferWidth, framebufferHeight, mouse->getDragStart());
 
     handleLeftClickSelection(ctx, scene, mouseWorldPos);
     handleRightClickPopup(ctx, scene, mouseWorldPos);
-    handleDragging(ctx, scene, mouseWorldPos, framebufferWidth, framebufferHeight);
+    handleDragging(ctx, scene, dragStartPos, mouseWorldPos, framebufferWidth, framebufferHeight);
     handleZoom(editorCamera, framebufferWidth, framebufferHeight);
 }
 
@@ -58,21 +58,14 @@ void EditorMouseController::handleLeftClickSelection(EditorContext &ctx, Scene &
     if (!mouse->wasMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT))
         return;
 
+    ctx.selectedObjects.clear();
+
     auto clickedObject = getGameObjectAt(scene, mouseWorldPos);
     if (clickedObject)
     {
-        scene.setActiveGameObject(clickedObject->get().getEntityId());
-        auto activeGameObject = scene.getActiveGameObject();
-
-        if (activeGameObject)
-        {
-            glm::vec3 objPos = activeGameObject->getComponent<Transform>().position;
-            m_dragOffset = glm::vec2(objPos.x, objPos.y) - mouseWorldPos;
-        }
-    }
-    else
-    {
-        scene.setActiveGameObject(entt::null);
+        ctx.selectedObjects.push_back(clickedObject->get());
+        glm::vec3 objPos = clickedObject->get().getComponent<Transform>().position;
+        m_dragOffset = glm::vec2(objPos.x, objPos.y) - mouseWorldPos;
     }
 }
 
@@ -82,13 +75,15 @@ void EditorMouseController::handleRightClickPopup(EditorContext &ctx, Scene &sce
     if (!mouse->wasMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
         return;
 
+    ctx.selectedObjects.clear();
     ctx.showPropertiesPopup = false;
+
     ImVec2 mousePos = ImGui::GetMousePos();
     auto clickedObject = getGameObjectAt(scene, mouseWorldPos);
 
     if (clickedObject)
     {
-        scene.setActiveGameObject(clickedObject->get().getEntityId());
+        ctx.selectedObjects.push_back(clickedObject->get());
         ctx.showPropertiesPopup = true;
 
         ctx.propertiesPopupPos = ImVec2(mousePos.x + 15, mousePos.y);
@@ -96,7 +91,6 @@ void EditorMouseController::handleRightClickPopup(EditorContext &ctx, Scene &sce
     }
     else
     {
-        scene.setActiveGameObject(entt::null);
         ctx.showCreateObjectPopup = true;
         ctx.createObjectPopupPos = ImVec2(mousePos.x, mousePos.y);
         ctx.createObjectWorldPos = mouseWorldPos;
@@ -113,55 +107,60 @@ void EditorMouseController::handleZoom(EditorCamera &camera, int framebufferWidt
     camera.onViewportResize(framebufferWidth, framebufferHeight);
 }
 
-void EditorMouseController::handleDragging(
-    EditorContext &ctx,
+void EditorMouseController::handleDragging(EditorContext &ctx,
     Scene &scene,
+    glm::vec2 dragStartPos,
     glm::vec2 mouseWorldPos,
     int framebufferWidth,
     int framebufferHeight)
 {
     MouseListener *mouse = MouseListener::instance();
 
-    auto prevActiveGameObject = scene.getActiveGameObject();
-    auto currActiveGameObject = scene.getActiveGameObject();
-    bool similarGameObjectClicked =
-        (prevActiveGameObject && currActiveGameObject) &&
-        (prevActiveGameObject->getEntityId() == currActiveGameObject->getEntityId());
-
-    bool draggingOnGameObject = mouse->isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT) && similarGameObjectClicked;
-    bool draggingOnEmptySpace = mouse->isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT) && !currActiveGameObject;
-
-    if (draggingOnGameObject)
+    if (mouse->isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT))
     {
-        moveGameObject(currActiveGameObject, mouseWorldPos);
-    }
-    else if (draggingOnEmptySpace)
-    {
-        moveCamera(ctx, framebufferWidth, framebufferHeight);
+        switch (ctx.interactionMode)
+        {
+        case EditorInteractionMode::Selection:
+            selectObjectsInDrag(ctx, scene, dragStartPos, mouseWorldPos);
+            break;
+
+        case EditorInteractionMode::Gliding:
+            moveCamera(ctx, framebufferWidth, framebufferHeight);
+            break;
+
+        case EditorInteractionMode::MoveObjects:
+            moveSelectedGameObjects(ctx, mouseWorldPos);
+            break;
+
+        default:
+            break;
+        }
     }
 }
 
-
-void EditorMouseController::moveGameObject(GameObject *activeGameObject, glm::vec2 mouseWorldPos)
+void EditorMouseController::moveSelectedGameObjects(EditorContext &ctx, glm::vec2 mouseWorldPos)
 {
-    if (m_movementMode == MovementMode::SnapToGrid)
+    for (const auto &go : ctx.selectedObjects)
     {
-        // Assume grid size is equal to the object's width.
-        float gridSize = static_cast<float>(activeGameObject->getWidth());
+        if (m_movementMode == MovementMode::SnapToGrid)
+        {
+            // Assume grid size is equal to the object's width.
+            float gridSize = static_cast<float>(go.get().getWidth());
 
-        // This should be kept in sync with GridRenderer.cpp
-        float snappedX = std::floor(mouseWorldPos.x / gridSize) * gridSize;
-        float snappedY = std::floor(mouseWorldPos.y / gridSize) * gridSize;
+            // This should be kept in sync with GridRenderer.cpp
+            float snappedX = std::floor(mouseWorldPos.x / gridSize) * gridSize;
+            float snappedY = std::floor(mouseWorldPos.y / gridSize) * gridSize;
 
-        Transform &transform = activeGameObject->getComponent<Transform>();
-        transform.position = {snappedX, snappedY, transform.position.z};
-    }
-    else if (m_movementMode == MovementMode::Free)
-    {
-        glm::vec2 newPos = mouseWorldPos + m_dragOffset;
+            Transform &transform = go.get().getComponent<Transform>();
+            transform.position = {snappedX, snappedY, transform.position.z};
+        }
+        else if (m_movementMode == MovementMode::Free)
+        {
+            glm::vec2 newPos = mouseWorldPos + m_dragOffset;
 
-        Transform &transform = activeGameObject->getComponent<Transform>();
-        transform.position = {newPos.x, newPos.y, transform.position.z};
+            Transform &transform = go.get().getComponent<Transform>();
+            transform.position = {newPos.x, newPos.y, transform.position.z};
+        }
     }
 }
 
@@ -181,15 +180,15 @@ void EditorMouseController::moveCamera(EditorContext &ctx, int framebufferWidth,
     editorCamera.setPosition(editorCamera.getPosition() - glm::vec3(dragDelta.x * scaleX, dragDelta.y * scaleY, 0.0f));
 }
 
-std::optional<std::reference_wrapper<const GameObject>>
-EditorMouseController::getGameObjectAt(Scene &scene, glm::vec2 mouseWorldPos)
+std::optional<std::reference_wrapper<GameObject>> EditorMouseController::getGameObjectAt(
+    Scene &scene, glm::vec2 mouseWorldPos)
 {
     for (const auto &obj : scene.getGameObjects())
     {
-        const GameObject *topObject = nullptr;
+        GameObject *topObject = nullptr;
         float topZ = -std::numeric_limits<float>::infinity();
 
-        for (const auto &obj : scene.getGameObjects())
+        for (auto &obj : scene.getGameObjects())
         {
             if (obj.containsPoint(mouseWorldPos))
             {
@@ -210,13 +209,14 @@ EditorMouseController::getGameObjectAt(Scene &scene, glm::vec2 mouseWorldPos)
     return std::nullopt;
 }
 
-glm::vec2 EditorMouseController::getWorldCoordinate(const Camera &camera, ImVec2 imagePos, ImVec2 imageSize, int framebufferWidth, int framebufferHeight)
+glm::vec2 EditorMouseController::getWorldCoordinate(const Camera &camera,
+    ImVec2 imagePos,
+    ImVec2 imageSize,
+    int framebufferWidth,
+    int framebufferHeight,
+    glm::vec2 mouseScreenCoords)
 {
-    MouseListener *listener = MouseListener::instance();
-
-    // Mouse position in screen coordinates
-    glm::vec2 mousePos = listener->getMouseScreenPosition();
-    glm::vec2 localPos = screenToLocal(mousePos, {imagePos.x, imagePos.y}, {imageSize.x, imageSize.y});
+    glm::vec2 localPos = screenToLocal(mouseScreenCoords, {imagePos.x, imagePos.y}, {imageSize.x, imageSize.y});
     glm::vec2 fbPos = localToFrameBuffer(localPos, {imageSize.x, imageSize.y}, framebufferWidth, framebufferHeight);
 
     // Make sure the mouse is inside the image
@@ -238,7 +238,8 @@ glm::vec2 EditorMouseController::screenToLocal(glm::vec2 mousePos, glm::vec2 ima
     return {localX, localY};
 }
 
-glm::vec2 EditorMouseController::localToFrameBuffer(glm::vec2 localPos, glm::vec2 imageSize, int framebufferWidth, int framebufferHeight)
+glm::vec2 EditorMouseController::localToFrameBuffer(
+    glm::vec2 localPos, glm::vec2 imageSize, int framebufferWidth, int framebufferHeight)
 {
     float fbX = (localPos.x / imageSize.x) * framebufferWidth;
     float fbY = (localPos.y / imageSize.y) * framebufferHeight;
@@ -246,7 +247,8 @@ glm::vec2 EditorMouseController::localToFrameBuffer(glm::vec2 localPos, glm::vec
     return {fbX, fbY};
 }
 
-glm::vec2 EditorMouseController::frameBufferToWorld(const Camera &camera, glm::vec2 fbPos, int framebufferWidth, int framebufferHeight)
+glm::vec2 EditorMouseController::frameBufferToWorld(
+    const Camera &camera, glm::vec2 fbPos, int framebufferWidth, int framebufferHeight)
 {
     // Convert to Normalized Device Coordinates (NDC)
     float ndcX = (fbPos.x / framebufferWidth) * 2.0f - 1.0f;
@@ -261,4 +263,31 @@ glm::vec2 EditorMouseController::frameBufferToWorld(const Camera &camera, glm::v
     glm::vec4 worldCoords = invViewProj * clipCoords;
 
     return glm::vec2(worldCoords.x, worldCoords.y);
+}
+
+void EditorMouseController::selectObjectsInDrag(
+    EditorContext &ctx, Scene &scene, glm::vec2 worldDragStart, glm::vec2 mouseWorldPos)
+{
+    ctx.selectedObjects.clear();
+
+    glm::vec2 minPoint = glm::min(worldDragStart, mouseWorldPos);
+    glm::vec2 maxPoint = glm::max(worldDragStart, mouseWorldPos);
+
+    for (auto &obj : scene.getGameObjects())
+    {
+        Transform &transform = obj.getComponent<Transform>();
+        glm::vec2 pos = {transform.position.x, transform.position.y};
+        glm::vec2 size = {obj.getWidth(), obj.getHeight()};
+
+        glm::vec2 objMin = pos - size * 0.5f;
+        glm::vec2 objMax = pos + size * 0.5f;
+
+        bool intersects =
+            (objMin.x <= maxPoint.x && objMax.x >= minPoint.x) && (objMin.y <= maxPoint.y && objMax.y >= minPoint.y);
+
+        if (intersects)
+        {
+            ctx.selectedObjects.push_back(obj);
+        }
+    }
 }

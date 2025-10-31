@@ -1,16 +1,18 @@
 #pragma once
 
+#include "core/Camera.h"
 #include "core/Scene.h"
 #include "core/SceneManager.h"
-#include "core/Camera.h"
 
-#include "editor/EditorMouseController.h"
 #include "editor/Constants.h"
-
-#include <memory>
-#include <string>
+#include "editor/EditorInteractionMode.h"
+#include "editor/EditorMouseController.h"
 
 #include "opengl/FrameBuffer.h"
+
+#include <functional>
+#include <memory>
+#include <string>
 
 struct EditorContext
 {
@@ -26,6 +28,9 @@ struct EditorContext
 
     bool showPropertiesPopup = false;
     bool showCreateObjectPopup = false;
+
+    EditorInteractionMode interactionMode = EditorInteractionMode::Selection;
+    std::vector<std::reference_wrapper<GameObject>> selectedObjects;
 
     ImVec2 propertiesPopupPos;
     ImVec2 createObjectPopupPos;

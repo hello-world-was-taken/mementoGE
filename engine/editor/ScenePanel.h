@@ -22,7 +22,8 @@ private:
 
 private:
     void renderGizmos();
-    void renderGrid();
+    void renderPlayPause();
+    void renderMovementMode();
     void renderSceneViewport();
 
     // get the screen coordinates (glfw screen) from world coordinate

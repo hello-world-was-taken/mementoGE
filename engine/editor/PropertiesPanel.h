@@ -24,16 +24,15 @@ private:
     void renderPropertiesInPopup();
 
     template <typename T>
-    void drawComponentInspector(GameObject &gameObject);
+    void drawComponentInspector(const GameObject &gameObject);
 
-    void drawIdentity(GameObject *go);
-    void drawSize(GameObject *go);
-    void drawTransform(GameObject *go);
-    void drawSpriteSettings(GameObject *go);
-    void drawAddComponentCombo(GameObject *go);
-    void drawRigidBodySettings(GameObject *go);
-    void drawBoxColliderSettings(GameObject *go);
-    void drawAnimatorSettings(GameObject *go);
+    void drawIdentity(GameObject &go);
+    void drawSize(GameObject &go);
+    void drawSpriteSettings(GameObject &go);
+    void drawAddComponentCombo(GameObject &go);
+    void drawRigidBodySettings(GameObject &go);
+    void drawBoxColliderSettings(GameObject &go);
+    void drawAnimatorSettings(GameObject &go);
     void drawPopups();
 };
 
@@ -54,7 +53,7 @@ template <typename T>
 inline constexpr bool has_onImguiRender_v = has_drawInspector<T>::value;
 
 template <typename T>
-void PropertiesPanel::drawComponentInspector(GameObject &gameObject)
+void PropertiesPanel::drawComponentInspector(const GameObject &gameObject)
 {
     if (gameObject.hasComponent<T>())
     {
