@@ -29,12 +29,14 @@ public:
     void addRigidbody(GameObject &obj);
     void removeRigidbody(entt::entity entity);
 
-    void syncTransforms(const std::vector<GameObject> &gameObjects);
     void setGravity(glm::vec2 gravity);
 
 private:
-    b2BodyId createBodyHelper(GameObject &obj);
-    void attachShapeHelper(b2BodyId bodyId, GameObject &obj);
+    void syncTransforms(const std::vector<GameObject> &gameObjects);
+    void attachShape(b2BodyId bodyId, GameObject &obj);
 
+    b2BodyId createBody(GameObject &obj);
+
+private:
     b2WorldId m_worldId;
 };

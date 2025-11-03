@@ -16,9 +16,6 @@ SelectionRenderer::~SelectionRenderer() = default;
 void SelectionRenderer::render(
     const Camera &camera, const std::vector<std::reference_wrapper<GameObject>> &selectedObjects)
 {
-    if (selectedObjects.empty())
-        return;
-
     if (m_batch == nullptr)
         m_batch = std::make_unique<RenderBatch>(m_indices, GL_LINES);
 
@@ -26,14 +23,12 @@ void SelectionRenderer::render(
 
     m_batch->setVertexData(m_vertices);
     m_batch->setIndexData(m_indices);
-    m_batch->render(camera);
+    m_batch->render(camera, m_vertices.size() / 4 * 8); // TODO: remove magic numbers
 }
 
 void SelectionRenderer::updateVertices(const std::vector<std::reference_wrapper<GameObject>> &selectedObjects)
 {
     m_vertices.clear();
-
-    glm::vec4 selectionColor = glm::vec4(0.0f, 0.6f, 1.0f, 1.0f); // blue outline
 
     for (const GameObject &obj : selectedObjects)
     {
@@ -53,12 +48,12 @@ void SelectionRenderer::updateVertices(const std::vector<std::reference_wrapper<
         glm::vec3 topRight = {centerPos.x + halfWidth, centerPos.y + halfHeight, 0.0f};
         glm::vec3 topLeft = {centerPos.x - halfWidth, centerPos.y + halfHeight, 0.0f};
 
-        glm::vec4 borderColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f); // red
+        glm::vec4 selectionColor = glm::vec4(0.0f, 0.6f, 1.0f, 1.0f); // blue outline
 
         auto makeVertex = [&](const glm::vec3 &pos) -> Vertex
         {
             return Vertex{
-                pos, borderColor,
+                pos, selectionColor,
                 glm::vec2(0.0f), // no texture
                 -1.0f            // sentinel tex index
             };

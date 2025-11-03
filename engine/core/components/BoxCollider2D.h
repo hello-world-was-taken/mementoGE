@@ -1,7 +1,7 @@
 #pragma once
 
-#include <glm/glm.hpp>
 #include <box2d/box2d.h>
+#include <glm/glm.hpp>
 
 #ifdef EDITOR_BUILD
 #include <imgui.h>
@@ -18,7 +18,7 @@ struct BoxCollider2D
     float friction = 0.3f;
     float restitution = 0.0f;
 
-    b2ShapeId runtimeFixture = b2_nullShapeId;
+    b2ShapeId shapeId = b2_nullShapeId;
 
 #ifdef EDITOR_BUILD
     void serialize(YAML::Emitter &out);

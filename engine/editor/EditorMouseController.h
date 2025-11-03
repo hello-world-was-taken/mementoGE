@@ -36,5 +36,4 @@ private:
     void moveCamera(EditorContext &ctx);
 
     MovementMode m_movementMode = MovementMode::Free;
-    glm::vec2 m_dragOffset;
 };

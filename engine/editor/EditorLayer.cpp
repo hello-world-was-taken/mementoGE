@@ -63,7 +63,7 @@ void EditorLayer::update()
             m_ctx.sceneManager.update();
             m_spriteRenderer.render(m_ctx.editorCamera, m_ctx.sceneManager.getActiveScene().getGameObjects());
 
-            // render selection outline
+            m_physicsRenderer.render(m_ctx.editorCamera, m_ctx.sceneManager.getActiveScene().getGameObjects());
             m_selectionRenderer.render(m_ctx.editorCamera, m_ctx.selectedObjects);
 
             drawEditorUI();
@@ -180,8 +180,6 @@ void EditorLayer::renderPerformancePanel()
 void EditorLayer::renderGrid()
 {
     const Camera &cam = m_ctx.editorCamera;
-
-    m_physicsRenderer.render(cam, m_ctx.sceneManager.getActiveScene().getGameObjects());
 
     if (!m_drawGrid)
         return;

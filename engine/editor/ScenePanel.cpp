@@ -76,10 +76,6 @@ void ScenePanel::renderMovementMode()
 {
     if (ImGui::BeginMenuBar())
     {
-        bool isSelection = m_ctx.interactionMode == EditorInteractionMode::Selection;
-        bool isGliding = m_ctx.interactionMode == EditorInteractionMode::Gliding;
-        bool isMove = m_ctx.interactionMode == EditorInteractionMode::MoveObjects;
-
         // Selection Mode
         if (ImGui::Button("Select"))
         {

@@ -39,6 +39,7 @@ struct EditorContext
 
     EditorInteractionMode interactionMode = EditorInteractionMode::Selection;
     std::vector<std::reference_wrapper<GameObject>> selectedObjects;
+    std::vector<glm::vec2> selectedGameObjectsDragOffset;
 
     std::string selectedTextureJsonPath;
 

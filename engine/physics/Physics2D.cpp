@@ -63,6 +63,7 @@ void Physics2D::simulate(float timestep, const std::vector<GameObject> &gameObje
     }
 
     b2World_Step(m_worldId, Time::deltaTime(), 4);
+    syncTransforms(gameObjects);
 }
 
 void Physics2D::setGravity(glm::vec2 gravity)
@@ -79,11 +80,11 @@ void Physics2D::addRigidbody(GameObject &obj)
         obj.addComponent<RigidBody2D>();
     }
 
-    b2BodyId bodyId = createBodyHelper(obj);
-    attachShapeHelper(bodyId, obj);
+    b2BodyId bodyId = createBody(obj);
+    attachShape(bodyId, obj);
 }
 
-b2BodyId Physics2D::createBodyHelper(GameObject &obj)
+b2BodyId Physics2D::createBody(GameObject &obj)
 {
     Transform &transform = obj.getComponent<Transform>();
     RigidBody2D &rb = obj.getComponent<RigidBody2D>();
@@ -106,7 +107,7 @@ b2BodyId Physics2D::createBodyHelper(GameObject &obj)
     return bodyId;
 }
 
-void Physics2D::attachShapeHelper(b2BodyId bodyId, GameObject &obj)
+void Physics2D::attachShape(b2BodyId bodyId, GameObject &obj)
 {
     // TODO: think this through. Added for testing physics
     if (!obj.hasComponent<BoxCollider2D>())
@@ -134,7 +135,7 @@ void Physics2D::attachShapeHelper(b2BodyId bodyId, GameObject &obj)
         std::cerr << "Failed to attach shape to body: " << obj.getTag() << std::endl;
     }
 
-    box.runtimeFixture = shapeId;
+    box.shapeId = shapeId;
 }
 
 void Physics2D::syncTransforms(const std::vector<GameObject> &gameObjects)

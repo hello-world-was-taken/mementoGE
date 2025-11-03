@@ -104,7 +104,7 @@ void RenderBatch::render(const Camera &camera, int drawCount, std::shared_ptr<Sh
     }
     else if (m_drawMode == GL_LINES)
     {
-        glDrawElements(GL_LINES, BATCH_SIZE * INDICES_PER_LINE_QUAD, GL_UNSIGNED_INT, nullptr);
+        glDrawElements(GL_LINES, drawCount, GL_UNSIGNED_INT, nullptr);
         glCheckError("glDrawLines", __FILE__, __LINE__);
     }
     m_vao->unbind();

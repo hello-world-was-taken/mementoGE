@@ -102,7 +102,6 @@ void Scene::update()
 
         // physics should be updated last as other systems make updates to it
         m_physicsWorld.simulate(Time::deltaTime(), m_gameObjects);
-        m_physicsWorld.syncTransforms(m_gameObjects);
 
         animate();
     }

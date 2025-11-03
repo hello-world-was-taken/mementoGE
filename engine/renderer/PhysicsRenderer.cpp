@@ -33,7 +33,7 @@ void PhysicsRenderer::render(const Camera &camera, const std::vector<GameObject>
 
     m_batch->setVertexData(m_vertices);
     m_batch->setIndexData(m_indices);
-    m_batch->render(camera);
+    m_batch->render(camera, m_vertices.size() / 4 * 8); // TODO: remove magic numbers
 }
 
 void PhysicsRenderer::updateVertices(const Camera &camera, const std::vector<GameObject> &gameObjects)

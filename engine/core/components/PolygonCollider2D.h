@@ -1,8 +1,8 @@
 #pragma once
 
-#include <vector>
-#include <glm/glm.hpp>
 #include <box2d/box2d.h>
+#include <glm/glm.hpp>
+#include <vector>
 
 class PolygonCollider2D
 {
@@ -14,5 +14,5 @@ public:
     float friction = 0.3f;
     float restitution = 0.0f;
 
-    b2ShapeId runtimeFixture = b2_nullShapeId;
+    b2ShapeId shapeId = b2_nullShapeId;
 };

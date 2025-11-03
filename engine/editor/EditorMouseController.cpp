@@ -49,16 +49,39 @@ void EditorMouseController::handleLeftClickSelection(EditorContext &ctx, Scene &
 {
     MouseListener *mouse = MouseListener::instance();
     if (!mouse->wasMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT))
+    {
         return;
+    }
+
+    bool inSelectionMode = ctx.interactionMode == EditorInteractionMode::Selection;
+    if (inSelectionMode)
+    {
+        return;
+    }
+
+    // On the first left button click store the objects' offset
+    bool storeObjectOffsets = ctx.interactionMode == EditorInteractionMode::MoveObjects;
+    if (storeObjectOffsets)
+    {
+        ctx.selectedGameObjectsDragOffset.clear();
+
+        for (GameObject &obj : ctx.selectedObjects)
+        {
+            glm::vec3 objPos = obj.getComponent<Transform>().position;
+            glm::vec2 dragOffset = glm::vec2(objPos.x, objPos.y) - mouseWorldPos;
+            ctx.selectedGameObjectsDragOffset.push_back(dragOffset);
+        }
+
+        return;
+    }
 
     ctx.selectedObjects.clear();
+    ctx.selectedGameObjectsDragOffset.clear();
 
     auto clickedObject = getGameObjectAt(scene, mouseWorldPos);
     if (clickedObject)
     {
         ctx.selectedObjects.push_back(clickedObject->get());
-        glm::vec3 objPos = clickedObject->get().getComponent<Transform>().position;
-        m_dragOffset = glm::vec2(objPos.x, objPos.y) - mouseWorldPos;
     }
 }
 
@@ -129,8 +152,11 @@ void EditorMouseController::handleDragging(
 
 void EditorMouseController::moveSelectedGameObjects(EditorContext &ctx, glm::vec2 mouseWorldPos)
 {
-    for (const auto &go : ctx.selectedObjects)
+    for (int i = 0; i < ctx.selectedObjects.size(); ++i)
     {
+        const auto &go = ctx.selectedObjects[i];
+        glm::vec2 dragOffset = ctx.selectedGameObjectsDragOffset[i];
+
         if (m_movementMode == MovementMode::SnapToGrid)
         {
             // Assume grid size is equal to the object's width.
@@ -145,7 +171,7 @@ void EditorMouseController::moveSelectedGameObjects(EditorContext &ctx, glm::vec
         }
         else if (m_movementMode == MovementMode::Free)
         {
-            glm::vec2 newPos = mouseWorldPos + m_dragOffset;
+            glm::vec2 newPos = mouseWorldPos + dragOffset;
 
             Transform &transform = go.get().getComponent<Transform>();
             transform.position = {newPos.x, newPos.y, transform.position.z};
