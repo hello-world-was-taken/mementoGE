@@ -59,12 +59,12 @@ void EditorLayer::update()
             // render grid
             renderGrid();
 
+            m_physicsRenderer.render(m_ctx.editorCamera, m_ctx.sceneManager.getActiveScene().getGameObjects());
+            m_selectionRenderer.render(m_ctx.editorCamera, m_ctx.selectedObjects);
+
             // render scene
             m_ctx.sceneManager.update();
             m_spriteRenderer.render(m_ctx.editorCamera, m_ctx.sceneManager.getActiveScene().getGameObjects());
-
-            m_physicsRenderer.render(m_ctx.editorCamera, m_ctx.sceneManager.getActiveScene().getGameObjects());
-            m_selectionRenderer.render(m_ctx.editorCamera, m_ctx.selectedObjects);
 
             drawEditorUI();
 

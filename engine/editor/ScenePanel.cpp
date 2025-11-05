@@ -1,6 +1,8 @@
 #include "core/components/Sprite.h"
 #include "core/components/Transform.h"
 
+#include "core/IconsFontAwesome4.h"
+
 #include "core/AssetManager.h"
 #include "core/MouseListener.h"
 #include "core/SpriteSheet.h"
@@ -16,6 +18,7 @@
 #include <imgui.h>
 #include <memory>
 #include <nlohmann/json.h>
+#include <string>
 
 ScenePanel::ScenePanel(EditorContext &ctx) : EditorPanel(ctx), m_ctx{ctx}
 {
@@ -46,7 +49,7 @@ void ScenePanel::renderPlayPause()
 
         ImGui::SetCursorPosX(startX);
 
-        if (ImGui::Button("PLAY"))
+        if (ImGui::Button(ICON_FA_PLAY))
         {
             if (!m_ctx.sceneManager.isPlaying())
             {
@@ -54,7 +57,7 @@ void ScenePanel::renderPlayPause()
             }
         }
 
-        if (ImGui::Button("PAUSE"))
+        if (ImGui::Button(ICON_FA_PAUSE))
         {
             if (m_ctx.sceneManager.isPlaying())
             {
@@ -63,7 +66,7 @@ void ScenePanel::renderPlayPause()
             }
         }
 
-        if (ImGui::Button("STOP"))
+        if (ImGui::Button(ICON_FA_STOP))
         {
             m_ctx.sceneManager.stopRuntimeScene();
         }
@@ -74,26 +77,30 @@ void ScenePanel::renderPlayPause()
 
 void ScenePanel::renderMovementMode()
 {
+
+    auto EditorInteractionModeTab = [&](std::string_view label, EditorInteractionMode mode, std::string_view tooltip)
+    {
+        if (ImGui::BeginTabItem(label.begin()))
+        {
+            m_ctx.interactionMode = mode;
+
+            if (ImGui::IsItemHovered() && tooltip.begin())
+                ImGui::SetTooltip("%s", tooltip.begin());
+
+            ImGui::EndTabItem();
+        }
+    };
+
     if (ImGui::BeginMenuBar())
     {
-        // Selection Mode
-        if (ImGui::Button("Select"))
+        if (ImGui::BeginTabBar("ModeTabs", ImGuiTabBarFlags_NoCloseWithMiddleMouseButton))
         {
-            m_ctx.interactionMode = EditorInteractionMode::Selection;
-        }
-        ImGui::SameLine();
+            EditorInteractionModeTab(
+                ICON_FA_MOUSE_POINTER, EditorInteractionMode::Selection, "Select and manipulate objects");
+            EditorInteractionModeTab(ICON_FA_HAND_PAPER_O, EditorInteractionMode::Gliding, "Glide through the scene");
+            EditorInteractionModeTab(ICON_FA_ARROWS_ALT, EditorInteractionMode::MoveObjects, "Move selected objects");
 
-        // Gliding Mode
-        if (ImGui::Button("Glide"))
-        {
-            m_ctx.interactionMode = EditorInteractionMode::Gliding;
-        }
-        ImGui::SameLine();
-
-        // Move Mode
-        if (ImGui::Button("Move"))
-        {
-            m_ctx.interactionMode = EditorInteractionMode::MoveObjects;
+            ImGui::EndTabBar();
         }
 
         ImGui::EndMenuBar();

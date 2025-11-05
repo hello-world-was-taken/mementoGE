@@ -1,15 +1,20 @@
 #include "core/Animator.h"
 #include "core/AssetManager.h"
 
+#include "util/PathUtils.h"
+
+#include <iostream>
 #include <memory>
 #include <string>
 
-void Animator::play(const std::string &name, bool loop)
+void Animator::play(std::string name, bool loop)
 {
     auto it = animationSourceMap.find(name);
-    if(it == animationSourceMap.end())
+    if (it == animationSourceMap.end())
     {
-        throw std::runtime_error("Animation '" + name + "' not found in Animator");
+        std::cout << "Animation " << name << " not found" << std::endl;
+        name = "android";
+        animationSourceMap[name] = getFilePath("assets/texture/android.json");
     }
 
     std::string jsonPath = animationSourceMap[name];

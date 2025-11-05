@@ -1,11 +1,15 @@
-#include "core/GLIncludes.h"
 #include "core/ImGuiWrapper.h"
+#include "core/GLIncludes.h"
 #include "core/Window.h"
+#include "core/IconsFontAwesome4.h"
 
-#include <imgui.h>
+#include "util/PathUtils.h"
+
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
+#include <filesystem>
 #include <functional>
+#include <imgui.h>
 
 void ImGuiWrapper::setupImgui(Window &window)
 {
@@ -20,7 +24,7 @@ void ImGuiWrapper::setupImgui(Window &window)
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     // TODO: for now
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
-    
+
     SetupStyle();
 
     // Setup Platform/Renderer backends
@@ -45,8 +49,8 @@ void ImGuiWrapper::beginDockspace()
         ImGui::SetNextWindowViewport(viewport->ID);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-        window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
-                        ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+        window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
+                        ImGuiWindowFlags_NoMove;
         window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
         window_flags |= ImGuiWindowFlags_NoBackground;
     }
@@ -136,15 +140,18 @@ void ImGuiWrapper::SetupStyle()
 
     // Buttons (using the accent color)
     style.Colors[ImGuiCol_Button] = accent_color;
-    style.Colors[ImGuiCol_ButtonHovered] = ImVec4(accent_color.x + 0.1f, accent_color.y + 0.1f, accent_color.z + 0.1f, 1.0f); // Slightly brighter
-    style.Colors[ImGuiCol_ButtonActive] = accent_color;
+    style.Colors[ImGuiCol_ButtonHovered] =
+        ImVec4(accent_color.x + 0.1f, accent_color.y + 0.1f, accent_color.z + 0.1f, 1.0f); // Slightly brighter
+    style.Colors[ImGuiCol_ButtonActive] =
+        ImVec4(accent_color.x - 0.2f, accent_color.y - 0.2f, accent_color.z - 0.2f, 1.0f); // Slightly darker;
 
     // Tab-Specific Colors:
     style.Colors[ImGuiCol_Tab] = bg_medium;
     style.Colors[ImGuiCol_TabHovered] = accent_color;
     style.Colors[ImGuiCol_TabActive] = accent_color;
     style.Colors[ImGuiCol_TabUnfocused] = bg_medium;
-    style.Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(accent_color.x * 0.7f, accent_color.y * 0.7f, accent_color.z * 0.7f, 1.0f); // Darker/desaturated accent
+    style.Colors[ImGuiCol_TabUnfocusedActive] =
+        ImVec4(accent_color.x * 0.7f, accent_color.y * 0.7f, accent_color.z * 0.7f, 1.0f); // Darker/desaturated accent
 
     // Scrollbar/Check Mark/Grab
     style.Colors[ImGuiCol_ScrollbarBg] = bg_dark;
@@ -152,4 +159,22 @@ void ImGuiWrapper::SetupStyle()
     style.Colors[ImGuiCol_CheckMark] = accent_color;
     style.Colors[ImGuiCol_SliderGrab] = accent_color;
     style.Colors[ImGuiCol_SliderGrabActive] = accent_color;
+
+    // Styling selectable (it uses headers styles)
+    style.Colors[ImGuiCol_Header] = accent_color;
+    style.Colors[ImGuiCol_HeaderHovered] =
+        ImVec4(accent_color.x + 0.1f, accent_color.y + 0.1f, accent_color.z + 0.1f, 1.0f); // Brighter on hover
+    style.Colors[ImGuiCol_HeaderActive] =
+        ImVec4(accent_color.x - 0.15f, accent_color.y - 0.15f, accent_color.z - 0.15f, 1.0f); // Darker when active
+
+    // Setup fonts
+    ImGuiIO &io = ImGui::GetIO();
+    io.Fonts->AddFontDefault();
+
+    ImFontConfig config;
+    config.MergeMode = true;
+    config.GlyphMinAdvanceX = 13.0f; // Use if you want to make the icon monospaced
+    static const ImWchar icon_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
+    std::filesystem::path fontPath = getFilePath("assets/fonts/fontawesome-webfont.ttf");
+    io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 13.0f, &config, icon_ranges);
 }

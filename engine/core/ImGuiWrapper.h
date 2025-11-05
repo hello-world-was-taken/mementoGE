@@ -1,3 +1,5 @@
+#pragma once
+
 #include "core/GLIncludes.h"
 #include "core/Window.h"
 

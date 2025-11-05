@@ -13,7 +13,7 @@ class Animator
 public:
     Animator() = default;
 
-    void play(const std::string &name, bool loop = true);
+    void play(std::string name, bool loop = true);
     void update();
     const Sprite &getCurrentSprite() const;
 

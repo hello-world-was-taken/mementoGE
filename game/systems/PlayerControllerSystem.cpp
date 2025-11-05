@@ -38,13 +38,13 @@ void PlayerControllerSystem::processInput(GameObject &player)
             {
                 player.getComponent<RigidBody2D>().velocity += glm::vec2{50.0f * Time::deltaTime(), 0.0f};
                 player.getComponent<Sprite>().flipX = true;
-                player.getComponent<Animator>().play("idle");
+                player.getComponent<Animator>().play("run");
             }
             else if (keyType == KeyType::LeftArrow)
             {
                 player.getComponent<RigidBody2D>().velocity += glm::vec2{-50.0f * Time::deltaTime(), 0.0f};
                 player.getComponent<Sprite>().flipX = false;
-                player.getComponent<Animator>().play("idle");
+                player.getComponent<Animator>().play("run");
             }
         }
     }

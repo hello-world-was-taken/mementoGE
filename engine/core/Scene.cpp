@@ -3,8 +3,6 @@
 #include "core/SystemRegistry.h"
 #include "core/components/Sprite.h"
 
-#include "renderer/RenderBatch.h"
-
 #include "util/Time.h"
 
 #include <algorithm>
@@ -94,7 +92,6 @@ void Scene::update()
 {
     if (m_play)
     {
-        std::cout << "systems: " << m_systems.size() << std::endl;
         for (auto &system : m_systems)
         {
             system->update(m_gameObjects);
