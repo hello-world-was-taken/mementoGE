@@ -197,7 +197,6 @@ GameObject &Scene::getPlayer()
     throw std::runtime_error("Player not found");
 }
 
-
 Physics2D &Scene::getPhysics2d()
 {
     return m_physicsWorld;
@@ -208,13 +207,6 @@ void Scene::setGraivty(glm::vec2 gravity)
     m_physicsWorld.setGravity(gravity);
 }
 
-
-// TODO: this adds rigid bodies again and again. Fix it
-// void Scene::addRigidBody2DToWorld()
-// {
-//     GameObject *go = getActiveGameObject();
-//     m_physicsWorld.addRigidbody(*go);
-// }
 
 const std::string &Scene::getTag() const
 {

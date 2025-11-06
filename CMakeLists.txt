@@ -11,7 +11,9 @@ add_executable(${PROJECT_NAME}
 
     # game files
     game/Game.cpp
+    game/systems/EnemyAiSystem.cpp
     game/systems/PatrolSystem.cpp
+    game/systems/AttackSystem.cpp
     game/systems/PlayerControllerSystem.cpp
 )
 

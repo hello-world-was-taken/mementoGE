@@ -26,16 +26,19 @@ public:
 
     void simulate(float timestep, const std::vector<GameObject> &gameObjects); // Call each frame
 
-    void addRigidbody(GameObject &obj);
+    void registerRigidBody2D(GameObject &obj);
+    void registerBoxCollider2D(GameObject &obj);
+    void registerSensor2D(GameObject &obj);
+
     void removeRigidbody(entt::entity entity);
 
     void setGravity(glm::vec2 gravity);
 
 private:
+    void processContactEvents();
     void syncTransforms(const std::vector<GameObject> &gameObjects);
-    void attachShape(b2BodyId bodyId, GameObject &obj);
 
-    b2BodyId createBody(GameObject &obj);
+    void createBody(GameObject &obj);
 
 private:
     b2WorldId m_worldId;

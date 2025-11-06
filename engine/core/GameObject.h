@@ -1,5 +1,9 @@
 #pragma once
 
+#include "core/components/BoxCollider2D.h"
+#include "core/components/RigidBody2D.h"
+#include "core/components/Sensor2D.h"
+
 #include "physics/Physics2D.h"
 
 #include <entt/entt.hpp>
@@ -123,7 +127,21 @@ void GameObject::deserializeComponent(const YAML::Node &serializedGameObject,
         {
             if (physics)
             {
-                physics->get().addRigidbody(*this);
+                physics->get().registerRigidBody2D(*this);
+            }
+        }
+        else if constexpr (std::is_same_v<Component, BoxCollider2D>)
+        {
+            if (physics)
+            {
+                physics->get().registerBoxCollider2D(*this);
+            }
+        }
+        else if constexpr (std::is_same_v<Component, Sensor2D>)
+        {
+            if (physics)
+            {
+                physics->get().registerSensor2D(*this);
             }
         }
     }

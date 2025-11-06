@@ -1,6 +1,7 @@
 #include "core/components/BoxCollider2D.h"
 #include "core/components/RigidBody2D.h"
 #include "core/components/Transform.h"
+#include "core/components/Sensor2D.h"
 
 #include "physics/Physics2D.h"
 
@@ -63,6 +64,9 @@ void Physics2D::simulate(float timestep, const std::vector<GameObject> &gameObje
     }
 
     b2World_Step(m_worldId, Time::deltaTime(), 4);
+    // process contact should be called after world step
+    processContactEvents();
+
     syncTransforms(gameObjects);
 }
 
@@ -71,20 +75,12 @@ void Physics2D::setGravity(glm::vec2 gravity)
     b2World_SetGravity(m_worldId, b2Vec2{gravity.x, gravity.y});
 }
 
-// TODO: we should support other colliders than box collider
-void Physics2D::addRigidbody(GameObject &obj)
+void Physics2D::registerRigidBody2D(GameObject &obj)
 {
-    Transform &transform = obj.getComponent<Transform>();
-    if (!obj.hasComponent<RigidBody2D>())
-    {
-        obj.addComponent<RigidBody2D>();
-    }
-
-    b2BodyId bodyId = createBody(obj);
-    attachShape(bodyId, obj);
+    createBody(obj);
 }
 
-b2BodyId Physics2D::createBody(GameObject &obj)
+void Physics2D::createBody(GameObject &obj)
 {
     Transform &transform = obj.getComponent<Transform>();
     RigidBody2D &rb = obj.getComponent<RigidBody2D>();
@@ -103,21 +99,24 @@ b2BodyId Physics2D::createBody(GameObject &obj)
         std::cerr << "[Physics2D] Failed to create body for GameObject: " << obj.getTag() << std::endl;
     }
     rb.bodyId = bodyId;
-
-    return bodyId;
 }
 
-void Physics2D::attachShape(b2BodyId bodyId, GameObject &obj)
+void Physics2D::registerBoxCollider2D(GameObject &obj)
 {
-    // TODO: think this through. Added for testing physics
     if (!obj.hasComponent<BoxCollider2D>())
     {
-        int width = obj.getWidth();
-        int height = obj.getHeight();
-        obj.addComponent<BoxCollider2D>();
-        obj.getComponent<BoxCollider2D>().size = {width, height};
+        std::cerr << "GameObject " << obj.getTag() << " missing BoxCollider2D component!\n";
+        return;
     }
 
+    // TODO: there might be cases where we just want sensors
+    if (!obj.hasComponent<RigidBody2D>())
+    {
+        obj.addComponent<RigidBody2D>();
+        registerRigidBody2D(obj);
+    }
+
+    RigidBody2D &rb = obj.getComponent<RigidBody2D>();
     BoxCollider2D &box = obj.getComponent<BoxCollider2D>();
 
     b2Polygon b2Shape = b2MakeBox(box.size.x * 0.5f, box.size.y * 0.5f);
@@ -127,8 +126,7 @@ void Physics2D::attachShape(b2BodyId bodyId, GameObject &obj)
     b2ShapeDef shapeDef = b2DefaultShapeDef();
     shapeDef.density = box.density;
     shapeDef.material.friction = box.friction;
-    // shapeDef.material.restitution = box.m_restitution;
-    b2ShapeId shapeId = b2CreatePolygonShape(bodyId, &shapeDef, &b2Shape);
+    b2ShapeId shapeId = b2CreatePolygonShape(rb.bodyId, &shapeDef, &b2Shape);
 
     if (!b2Shape_IsValid(shapeId))
     {
@@ -136,6 +134,98 @@ void Physics2D::attachShape(b2BodyId bodyId, GameObject &obj)
     }
 
     box.shapeId = shapeId;
+}
+
+void Physics2D::registerSensor2D(GameObject &obj)
+{
+    if (!obj.hasComponent<Sensor2D>())
+    {
+        std::cerr << "GameObject " << obj.getTag() << " missing Sensor2D component!\n";
+        return;
+    }
+
+    // TODO: there might be cases where we just want sensors
+    if (!obj.hasComponent<RigidBody2D>())
+    {
+        obj.addComponent<RigidBody2D>();
+        registerRigidBody2D(obj);
+    }
+
+    RigidBody2D &rb = obj.getComponent<RigidBody2D>();
+    Sensor2D &sensor = obj.getComponent<Sensor2D>();
+
+    b2Polygon shape = b2MakeBox(sensor.size.x * 0.5f, sensor.size.y * 0.5f);
+    b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+    shapeDef.isSensor = true;
+    shapeDef.userData = &obj; // store pointer to your GameObject for later retrieval
+    b2ShapeId shapeId = b2CreatePolygonShape(rb.bodyId, &shapeDef, &shape);
+
+    if (!b2Shape_IsValid(shapeId))
+    {
+        std::cerr << "[Physics2D] Failed to create sensor shape for GameObject: " << obj.getTag() << std::endl;
+        return;
+    }
+
+    sensor.shapeId = shapeId;
+}
+
+void Physics2D::processContactEvents()
+{
+    b2ContactEvents contactEvents = b2World_GetContactEvents(m_worldId);
+
+    // Begin contacts
+    for (int i = 0; i < contactEvents.beginCount; ++i)
+    {
+        const b2ContactBeginTouchEvent *e = contactEvents.beginEvents + i;
+
+        b2ShapeId shapeA = e->shapeIdA;
+        b2ShapeId shapeB = e->shapeIdB;
+
+        GameObject *objA = static_cast<GameObject *>(b2Shape_GetUserData(shapeA));
+        GameObject *objB = static_cast<GameObject *>(b2Shape_GetUserData(shapeB));
+
+        if (!objA || !objB)
+            continue;
+
+        if (objA->hasComponent<Sensor2D>())
+        {
+            auto &sensor = objA->getComponent<Sensor2D>();
+            sensor.overlappingObjects.push_back(objB);
+        }
+        if (objB->hasComponent<Sensor2D>())
+        {
+            auto &sensor = objB->getComponent<Sensor2D>();
+            sensor.overlappingObjects.push_back(objA);
+        }
+    }
+
+    // End contacts
+    for (int i = 0; i < contactEvents.endCount; ++i)
+    {
+        const b2ContactEndTouchEvent *e = contactEvents.endEvents + i;
+
+        b2ShapeId shapeA = e->shapeIdA;
+        b2ShapeId shapeB = e->shapeIdB;
+
+        GameObject *objA = static_cast<GameObject *>(b2Shape_GetUserData(shapeA));
+        GameObject *objB = static_cast<GameObject *>(b2Shape_GetUserData(shapeB));
+
+        if (!objA || !objB)
+            continue;
+
+        if (objA->hasComponent<Sensor2D>())
+        {
+            auto &list = objA->getComponent<Sensor2D>().overlappingObjects;
+            list.erase(std::remove(list.begin(), list.end(), objB), list.end());
+        }
+
+        if (objB->hasComponent<Sensor2D>())
+        {
+            auto &list = objB->getComponent<Sensor2D>().overlappingObjects;
+            list.erase(std::remove(list.begin(), list.end(), objA), list.end());
+        }
+    }
 }
 
 void Physics2D::syncTransforms(const std::vector<GameObject> &gameObjects)
@@ -154,7 +244,6 @@ void Physics2D::syncTransforms(const std::vector<GameObject> &gameObjects)
         {
             b2Transform t = b2Body_GetTransform(rb.bodyId);
             transform.position = {t.p.x, t.p.y, transform.position.z};
-            // transform.getRotation()->z = glm::degrees(t.q.angle);
         }
     }
 }

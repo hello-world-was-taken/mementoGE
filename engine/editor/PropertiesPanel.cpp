@@ -1,6 +1,7 @@
 #include "core/components/CircleCollider2D.h"
 #include "core/components/EnemyState.h"
 #include "core/components/Patrol.h"
+#include "core/components/Sensor2D.h"
 #include "core/components/Sprite.h"
 #include "core/components/Transform.h"
 
@@ -95,9 +96,10 @@ void PropertiesPanel::renderPropertiesPanel()
     drawComponentInspector<RigidBody2D>(go);
     drawComponentInspector<EnemyState>(go);
     drawComponentInspector<Patrol>(go);
+    drawComponentInspector<Sensor2D>(go);
     drawSpriteSettings(go);
-    drawAddComponentCombo(go);
     drawAnimatorSettings(go);
+    drawAddComponentCombo(go);
 
     ImGui::Separator();
     if (ImGui::Button("Delete Object"))
@@ -186,20 +188,26 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
         if (ImGui::Selectable("Rigidbody2D"))
         {
             go.addComponent<RigidBody2D>();
-            m_ctx.sceneManager.getActiveScene().getPhysics2d().addRigidbody(go);
+            m_ctx.sceneManager.getActiveScene().getPhysics2d().registerRigidBody2D(go);
         }
 
         if (ImGui::Selectable("BoxCollider2D"))
         {
             go.addComponent<BoxCollider2D>();
             go.getComponent<BoxCollider2D>().size = {go.getWidth(), go.getHeight()};
-            m_ctx.sceneManager.getActiveScene().getPhysics2d().addRigidbody(go);
+            m_ctx.sceneManager.getActiveScene().getPhysics2d().registerRigidBody2D(go);
         }
 
         if (ImGui::Selectable("CircleCollider2D"))
         {
             go.addComponent<CircleCollider2D>();
-            m_ctx.sceneManager.getActiveScene().getPhysics2d().addRigidbody(go);
+            m_ctx.sceneManager.getActiveScene().getPhysics2d().registerRigidBody2D(go);
+        }
+
+        if (ImGui::Selectable("Sensor2D"))
+        {
+            go.addComponent<Sensor2D>();
+            m_ctx.sceneManager.getActiveScene().getPhysics2d().registerSensor2D(go);
         }
 
         if (ImGui::Selectable("Animator"))

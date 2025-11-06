@@ -1,4 +1,6 @@
 #include "game/Game.h"
+#include "game/systems/AttackSystem.h"
+#include "game/systems/EnemyAiSystem.h"
 #include "game/systems/PatrolSystem.h"
 #include "game/systems/PlayerControllerSystem.h"
 
@@ -19,7 +21,8 @@
 #include <iostream>
 #include <memory>
 
-Game::Game(bool editorMode) : m_window{}, m_sceneManager{&m_window}, m_editorMode{editorMode}, m_editorLayer{m_window}
+Game::Game(bool editorMode)
+    : m_window{}, m_sceneManager{&m_window}, m_editorMode{editorMode}, m_editorLayer{m_window}
 {
 }
 
@@ -32,11 +35,16 @@ void Game::start()
     if (m_editorMode)
     {
         // register systems
+        SystemRegistry::instance().registerSystem<EnemyAiSystem>("EnemyAiSystem");
         SystemRegistry::instance().registerSystem<PatrolSystem>("PatrolSystem");
+        SystemRegistry::instance().registerSystem<AttackSystem>("AttackSystem");
         SystemRegistry::instance().registerSystem<PlayerControllerSystem>("PlayerControllerSystem");
 
         m_editorLayer.getEditorContext().sceneManager.deserialize();
+        m_editorLayer.getEditorContext().sceneManager.getActiveScene().addSystem("EnemyAiSystem");
         m_editorLayer.getEditorContext().sceneManager.getActiveScene().addSystem("PatrolSystem");
+        m_editorLayer.getEditorContext().sceneManager.getActiveScene().addSystem("AttackSystem");
+        m_editorLayer.getEditorContext().sceneManager.getActiveScene().addSystem("PlayerControllerSystem");
 
         m_window.setupCallBack();
     }
@@ -53,10 +61,6 @@ void Game::update()
             if (m_editorMode)
             {
                 m_editorLayer.update();
-                if (m_editorLayer.getEditorContext().sceneManager.isPlaying())
-                {
-                    m_editorLayer.getEditorContext().sceneManager.getActiveScene().addSystem("PlayerControllerSystem");
-                }
                 MouseListener::instance()->beginFrame();
             }
             else

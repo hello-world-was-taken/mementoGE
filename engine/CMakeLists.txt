@@ -21,6 +21,7 @@ add_library(${PROJECT_NAME} STATIC
     core/components/BoxCollider2D.cpp
     core/components/EnemyState.cpp
     core/components/Patrol.cpp
+    core/components/Sensor2D.cpp
     # core/components/Animation.cpp
 
     core/Window.cpp

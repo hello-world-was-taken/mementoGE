@@ -1,5 +1,7 @@
 #include "core/components/Patrol.h"
 #include "core/components/RigidBody2D.h"
+#include "core/components/BoxCollider2D.h"
+#include "core/components/Sensor2D.h"
 #include "core/components/Sprite.h"
 #include "core/components/Transform.h"
 #include "core/components/EnemyState.h"
@@ -32,8 +34,9 @@ GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGam
     // Deserialize Components
     deserializeComponent<Transform>(serializedGameObject, "Transform");
     deserializeComponent<Sprite>(serializedGameObject, "Sprite");
-    deserializeComponent<BoxCollider2D>(serializedGameObject, "BoxCollider2D");
     deserializeComponent<RigidBody2D>(serializedGameObject, "RigidBody2D", physics);
+    deserializeComponent<BoxCollider2D>(serializedGameObject, "BoxCollider2D", physics);
+    deserializeComponent<Sensor2D>(serializedGameObject, "Sensor2D", physics);
     deserializeComponent<Animator>(serializedGameObject, "Animator");
     deserializeComponent<EnemyState>(serializedGameObject, "EnemyState");
     deserializeComponent<Patrol>(serializedGameObject, "Patrol");
@@ -159,6 +162,7 @@ bool GameObject::serialize(YAML::Emitter &out)
     serializeComponent<Sprite>(out);
     serializeComponent<RigidBody2D>(out);
     serializeComponent<BoxCollider2D>(out);
+    serializeComponent<Sensor2D>(out);
     serializeComponent<Animator>(out);
     serializeComponent<Animator>(out);
     serializeComponent<EnemyState>(out);

@@ -26,6 +26,8 @@ public:
     void render(const Camera &camera, const std::vector<GameObject> &gameObjects);
 
 private:
+    void updateBoxCollider2DVertices(const GameObject &gameObject);
+    void updateSensor2DVertices(const GameObject &gameObject);
     void updateVertices(const Camera &camera, const std::vector<GameObject> &gameObjects);
     void generateIndexArray();
 

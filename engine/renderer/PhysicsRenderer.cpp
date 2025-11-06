@@ -1,4 +1,5 @@
 #include "core/components/BoxCollider2D.h"
+#include "core/components/Sensor2D.h"
 #include "core/components/Sprite.h"
 
 #include "core/GLIncludes.h"
@@ -36,43 +37,85 @@ void PhysicsRenderer::render(const Camera &camera, const std::vector<GameObject>
     m_batch->render(camera, m_vertices.size() / 4 * 8); // TODO: remove magic numbers
 }
 
+void PhysicsRenderer::updateSensor2DVertices(const GameObject &gameObject)
+{
+    Transform &transform = gameObject.getComponent<Transform>();
+    const Sensor2D &sensor = gameObject.getComponent<Sensor2D>();
+
+    float halfWidth = sensor.size.x * 0.5f;
+    float halfHeight = sensor.size.y * 0.5f;
+
+    glm::vec2 centerPos = glm::vec2{transform.position.x, transform.position.y} + sensor.offset;
+
+    glm::vec3 bottomLeft = {centerPos.x - halfWidth, centerPos.y - halfHeight, 0.0f};
+    glm::vec3 bottomRight = {centerPos.x + halfWidth, centerPos.y - halfHeight, 0.0f};
+    glm::vec3 topRight = {centerPos.x + halfWidth, centerPos.y + halfHeight, 0.0f};
+    glm::vec3 topLeft = {centerPos.x - halfWidth, centerPos.y + halfHeight, 0.0f};
+
+    glm::vec4 borderColor = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f); // green
+
+    auto makeVertex = [&](const glm::vec3 &pos) -> Vertex
+    {
+        return Vertex{
+            pos, borderColor,
+            glm::vec2(0.0f), // no texture
+            -1.0f            // sentinel tex index
+        };
+    };
+
+    m_vertices.push_back(makeVertex(topLeft));
+    m_vertices.push_back(makeVertex(bottomLeft));
+    m_vertices.push_back(makeVertex(bottomRight));
+    m_vertices.push_back(makeVertex(topRight));
+}
+
+void PhysicsRenderer::updateBoxCollider2DVertices(const GameObject &gameObject)
+{
+    Transform &transform = gameObject.getComponent<Transform>();
+    const BoxCollider2D &collider = gameObject.getComponent<BoxCollider2D>();
+
+    float halfWidth = collider.size.x * 0.5f;
+    float halfHeight = collider.size.y * 0.5f;
+
+    glm::vec2 centerPos = glm::vec2{transform.position.x, transform.position.y} + collider.offset;
+
+    glm::vec3 bottomLeft = {centerPos.x - halfWidth, centerPos.y - halfHeight, 0.0f};
+    glm::vec3 bottomRight = {centerPos.x + halfWidth, centerPos.y - halfHeight, 0.0f};
+    glm::vec3 topRight = {centerPos.x + halfWidth, centerPos.y + halfHeight, 0.0f};
+    glm::vec3 topLeft = {centerPos.x - halfWidth, centerPos.y + halfHeight, 0.0f};
+
+    glm::vec4 borderColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f); // red
+
+    auto makeVertex = [&](const glm::vec3 &pos) -> Vertex
+    {
+        return Vertex{
+            pos, borderColor,
+            glm::vec2(0.0f), // no texture
+            -1.0f            // sentinel tex index
+        };
+    };
+
+    m_vertices.push_back(makeVertex(topLeft));
+    m_vertices.push_back(makeVertex(bottomLeft));
+    m_vertices.push_back(makeVertex(bottomRight));
+    m_vertices.push_back(makeVertex(topRight));
+}
+
 void PhysicsRenderer::updateVertices(const Camera &camera, const std::vector<GameObject> &gameObjects)
 {
     m_vertices.clear();
 
-    for (const GameObject &gameObject : gameObjects)
+    for (const GameObject &go : gameObjects)
     {
-        if (!gameObject.hasComponent<BoxCollider2D>())
-            continue;
-
-        Transform &transform = gameObject.getComponent<Transform>();
-        const BoxCollider2D &collider = gameObject.getComponent<BoxCollider2D>();
-
-        float halfWidth = collider.size.x * 0.5f;
-        float halfHeight = collider.size.y * 0.5f;
-
-        glm::vec2 centerPos = glm::vec2{transform.position.x, transform.position.y} + collider.offset;
-
-        glm::vec3 bottomLeft = {centerPos.x - halfWidth, centerPos.y - halfHeight, 0.0f};
-        glm::vec3 bottomRight = {centerPos.x + halfWidth, centerPos.y - halfHeight, 0.0f};
-        glm::vec3 topRight = {centerPos.x + halfWidth, centerPos.y + halfHeight, 0.0f};
-        glm::vec3 topLeft = {centerPos.x - halfWidth, centerPos.y + halfHeight, 0.0f};
-
-        glm::vec4 borderColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f); // red
-
-        auto makeVertex = [&](const glm::vec3 &pos) -> Vertex
+        if (go.hasComponent<BoxCollider2D>())
         {
-            return Vertex{
-                pos, borderColor,
-                glm::vec2(0.0f), // no texture
-                -1.0f            // sentinel tex index
-            };
-        };
+            updateBoxCollider2DVertices(go);
+        }
 
-        m_vertices.push_back(makeVertex(topLeft));
-        m_vertices.push_back(makeVertex(bottomLeft));
-        m_vertices.push_back(makeVertex(bottomRight));
-        m_vertices.push_back(makeVertex(topRight));
+        if (go.hasComponent<Sensor2D>())
+        {
+            updateSensor2DVertices(go);
+        }
     }
 
     m_batch->setVertexData(m_vertices);
