@@ -15,6 +15,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/opengl)
 
 add_library(${PROJECT_NAME} STATIC
     # core
+    core/components/EntityInfo.cpp
     core/components/Transform.cpp
     core/components/Sprite.cpp
     core/components/RigidBody2D.cpp
@@ -51,6 +52,7 @@ add_library(${PROJECT_NAME} STATIC
     editor/TexturePanel.cpp
     editor/EditorMouseController.cpp
     editor/EditorCamera.cpp
+    editor/SceneHistory.cpp
 
     # renderer
     renderer/RenderBatch.cpp

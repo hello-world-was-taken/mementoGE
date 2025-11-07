@@ -21,8 +21,7 @@
 #include <iostream>
 #include <memory>
 
-Game::Game(bool editorMode)
-    : m_window{}, m_sceneManager{&m_window}, m_editorMode{editorMode}, m_editorLayer{m_window}
+Game::Game(bool editorMode) : m_window{}, m_sceneManager{&m_window}, m_editorMode{editorMode}, m_editorLayer{m_window}
 {
 }
 
@@ -32,22 +31,30 @@ Game::~Game()
 
 void Game::start()
 {
+    // register systems
+    SystemRegistry::instance().registerSystem<EnemyAiSystem>("EnemyAiSystem");
+    SystemRegistry::instance().registerSystem<PatrolSystem>("PatrolSystem");
+    SystemRegistry::instance().registerSystem<AttackSystem>("AttackSystem");
+    SystemRegistry::instance().registerSystem<PlayerControllerSystem>("PlayerControllerSystem");
+
     if (m_editorMode)
     {
-        // register systems
-        SystemRegistry::instance().registerSystem<EnemyAiSystem>("EnemyAiSystem");
-        SystemRegistry::instance().registerSystem<PatrolSystem>("PatrolSystem");
-        SystemRegistry::instance().registerSystem<AttackSystem>("AttackSystem");
-        SystemRegistry::instance().registerSystem<PlayerControllerSystem>("PlayerControllerSystem");
-
         m_editorLayer.getEditorContext().sceneManager.deserialize();
         m_editorLayer.getEditorContext().sceneManager.getActiveScene().addSystem("EnemyAiSystem");
         m_editorLayer.getEditorContext().sceneManager.getActiveScene().addSystem("PatrolSystem");
         m_editorLayer.getEditorContext().sceneManager.getActiveScene().addSystem("AttackSystem");
         m_editorLayer.getEditorContext().sceneManager.getActiveScene().addSystem("PlayerControllerSystem");
-
-        m_window.setupCallBack();
     }
+    else
+    {
+        m_sceneManager.deserialize();
+        m_sceneManager.getActiveScene().play(); // TODO: improve api
+        m_sceneManager.getActiveScene().addSystem("EnemyAiSystem");
+        m_sceneManager.getActiveScene().addSystem("PatrolSystem");
+        m_sceneManager.getActiveScene().addSystem("AttackSystem");
+        m_sceneManager.getActiveScene().addSystem("PlayerControllerSystem");
+    }
+    m_window.setupCallBack();
     update();
 }
 
@@ -73,8 +80,6 @@ void Game::update()
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
                 m_sceneManager.update();
-                // TODO: we need to set the player as active game object in game mode
-                m_editorLayer.getEditorContext().sceneManager.getActiveScene().addSystem("PlayerControllerSystem");
                 render();
             }
         },

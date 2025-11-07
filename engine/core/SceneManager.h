@@ -36,8 +36,8 @@ public:
     // TODO: make this private. for debugging
     bool m_isPlaying = false;
 
-private:
     std::map<std::string, Scene> m_scenes;
+private:
     std::optional<std::string> m_activeSceneName;
     Window *m_window = nullptr;
 };

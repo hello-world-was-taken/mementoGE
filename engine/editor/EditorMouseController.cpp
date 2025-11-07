@@ -1,3 +1,4 @@
+#include "core/components/EntityInfo.h"
 #include "core/components/Transform.h"
 
 #include "core/GLIncludes.h"
@@ -28,7 +29,9 @@ void EditorMouseController::setMovementMode(MovementMode mode)
 void EditorMouseController::update(EditorContext &ctx)
 {
     if (!ctx.sceneImageHovered)
+    {
         return;
+    }
 
     Scene &scene = ctx.sceneManager.getActiveScene();
     EditorCamera &editorCamera = ctx.editorCamera;
@@ -141,7 +144,11 @@ void EditorMouseController::handleDragging(
             break;
 
         case EditorInteractionMode::MoveObjects:
-            moveSelectedGameObjects(ctx, mouseWorldPos);
+            ctx.performSceneEdit(
+                [&]
+                {
+                    moveSelectedGameObjects(ctx, mouseWorldPos);
+                });
             break;
 
         default:
@@ -159,8 +166,9 @@ void EditorMouseController::moveSelectedGameObjects(EditorContext &ctx, glm::vec
 
         if (m_movementMode == MovementMode::SnapToGrid)
         {
-            // Assume grid size is equal to the object's width.
-            float gridSize = static_cast<float>(go.get().getWidth());
+            // TODO: for now this would work as a way to snap objects for alignment purposes
+            // but we can also use it for grid based tiles
+            float gridSize = static_cast<float>(5);
 
             // This should be kept in sync with GridRenderer.cpp
             float snappedX = std::floor(mouseWorldPos.x / gridSize) * gridSize;
@@ -234,9 +242,10 @@ void EditorMouseController::selectObjectsInDrag(
 
     for (auto &obj : scene.getGameObjects())
     {
+        EntityInfo &entityInfo = obj.getComponent<EntityInfo>();
         Transform &transform = obj.getComponent<Transform>();
         glm::vec2 pos = {transform.position.x, transform.position.y};
-        glm::vec2 size = {obj.getWidth(), obj.getHeight()};
+        glm::vec2 size = {entityInfo.width, entityInfo.height};
 
         glm::vec2 objMin = pos - size * 0.5f;
         glm::vec2 objMax = pos + size * 0.5f;

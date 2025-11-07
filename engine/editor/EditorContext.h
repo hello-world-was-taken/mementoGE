@@ -7,6 +7,7 @@
 #include "editor/Constants.h"
 #include "editor/EditorInteractionMode.h"
 #include "editor/EditorMouseController.h"
+#include "editor/SceneHistory.h"
 
 #include "opengl/FrameBuffer.h"
 
@@ -16,7 +17,6 @@
 
 struct EditorContext
 {
-
     Window &window;
     SceneManager sceneManager{&window};
 
@@ -43,6 +43,7 @@ struct EditorContext
 
     std::string selectedTextureJsonPath;
 
+    SceneHistory sceneHistory;
     EditorCamera editorCamera;
     EditorMouseController editorMouseController;
     FrameBuffer frameBuffer{viewportWidth, viewportHeight};
@@ -63,5 +64,14 @@ struct EditorContext
     glm::vec2 worldToFrameBuffer(glm::vec2 worldPos);
     glm::vec2 frameBufferToLocal(glm::vec2 frameBufferPos);
     glm::vec2 localToScreen(glm::vec2 localPos);
+
+    template <typename Func> void performSceneEdit(Func &&editFunc);
 };
 
+template <typename Func> void EditorContext::performSceneEdit(Func &&editFunc)
+{
+    Scene &scene = sceneManager.getActiveScene();
+    sceneHistory.pushSnapshot(scene); // before
+    editFunc();
+    sceneHistory.pushSnapshot(scene); // after
+}

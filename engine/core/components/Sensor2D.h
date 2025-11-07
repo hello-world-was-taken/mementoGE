@@ -1,6 +1,7 @@
 #pragma once
 
 #include <box2d/box2d.h>
+#include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <vector>
 
@@ -18,7 +19,7 @@ struct Sensor2D
     b2ShapeId shapeId = b2_nullShapeId;
 
     // Store detected objects
-    std::vector<void *> overlappingObjects;
+    std::vector<entt::entity> overlappingObjects;
 
 #ifdef EDITOR_BUILD
     void serialize(YAML::Emitter &out);

@@ -7,13 +7,14 @@
 #include "engine/core/components/Sensor2D.h"
 
 #include <algorithm>
+#include <entt/entt.hpp>
 #include <vector>
 
 class EnemyAiSystem : public ISystem
 {
 public:
-    void update(std::vector<GameObject> &gameObjects) override;
+    void update(entt::registry &registry) override;
 
 private:
-    bool isPlayerInRange(const Sensor2D &sensor) const;
+    entt::entity findPlayer(const Sensor2D &sensor, entt::registry &registry) const;
 };

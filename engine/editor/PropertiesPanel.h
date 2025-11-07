@@ -26,8 +26,6 @@ private:
     template <typename T>
     void drawComponentInspector(const GameObject &gameObject);
 
-    void drawIdentity(GameObject &go);
-    void drawSize(GameObject &go);
     void drawSpriteSettings(GameObject &go);
     void drawAddComponentCombo(GameObject &go);
     void drawRigidBodySettings(GameObject &go);

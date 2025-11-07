@@ -1,7 +1,7 @@
 #include "core/ImGuiWrapper.h"
 #include "core/GLIncludes.h"
-#include "core/Window.h"
 #include "core/IconsFontAwesome4.h"
+#include "core/Window.h"
 
 #include "util/PathUtils.h"
 
@@ -121,11 +121,12 @@ void ImGuiWrapper::SetupStyle()
     style.TabBorderSize = 0.0f;
 
     // Color palette (normalized color values (0.0 to 1.0))
-    ImVec4 accent_color = ImVec4(0.49412f, 0.63137f, 0.41961f, 1.00f);
-    ImVec4 bg_dark = ImVec4(0.10f, 0.10f, 0.12f, 1.00f);
-    ImVec4 bg_medium = ImVec4(0.18f, 0.18f, 0.20f, 1.00f);
-    ImVec4 bg_light = ImVec4(0.49412f, 0.63137f, 0.41961f, 1.00f);
-    ImVec4 text_main = ImVec4(0.85f, 0.85f, 0.85f, 1.00f);
+    ImVec4 accent_color = ImVec4(0.314f, 0.447f, 0.655f, 1.00f); // Blue-ish accent
+    ImVec4 lighter_accent_color = ImVec4(accent_color.x + 0.1f, accent_color.y + 0.1f, accent_color.z + 0.1f, 1.0f);
+    ImVec4 bg_dark = ImVec4(0.051f, 0.039f, 0.043f, 1.00f);
+    ImVec4 bg_medium = ImVec4(0.12f, 0.11f, 0.13f, 1.00f); // Soft step above bg_dark
+    ImVec4 bg_light = ImVec4(0.22f, 0.20f, 0.24f, 1.00f);  // Lightest neutral background
+    ImVec4 text_main = ImVec4(0.85f, 0.85f, 0.88f, 1.00f); // Slightly cool to fit blue accent
 
     // Windows
     style.Colors[ImGuiCol_WindowBg] = bg_dark;
@@ -140,18 +141,15 @@ void ImGuiWrapper::SetupStyle()
 
     // Buttons (using the accent color)
     style.Colors[ImGuiCol_Button] = accent_color;
-    style.Colors[ImGuiCol_ButtonHovered] =
-        ImVec4(accent_color.x + 0.1f, accent_color.y + 0.1f, accent_color.z + 0.1f, 1.0f); // Slightly brighter
-    style.Colors[ImGuiCol_ButtonActive] =
-        ImVec4(accent_color.x - 0.2f, accent_color.y - 0.2f, accent_color.z - 0.2f, 1.0f); // Slightly darker;
+    style.Colors[ImGuiCol_ButtonHovered] = lighter_accent_color;
+    style.Colors[ImGuiCol_ButtonActive] = accent_color;
 
     // Tab-Specific Colors:
     style.Colors[ImGuiCol_Tab] = bg_medium;
-    style.Colors[ImGuiCol_TabHovered] = accent_color;
+    style.Colors[ImGuiCol_TabHovered] = lighter_accent_color;
     style.Colors[ImGuiCol_TabActive] = accent_color;
     style.Colors[ImGuiCol_TabUnfocused] = bg_medium;
-    style.Colors[ImGuiCol_TabUnfocusedActive] =
-        ImVec4(accent_color.x * 0.7f, accent_color.y * 0.7f, accent_color.z * 0.7f, 1.0f); // Darker/desaturated accent
+    style.Colors[ImGuiCol_TabUnfocusedActive] = accent_color;
 
     // Scrollbar/Check Mark/Grab
     style.Colors[ImGuiCol_ScrollbarBg] = bg_dark;
@@ -161,11 +159,9 @@ void ImGuiWrapper::SetupStyle()
     style.Colors[ImGuiCol_SliderGrabActive] = accent_color;
 
     // Styling selectable (it uses headers styles)
-    style.Colors[ImGuiCol_Header] = accent_color;
-    style.Colors[ImGuiCol_HeaderHovered] =
-        ImVec4(accent_color.x + 0.1f, accent_color.y + 0.1f, accent_color.z + 0.1f, 1.0f); // Brighter on hover
-    style.Colors[ImGuiCol_HeaderActive] =
-        ImVec4(accent_color.x - 0.15f, accent_color.y - 0.15f, accent_color.z - 0.15f, 1.0f); // Darker when active
+    style.Colors[ImGuiCol_Header] = bg_medium;
+    style.Colors[ImGuiCol_HeaderHovered] = lighter_accent_color;
+    style.Colors[ImGuiCol_HeaderActive] = accent_color;
 
     // Setup fonts
     ImGuiIO &io = ImGui::GetIO();

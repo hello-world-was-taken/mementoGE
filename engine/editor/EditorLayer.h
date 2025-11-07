@@ -1,17 +1,17 @@
 #pragma once
 
-#include "core/Scene.h"
-#include "core/SceneManager.h"
 #include "core/Camera.h"
-#include "core/Window.h"
 #include "core/EventHandler.h"
 #include "core/MovementMode.h"
+#include "core/Scene.h"
+#include "core/SceneManager.h"
+#include "core/Window.h"
 
 #include "editor/EditorContext.h"
-#include "editor/ScenePanel.h"
 #include "editor/PropertiesPanel.h"
-#include "editor/TexturePanel.h"
 #include "editor/SceneHierarchyPanel.h"
+#include "editor/ScenePanel.h"
+#include "editor/TexturePanel.h"
 
 #include "renderer/GridRenderer.h"
 #include "renderer/PhysicsRenderer.h"
@@ -43,9 +43,9 @@ private:
 
     void drawMouseDebugPanel();
 
-    void handleSceneInteraction();
-
     std::vector<std::string> getTextureFiles(const std::string &folderPath);
+
+    void undoRedoListener();
 
 private:
     EditorContext m_ctx;

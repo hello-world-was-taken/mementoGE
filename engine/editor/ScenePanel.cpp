@@ -135,28 +135,33 @@ void ScenePanel::renderSceneViewport()
     {
         if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("SPRITE"))
         {
-            IM_ASSERT(payload->DataSize == sizeof(int) || payload->DataSize == sizeof(SpritePayload));
-            int spriteIndex = ((SpritePayload *)payload->Data)->spriteIndex;
+            m_ctx.performSceneEdit(
+                [&]
+                {
+                    IM_ASSERT(payload->DataSize == sizeof(int) || payload->DataSize == sizeof(SpritePayload));
+                    int spriteIndex = ((SpritePayload *)payload->Data)->spriteIndex;
 
-            // Convert current mouse to world position
-            const Camera &cam = m_ctx.editorCamera;
+                    // Convert current mouse to world position
+                    const Camera &cam = m_ctx.editorCamera;
 
-            std::filesystem::path texturePath = getTexturePathFromJson(m_ctx.selectedTextureJsonPath);
-            std::shared_ptr<SpriteSheet> spriteSheet =
-                AssetManager::instance().getSpriteSheet(m_ctx.selectedTextureJsonPath);
+                    std::filesystem::path texturePath = getTexturePathFromJson(m_ctx.selectedTextureJsonPath);
+                    std::shared_ptr<SpriteSheet> spriteSheet =
+                        AssetManager::instance().getSpriteSheet(m_ctx.selectedTextureJsonPath);
 
-            int fbWidth, fbHeight;
-            glfwGetFramebufferSize(m_ctx.window.getGlfwWindow(), &fbWidth, &fbHeight);
+                    int fbWidth, fbHeight;
+                    glfwGetFramebufferSize(m_ctx.window.getGlfwWindow(), &fbWidth, &fbHeight);
 
-            MouseListener *mouse = MouseListener::instance();
-            glm::vec2 worldPos = m_ctx.getWorldCoordinate(mouse->getMouseScreenPosition());
+                    MouseListener *mouse = MouseListener::instance();
+                    glm::vec2 worldPos = m_ctx.getWorldCoordinate(mouse->getMouseScreenPosition());
 
-            // Create object here
-            Sprite sprite = spriteSheet->getSprites()[spriteIndex];
-            const float aspectRatio = sprite.width / sprite.height;
-            GameObject &newObj = m_ctx.sceneManager.getActiveScene().addGameObject(32 * aspectRatio, 32, "_new");
-            newObj.addComponent<Sprite>(sprite.topLeft, sprite.width, sprite.height, sprite.texture);
-            newObj.getComponent<Transform>().position = {worldPos.x, worldPos.y, 0.0f};
+                    // Create object here
+                    Sprite sprite = spriteSheet->getSprites()[spriteIndex];
+                    const float aspectRatio = sprite.width / sprite.height;
+                    GameObject &newObj =
+                        m_ctx.sceneManager.getActiveScene().addGameObject(32 * aspectRatio, 32, "_new");
+                    newObj.addComponent<Sprite>(sprite.topLeft, sprite.width, sprite.height, sprite.texture);
+                    newObj.getComponent<Transform>().position = {worldPos.x, worldPos.y, 0.0f};
+                });
         }
         ImGui::EndDragDropTarget();
     }

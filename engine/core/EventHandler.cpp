@@ -39,6 +39,10 @@ void EventHandler::glfwKeyCallBack(GLFWwindow *window, int key, int scancode, in
     updateKey(GLFW_KEY_S, KeyType::S, "SKey");
     updateKey(GLFW_KEY_D, KeyType::D, "DKey");
     updateKey(GLFW_KEY_SPACE, KeyType::Space, "SpaceKey");
+
+    // Z, Y Undo / Redo
+    updateKey(GLFW_KEY_Y, KeyType::Y, "YKey");
+    updateKey(GLFW_KEY_Z, KeyType::Z, "ZKey");
 }
 
 bool EventHandler::hasActiveEvent()

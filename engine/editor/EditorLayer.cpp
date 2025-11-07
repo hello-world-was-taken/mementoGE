@@ -7,6 +7,7 @@
 #include "core/components/RigidBody2D.h"
 
 #include "core/Camera.h"
+#include "core/EventHandler.h"
 #include "core/ImGuiWrapper.h"
 #include "core/MovementMode.h"
 #include "core/SpriteSheet.h"
@@ -49,6 +50,8 @@ void EditorLayer::update()
     ImGuiWrapper::ImGuiFrame(
         [&]()
         {
+            undoRedoListener();
+
             m_ctx.frameBuffer.resize();
             m_ctx.frameBuffer.bind();
 
@@ -104,16 +107,20 @@ void EditorLayer::renderAddNewObjectPopup()
 
         if (ImGui::Button("Create"))
         {
-            // TODO: might be worth extracting this out to a function
-            Scene &scene = m_ctx.sceneManager.getActiveScene();
+            m_ctx.performSceneEdit(
+                [&]
+                {
+                    // TODO: might be worth extracting this out to a function
+                    Scene &scene = m_ctx.sceneManager.getActiveScene();
 
-            auto &newObj = scene.addGameObject(32, 32, tagBuffer);
-            newObj.getComponent<Transform>().position = {
-                m_ctx.createObjectWorldPos.x, m_ctx.createObjectWorldPos.y, 0.0f};
+                    auto &newObj = scene.addGameObject(32, 32, tagBuffer);
+                    newObj.getComponent<Transform>().position = {
+                        m_ctx.createObjectWorldPos.x, m_ctx.createObjectWorldPos.y, 0.0f};
 
-            tagBuffer[0] = '\0'; // clear input for next time
-            m_ctx.showCreateObjectPopup = false;
-            ImGui::CloseCurrentPopup();
+                    tagBuffer[0] = '\0'; // clear input for next time
+                    m_ctx.showCreateObjectPopup = false;
+                    ImGui::CloseCurrentPopup();
+                });
         }
 
         ImGui::SameLine();
@@ -209,9 +216,30 @@ void EditorLayer::renderEditorProperties()
     ImGui::End();
 }
 
-void EditorLayer::handleSceneInteraction()
+void EditorLayer::undoRedoListener()
 {
-    // Use mouseListener and viewport coordinates to select or modify objects
+    EventHandler *eventHandler = EventHandler::instance();
+
+    if (eventHandler->hasActiveEvent())
+    {
+        Event e = eventHandler->getCurrentEvent();
+        if (e.getEventType() == EventType::Key)
+        {
+            // TODO: add ctrl/cmd is down
+            if (e.getKeyType() == KeyType::Z)
+            {
+                m_ctx.selectedGameObjectsDragOffset.clear();
+                m_ctx.selectedObjects.clear();
+                m_ctx.sceneHistory.undo(m_ctx.sceneManager);
+            }
+            else if (e.getKeyType() == KeyType::Y)
+            {
+                m_ctx.selectedGameObjectsDragOffset.clear();
+                m_ctx.selectedObjects.clear();
+                m_ctx.sceneHistory.redo(m_ctx.sceneManager);
+            }
+        }
+    }
 }
 
 void EditorLayer::drawMouseDebugPanel()

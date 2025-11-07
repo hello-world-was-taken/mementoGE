@@ -2,6 +2,7 @@
 
 #include "engine/core/Animator.h"
 #include "engine/core/components/EnemyState.h"
+#include "engine/core/components/EntityInfo.h"
 #include "engine/core/components/RigidBody2D.h"
 #include "engine/core/components/Sensor2D.h"
 #include "engine/core/components/Sprite.h"
@@ -9,25 +10,21 @@
 #include "engine/util/Time.h"
 
 #include <algorithm>
+#include <entt/entt.hpp>
 #include <iostream>
 
-void AttackSystem::update(std::vector<GameObject> &gameObjects)
+void AttackSystem::update(entt::registry &registry)
 {
-    for (auto &enemy : gameObjects)
+    auto view = registry.view<EnemyState, EnemyState, Sensor2D, Animator, RigidBody2D>();
+    for (entt::entity entity : view)
     {
-        if (!enemy.hasComponent<EnemyState>())
-            continue;
+        EnemyState &state = registry.get<EnemyState>(entity);
+        Sensor2D &sensor = registry.get<Sensor2D>(entity);
+        Animator &animator = registry.get<Animator>(entity);
+        RigidBody2D &rb = registry.get<RigidBody2D>(entity);
 
-        auto &state = enemy.getComponent<EnemyState>();
         if (state.state != AiState::Attack || state.state == AiState::Dead)
             continue;
-
-        if (!enemy.hasComponent<Sensor2D>())
-            continue;
-
-        auto &sensor = enemy.getComponent<Sensor2D>();
-        auto &animator = enemy.getComponent<Animator>();
-        auto &rb = enemy.getComponent<RigidBody2D>();
 
         // Stop horizontal movement when attacking
         rb.velocity.x = 0.0f;
@@ -56,8 +53,9 @@ void AttackSystem::update(std::vector<GameObject> &gameObjects)
 
 void AttackSystem::performAttack(GameObject &enemy, GameObject &player)
 {
-    // This is where you’d apply damage, knockback, etc.
-    std::cout << "[AttackSystem] " << enemy.getTag() << " attacked player: " << player.getTag() << std::endl;
+    EntityInfo &enemyEntityInfo = enemy.getComponent<EntityInfo>();
+    EntityInfo &playerEntityInfo = player.getComponent<EntityInfo>();
+    std::cout << "[AttackSystem] " << enemyEntityInfo.tag << " attacked player: " << playerEntityInfo.tag << std::endl;
 
     // Example: play animation, trigger hitbox, or reduce health
     // player.getComponent<Health>().applyDamage(10);

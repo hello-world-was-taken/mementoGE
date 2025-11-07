@@ -1,5 +1,6 @@
 #include "core/components/CircleCollider2D.h"
 #include "core/components/EnemyState.h"
+#include "core/components/EntityInfo.h"
 #include "core/components/Patrol.h"
 #include "core/components/Sensor2D.h"
 #include "core/components/Sprite.h"
@@ -89,8 +90,7 @@ void PropertiesPanel::renderPropertiesPanel()
     GameObject &go = m_ctx.selectedObjects.back().get();
 
     // TODO: look into entt::meta
-    drawIdentity(go);
-    drawSize(go);
+    drawComponentInspector<EntityInfo>(go);
     drawComponentInspector<Transform>(go);
     drawComponentInspector<BoxCollider2D>(go);
     drawComponentInspector<RigidBody2D>(go);
@@ -109,43 +109,6 @@ void PropertiesPanel::renderPropertiesPanel()
 
     // Popups (global)
     drawPopups();
-}
-
-void PropertiesPanel::drawIdentity(GameObject &go)
-{
-    ImGui::Separator();
-    ImGui::Text("Identity");
-
-    // Display Entity ID (non-editable)
-    ImGui::Text("Entity ID: %u", (unsigned int)go.getEntityId());
-
-    // TODO: there is a way we can directly support string.
-    static char tagBuffer[128];
-    std::string tag = go.getTag();
-    strncpy(tagBuffer, tag.c_str(), sizeof(tagBuffer));
-    tagBuffer[sizeof(tagBuffer) - 1] = '\0';
-
-    SetFieldWidth(200);
-    if (ImGui::InputText("Tag", tagBuffer, IM_ARRAYSIZE(tagBuffer)))
-    {
-        go.setTag(std::string(tagBuffer));
-    }
-}
-
-void PropertiesPanel::drawSize(GameObject &go)
-{
-    ImGui::Separator();
-    ImGui::Text("Size");
-    int width = go.getWidth();
-    int height = go.getHeight();
-
-    SetFieldWidth();
-    if (ImGui::DragInt("Width", &width))
-        go.setWidth(width);
-
-    SetFieldWidth();
-    if (ImGui::DragInt("Height", &height))
-        go.setHeight(height);
 }
 
 void PropertiesPanel::drawSpriteSettings(GameObject &go)
@@ -187,42 +150,72 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
     {
         if (ImGui::Selectable("Rigidbody2D"))
         {
-            go.addComponent<RigidBody2D>();
-            m_ctx.sceneManager.getActiveScene().getPhysics2d().registerRigidBody2D(go);
+            m_ctx.performSceneEdit(
+                [&]
+                {
+                    go.addComponent<RigidBody2D>();
+                    m_ctx.sceneManager.getActiveScene().getPhysics2d().registerRigidBody2D(go);
+                });
         }
 
         if (ImGui::Selectable("BoxCollider2D"))
         {
-            go.addComponent<BoxCollider2D>();
-            go.getComponent<BoxCollider2D>().size = {go.getWidth(), go.getHeight()};
-            m_ctx.sceneManager.getActiveScene().getPhysics2d().registerRigidBody2D(go);
+            m_ctx.performSceneEdit(
+                [&]
+                {
+                    EntityInfo &entityInfo = go.getComponent<EntityInfo>();
+                    go.addComponent<BoxCollider2D>();
+                    go.getComponent<BoxCollider2D>().size = {entityInfo.width, entityInfo.height};
+                    m_ctx.sceneManager.getActiveScene().getPhysics2d().registerRigidBody2D(go);
+                });
         }
 
         if (ImGui::Selectable("CircleCollider2D"))
         {
-            go.addComponent<CircleCollider2D>();
-            m_ctx.sceneManager.getActiveScene().getPhysics2d().registerRigidBody2D(go);
+            m_ctx.performSceneEdit(
+                [&]
+                {
+                    go.addComponent<CircleCollider2D>();
+                    m_ctx.sceneManager.getActiveScene().getPhysics2d().registerRigidBody2D(go);
+                });
         }
 
         if (ImGui::Selectable("Sensor2D"))
         {
-            go.addComponent<Sensor2D>();
-            m_ctx.sceneManager.getActiveScene().getPhysics2d().registerSensor2D(go);
+            m_ctx.performSceneEdit(
+                [&]
+                {
+                    go.addComponent<Sensor2D>();
+                    m_ctx.sceneManager.getActiveScene().getPhysics2d().registerSensor2D(go);
+                });
         }
 
         if (ImGui::Selectable("Animator"))
         {
-            go.addComponent<Animator>();
+            m_ctx.performSceneEdit(
+                [&]
+                {
+                    go.addComponent<Animator>();
+                });
         }
 
         if (ImGui::Selectable("Enemy Stats"))
         {
-            go.addComponent<EnemyState>();
+            m_ctx.performSceneEdit(
+                [&]
+                {
+                    go.addComponent<EnemyState>();
+                    go.getComponent<EnemyState>().startPosition = glm::vec3{go.getComponent<Transform>().position};
+                });
         }
 
         if (ImGui::Selectable("Patrol"))
         {
-            go.addComponent<Patrol>();
+            m_ctx.performSceneEdit(
+                [&]
+                {
+                    go.addComponent<Patrol>();
+                });
         }
         ImGui::EndCombo();
     }

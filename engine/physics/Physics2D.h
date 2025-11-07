@@ -24,7 +24,7 @@ public:
     Physics2D(Physics2D &&other) noexcept;
     Physics2D &operator=(Physics2D &&other) noexcept;
 
-    void simulate(float timestep, const std::vector<GameObject> &gameObjects); // Call each frame
+    void simulate(float timestep, entt::registry &registry);
 
     void registerRigidBody2D(GameObject &obj);
     void registerBoxCollider2D(GameObject &obj);
@@ -35,8 +35,8 @@ public:
     void setGravity(glm::vec2 gravity);
 
 private:
-    void processContactEvents();
-    void syncTransforms(const std::vector<GameObject> &gameObjects);
+    void processContactEvents(entt::registry &registry);
+    void syncTransforms(entt::registry &registry);
 
     void createBody(GameObject &obj);
 

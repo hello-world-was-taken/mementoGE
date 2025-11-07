@@ -1,7 +1,9 @@
-#include "core/Scene.h"
-#include "core/Animator.h"
-#include "core/SystemRegistry.h"
+#include "core/components/EntityInfo.h"
 #include "core/components/Sprite.h"
+
+#include "core/Animator.h"
+#include "core/Scene.h"
+#include "core/SystemRegistry.h"
 
 #include "util/Time.h"
 
@@ -21,51 +23,54 @@ Scene::Scene(const YAML::Node &&serializedScene) : m_registry{}
     deserialize(serializedScene);
 }
 
-Scene::Scene(Scene &&other) noexcept : m_registry{std::move(other.m_registry)}
+Scene::Scene(Scene &&other) noexcept
+    : m_registry(std::move(other.m_registry)), m_sceneCamera(std::move(other.m_sceneCamera)),
+      m_physicsWorld(std::move(other.m_physicsWorld)), m_textures(std::move(other.m_textures)),
+      m_systemNames(std::move(other.m_systemNames)), m_systems(std::move(other.m_systems)), mTag(std::move(other.mTag))
 {
-    m_sceneCamera = std::move(other.m_sceneCamera);
-    m_textures = std::move(other.m_textures);
-    m_systemNames = std::move(other.m_systemNames);
-    m_systems = std::move(other.m_systems);
-
-    mTag = std::move(other.mTag);
-
-    for (GameObject &g : other.m_gameObjects)
+    // Move game objects while rebinding registry
+    m_gameObjects.reserve(other.m_gameObjects.size());
+    for (auto &g : other.m_gameObjects)
     {
         g.updateEntityReference(m_registry);
         m_gameObjects.push_back(std::move(g));
     }
-
-    // setting other pointer variables to null_ptr
-    other.m_activeEntityId = entt::null;
-    other.m_registry = NULL;
-
-    // TODO: DO THIS IN A BETTER WAY
-    if (m_gameObjects.size())
-        m_activeEntityId = m_gameObjects.back().getEntityId();
-
-    m_physicsWorld = std::move(other.m_physicsWorld);
+    other.m_gameObjects.clear();
 }
 
 Scene &Scene::operator=(Scene &&other)
 {
-    m_registry = std::move(other.m_registry);
-    m_gameObjects = std::move(other.m_gameObjects);
-    m_sceneCamera = std::move(other.m_sceneCamera);
-    m_textures = std::move(other.m_textures);
-    m_systemNames = std::move(other.m_systemNames);
-    m_systems = std::move(other.m_systems);
-    m_activeEntityId = other.m_activeEntityId;
-    mTag = std::move(other.mTag);
+    if (this != &other)
+    {
+        m_registry = std::move(other.m_registry);
+        m_sceneCamera = std::move(other.m_sceneCamera);
+        m_physicsWorld = std::move(other.m_physicsWorld);
+        m_textures = std::move(other.m_textures);
+        m_systemNames = std::move(other.m_systemNames);
+        m_systems = std::move(other.m_systems);
+        mTag = std::move(other.mTag);
 
-    // setting other pointer variables to null_ptr
-    other.m_activeEntityId = entt::null;
+        // Move game objects while rebinding registry
+        m_gameObjects.clear();
+        m_gameObjects.reserve(other.m_gameObjects.size());
+        for (auto &g : other.m_gameObjects)
+        {
+            g.updateEntityReference(m_registry);
+            m_gameObjects.push_back(std::move(g));
+        }
+        other.m_gameObjects.clear();
 
+    }
     return *this;
 }
 
 Scene::~Scene()
 {
+    for (const GameObject &go : m_gameObjects)
+    {
+        m_registry.destroy(go.getEntityId());
+    }
+    m_registry.clear();
     std::cout << "Scene destructor called: " << mTag << std::endl;
 }
 
@@ -94,11 +99,11 @@ void Scene::update()
     {
         for (auto &system : m_systems)
         {
-            system->update(m_gameObjects);
+            system->update(m_registry);
         }
 
         // physics should be updated last as other systems make updates to it
-        m_physicsWorld.simulate(Time::deltaTime(), m_gameObjects);
+        m_physicsWorld.simulate(Time::deltaTime(), m_registry);
 
         animate();
     }
@@ -151,8 +156,17 @@ void Scene::animate()
 
 GameObject &Scene::addGameObject(unsigned int width, unsigned int height, std::string &&tag)
 {
-    auto go = GameObject{m_registry, std::move(tag), width, height};
-    m_activeEntityId = go.getEntityId();
+    auto go = GameObject{
+        m_registry,
+    };
+    // TODO: there are a lot of places where we add a component and then immediately update the values
+    // it'll be better to just return the component after adding it
+    go.addComponent<EntityInfo>();
+    EntityInfo &entityInfo = go.getComponent<EntityInfo>();
+    entityInfo.tag = std::move(tag);
+    entityInfo.width = std::move(width);
+    entityInfo.height = std::move(height);
+
     m_gameObjects.push_back(std::move(go));
 
     return m_gameObjects.back();
@@ -188,7 +202,8 @@ GameObject &Scene::getPlayer()
 {
     for (auto &go : m_gameObjects)
     {
-        if (go.getTag() == m_playerTag)
+        EntityInfo &entityInfo = go.getComponent<EntityInfo>();
+        if (entityInfo.tag == m_playerTag)
         {
             return go;
         }
@@ -206,7 +221,6 @@ void Scene::setGraivty(glm::vec2 gravity)
 {
     m_physicsWorld.setGravity(gravity);
 }
-
 
 const std::string &Scene::getTag() const
 {
@@ -280,8 +294,5 @@ void Scene::deserialize(const YAML::Node &in)
                 addSystem(system.as<std::string>());
             }
         }
-
-        // TODO: FIX THIS! Exception is thrown when scene.yaml doesn't have any objects
-        m_activeEntityId = m_gameObjects.back().getEntityId();
     }
 }

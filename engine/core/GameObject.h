@@ -3,6 +3,8 @@
 #include "core/components/BoxCollider2D.h"
 #include "core/components/RigidBody2D.h"
 #include "core/components/Sensor2D.h"
+#include "core/components/Transform.h"
+#include "core/components/EnemyState.h"
 
 #include "physics/Physics2D.h"
 
@@ -16,14 +18,16 @@
 #include <vector>
 #include <yaml-cpp/yaml.h>
 
+// TODO: can we make gameObject a light wrapper around entity?
+// maybe move the utilities to the scene?
 class GameObject
 {
 public:
-    GameObject(entt::registry &registry, std::string &&tag, unsigned int width = 0, unsigned int height = 0);
+    GameObject(entt::registry &registry);
     GameObject(entt::registry &registry, const YAML::Node &serializedGameObject, Physics2D &physics);
     GameObject(GameObject &&other);
     GameObject &operator=(GameObject &&other);
-    ~GameObject();
+    ~GameObject() = default;
 
     template <typename Component, typename... Args> void addComponent(Args &&...args);
     template <typename Component> bool hasComponent() const;
@@ -36,15 +40,6 @@ public:
         std::optional<std::reference_wrapper<Physics2D>> physics = std::nullopt);
 
     void destroy();
-
-    void setWidth(int width);
-    void setHeight(int height);
-
-    const int getWidth() const;
-    const int getHeight() const;
-
-    void setTag(const std::string &newTag);
-    const std::string &getTag() const;
 
     std::array<glm::vec3, 4> getQuad() const;
     std::array<glm::vec3, 4> getWorldCoordinateQuad() const;
@@ -67,11 +62,6 @@ private:
     // We take registry as a reference and internally use it as a pointer to support
     // assignment operation
     entt::registry *m_registry;
-
-    unsigned int m_width = 0;
-    unsigned int m_height = 0;
-
-    std::string mTag;
     entt::entity m_entity;
 };
 
@@ -143,6 +133,10 @@ void GameObject::deserializeComponent(const YAML::Node &serializedGameObject,
             {
                 physics->get().registerSensor2D(*this);
             }
+        }
+        else if constexpr (std::is_same_v<Component, EnemyState>)
+        {
+            getComponent<EnemyState>().startPosition = glm::vec3{getComponent<Transform>().position};
         }
     }
 }

@@ -1,12 +1,14 @@
 #include "engine/core/GameObject.h"
 #include "engine/core/ISystem.h"
 
+#include <entt/entt.hpp>
 #include <vector>
 
 class PlayerControllerSystem : public ISystem
 {
 public:
-    void update(std::vector<GameObject> &gameObjects) override;
+    void update(entt::registry &registry) override;
 
-    void processInput(GameObject &player);
+private:
+    void processInput(const entt::entity &entity, entt::registry &registry);
 };

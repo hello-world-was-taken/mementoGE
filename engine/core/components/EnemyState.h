@@ -1,5 +1,7 @@
 #pragma once
 
+#include <glm/glm.hpp>
+
 #ifdef EDITOR_BUILD
 #include <imgui.h>
 #include <yaml-cpp/yaml.h>
@@ -12,7 +14,8 @@ enum class AiState
     Chase,
     Fly,
     Attack,
-    Dead
+    Return,
+    Dead,
 };
 
 enum class EnemyType
@@ -25,7 +28,7 @@ enum class EnemyType
 struct EnemyState
 {
     EnemyType type = EnemyType::Minion;
-    AiState state = AiState::Idle;
+    AiState state = AiState::Patrol;
 
     float health = 100.0f;
     float moveSpeed = 50.0f;
@@ -35,6 +38,10 @@ struct EnemyState
 
     float detectionRadius = 150.0f;
     float attackRange = 30.0f;
+
+    // doesn't need to be serialized as at the start,
+    // it'll be the same as the entity's transfomr
+    glm::vec3 startPosition;
 
 #ifdef EDITOR_BUILD
     void serialize(YAML::Emitter &out);

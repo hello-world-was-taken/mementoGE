@@ -2,29 +2,38 @@
 
 #include "engine/core/Animator.h"
 #include "engine/core/EventHandler.h"
+#include "engine/core/components/EntityInfo.h"
 #include "engine/core/components/RigidBody2D.h"
 #include "engine/core/components/Sprite.h"
 #include "engine/util/Time.h"
 
 #include <algorithm>
+#include <entt/entt.hpp>
 
-void PlayerControllerSystem::update(std::vector<GameObject> &gameObjects)
+void PlayerControllerSystem::update(entt::registry &registry)
 {
-    // TODO: Improve this. Searching for the player on every update.
-    auto it = std::find_if(gameObjects.begin(), gameObjects.end(),
-        [](GameObject &go)
+    auto view = registry.view<EntityInfo>();
+    auto it = std::find_if(view.begin(), view.end(),
+        [&](const entt::entity &entity)
         {
-            return go.getTag() == "Player";
+            EntityInfo &entityInfo = registry.get<EntityInfo>(entity);
+            return entityInfo.tag == "Player";
         });
-    if (it == gameObjects.end())
+
+    if (it == view.end())
     {
+        std::cout << "Player not found" << std::endl;
         return;
     }
-    processInput(it[0]);
+    processInput(*it, registry);
 }
 
-void PlayerControllerSystem::processInput(GameObject &player)
+void PlayerControllerSystem::processInput(const entt::entity &entity, entt::registry &registry)
 {
+    Sprite &sprite = registry.get<Sprite>(entity);
+    Animator &animator = registry.get<Animator>(entity);
+    RigidBody2D &rb = registry.get<RigidBody2D>(entity);
+
     auto *eventHandler = EventHandler::instance();
     if (eventHandler->hasActiveEvent())
     {
@@ -36,21 +45,21 @@ void PlayerControllerSystem::processInput(GameObject &player)
 
             if (keyType == KeyType::RightArrow)
             {
-                player.getComponent<RigidBody2D>().velocity += glm::vec2{50.0f * Time::deltaTime(), 0.0f};
-                player.getComponent<Sprite>().flipX = true;
-                player.getComponent<Animator>().play("run");
+                rb.velocity += glm::vec2{50.0f * Time::deltaTime(), 0.0f};
+                sprite.flipX = true;
+                animator.play("run");
             }
             else if (keyType == KeyType::LeftArrow)
             {
-                player.getComponent<RigidBody2D>().velocity += glm::vec2{-50.0f * Time::deltaTime(), 0.0f};
-                player.getComponent<Sprite>().flipX = false;
-                player.getComponent<Animator>().play("run");
+                rb.velocity += glm::vec2{-50.0f * Time::deltaTime(), 0.0f};
+                sprite.flipX = false;
+                animator.play("run");
             }
         }
     }
     else
     {
-        player.getComponent<RigidBody2D>().velocity = glm::vec2{0.0f, 0.0f};
-        player.getComponent<Animator>().play("idle");
+        rb.velocity = glm::vec2{0.0f, 0.0f};
+        animator.play("idle");
     }
 }

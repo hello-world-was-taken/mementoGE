@@ -1,5 +1,7 @@
-#include "renderer/SelectionRenderer.h"
 #include "core/components/Transform.h"
+#include "core/components/EntityInfo.h"
+
+#include "renderer/SelectionRenderer.h"
 
 #include <functional>
 #include <glm/glm.hpp>
@@ -35,8 +37,9 @@ void SelectionRenderer::updateVertices(const std::vector<std::reference_wrapper<
         if (!obj.hasComponent<Transform>())
             continue;
 
+        EntityInfo &entityInfo = obj.getComponent<EntityInfo>();
         const Transform &transform = obj.getComponent<Transform>();
-        glm::vec2 size = {obj.getWidth(), obj.getHeight()}; // assumes you have this
+        glm::vec2 size = {entityInfo.width, entityInfo.height};
 
         float halfWidth = size.x * 0.5f;
         float halfHeight = size.y * 0.5f;

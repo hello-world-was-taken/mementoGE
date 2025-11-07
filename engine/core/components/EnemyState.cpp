@@ -9,6 +9,7 @@
 
 #ifdef EDITOR_BUILD
 static const char *EnemyTypeNames[] = {"Minion", "Elite", "Boss"};
+static const char *AiStateNames[] = {"Idle", "Patrol", "Chase", "Fly", "Attack", "Return", "Dead"};
 #endif
 
 #ifdef EDITOR_BUILD
@@ -61,6 +62,11 @@ void EnemyState::drawInspector()
             {
                 type = static_cast<EnemyType>(typeIndex);
             }
+
+            int aiStateIndex = static_cast<int>(state);
+            ImGui::Text("AI State:");
+            ImGui::SameLine();
+            ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "%s", AiStateNames[aiStateIndex]);
 
             SetFieldWidth();
             ImGui::DragFloat("Health", &health, 1.0f, 0.0f);

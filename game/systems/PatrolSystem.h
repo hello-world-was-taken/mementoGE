@@ -9,7 +9,7 @@
 class PatrolSystem : public ISystem
 {
   public:
-    void update(std::vector<GameObject> &gameObjects) override;
+      void update(entt::registry &registry) override;
 
   private:
     void updateAnimation();

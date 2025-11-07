@@ -64,16 +64,16 @@ public:
 private:
     bool m_play;
 
+    std::string mTag;
+    std::string m_playerTag = "Player";
+
     entt::registry m_registry;
     Physics2D m_physicsWorld{{0.0f, -9.8f}};
-    SceneCamera m_sceneCamera;
+    std::vector<std::shared_ptr<Texture>> m_textures;
 
+    SceneCamera m_sceneCamera;
     std::vector<GameObject> m_gameObjects;
+
     std::vector<std::unique_ptr<ISystem>> m_systems;
     std::vector<std::string> m_systemNames;
-    std::vector<std::shared_ptr<Texture>> m_textures;
-    // TODO: move this out to editor context
-    std::optional<entt::entity> m_activeEntityId;
-    std::string m_playerTag = "Player";
-    std::string mTag;
 };

@@ -27,7 +27,10 @@ enum class KeyType
     A,
     S,
     D,
-    Space
+    Z,
+    Y,
+    Cmd,
+    Space,
 };
 
 class Event
