@@ -59,14 +59,13 @@ void EditorLayer::update()
             glClearColor(0.41176f, 0.41176f, 0.41176f, 1.00f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+            m_ctx.sceneManager.update();
+
             // render grid
             renderGrid();
 
             m_physicsRenderer.render(m_ctx.editorCamera, m_ctx.sceneManager.getActiveScene().getGameObjects());
             m_selectionRenderer.render(m_ctx.editorCamera, m_ctx.selectedObjects);
-
-            // render scene
-            m_ctx.sceneManager.update();
             m_spriteRenderer.render(m_ctx.editorCamera, m_ctx.sceneManager.getActiveScene().getGameObjects());
 
             drawEditorUI();
