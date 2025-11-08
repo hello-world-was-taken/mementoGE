@@ -118,7 +118,7 @@ void SceneManager::serialize()
         scene.serialize(out);
     }
 
-    std::ofstream file(getFilePath("scene.yaml"), std::ios::out | std::ios::trunc);
+    std::ofstream file(getGameScenesPath("scene.yaml"), std::ios::out | std::ios::trunc);
     file << out.c_str();
 
     std::cout << "Serialized scene to scene.yaml" << std::endl;
@@ -126,7 +126,7 @@ void SceneManager::serialize()
 
 void SceneManager::deserialize()
 {
-    const std::string sceneFile = getFilePath("scene.yaml");
+    const std::string sceneFile = getGameScenesPath("scene.yaml");
 
     if (!std::filesystem::exists(sceneFile))
     {

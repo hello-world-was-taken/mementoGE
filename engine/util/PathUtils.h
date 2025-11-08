@@ -4,6 +4,7 @@
 #include <fstream>
 #include <nlohmann/json.h>
 #include <string>
+#include <iostream>
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -52,11 +53,25 @@ inline std::filesystem::path getFilePath(const std::string &relative)
     return base / relative;
 }
 
+inline std::filesystem::path getGameFilesPath(const std::string &relative)
+{
+    // auto base = getExecutableDir();
+    auto base = std::filesystem::path(std::string(GAME_ASSETS_DIR));
+    return base / relative;
+}
+
+inline std::filesystem::path getGameScenesPath(const std::string &relative)
+{
+    // auto base = getExecutableDir();
+    auto base = std::filesystem::path(std::string(GAME_SCENES_DIR));
+    return base / relative;
+}
+
 inline std::filesystem::path getTexturePathFromJson(const std::string &jsonTexturePath)
 {
     std::ifstream file(jsonTexturePath);
     nlohmann::json data;
     file >> data;
 
-    return getFilePath("texture") / data["meta"]["texture"];
+    return getGameFilesPath("texture") / data["meta"]["texture"];
 }

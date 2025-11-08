@@ -77,7 +77,7 @@ const Animation &AnimationMap::getAnimation(const std::string &name) const
         return it->second;
     }
 
-    throw std::runtime_error("Animation not found");
+    throw std::runtime_error("Animation not found: " + name);
 }
 
 std::map<std::string, Animation> &AnimationMap::getAnimations()

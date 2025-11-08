@@ -65,7 +65,7 @@ void TexturePanel::renderTextureAssetsListPanel()
     }
     // TODO: lets avoid this call on every render
     auto texturesJsonPath = getTextureFiles(
-        getFilePath("texture"));
+        getGameFilesPath("texture"));
     for (const auto &textureJsonPath : texturesJsonPath)
     {
         std::string fileName = fs::path(textureJsonPath).filename().string();
