@@ -84,17 +84,21 @@ add_library(${PROJECT_NAME} STATIC
 
 target_include_directories(${PROJECT_NAME}
     PUBLIC engine/
+    PUBLIC engine/lib
     PUBLIC engine/lib/glm
-    PRIVATE engine/lib/imgui
+    PUBLIC engine/lib/imgui
     PRIVATE engine/lib/ImguiFileDialog
 )
 
 target_link_libraries(${PROJECT_NAME}
     PUBLIC glfw yaml-cpp box2d
+    PUBLIC OpenGL::GL
+    PUBLIC GLEW::GLEW
     PRIVATE opengl
-    PRIVATE OpenGL::GL
-    PRIVATE GLEW::GLEW
 )
 
 # comment out for release builds
 target_compile_definitions(${PROJECT_NAME} PRIVATE EDITOR_BUILD)
+
+set(MEMENTO_ASSET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets/")
+target_compile_definitions(${PROJECT_NAME} PRIVATE MEMENTO_ASSET_DIR="${MEMENTO_ASSET_DIR}")

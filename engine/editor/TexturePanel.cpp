@@ -65,7 +65,7 @@ void TexturePanel::renderTextureAssetsListPanel()
     }
     // TODO: lets avoid this call on every render
     auto texturesJsonPath = getTextureFiles(
-        getFilePath("assets/texture"));
+        getFilePath("texture"));
     for (const auto &textureJsonPath : texturesJsonPath)
     {
         std::string fileName = fs::path(textureJsonPath).filename().string();
@@ -88,7 +88,7 @@ void TexturePanel::copyTextureToAssets()
         {
             std::string selectedPath = ImGuiFileDialog::Instance()->GetFilePathName();
             std::string fileName = ImGuiFileDialog::Instance()->GetCurrentFileName();
-            std::string destPath = getFilePath("assets/texture") / fileName;
+            std::string destPath = getFilePath("texture") / fileName;
 
             try
             {

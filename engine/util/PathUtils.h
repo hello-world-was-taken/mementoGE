@@ -2,9 +2,8 @@
 
 #include <filesystem>
 #include <fstream>
-#include <string>
 #include <nlohmann/json.h>
-
+#include <string>
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -48,7 +47,8 @@ inline std::filesystem::path getExecutableDir()
 
 inline std::filesystem::path getFilePath(const std::string &relative)
 {
-    auto base = getExecutableDir();
+    // auto base = getExecutableDir();
+    auto base = std::filesystem::path(std::string(MEMENTO_ASSET_DIR));
     return base / relative;
 }
 
@@ -58,5 +58,5 @@ inline std::filesystem::path getTexturePathFromJson(const std::string &jsonTextu
     nlohmann::json data;
     file >> data;
 
-    return getFilePath("assets/texture") / data["meta"]["texture"];
+    return getFilePath("texture") / data["meta"]["texture"];
 }

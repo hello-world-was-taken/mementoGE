@@ -83,8 +83,8 @@ void RenderBatch::setIndexData(std::vector<unsigned int> indices)
 
 void RenderBatch::render(const Camera &camera, int drawCount, std::shared_ptr<Shader> customShader)
 {
-    auto vertexShaderPath = getFilePath("assets/shader/vertex.shader");
-    auto fragmentShaderPath = getFilePath("assets/shader/fragment.shader");
+    auto vertexShaderPath = getFilePath("shader/vertex.shader");
+    auto fragmentShaderPath = getFilePath("shader/fragment.shader");
 
     std::shared_ptr<Shader>
         shader = customShader ? customShader

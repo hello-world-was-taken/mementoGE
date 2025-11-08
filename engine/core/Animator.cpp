@@ -14,7 +14,7 @@ void Animator::play(std::string name, bool loop)
     {
         std::cout << "Animation " << name << " not found" << std::endl;
         name = "android";
-        animationSourceMap[name] = getFilePath("assets/texture/android.json");
+        animationSourceMap[name] = getFilePath("texture/android.json");
     }
 
     std::string jsonPath = animationSourceMap[name];

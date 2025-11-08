@@ -24,7 +24,8 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 target_include_directories(${PROJECT_NAME}
-    PUBLIC ${CMAKE_SOURCE_DIR}/engine/lib
-    PUBLIC ${CMAKE_SOURCE_DIR}/engine/lib/glm
-    PUBLIC ${CMAKE_SOURCE_DIR}/engine/lib/yaml-cpp/include
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../lib
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../lib/glm
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../lib/yaml-cpp/include
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../lib/stb_image
 )

@@ -171,6 +171,6 @@ void ImGuiWrapper::SetupStyle()
     config.MergeMode = true;
     config.GlyphMinAdvanceX = 13.0f; // Use if you want to make the icon monospaced
     static const ImWchar icon_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
-    std::filesystem::path fontPath = getFilePath("assets/fonts/fontawesome-webfont.ttf");
+    std::filesystem::path fontPath = getFilePath("fonts/fontawesome-webfont.ttf");
     io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 13.0f, &config, icon_ranges);
 }
