@@ -77,31 +77,61 @@ void ScenePanel::renderPlayPause()
 
 void ScenePanel::renderMovementMode()
 {
-
-    auto EditorInteractionModeTab = [&](std::string_view label, EditorInteractionMode mode, std::string_view tooltip)
+    auto EditorInteractionModeSelectable =
+        [&](std::string_view label, EditorInteractionMode mode, std::string_view tooltip)
     {
-        if (ImGui::BeginTabItem(label.begin()))
+        auto selectedColor = ImVec4(0.314f, 0.447f, 0.655f, 1.00f);
+
+        // check current state (before clicking)
+        bool wasSelected = m_ctx.interactionMode == mode;
+
+        if (wasSelected)
         {
-            m_ctx.interactionMode = mode;
+            ImGui::PushStyleColor(ImGuiCol_Header, selectedColor);
+            ImGui::PushStyleColor(ImGuiCol_HeaderHovered, selectedColor);
+        }
 
-            if (ImGui::IsItemHovered() && tooltip.begin())
-                ImGui::SetTooltip("%s", tooltip.begin());
+        bool selectedOnClick = wasSelected;
+        if (ImGui::Selectable(label.begin(), &selectedOnClick, 0, ImVec2(13, 0)))
+        {
+            if (m_ctx.interactionMode == mode)
+            {
+                m_ctx.interactionMode = EditorInteractionMode::None; // Deselect
+            }
+            else
+            {
+                m_ctx.interactionMode = mode; // Select
+            }
+        }
 
-            ImGui::EndTabItem();
+        if (wasSelected)
+        {
+            ImGui::PopStyleColor(2);
+        }
+
+        if (ImGui::IsItemHovered() && !tooltip.empty())
+        {
+            ImGui::SetTooltip("%s", tooltip.begin());
         }
     };
 
     if (ImGui::BeginMenuBar())
     {
-        if (ImGui::BeginTabBar("ModeTabs", ImGuiTabBarFlags_NoCloseWithMiddleMouseButton))
-        {
-            EditorInteractionModeTab(
-                ICON_FA_MOUSE_POINTER, EditorInteractionMode::Selection, "Select and manipulate objects");
-            EditorInteractionModeTab(ICON_FA_HAND_PAPER_O, EditorInteractionMode::Gliding, "Glide through the scene");
-            EditorInteractionModeTab(ICON_FA_ARROWS_ALT, EditorInteractionMode::MoveObjects, "Move selected objects");
+        ImGui::Spacing();
 
-            ImGui::EndTabBar();
-        }
+        // Selection Mode (Default)
+        EditorInteractionModeSelectable(
+            ICON_FA_MOUSE_POINTER, EditorInteractionMode::Selection, "Select and manipulate objects");
+        ImGui::SameLine();
+
+        // Gliding/Panning Mode
+        EditorInteractionModeSelectable(
+            ICON_FA_HAND_PAPER_O, EditorInteractionMode::Gliding, "Glide through the scene");
+        ImGui::SameLine();
+
+        // Move Objects Mode
+        EditorInteractionModeSelectable(
+            ICON_FA_ARROWS_ALT, EditorInteractionMode::MoveObjects, "Move selected objects");
 
         ImGui::EndMenuBar();
     }

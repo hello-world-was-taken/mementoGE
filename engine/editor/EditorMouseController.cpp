@@ -84,6 +84,9 @@ void EditorMouseController::handleLeftClickSelection(EditorContext &ctx, Scene &
     auto clickedObject = getGameObjectAt(scene, mouseWorldPos);
     if (clickedObject)
     {
+        glm::vec3 objPos = clickedObject->get().getComponent<Transform>().position;
+        glm::vec2 dragOffset = glm::vec2(objPos.x, objPos.y) - mouseWorldPos;
+        ctx.selectedGameObjectsDragOffset.push_back(dragOffset);
         ctx.selectedObjects.push_back(clickedObject->get());
     }
 }
@@ -143,15 +146,14 @@ void EditorMouseController::handleDragging(
             moveCamera(ctx);
             break;
 
+        // NOTE: fall-through
         case EditorInteractionMode::MoveObjects:
+        default:
             ctx.performSceneEdit(
                 [&]
                 {
                     moveSelectedGameObjects(ctx, mouseWorldPos);
                 });
-            break;
-
-        default:
             break;
         }
     }

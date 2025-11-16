@@ -195,43 +195,114 @@ void EditorLayer::renderGrid()
 
 void EditorLayer::renderEditorProperties()
 {
-    ImGui::Begin("Editor Properties");
+    ImGui::Begin("Context");
+    ImGuiWrapper::Collapsable("Viewport",
+        [&]
+        {
+            ImGui::Text("Viewport Size: %.1f x %.1f", m_ctx.viewportWidth, m_ctx.viewportHeight);
+            ImGui::Text("Scene Panel Pos: (%.1f, %.1f)", m_ctx.scenePanelTopLeftPos.x, m_ctx.scenePanelTopLeftPos.y);
+            ImGui::Text("Scene Panel Size: (%.1f, %.1f)", m_ctx.scenePanelSize.x, m_ctx.scenePanelSize.y);
+            ImGui::Checkbox("Draw Grid", &m_ctx.drawGrid);
+            bool snap = (m_movementMode == MovementMode::SnapToGrid);
+            if (ImGui::Checkbox("Snap to Grid", &snap))
+            {
+                m_movementMode = snap ? MovementMode::SnapToGrid : MovementMode::Free;
+                m_drawGrid = snap;
+            }
+        });
 
-    bool snap = (m_movementMode == MovementMode::SnapToGrid);
-    if (ImGui::Checkbox("Snap to Grid", &snap))
-    {
-        m_movementMode = snap ? MovementMode::SnapToGrid : MovementMode::Free;
-        m_drawGrid = snap;
-    }
+    ImGuiWrapper::Collapsable("Interaction",
+        [&]
+        {
+            const char *modeNames[] = {"Selection", "Translate", "Rotate", "Scale"};
+            int mode = (int)m_ctx.interactionMode;
+            ImGui::Text("Interaction Mode: %s", modeNames[mode]);
 
-    // update mouse controller
-    m_ctx.editorMouseController.setMovementMode(m_movementMode);
+            ImGui::Separator();
 
-    ImGui::Separator();
-    ImGui::Checkbox("Draw Grid", &m_drawGrid);
+            ImGui::Text("Scene Image Hovered: %s", m_ctx.sceneImageHovered ? "True" : "False");
+            ImGui::Text("Properties Popup: %s", m_ctx.showPropertiesPopup ? "Open" : "Closed");
+            ImGui::Text("Create Object Popup: %s", m_ctx.showCreateObjectPopup ? "Open" : "Closed");
+        });
 
-    drawMouseDebugPanel();
+    ImGuiWrapper::Collapsable("Mouse / Coordinates",
+        [&]
+        {
+            ImVec2 mouseScreen = ImGui::GetMousePos();
+            glm::vec2 world = m_ctx.getWorldCoordinate({mouseScreen.x, mouseScreen.y});
+
+            ImGui::Text("Mouse Screen: (%.1f, %.1f)", mouseScreen.x, mouseScreen.y);
+            ImGui::Text("Mouse World:  (%.2f, %.2f)", world.x, world.y);
+        });
+
+    ImGuiWrapper::Collapsable("Selected Objects",
+        [&]
+        {
+            ImGui::Text("Count: %zu", m_ctx.selectedObjects.size());
+            if (!m_ctx.selectedObjects.empty())
+            {
+                for (size_t i = 0; i < m_ctx.selectedObjects.size(); i++)
+                {
+                    GameObject &obj = m_ctx.selectedObjects[i].get();
+                    EntityInfo &entityInfo = obj.getComponent<EntityInfo>();
+                    ImGui::Text("[%zu] %s (ID: %u)", i, entityInfo.tag.c_str(), (unsigned int)obj.getEntityId());
+                }
+            }
+        });
+
+    ImGuiWrapper::Collapsable("Camera",
+        [&]
+        {
+            ImGui::Text(
+                "Camera Pos: (%.2f, %.2f)", m_ctx.editorCamera.getPosition().x, m_ctx.editorCamera.getPosition().y);
+            ImGui::Text("Camera Zoom: %.2f", m_ctx.editorCamera.getZoom());
+        });
+
+    ImGuiWrapper::Collapsable("Scene History",
+        [&]
+        {
+            ImGui::Text("Can Undo: %s", m_ctx.sceneHistory.canUndo() ? "True" : "False");
+            ImGui::Text("Can Redo: %s", m_ctx.sceneHistory.canRedo() ? "True" : "False");
+            ImGui::Text("Snapshot Size: %u", m_ctx.sceneHistory.getStackSize());
+            ImGui::Text("Snapshot Idx: %u", m_ctx.sceneHistory.getCurrentIndex());
+        });
+
+    ImGuiWrapper::Collapsable("Framebuffer",
+        [&]
+        {
+            ImGui::Text("FB Size: %dx%d", (int)m_ctx.frameBuffer.getWidth(), (int)m_ctx.frameBuffer.getHeight());
+        });
 
     ImGui::End();
 }
 
+// TODO: Rename this to eventHandler or sth
+// Also, might be a good idea to move this to a separate thread
 void EditorLayer::undoRedoListener()
 {
+    // if it is play mode, the player controller should process events.
+    // as a side note, we may need to make the events last for the current frame
+    // and reset them on next render. Doing that will help us have multiple processors
+    if (m_ctx.sceneManager.m_isPlaying)
+    {
+        return;
+    }
+
     EventHandler *eventHandler = EventHandler::instance();
 
-    if (eventHandler->hasActiveEvent())
+    while (eventHandler->hasPendingEvents())
     {
-        Event e = eventHandler->getCurrentEvent();
-        if (e.getEventType() == EventType::Key)
+        Event e = eventHandler->nextEvent();
+        std::cout << e.name << ": " << e.cmd << std::endl;
+        if (e.type == EventType::Key || e.type == EventType::KeyRepeat)
         {
-            // TODO: add ctrl/cmd is down
-            if (e.getKeyType() == KeyType::Z)
+            if (e.keyType == KeyType::Z && e.cmd == true)
             {
                 m_ctx.selectedGameObjectsDragOffset.clear();
                 m_ctx.selectedObjects.clear();
                 m_ctx.sceneHistory.undo(m_ctx.sceneManager);
             }
-            else if (e.getKeyType() == KeyType::Y)
+            else if (e.keyType == KeyType::Y && e.cmd == true)
             {
                 m_ctx.selectedGameObjectsDragOffset.clear();
                 m_ctx.selectedObjects.clear();
@@ -241,6 +312,7 @@ void EditorLayer::undoRedoListener()
     }
 }
 
+// TODO: do we need this now?
 void EditorLayer::drawMouseDebugPanel()
 {
     ImGui::Separator();

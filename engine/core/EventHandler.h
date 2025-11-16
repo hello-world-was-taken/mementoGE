@@ -4,6 +4,7 @@
 #include "core/Event.h"
 
 #include <map>
+#include <queue>
 
 // TODO: handle mouse events here as well
 class EventHandler
@@ -11,9 +12,10 @@ class EventHandler
 public:
     static EventHandler *instance();
 
-    bool hasActiveEvent();
-    const Event getCurrentEvent();
     bool isKeyPressed(KeyType key) const;
+
+    bool hasPendingEvents() const;
+    Event nextEvent();
 
     // The idea here is we have an event listener for other windowing
     // systems we can add later as well. Then our window would choose
@@ -23,10 +25,6 @@ public:
 private:
     EventHandler() = default;
 
-    bool m_hasActiveEvent;
-
-    // used for game logic with single-action triggers. E.g: when user clicks on ESC
-    // to toggle settings/menu.
-    Event m_currentEvent{"None", EventType::None, false, KeyType::None};
+    std::queue<Event> m_eventQueue;
     std::unordered_map<KeyType, bool> m_keyStates;
 };

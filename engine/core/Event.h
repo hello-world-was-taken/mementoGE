@@ -33,19 +33,16 @@ enum class KeyType
     Space,
 };
 
-class Event
+struct Event
 {
-public:
-    Event(std::string name, EventType type, bool isPressed, KeyType keyType = KeyType::None);
+    std::string name;
+    EventType type; // keyboard, mouse, window events
+    bool isPressed;
+    KeyType keyType = KeyType::None;
 
-    const std::string &getEventName() const;
-    EventType getEventType() const; // keyboard, mouse, window events
-    bool isKeyPressEvent() const;
-    KeyType getKeyType() const;
-
-private:
-    std::string mEventName;
-    EventType mEventType;
-    bool mIsPressed;
-    KeyType mKeyType;
+    // modifiers, maybe we could use bit manipulation instead
+    bool cmd = false;
+    bool ctrl = false;
+    bool shift = false;
+    bool alt = false;
 };

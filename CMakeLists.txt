@@ -35,7 +35,6 @@ add_library(${PROJECT_NAME} STATIC
     engine/core/ImGuiWrapper.cpp
     engine/core/SpriteSheet.cpp
     engine/core/MouseListener.cpp
-    engine/core/Event.cpp
     engine/core/EventHandler.cpp
     engine/core/GlResourceManager.cpp
     engine/core/AnimationMap.cpp

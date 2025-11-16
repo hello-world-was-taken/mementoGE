@@ -45,6 +45,7 @@ void RigidBody2D::drawInspector()
     ImGuiWrapper::Collapsable("Rigidbody 2D",
         [&]
         {
+            ImGui::Text("Velocity: (%.2f, %.2f)", velocity.x, velocity.y);
             if (ImGui::BeginCombo("Rigidbody 2D Type", typeString.c_str()))
             {
                 if (ImGui::Selectable("Static"))

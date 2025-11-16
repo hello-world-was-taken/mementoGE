@@ -1,7 +1,7 @@
 #include "core/EventHandler.h"
 
-#include <iostream>
 #include <imgui.h>
+#include <iostream>
 
 EventHandler *EventHandler::instance()
 {
@@ -13,7 +13,11 @@ void EventHandler::glfwKeyCallBack(GLFWwindow *window, int key, int scancode, in
 {
     auto *listener = EventHandler::instance();
 
-    listener->m_hasActiveEvent = (action == GLFW_PRESS || action == GLFW_REPEAT);
+    // modifiers
+    bool cmd = mods & GLFW_MOD_SUPER;
+    bool ctrl = mods & GLFW_MOD_CONTROL;
+    bool shift = mods & GLFW_MOD_SHIFT;
+    bool alt = mods & GLFW_MOD_ALT;
 
     auto updateKey = [&](int glfwKey, KeyType type, const std::string &name)
     {
@@ -21,8 +25,8 @@ void EventHandler::glfwKeyCallBack(GLFWwindow *window, int key, int scancode, in
         {
             bool isPressed = (action != GLFW_RELEASE);
             const EventType eventType = (action == GLFW_REPEAT) ? EventType::KeyRepeat : EventType::Key;
-            listener->m_keyStates[type] = true;
-            listener->m_currentEvent = Event{name, eventType, isPressed, type};
+            listener->m_keyStates[type] = isPressed;
+            listener->m_eventQueue.push(Event{name, eventType, isPressed, type, cmd, ctrl, shift, alt});
         }
     };
 
@@ -45,14 +49,22 @@ void EventHandler::glfwKeyCallBack(GLFWwindow *window, int key, int scancode, in
     updateKey(GLFW_KEY_Z, KeyType::Z, "ZKey");
 }
 
-bool EventHandler::hasActiveEvent()
+bool EventHandler::hasPendingEvents() const
 {
-    return m_hasActiveEvent;
+    return !m_eventQueue.empty();
 }
 
-const Event EventHandler::getCurrentEvent()
+Event EventHandler::nextEvent()
 {
-    return m_currentEvent;
+    if (m_eventQueue.empty())
+    {
+        return Event{"None", EventType::None, false, KeyType::None};
+    }
+
+    Event event = m_eventQueue.front();
+    m_eventQueue.pop();
+
+    return event;
 }
 
 bool EventHandler::isKeyPressed(KeyType key) const

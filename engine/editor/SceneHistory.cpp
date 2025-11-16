@@ -56,5 +56,12 @@ void SceneHistory::applySnapshot(SceneManager &sceneManager)
     sceneManager.m_scenes.insert_or_assign(activeSceneName, std::move(node));
 }
 
-std::vector<std::string> m_snapshots;
-int m_currentIndex = -1;
+unsigned int SceneHistory::getStackSize()
+{
+    return m_snapshots.size();
+}
+
+unsigned int SceneHistory::getCurrentIndex()
+{
+    return m_currentIndex;
+}

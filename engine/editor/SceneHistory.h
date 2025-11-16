@@ -19,6 +19,8 @@ public:
     void undo(SceneManager &sceneManager);
     void redo(SceneManager &sceneManager);
 
+    unsigned int getStackSize();
+    unsigned int getCurrentIndex();
 private:
     void applySnapshot(SceneManager &sceneManager);
 
