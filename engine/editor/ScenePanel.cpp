@@ -139,8 +139,9 @@ void ScenePanel::renderMovementMode()
 
 void ScenePanel::renderSceneViewport()
 {
+    std::string title = m_ctx.sceneHistory.isDirty() ? "Scene*" : "Scene";
     ImGui::PushStyleColor(ImGuiCol_MenuBarBg, IM_COL32(0, 0, 0, 255));
-    ImGui::Begin("Scene", nullptr, ImGuiWindowFlags_MenuBar);
+    ImGui::Begin(title.c_str(), nullptr, ImGuiWindowFlags_MenuBar);
     ImGui::PopStyleColor();
 
     renderPlayPause();

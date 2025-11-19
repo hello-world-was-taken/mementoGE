@@ -8,22 +8,45 @@
 #include <vector>
 #include <yaml-cpp/yaml.h>
 
+void SceneHistory::pushInitialScene(Scene &scene)
+{
+    pushSnapshot(scene);
+}
+
 void SceneHistory::pushSnapshot(Scene &scene)
 {
     YAML::Emitter out;
     scene.serialize(out);
 
-    // Trim future states if user did undo then made a new edit
+    // If future snapshots exist, erase them
     if (m_currentIndex + 1 < (int)m_snapshots.size())
+    {
+        // If savedIndex was in the trimmed zone, scene becomes dirty (savedIndex invalid)
+        if (m_savedIndex > m_currentIndex)
+        {
+            m_savedIndex = -1;
+        }
+
         m_snapshots.erase(m_snapshots.begin() + m_currentIndex + 1, m_snapshots.end());
+    }
 
     m_snapshots.push_back(out.c_str());
     m_currentIndex = (int)m_snapshots.size() - 1;
 }
 
+void SceneHistory::markSaved()
+{
+    m_savedIndex = m_currentIndex;
+}
+
+bool SceneHistory::isDirty() const
+{
+    return m_currentIndex != m_savedIndex;
+}
+
 bool SceneHistory::canUndo() const
 {
-    return m_currentIndex > 0;
+    return m_currentIndex > 0; // 0's idx will always be the starting scene
 }
 bool SceneHistory::canRedo() const
 {

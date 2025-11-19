@@ -45,7 +45,7 @@ private:
 
     std::vector<std::string> getTextureFiles(const std::string &folderPath);
 
-    void undoRedoListener();
+    void handleEditorShortcuts();
 
 private:
     EditorContext m_ctx;

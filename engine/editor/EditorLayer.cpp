@@ -50,7 +50,7 @@ void EditorLayer::update()
     ImGuiWrapper::ImGuiFrame(
         [&]()
         {
-            undoRedoListener();
+            handleEditorShortcuts();
 
             m_ctx.frameBuffer.resize();
             m_ctx.frameBuffer.bind();
@@ -276,9 +276,8 @@ void EditorLayer::renderEditorProperties()
     ImGui::End();
 }
 
-// TODO: Rename this to eventHandler or sth
-// Also, might be a good idea to move this to a separate thread
-void EditorLayer::undoRedoListener()
+// TODO, might be a good idea to move this to a separate thread
+void EditorLayer::handleEditorShortcuts()
 {
     // if it is play mode, the player controller should process events.
     // as a side note, we may need to make the events last for the current frame
@@ -296,17 +295,28 @@ void EditorLayer::undoRedoListener()
         std::cout << e.name << ": " << e.cmd << std::endl;
         if (e.type == EventType::Key || e.type == EventType::KeyRepeat)
         {
+            // Undo
             if (e.keyType == KeyType::Z && e.cmd == true)
             {
                 m_ctx.selectedGameObjectsDragOffset.clear();
                 m_ctx.selectedObjects.clear();
                 m_ctx.sceneHistory.undo(m_ctx.sceneManager);
             }
+
+            // Redo
             else if (e.keyType == KeyType::Y && e.cmd == true)
             {
                 m_ctx.selectedGameObjectsDragOffset.clear();
                 m_ctx.selectedObjects.clear();
                 m_ctx.sceneHistory.redo(m_ctx.sceneManager);
+            }
+
+            // Save
+            else if (e.keyType == KeyType::S && e.cmd == true && (e.cmd || e.cmd))
+            {
+                m_ctx.sceneManager.serialize(); // write to disk
+                m_ctx.sceneHistory.markSaved(); // clear the "*" dirty flag
+                std::cout << "Scene saved.\n";
             }
         }
     }

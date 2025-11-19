@@ -5,6 +5,7 @@
 #include "core/components/Sensor2D.h"
 #include "core/components/Transform.h"
 #include "core/components/EnemyState.h"
+#include "core/components/EntityInfo.h"
 
 #include "physics/Physics2D.h"
 
@@ -72,6 +73,10 @@ template <typename Component, typename... Args> void GameObject::addComponent(Ar
 
 template <typename Component> bool GameObject::hasComponent() const
 {
+    // std::cout << "has component called for" << typeid(Component).name() << " registry destroyed: " << (m_registry == nullptr) << std::endl;
+    // auto &test = m_registry->get<EntityInfo>(m_entity);
+    // std::cout << "entity is valid: " << m_registry->valid(m_entity) << std::endl;
+    // std::cout << "entity name: " << test.tag << std::endl;
     return m_registry->all_of<Component>(m_entity);
 }
 
