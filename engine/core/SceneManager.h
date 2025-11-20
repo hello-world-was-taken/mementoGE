@@ -2,7 +2,6 @@
 
 #include "core/GLIncludes.h"
 #include "core/Scene.h"
-#include "core/Window.h"
 
 #include <map>
 #include <memory>
@@ -11,7 +10,7 @@
 class SceneManager
 {
 public:
-    SceneManager(Window *window);
+    SceneManager();
     ~SceneManager();
 
     void update();
@@ -39,5 +38,4 @@ public:
     std::map<std::string, Scene> m_scenes;
 private:
     std::optional<std::string> m_activeSceneName;
-    Window *m_window = nullptr;
 };

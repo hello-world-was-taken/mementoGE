@@ -2,9 +2,9 @@
 
 #include "core/Camera.h"
 #include "core/EventHandler.h"
+#include "core/BaseGame.h"
 #include "core/MovementMode.h"
 #include "core/Scene.h"
-#include "core/SceneManager.h"
 #include "core/Window.h"
 
 #include "editor/EditorContext.h"
@@ -25,7 +25,7 @@
 class EditorLayer
 {
 public:
-    EditorLayer(Window &window);
+    EditorLayer(BaseGame &game);
     ~EditorLayer();
 
     void update();
@@ -48,6 +48,7 @@ private:
     void handleEditorShortcuts();
 
 private:
+    BaseGame &m_game;
     EditorContext m_ctx;
     ScenePanel m_scenePanel;
     SceneHierarchyPanel m_sceneHierarchyPanel;

@@ -11,8 +11,7 @@
 #include <fstream>
 #include <stdexcept>
 
-SceneManager::SceneManager(Window *window)
-    : m_window{window}
+SceneManager::SceneManager()
 {
     // systems must be registed first
     // deserialize();

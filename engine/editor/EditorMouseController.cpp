@@ -161,6 +161,13 @@ void EditorMouseController::handleDragging(
 
 void EditorMouseController::moveSelectedGameObjects(EditorContext &ctx, glm::vec2 mouseWorldPos)
 {
+    if (ctx.selectedObjects.size() != ctx.selectedGameObjectsDragOffset.size())
+    {
+        std::cout << "moveSelectedGameObjects invalid state" << std::endl;
+        std::cout << ctx.selectedObjects.size() << " : " << ctx.selectedGameObjectsDragOffset.size() << std::endl;
+        return;
+    }
+
     for (int i = 0; i < ctx.selectedObjects.size(); ++i)
     {
         const auto &go = ctx.selectedObjects[i];

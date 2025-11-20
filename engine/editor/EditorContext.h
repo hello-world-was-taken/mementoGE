@@ -17,8 +17,8 @@
 
 struct EditorContext
 {
+    SceneManager &sceneManager;
     Window &window;
-    SceneManager sceneManager{&window};
 
     float viewportWidth = WINDOW_WIDTH;
     float viewportHeight = WINDOW_HEIGHT;
@@ -37,7 +37,7 @@ struct EditorContext
     ImVec2 scenePanelTopLeftPos;
     ImVec2 scenePanelSize;
 
-    EditorInteractionMode interactionMode = EditorInteractionMode::Selection;
+    EditorInteractionMode interactionMode = EditorInteractionMode::None;
     std::vector<std::reference_wrapper<GameObject>> selectedObjects;
     std::vector<glm::vec2> selectedGameObjectsDragOffset;
 

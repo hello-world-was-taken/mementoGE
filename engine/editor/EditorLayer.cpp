@@ -6,6 +6,7 @@
 #include "core/components/CircleCollider2D.h"
 #include "core/components/RigidBody2D.h"
 
+#include "core/BaseGame.h"
 #include "core/Camera.h"
 #include "core/EventHandler.h"
 #include "core/ImGuiWrapper.h"
@@ -27,12 +28,18 @@
 
 namespace fs = std::filesystem;
 
-EditorLayer::EditorLayer(Window &window)
-    : m_ctx{window}, m_scenePanel{m_ctx}, m_sceneHierarchyPanel{m_ctx}, m_texturePanel{m_ctx},
-      m_propertiesPanel{m_ctx, m_texturePanel},
+EditorLayer::EditorLayer(BaseGame &game)
+    : m_game{game}, m_ctx{game.m_sceneManager, game.m_window}, m_scenePanel{m_ctx}, m_sceneHierarchyPanel{m_ctx},
+      m_texturePanel{m_ctx}, m_propertiesPanel{m_ctx, m_texturePanel},
       m_gridRenderer{static_cast<int>(LOGICAL_WIDTH), static_cast<int>(LOGICAL_HEIGHT), 32, m_ctx.editorCamera}
 {
     ImGuiWrapper::setupImgui(m_ctx.window);
+    game.m_window.setupCallBack();
+
+    game.onStart();
+    m_ctx.sceneHistory.pushInitialScene(m_ctx.sceneManager.getActiveScene());
+
+    update();
 }
 
 EditorLayer::~EditorLayer()
@@ -47,30 +54,40 @@ EditorContext &EditorLayer::getEditorContext()
 
 void EditorLayer::update()
 {
-    ImGuiWrapper::ImGuiFrame(
-        [&]()
+    m_game.m_window.run(
+        [&]
         {
-            handleEditorShortcuts();
+            ImGuiWrapper::ImGuiFrame(
+                [&]()
+                {
+                    handleEditorShortcuts();
 
-            m_ctx.frameBuffer.resize();
-            m_ctx.frameBuffer.bind();
+                    m_ctx.frameBuffer.resize();
+                    m_ctx.frameBuffer.bind();
 
-            // clearing our off screen frame buffer before each render
-            glClearColor(0.41176f, 0.41176f, 0.41176f, 1.00f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                    // clearing our off screen frame buffer before each render
+                    glClearColor(0.41176f, 0.41176f, 0.41176f, 1.00f);
+                    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            m_ctx.sceneManager.update();
+                    m_ctx.sceneManager.update();
 
-            // render grid
-            renderGrid();
+                    // render grid
+                    renderGrid();
 
-            m_physicsRenderer.render(m_ctx.editorCamera, m_ctx.sceneManager.getActiveScene().getGameObjects());
-            m_selectionRenderer.render(m_ctx.editorCamera, m_ctx.selectedObjects);
-            m_spriteRenderer.render(m_ctx.editorCamera, m_ctx.sceneManager.getActiveScene().getGameObjects());
+                    m_physicsRenderer.render(m_ctx.editorCamera, m_ctx.sceneManager.getActiveScene().getGameObjects());
+                    m_selectionRenderer.render(m_ctx.editorCamera, m_ctx.selectedObjects);
+                    m_spriteRenderer.render(m_ctx.editorCamera, m_ctx.sceneManager.getActiveScene().getGameObjects());
 
-            drawEditorUI();
+                    drawEditorUI();
 
-            m_ctx.frameBuffer.unbind();
+                    m_ctx.frameBuffer.unbind();
+                });
+
+            MouseListener::instance()->beginFrame();
+        },
+        [&]
+        {
+            // cleanup function
         });
 }
 
