@@ -36,88 +36,134 @@ void EditorMouseController::update(EditorContext &ctx)
     Scene &scene = ctx.sceneManager.getActiveScene();
     EditorCamera &editorCamera = ctx.editorCamera;
 
-    auto &gameObjects = scene.getGameObjects();
-
     MouseListener *mouse = MouseListener::instance();
     glm::vec2 mouseWorldPos = ctx.getWorldCoordinate(mouse->getMouseScreenPosition());
     glm::vec2 dragStartPos = ctx.getWorldCoordinate(mouse->getDragStart());
 
-    handleLeftClickSelection(ctx, scene, mouseWorldPos);
-    handleRightClickPopup(ctx, scene, mouseWorldPos);
+    handleSingleLeftClick(ctx, scene, mouseWorldPos);
+    handleRightClick(ctx, scene, mouseWorldPos);
     handleDragging(ctx, scene, dragStartPos, mouseWorldPos);
     handleZoom(ctx);
 }
 
-void EditorMouseController::handleLeftClickSelection(EditorContext &ctx, Scene &scene, glm::vec2 mouseWorldPos)
+void EditorMouseController::handleSingleLeftClick(EditorContext &ctx, Scene &scene, glm::vec2 mouseWorldPos)
 {
     MouseListener *mouse = MouseListener::instance();
+
     if (!mouse->wasMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT))
     {
         return;
     }
 
-    bool inSelectionMode = ctx.interactionMode == EditorInteractionMode::Selection;
-    if (inSelectionMode)
+    if (isInSelectionMode(ctx))
     {
         return;
     }
 
-    // On the first left button click store the objects' offset
-    bool storeObjectOffsets = ctx.interactionMode == EditorInteractionMode::MoveObjects;
-    if (storeObjectOffsets)
+    if (isMovementMode(ctx))
     {
-        ctx.selectedGameObjectsDragOffset.clear();
-
-        for (GameObject &obj : ctx.selectedObjects)
-        {
-            glm::vec3 objPos = obj.getComponent<Transform>().position;
-            glm::vec2 dragOffset = glm::vec2(objPos.x, objPos.y) - mouseWorldPos;
-            ctx.selectedGameObjectsDragOffset.push_back(dragOffset);
-        }
-
+        storeDragOffsets(ctx, mouseWorldPos);
         return;
     }
 
-    ctx.selectedObjects.clear();
+    clearSelection(ctx);
+    selectClickedObject(ctx, scene, mouseWorldPos);
+}
+
+bool EditorMouseController::isInSelectionMode(const EditorContext &ctx) const
+{
+    return ctx.interactionMode == EditorInteractionMode::Selection;
+}
+
+bool EditorMouseController::isMovementMode(const EditorContext &ctx) const
+{
+    return ctx.interactionMode == EditorInteractionMode::MoveObjects;
+}
+
+// On the first left button click store the objects' offset
+void EditorMouseController::storeDragOffsets(EditorContext &ctx, glm::vec2 mouseWorldPos)
+{
     ctx.selectedGameObjectsDragOffset.clear();
 
-    auto clickedObject = getGameObjectAt(scene, mouseWorldPos);
-    if (clickedObject)
+    for (GameObject &obj : ctx.selectedObjects)
     {
-        glm::vec3 objPos = clickedObject->get().getComponent<Transform>().position;
-        glm::vec2 dragOffset = glm::vec2(objPos.x, objPos.y) - mouseWorldPos;
-        ctx.selectedGameObjectsDragOffset.push_back(dragOffset);
-        ctx.selectedObjects.push_back(clickedObject->get());
+        glm::vec3 objPos = obj.getComponent<Transform>().position;
+        glm::vec2 offset = glm::vec2(objPos.x, objPos.y) - mouseWorldPos;
+        ctx.selectedGameObjectsDragOffset.push_back(offset);
     }
 }
 
-void EditorMouseController::handleRightClickPopup(EditorContext &ctx, Scene &scene, glm::vec2 mouseWorldPos)
+void EditorMouseController::clearSelection(EditorContext &ctx)
+{
+    ctx.selectedObjects.clear();
+    ctx.selectedGameObjectsDragOffset.clear();
+}
+
+void EditorMouseController::selectClickedObject(EditorContext &ctx, Scene &scene, glm::vec2 mouseWorldPos)
+{
+    auto clickedObject = getGameObjectAt(scene, mouseWorldPos);
+    if (!clickedObject)
+    {
+        return;
+    }
+
+    GameObject &obj = clickedObject->get();
+    glm::vec3 objPos = obj.getComponent<Transform>().position;
+
+    glm::vec2 dragOffset = glm::vec2(objPos.x, objPos.y) - mouseWorldPos;
+
+    ctx.selectedGameObjectsDragOffset.push_back(dragOffset);
+    ctx.selectedObjects.push_back(obj);
+}
+
+void EditorMouseController::handleRightClick(EditorContext &ctx, Scene &scene, glm::vec2 mouseWorldPos)
 {
     MouseListener *mouse = MouseListener::instance();
     if (!mouse->wasMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
+    {
         return;
+    }
 
-    ctx.selectedObjects.clear();
-    ctx.showPropertiesPopup = false;
+    resetRightClickState(ctx);
 
-    ImVec2 mousePos = ImGui::GetMousePos();
+    ImVec2 mouseScreenPos = ImGui::GetMousePos();
     auto clickedObject = getGameObjectAt(scene, mouseWorldPos);
 
     if (clickedObject)
     {
-        ctx.selectedObjects.push_back(clickedObject->get());
-        ctx.showPropertiesPopup = true;
-
-        ctx.propertiesPopupPos = ImVec2(mousePos.x + 15, mousePos.y);
-        ImGui::OpenPopup("PropertiesPopup");
+        handleRightClickOnObject(ctx, clickedObject->get(), mouseScreenPos);
     }
     else
     {
-        ctx.showCreateObjectPopup = true;
-        ctx.createObjectPopupPos = ImVec2(mousePos.x, mousePos.y);
-        ctx.createObjectWorldPos = mouseWorldPos;
-        ImGui::OpenPopup("CreateObjectPopup");
+        handleRightClickOnEmpty(ctx, mouseWorldPos, mouseScreenPos);
     }
+}
+
+void EditorMouseController::resetRightClickState(EditorContext &ctx)
+{
+    ctx.selectedObjects.clear();
+    ctx.selectedGameObjectsDragOffset.clear();
+    ctx.showPropertiesPopup = false;
+}
+
+void EditorMouseController::handleRightClickOnObject(EditorContext &ctx, GameObject &obj, const ImVec2 &mouseScreenPos)
+{
+    ctx.selectedObjects.push_back(obj);
+    ctx.showPropertiesPopup = true;
+
+    ctx.propertiesPopupPos = ImVec2(mouseScreenPos.x + 15, mouseScreenPos.y);
+    ImGui::OpenPopup("PropertiesPopup");
+}
+
+void EditorMouseController::handleRightClickOnEmpty(
+    EditorContext &ctx, glm::vec2 mouseWorldPos, const ImVec2 &mouseScreenPos)
+{
+    ctx.showCreateObjectPopup = true;
+
+    ctx.createObjectPopupPos = mouseScreenPos;
+    ctx.createObjectWorldPos = mouseWorldPos;
+
+    ImGui::OpenPopup("CreateObjectPopup");
 }
 
 void EditorMouseController::handleZoom(EditorContext &ctx)

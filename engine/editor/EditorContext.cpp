@@ -100,3 +100,26 @@ glm::vec2 EditorContext::localToScreen(glm::vec2 localPos)
 
     return screenPos;
 }
+
+SceneHistory &EditorContext::getSelectedSceneHistory()
+{
+    return sceneHistoryByScenePathMap[selectedScenePath];
+}
+
+void EditorContext::snapshotScene()
+{
+    Scene &scene = sceneManager.getActiveScene();
+    getSelectedSceneHistory().pushSnapshot(scene);
+}
+
+void EditorContext::startEdit()
+{
+    editingInProgress = true;
+    snapshotScene();
+}
+
+void EditorContext::endEdit()
+{
+    editingInProgress = false;
+    snapshotScene();
+}

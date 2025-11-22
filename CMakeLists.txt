@@ -53,6 +53,7 @@ add_library(${PROJECT_NAME} STATIC
     engine/editor/EditorMouseController.cpp
     engine/editor/EditorCamera.cpp
     engine/editor/SceneHistory.cpp
+    engine/editor/SceneListPanel.cpp
 
     # renderer
     engine/renderer/RenderBatch.cpp

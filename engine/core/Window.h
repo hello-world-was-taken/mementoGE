@@ -25,7 +25,6 @@ public:
     static float getWindowTime();
 
     void initializeWindow();
-    void run(const std::function<void()> &frameFunc, const std::function<void()> &cleanupFunc);
 
     void setupCallBack() const;
     void setUserData(EditorCamera *c);

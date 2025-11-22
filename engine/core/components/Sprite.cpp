@@ -1,5 +1,12 @@
 #include "core/components/Sprite.h"
 
+#ifdef EDITOR_BUILD
+#include "core/ImGuiWrapper.h"
+#include "core/GlResourceManager.h"
+
+#include <imgui.h>
+#endif
+
 std::array<glm::vec2, 4> Sprite::getNormalizedTextureCoordinates() const
 {
     if (!texture)
@@ -30,8 +37,6 @@ std::array<glm::vec2, 4> Sprite::getNormalizedTextureCoordinates() const
 }
 
 #ifdef EDITOR_BUILD
-#include "core/GlResourceManager.h"
-
 void Sprite::serialize(YAML::Emitter &out)
 {
     out << YAML::Key << "Sprite";

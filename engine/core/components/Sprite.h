@@ -7,7 +7,6 @@
 
 #ifdef EDITOR_BUILD
 #include <yaml-cpp/yaml.h>
-#include <imgui.h>
 #endif
 
 struct Sprite

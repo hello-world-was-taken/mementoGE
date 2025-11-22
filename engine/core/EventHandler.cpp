@@ -1,6 +1,5 @@
 #include "core/EventHandler.h"
 
-#include <imgui.h>
 #include <iostream>
 
 EventHandler *EventHandler::instance()

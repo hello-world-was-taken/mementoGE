@@ -139,7 +139,13 @@ void ScenePanel::renderMovementMode()
 
 void ScenePanel::renderSceneViewport()
 {
-    std::string title = m_ctx.sceneHistory.isDirty() ? "Scene*" : "Scene";
+    // TODO: this needs to be worked on more. At the moment
+    // we are storing the same scene's history in two d/t
+    // sceneHistorys as the updates happen on the active scene
+    // in SceneManager. All updates to c_ctx.sceneManager.getActive()
+    // should be updated at the editor level. SceneManager should only
+    // be concerned with gameplay. Not editor updates.
+    std::string title = m_ctx.getSelectedSceneHistory().isDirty() ? "Scene*" : "Scene";
     ImGui::PushStyleColor(ImGuiCol_MenuBarBg, IM_COL32(0, 0, 0, 255));
     ImGui::Begin(title.c_str(), nullptr, ImGuiWindowFlags_MenuBar);
     ImGui::PopStyleColor();

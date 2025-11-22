@@ -7,6 +7,7 @@
 #include <yaml-cpp/yaml.h>
 #endif
 
+#ifdef EDITOR_BUILD
 void Patrol::serialize(YAML::Emitter &out)
 {
     out << YAML::Key << "Patrol" << YAML::Value << YAML::BeginMap;
@@ -30,7 +31,6 @@ void Patrol::deserialize(const YAML::Node &node)
     direction = data["direction"].as<bool>();
 }
 
-#ifdef EDITOR_BUILD
 inline void SetFieldWidth(float w = 120.0f)
 {
     ImGui::SetNextItemWidth(w);

@@ -4,7 +4,6 @@
 #include <glm/glm.hpp>
 
 #ifdef EDITOR_BUILD
-#include <imgui.h>
 #include <yaml-cpp/yaml.h>
 #endif
 

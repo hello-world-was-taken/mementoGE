@@ -64,6 +64,10 @@ inline std::filesystem::path getGameScenesPath(const std::string &relative)
 {
     // auto base = getExecutableDir();
     auto base = std::filesystem::path(std::string(GAME_SCENES_DIR));
+    if (relative.empty())
+    {
+        return base;
+    }
     return base / relative;
 }
 

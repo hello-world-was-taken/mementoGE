@@ -12,6 +12,7 @@
 #include "editor/SceneHierarchyPanel.h"
 #include "editor/ScenePanel.h"
 #include "editor/TexturePanel.h"
+#include "editor/SceneListPanel.h"
 
 #include "renderer/GridRenderer.h"
 #include "renderer/PhysicsRenderer.h"
@@ -28,13 +29,15 @@ public:
     EditorLayer(BaseGame &game);
     ~EditorLayer();
 
-    void update();
+    void run();
     void drawEditorUI(); // Render ImGui windows here
 
     void setScene(std::shared_ptr<Scene> scene);
     EditorContext &getEditorContext();
 
 private:
+    void runLoop();
+    void updateFrame();
     // imgui panels
     void renderGrid();
     void renderPerformancePanel();
@@ -50,10 +53,11 @@ private:
 private:
     BaseGame &m_game;
     EditorContext m_ctx;
-    ScenePanel m_scenePanel;
-    SceneHierarchyPanel m_sceneHierarchyPanel;
-    TexturePanel m_texturePanel;
-    PropertiesPanel m_propertiesPanel;
+    ScenePanel m_scenePanel{m_ctx};
+    SceneHierarchyPanel m_sceneHierarchyPanel{m_ctx};
+    TexturePanel m_texturePanel{m_ctx};
+    PropertiesPanel m_propertiesPanel{m_ctx, m_texturePanel};
+    SceneListPanel m_sceneListPanel{m_ctx};
 
     MovementMode m_movementMode = MovementMode::Free;
     bool m_drawGrid = false;

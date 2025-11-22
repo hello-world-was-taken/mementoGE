@@ -29,17 +29,14 @@
 namespace fs = std::filesystem;
 
 EditorLayer::EditorLayer(BaseGame &game)
-    : m_game{game}, m_ctx{game.m_sceneManager, game.m_window}, m_scenePanel{m_ctx}, m_sceneHierarchyPanel{m_ctx},
-      m_texturePanel{m_ctx}, m_propertiesPanel{m_ctx, m_texturePanel},
+    : m_game{game}, m_ctx{game.m_sceneManager, game.m_window},
       m_gridRenderer{static_cast<int>(LOGICAL_WIDTH), static_cast<int>(LOGICAL_HEIGHT), 32, m_ctx.editorCamera}
 {
     ImGuiWrapper::setupImgui(m_ctx.window);
     game.m_window.setupCallBack();
 
     game.onStart();
-    m_ctx.sceneHistory.pushInitialScene(m_ctx.sceneManager.getActiveScene());
-
-    update();
+    m_ctx.getSelectedSceneHistory().pushInitialScene(m_ctx.sceneManager.getActiveScene());
 }
 
 EditorLayer::~EditorLayer()
@@ -52,43 +49,57 @@ EditorContext &EditorLayer::getEditorContext()
     return m_ctx;
 }
 
-void EditorLayer::update()
+void EditorLayer::run()
 {
-    m_game.m_window.run(
-        [&]
+    runLoop();
+}
+
+void EditorLayer::updateFrame()
+{
+    ImGuiWrapper::ImGuiFrame(
+        [&]()
         {
-            ImGuiWrapper::ImGuiFrame(
-                [&]()
-                {
-                    handleEditorShortcuts();
+            handleEditorShortcuts();
 
-                    m_ctx.frameBuffer.resize();
-                    m_ctx.frameBuffer.bind();
+            m_ctx.frameBuffer.resize();
+            m_ctx.frameBuffer.bind();
 
-                    // clearing our off screen frame buffer before each render
-                    glClearColor(0.41176f, 0.41176f, 0.41176f, 1.00f);
-                    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            // clearing our off screen frame buffer before each render
+            glClearColor(0.41176f, 0.41176f, 0.41176f, 1.00f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-                    m_ctx.sceneManager.update();
+            m_ctx.sceneManager.update();
 
-                    // render grid
-                    renderGrid();
+            // render grid
+            renderGrid();
 
-                    m_physicsRenderer.render(m_ctx.editorCamera, m_ctx.sceneManager.getActiveScene().getGameObjects());
-                    m_selectionRenderer.render(m_ctx.editorCamera, m_ctx.selectedObjects);
-                    m_spriteRenderer.render(m_ctx.editorCamera, m_ctx.sceneManager.getActiveScene().getGameObjects());
+            m_physicsRenderer.render(m_ctx.editorCamera, m_ctx.sceneManager.getActiveScene().getGameObjects());
+            m_selectionRenderer.render(m_ctx.editorCamera, m_ctx.selectedObjects);
+            m_spriteRenderer.render(m_ctx.editorCamera, m_ctx.sceneManager.getActiveScene().getGameObjects());
 
-                    drawEditorUI();
+            drawEditorUI();
 
-                    m_ctx.frameBuffer.unbind();
-                });
-
-            MouseListener::instance()->beginFrame();
-        },
-        [&]
-        {
-            // cleanup function
+            m_ctx.frameBuffer.unbind();
         });
+
+    MouseListener::instance()->beginFrame();
+}
+
+void EditorLayer::runLoop()
+{
+    glfwSwapInterval(1);
+
+    while (!glfwWindowShouldClose(m_game.m_window.getGlfwWindow()))
+    {
+        Time::update();
+        glfwPollEvents();
+
+        updateFrame();
+
+        glfwSwapBuffers(m_game.m_window.getGlfwWindow());
+    }
+
+    glfwTerminate();
 }
 
 void EditorLayer::drawEditorUI()
@@ -99,6 +110,7 @@ void EditorLayer::drawEditorUI()
     m_sceneHierarchyPanel.draw();
     m_propertiesPanel.draw();
     m_texturePanel.draw();
+    m_sceneListPanel.draw();
 
     renderPerformancePanel();
     renderEditorProperties();
@@ -278,10 +290,10 @@ void EditorLayer::renderEditorProperties()
     ImGuiWrapper::Collapsable("Scene History",
         [&]
         {
-            ImGui::Text("Can Undo: %s", m_ctx.sceneHistory.canUndo() ? "True" : "False");
-            ImGui::Text("Can Redo: %s", m_ctx.sceneHistory.canRedo() ? "True" : "False");
-            ImGui::Text("Snapshot Size: %u", m_ctx.sceneHistory.getStackSize());
-            ImGui::Text("Snapshot Idx: %u", m_ctx.sceneHistory.getCurrentIndex());
+            ImGui::Text("Can Undo: %s", m_ctx.getSelectedSceneHistory().canUndo() ? "True" : "False");
+            ImGui::Text("Can Redo: %s", m_ctx.getSelectedSceneHistory().canRedo() ? "True" : "False");
+            ImGui::Text("Snapshot Size: %u", m_ctx.getSelectedSceneHistory().getStackSize());
+            ImGui::Text("Snapshot Idx: %u", m_ctx.getSelectedSceneHistory().getCurrentIndex());
         });
 
     ImGuiWrapper::Collapsable("Framebuffer",
@@ -317,7 +329,7 @@ void EditorLayer::handleEditorShortcuts()
             {
                 m_ctx.selectedGameObjectsDragOffset.clear();
                 m_ctx.selectedObjects.clear();
-                m_ctx.sceneHistory.undo(m_ctx.sceneManager);
+                m_ctx.getSelectedSceneHistory().undo(m_ctx.sceneManager);
             }
 
             // Redo
@@ -325,14 +337,14 @@ void EditorLayer::handleEditorShortcuts()
             {
                 m_ctx.selectedGameObjectsDragOffset.clear();
                 m_ctx.selectedObjects.clear();
-                m_ctx.sceneHistory.redo(m_ctx.sceneManager);
+                m_ctx.getSelectedSceneHistory().redo(m_ctx.sceneManager);
             }
 
             // Save
             else if (e.keyType == KeyType::S && e.cmd == true && (e.cmd || e.cmd))
             {
                 m_ctx.sceneManager.serialize(); // write to disk
-                m_ctx.sceneHistory.markSaved(); // clear the "*" dirty flag
+                m_ctx.getSelectedSceneHistory().markSaved(); // clear the "*" dirty flag
                 std::cout << "Scene saved.\n";
             }
         }

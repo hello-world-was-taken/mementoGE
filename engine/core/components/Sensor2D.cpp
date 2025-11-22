@@ -6,12 +6,12 @@
 #include <yaml-cpp/yaml.h>
 #endif
 
+#ifdef EDITOR_BUILD
 inline void SetFieldWidth(float w = 120.0f)
 {
     ImGui::SetNextItemWidth(w);
 }
 
-#ifdef EDITOR_BUILD
 void Sensor2D::serialize(YAML::Emitter &out)
 {
     out << YAML::Key << "Sensor2D" << YAML::Value << YAML::BeginMap;

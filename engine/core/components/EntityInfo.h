@@ -3,11 +3,6 @@
 #include <string>
 #include <yaml-cpp/yaml.h>
 
-#ifdef EDITOR_BUILD
-#include "core/ImGuiWrapper.h"
-#include <imgui.h>
-#endif
-
 struct EntityInfo
 {
     std::string tag;

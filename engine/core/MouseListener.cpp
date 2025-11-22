@@ -23,7 +23,9 @@ void MouseListener::endFrame()
 
 void MouseListener::mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
+#ifdef EDITOR_BUILD
     ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
+#endif
 
     auto *listener = MouseListener::instance();
 
@@ -49,7 +51,9 @@ void MouseListener::mouseButtonCallback(GLFWwindow *window, int button, int acti
 
 void MouseListener::cursorPositionCallback(GLFWwindow *window, double xPos, double yPos)
 {
+#ifdef EDITOR_BUILD
     ImGui_ImplGlfw_CursorPosCallback(window, xPos, yPos);
+#endif
 
     auto *listener = MouseListener::instance();
     glm::vec2 newMousePos = {static_cast<float>(xPos), static_cast<float>(yPos)};
@@ -60,7 +64,9 @@ void MouseListener::cursorPositionCallback(GLFWwindow *window, double xPos, doub
 
 void MouseListener::scrollCallback(GLFWwindow *window, double xOffset, double yOffset)
 {
+#ifdef EDITOR_BUILD
     ImGui_ImplGlfw_ScrollCallback(window, xOffset, yOffset);
+#endif
 
     auto *listener = MouseListener::instance();
     listener->m_scrollDelta = {static_cast<float>(xOffset), static_cast<float>(yOffset)};

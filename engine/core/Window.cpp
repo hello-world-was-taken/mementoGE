@@ -50,22 +50,6 @@ float Window::getWindowTime()
     return glfwGetTime();
 }
 
-void Window::run(const std::function<void()> &frameFunc, const std::function<void()> &cleanupFunc)
-{
-    glfwSwapInterval(1);
-
-    while (!glfwWindowShouldClose(getGlfwWindow()))
-    {
-        Time::update();
-        glfwPollEvents();
-        frameFunc();
-        glfwSwapBuffers(getGlfwWindow());
-    }
-
-    cleanupFunc();
-    glfwTerminate();
-}
-
 float Window::getWidth() const
 {
     return WINDOW_WIDTH;
