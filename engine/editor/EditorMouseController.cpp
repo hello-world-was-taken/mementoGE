@@ -33,7 +33,7 @@ void EditorMouseController::update(EditorContext &ctx)
         return;
     }
 
-    Scene &scene = ctx.sceneManager.getActiveScene();
+    Scene &scene = ctx.getActiveScene();
     EditorCamera &editorCamera = ctx.editorCamera;
 
     MouseListener *mouse = MouseListener::instance();

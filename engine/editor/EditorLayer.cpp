@@ -6,7 +6,6 @@
 #include "core/components/CircleCollider2D.h"
 #include "core/components/RigidBody2D.h"
 
-#include "core/BaseGame.h"
 #include "core/Camera.h"
 #include "core/EventHandler.h"
 #include "core/ImGuiWrapper.h"
@@ -28,20 +27,18 @@
 
 namespace fs = std::filesystem;
 
-EditorLayer::EditorLayer(BaseGame &game)
-    : m_game{game}, m_ctx{game.m_sceneManager, game.m_window},
-      m_gridRenderer{static_cast<int>(LOGICAL_WIDTH), static_cast<int>(LOGICAL_HEIGHT), 32, m_ctx.editorCamera}
+EditorLayer::EditorLayer()
+    : m_gridRenderer{static_cast<int>(LOGICAL_WIDTH), static_cast<int>(LOGICAL_HEIGHT), 32, m_ctx.editorCamera}
 {
     ImGuiWrapper::setupImgui(m_ctx.window);
-    game.m_window.setupCallBack();
+    m_window.setupCallBack();
 
-    game.onStart();
-    m_ctx.getSelectedSceneHistory().pushInitialScene(m_ctx.sceneManager.getActiveScene());
+    m_ctx.getSelectedSceneHistory().pushInitialScene(m_ctx.getActiveScene());
 }
 
 EditorLayer::~EditorLayer()
 {
-    m_ctx.sceneManager.serialize();
+    // m_ctx.sceneManager.serialize();
 }
 
 EditorContext &EditorLayer::getEditorContext()
@@ -68,14 +65,14 @@ void EditorLayer::updateFrame()
             glClearColor(0.41176f, 0.41176f, 0.41176f, 1.00f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            m_ctx.sceneManager.update();
+            m_ctx.getActiveScene().update();
 
             // render grid
             renderGrid();
 
-            m_physicsRenderer.render(m_ctx.editorCamera, m_ctx.sceneManager.getActiveScene().getGameObjects());
+            m_physicsRenderer.render(m_ctx.editorCamera, m_ctx.getActiveScene().getGameObjects());
             m_selectionRenderer.render(m_ctx.editorCamera, m_ctx.selectedObjects);
-            m_spriteRenderer.render(m_ctx.editorCamera, m_ctx.sceneManager.getActiveScene().getGameObjects());
+            m_spriteRenderer.render(m_ctx.editorCamera, m_ctx.getActiveScene().getGameObjects());
 
             drawEditorUI();
 
@@ -89,14 +86,14 @@ void EditorLayer::runLoop()
 {
     glfwSwapInterval(1);
 
-    while (!glfwWindowShouldClose(m_game.m_window.getGlfwWindow()))
+    while (!glfwWindowShouldClose(m_window.getGlfwWindow()))
     {
         Time::update();
         glfwPollEvents();
 
         updateFrame();
 
-        glfwSwapBuffers(m_game.m_window.getGlfwWindow());
+        glfwSwapBuffers(m_window.getGlfwWindow());
     }
 
     glfwTerminate();
@@ -111,6 +108,7 @@ void EditorLayer::drawEditorUI()
     m_propertiesPanel.draw();
     m_texturePanel.draw();
     m_sceneListPanel.draw();
+    m_assetsPanel.draw();
 
     renderPerformancePanel();
     renderEditorProperties();
@@ -139,7 +137,7 @@ void EditorLayer::renderAddNewObjectPopup()
                 [&]
                 {
                     // TODO: might be worth extracting this out to a function
-                    Scene &scene = m_ctx.sceneManager.getActiveScene();
+                    Scene &scene = m_ctx.getActiveScene();
 
                     auto &newObj = scene.addGameObject(32, 32, tagBuffer);
                     newObj.getComponent<Transform>().position = {
@@ -311,7 +309,7 @@ void EditorLayer::handleEditorShortcuts()
     // if it is play mode, the player controller should process events.
     // as a side note, we may need to make the events last for the current frame
     // and reset them on next render. Doing that will help us have multiple processors
-    if (m_ctx.sceneManager.m_isPlaying)
+    if (m_ctx.isPlaying)
     {
         return;
     }
@@ -329,7 +327,7 @@ void EditorLayer::handleEditorShortcuts()
             {
                 m_ctx.selectedGameObjectsDragOffset.clear();
                 m_ctx.selectedObjects.clear();
-                m_ctx.getSelectedSceneHistory().undo(m_ctx.sceneManager);
+                // m_ctx.getSelectedSceneHistory().undo(m_ctx.sceneManager);
             }
 
             // Redo
@@ -337,13 +335,13 @@ void EditorLayer::handleEditorShortcuts()
             {
                 m_ctx.selectedGameObjectsDragOffset.clear();
                 m_ctx.selectedObjects.clear();
-                m_ctx.getSelectedSceneHistory().redo(m_ctx.sceneManager);
+                // m_ctx.getSelectedSceneHistory().redo(m_ctx.sceneManager);
             }
 
             // Save
             else if (e.keyType == KeyType::S && e.cmd == true && (e.cmd || e.cmd))
             {
-                m_ctx.sceneManager.serialize(); // write to disk
+                m_ctx.serializaActiveScene();                // write to disk
                 m_ctx.getSelectedSceneHistory().markSaved(); // clear the "*" dirty flag
                 std::cout << "Scene saved.\n";
             }

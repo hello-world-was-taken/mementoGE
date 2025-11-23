@@ -54,6 +54,7 @@ add_library(${PROJECT_NAME} STATIC
     engine/editor/EditorCamera.cpp
     engine/editor/SceneHistory.cpp
     engine/editor/SceneListPanel.cpp
+    engine/editor/AssetsPanel.cpp
 
     # renderer
     engine/renderer/RenderBatch.cpp
@@ -104,5 +105,6 @@ set(MEMENTO_ASSET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets/")
 target_compile_definitions(${PROJECT_NAME} PRIVATE MEMENTO_ASSET_DIR="${MEMENTO_ASSET_DIR}")
 
 # should be passed from the game
+target_compile_definitions(${PROJECT_NAME} PUBLIC GAME_MODELS_DIR="${GAME_MODELS_DIR}")
 target_compile_definitions(${PROJECT_NAME} PUBLIC GAME_SCENES_DIR="${GAME_SCENES_DIR}")
 target_compile_definitions(${PROJECT_NAME} PUBLIC GAME_ASSETS_DIR="${GAME_ASSETS_DIR}")

@@ -4,6 +4,7 @@
 #include "opengl/FrameBuffer.h"
 
 #include <memory>
+#include <imgui.h>
 
 class ScenePanel : public EditorPanel
 {
@@ -21,4 +22,6 @@ private:
     void renderPlayPause();
     void renderMovementMode();
     void renderSceneViewport();
+    void handleViewportDropTarget();
+    void createSpriteFromPayload(const ImGuiPayload *payload);
 };

@@ -1,5 +1,9 @@
 #include "editor/EditorContext.h"
 
+#include "util/PathUtils.h"
+
+#include <fstream>
+
 glm::vec2 EditorContext::getWorldCoordinate(glm::vec2 mouseScreenCoords)
 {
     glm::vec2 localPos = screenToLocal(mouseScreenCoords);
@@ -106,9 +110,46 @@ SceneHistory &EditorContext::getSelectedSceneHistory()
     return sceneHistoryByScenePathMap[selectedScenePath];
 }
 
+Scene &EditorContext::getActiveScene()
+{
+    if (isPlaying)
+    {
+        auto it = sceneByScenePathMap.find("runtime_scene");
+        if (it != sceneByScenePathMap.end())
+        {
+            return it->second;
+        }
+        else
+        {
+            std::cerr << "inPlaying but runtime_scene not found" << std::endl;
+        }
+    }
+
+    if (!selectedScenePath.empty())
+    {
+        auto it = sceneByScenePathMap.find(selectedScenePath);
+        if (it == sceneByScenePathMap.end())
+        {
+            // deserilizes and adds selected scene to our map
+            deserializeSelectedScene();
+            getSelectedSceneHistory().pushInitialScene(getActiveScene()); // push initial saved state
+        }
+        return sceneByScenePathMap.find(selectedScenePath)->second;
+    }
+
+    auto it = sceneByScenePathMap.find("newScene");
+    if (it == sceneByScenePathMap.end())
+    {
+        std::cout << "getActiveScene called, but no scene is selected. Creating new scene" << std::endl;
+        sceneByScenePathMap.insert({"newScene", Scene{std::move("newScene")}});
+    }
+
+    return sceneByScenePathMap.find("newScene")->second;
+}
+
 void EditorContext::snapshotScene()
 {
-    Scene &scene = sceneManager.getActiveScene();
+    Scene &scene = getActiveScene();
     getSelectedSceneHistory().pushSnapshot(scene);
 }
 
@@ -122,4 +163,55 @@ void EditorContext::endEdit()
 {
     editingInProgress = false;
     snapshotScene();
+}
+
+void EditorContext::startRuntimeScene()
+{
+    // always insert/assign in playmode
+    sceneByScenePathMap.insert_or_assign("runtime_scene", getActiveScene().clone("runtime_scene"));
+    isPlaying = true;
+    getActiveScene().play();
+}
+
+void EditorContext::pauseRuntimeScene()
+{
+    getActiveScene().pause();
+    isPlaying = false;
+}
+
+void EditorContext::stopRuntimeScene()
+{
+    sceneByScenePathMap.erase("runtime_scene");
+    isPlaying = false;
+}
+
+// TODO: move this to editor layer
+void EditorContext::deserializeSelectedScene()
+{
+    YAML::Node serializedScene = YAML::LoadFile(selectedScenePath);
+
+    // Check if loaded node is valid and not empty
+    if (!serializedScene.IsDefined() || serializedScene.size() == 0)
+    {
+        std::cerr << "scene.yaml is empty or invalid" << std::endl;
+        Scene scene{"default_scene"};
+        sceneByScenePathMap.insert_or_assign(selectedScenePath, std::move(scene));
+        return;
+    }
+
+    Scene scene{std::move(serializedScene)};
+    sceneByScenePathMap.insert({selectedScenePath, std::move(scene)});
+    std::cout << "Deserialized scene from scene.yaml" << std::endl;
+}
+
+void EditorContext::serializaActiveScene()
+{
+    YAML::Emitter out;
+    getActiveScene().serialize(out);
+    std::string sceneName = getActiveScene().getTag();
+    std::string filePath = getGameAssetsPath("scenes/" + sceneName + ".yaml");
+    std::ofstream file(filePath, std::ios::out | std::ios::trunc);
+    file << out.c_str();
+
+    std::cout << "Serialized scene to: " << sceneName << ".yaml" << std::endl;
 }

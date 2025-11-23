@@ -61,7 +61,7 @@ public:
     Physics2D &getPhysics2d();
 
 private:
-    bool m_play;
+    bool m_play = false;
 
     std::string mTag;
     std::string m_playerTag = "Player";

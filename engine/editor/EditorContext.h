@@ -4,7 +4,6 @@
 #include "core/Scene.h"
 #include "core/SceneManager.h"
 #include "core/Window.h"
-#include "core/Camera.h"
 
 #include "editor/Constants.h"
 #include "editor/EditorInteractionMode.h"
@@ -20,12 +19,12 @@
 
 struct EditorContext
 {
-    SceneManager &sceneManager;
     Window &window;
 
     float viewportWidth = WINDOW_WIDTH;
     float viewportHeight = WINDOW_HEIGHT;
 
+    bool isPlaying = false;
     bool editingInProgress = false;
 
     bool drawGrid = false;
@@ -42,13 +41,15 @@ struct EditorContext
     ImVec2 scenePanelTopLeftPos;
     ImVec2 scenePanelSize;
 
-    std::string selectedTextureJsonPath;
     std::string selectedScenePath;
+    std::string selectedTextureJsonPath;
+    std::string selectedAssetChildFolderPath;
 
     EditorInteractionMode interactionMode = EditorInteractionMode::None;
     std::vector<std::reference_wrapper<GameObject>> selectedObjects;
     std::vector<glm::vec2> selectedGameObjectsDragOffset;
 
+    std::unordered_map<std::string, Scene> sceneByScenePathMap;
     std::unordered_map<std::string, SceneHistory> sceneHistoryByScenePathMap;
     EditorCamera editorCamera;
     EditorMouseController editorMouseController;
@@ -73,16 +74,26 @@ struct EditorContext
 
     SceneHistory &getSelectedSceneHistory();
 
+    Scene &getActiveScene();
     void snapshotScene();
     void startEdit();
     void endEdit();
+
+    // TODO: move this to editor layer. EditorContext should be
+    // just state as much as possible
+    void startRuntimeScene();
+    void pauseRuntimeScene();
+    void stopRuntimeScene();
+
+    void deserializeSelectedScene();
+    void serializaActiveScene();
 
     template <typename Func> void performSceneEdit(Func &&editFunc);
 };
 
 template <typename Func> void EditorContext::performSceneEdit(Func &&editFunc)
 {
-    Scene &scene = sceneManager.getActiveScene();
+    Scene &scene = getActiveScene();
     getSelectedSceneHistory().pushSnapshot(scene); // before
     editFunc();
     getSelectedSceneHistory().pushSnapshot(scene); // after

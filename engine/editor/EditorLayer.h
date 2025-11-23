@@ -2,7 +2,6 @@
 
 #include "core/Camera.h"
 #include "core/EventHandler.h"
-#include "core/BaseGame.h"
 #include "core/MovementMode.h"
 #include "core/Scene.h"
 #include "core/Window.h"
@@ -13,6 +12,7 @@
 #include "editor/ScenePanel.h"
 #include "editor/TexturePanel.h"
 #include "editor/SceneListPanel.h"
+#include "editor/AssetsPanel.h"
 
 #include "renderer/GridRenderer.h"
 #include "renderer/PhysicsRenderer.h"
@@ -26,7 +26,7 @@
 class EditorLayer
 {
 public:
-    EditorLayer(BaseGame &game);
+    EditorLayer();
     ~EditorLayer();
 
     void run();
@@ -51,13 +51,14 @@ private:
     void handleEditorShortcuts();
 
 private:
-    BaseGame &m_game;
-    EditorContext m_ctx;
+    Window m_window;
+    EditorContext m_ctx{m_window};
     ScenePanel m_scenePanel{m_ctx};
     SceneHierarchyPanel m_sceneHierarchyPanel{m_ctx};
     TexturePanel m_texturePanel{m_ctx};
     PropertiesPanel m_propertiesPanel{m_ctx, m_texturePanel};
     SceneListPanel m_sceneListPanel{m_ctx};
+    AssetsPanel m_assetsPanel{m_ctx};
 
     MovementMode m_movementMode = MovementMode::Free;
     bool m_drawGrid = false;

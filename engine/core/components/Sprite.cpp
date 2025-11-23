@@ -85,18 +85,19 @@ void Sprite::deserialize(const YAML::Node &in)
     texture->bind();
 }
 
-void Sprite::drawInspector(Sprite &sprite)
+// TODO: indent
+void Sprite::drawInspector()
 {
     if (ImGui::CollapsingHeader("Sprite Component", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        ImGui::ColorEdit4("Color", &sprite.color.x);
-        ImGui::Checkbox("Flip X", &sprite.flipX);
-        ImGui::Checkbox("Flip Y", &sprite.flipY);
+        ImGui::ColorEdit4("Color", &color.x);
+        ImGui::Checkbox("Flip X", &flipX);
+        ImGui::Checkbox("Flip Y", &flipY);
 
-        ImGui::Text("Texture: %s", sprite.texture ? sprite.texture->getFilePath().c_str() : "None");
+        ImGui::Text("Texture: %s", texture ? texture->getFilePath().c_str() : "None");
 
         ImGui::Separator();
-        ImGui::Text("Size: %.1f x %.1f", sprite.width, sprite.height);
+        ImGui::Text("Size: %.1f x %.1f", width, height);
     }
 }
 #endif // EDITOR_BUILD

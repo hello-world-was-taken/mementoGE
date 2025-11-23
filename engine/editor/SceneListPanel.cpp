@@ -2,8 +2,8 @@
 
 #include "util/PathUtils.h"
 
-#include <imgui.h>
 #include <filesystem>
+#include <imgui.h>
 
 namespace fs = std::filesystem;
 
@@ -18,7 +18,6 @@ inline std::vector<std::string> getSceneFiles(const std::string &folderPath)
             std::string ext = file.path().extension().string();
             if (ext == ".yaml" || ext == ".yml")
             {
-                std::cout << "scene file name: " << file.path().string() << std::endl;
                 scenes.push_back(file.path().string());
             }
         }
@@ -44,7 +43,7 @@ void SceneListPanel::renderSceneListPanel()
     ImGui::Begin("Scenes");
 
     // find scenes/*.yaml
-    auto sceneFiles = getSceneFiles(getGameScenesPath(""));
+    auto sceneFiles = getSceneFiles(getGameAssetsPath("scenes"));
 
     for (const auto &scenePath : sceneFiles)
     {

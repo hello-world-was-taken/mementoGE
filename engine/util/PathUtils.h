@@ -2,9 +2,9 @@
 
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <nlohmann/json.h>
 #include <string>
-#include <iostream>
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -53,10 +53,11 @@ inline std::filesystem::path getFilePath(const std::string &relative)
     return base / relative;
 }
 
-inline std::filesystem::path getGameFilesPath(const std::string &relative)
+inline std::filesystem::path getGameAssetsPath(const std::string &relative)
 {
     // auto base = getExecutableDir();
     auto base = std::filesystem::path(std::string(GAME_ASSETS_DIR));
+    auto temp = base / relative;
     return base / relative;
 }
 
@@ -71,11 +72,21 @@ inline std::filesystem::path getGameScenesPath(const std::string &relative)
     return base / relative;
 }
 
+inline std::filesystem::path getGameModelsPath(const std::string &relative)
+{
+    auto base = std::filesystem::path(std::string(GAME_MODELS_DIR));
+    if (relative.empty())
+    {
+        return base;
+    }
+    return base / relative;
+}
+
 inline std::filesystem::path getTexturePathFromJson(const std::string &jsonTexturePath)
 {
     std::ifstream file(jsonTexturePath);
     nlohmann::json data;
     file >> data;
 
-    return getGameFilesPath("texture") / data["meta"]["texture"];
+    return getGameAssetsPath("texture") / data["meta"]["texture"];
 }

@@ -1,20 +1,20 @@
 #include "core/components/Sprite.h"
 
-#include "core/SpriteSheet.h"
 #include "core/AnimationMap.h"
 #include "core/AnimationPlayer.h"
 #include "core/AssetManager.h"
+#include "core/SpriteSheet.h"
 
-#include "editor/TexturePanel.h"
 #include "editor/SpritePayload.h"
+#include "editor/TexturePanel.h"
 
 #include "util/PathUtils.h"
 #include "util/Time.h"
 
-#include <functional>
 #include <ImGuiFileDialog/ImGuiFileDialog.h>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <memory>
 
 namespace fs = std::filesystem;
@@ -59,13 +59,10 @@ void TexturePanel::renderTextureAssetsListPanel()
     ImGui::Begin("Texture Resources");
     if (ImGui::Button("Add Texture"))
     {
-        ImGuiFileDialog::Instance()->OpenDialog(
-            "ChooseTexFile", "Select a Texture",
-            ".png,.jpg,.jpeg");
+        ImGuiFileDialog::Instance()->OpenDialog("ChooseTexFile", "Select a Texture", ".png,.jpg,.jpeg");
     }
     // TODO: lets avoid this call on every render
-    auto texturesJsonPath = getTextureFiles(
-        getGameFilesPath("texture"));
+    auto texturesJsonPath = getTextureFiles(getGameAssetsPath("texture"));
     for (const auto &textureJsonPath : texturesJsonPath)
     {
         std::string fileName = fs::path(textureJsonPath).filename().string();
@@ -92,9 +89,7 @@ void TexturePanel::copyTextureToAssets()
 
             try
             {
-                std::filesystem::copy_file(
-                    selectedPath, destPath,
-                    std::filesystem::copy_options::update_existing);
+                std::filesystem::copy_file(selectedPath, destPath, std::filesystem::copy_options::update_existing);
             }
             catch (const std::filesystem::filesystem_error &e)
             {
@@ -125,7 +120,8 @@ void TexturePanel::renderAnimationPanel()
     static std::unordered_map<std::string, AnimationPlayer> animationPlayerMap;
 
     int imguiId = 0;
-    for(auto &[animName, animation]: animationMap->getAnimations()) {
+    for (auto &[animName, animation] : animationMap->getAnimations())
+    {
         auto it = animationPlayerMap.find(animName);
         if (it == animationPlayerMap.end())
         {
@@ -133,7 +129,8 @@ void TexturePanel::renderAnimationPanel()
         }
         animationPlayerMap[animName].update();
 
-        std::array<glm::vec2, 4> texCoord = animationPlayerMap[animName].getCurrentFrame().sprite.getNormalizedTextureCoordinates();
+        std::array<glm::vec2, 4> texCoord =
+            animationPlayerMap[animName].getCurrentFrame().sprite.getNormalizedTextureCoordinates();
         ImVec2 topLeft = ImVec2(texCoord[0].x, texCoord[0].y);
         ImVec2 bottomRight = ImVec2(texCoord[2].x, texCoord[2].y);
 
@@ -141,14 +138,8 @@ void TexturePanel::renderAnimationPanel()
         float imgButtonHeight = 64;
 
         ImGui::PushID(imguiId);
-        if (ImGui::ImageButton(
-                "",
-                texId,
-                ImVec2(imgButtonWidth, imgButtonHeight),
-                topLeft,
-                bottomRight,
-                ImVec4(0.0f, 0.0f, 0.0f, 1.0f),
-                ImVec4(1.0f, 1.0f, 1.0f, 1.0f)))
+        if (ImGui::ImageButton("", texId, ImVec2(imgButtonWidth, imgButtonHeight), topLeft, bottomRight,
+                ImVec4(0.0f, 0.0f, 0.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f)))
         {
         }
 
@@ -156,7 +147,8 @@ void TexturePanel::renderAnimationPanel()
         {
             AnimationPayload payload{};
             strncpy(payload.animationName, animName.c_str(), sizeof(payload.animationName) - 1);
-            strncpy(payload.animationJsonPath, m_ctx.selectedTextureJsonPath.c_str(), sizeof(payload.animationJsonPath) - 1);
+            strncpy(payload.animationJsonPath, m_ctx.selectedTextureJsonPath.c_str(),
+                sizeof(payload.animationJsonPath) - 1);
 
             ImGui::SetDragDropPayload("ANIMATION", &payload, sizeof(AnimationPayload));
             ImGui::Text("Dragging animation %s", animName.c_str());
@@ -178,7 +170,6 @@ void TexturePanel::renderAnimationPanel()
         {
             ImGui::SameLine();
         }
-
     }
 
     ImGui::End();
@@ -213,16 +204,12 @@ void TexturePanel::renderSelectedTexSheetPanel(bool isInModal, std::function<voi
 
         // TODO: Add sprite IDs and use those to identify which sprite was clicked
         ImGui::PushID(id);
-        if (ImGui::ImageButton(
-                "",
-                texId,
-                ImVec2(imgButtonWidth, imgButtonHeight),
+        if (ImGui::ImageButton("", texId, ImVec2(imgButtonWidth, imgButtonHeight),
                 ImVec2(textureCoordinates[0].x,
-                       textureCoordinates[0].y), // uv0 = top-left
+                    textureCoordinates[0].y), // uv0 = top-left
                 ImVec2(textureCoordinates[2].x,
-                       textureCoordinates[2].y), // uv1 = bottom-right
-                ImVec4(0.0f, 0.0f, 0.0f, 1.0f),
-                ImVec4(1.0f, 1.0f, 1.0f, 1.0f)))
+                    textureCoordinates[2].y), // uv1 = bottom-right
+                ImVec4(0.0f, 0.0f, 0.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f)))
         {
             if (onClick != nullptr)
             {

@@ -78,7 +78,7 @@ void PropertiesPanel::renderPropertiesInPopup()
 
 void PropertiesPanel::renderPropertiesPanel()
 {
-    if (m_ctx.sceneManager.getActiveScene().getGameObjects().empty())
+    if (m_ctx.getActiveScene().getGameObjects().empty())
         return;
 
     if (m_ctx.selectedObjects.empty())
@@ -97,14 +97,17 @@ void PropertiesPanel::renderPropertiesPanel()
     drawComponentInspector<EnemyState>(go);
     drawComponentInspector<Patrol>(go);
     drawComponentInspector<Sensor2D>(go);
-    drawSpriteSettings(go);
+    drawComponentInspector<Sprite>(go);
     drawAnimatorSettings(go);
     drawAddComponentCombo(go);
+    drawExportModel(go);
 
     ImGui::Separator();
     if (ImGui::Button("Delete Object"))
     {
-        m_ctx.sceneManager.getActiveScene().removeGameObject(go.getEntityId());
+        m_ctx.getActiveScene().removeGameObject(go.getEntityId());
+        m_ctx.selectedGameObjectsDragOffset.clear();
+        m_ctx.selectedObjects.clear();
     }
 
     // Popups (global)
@@ -154,7 +157,7 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                 [&]
                 {
                     go.addComponent<RigidBody2D>();
-                    m_ctx.sceneManager.getActiveScene().getPhysics2d().registerRigidBody2D(go);
+                    m_ctx.getActiveScene().getPhysics2d().registerRigidBody2D(go);
                 });
         }
 
@@ -166,7 +169,7 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                     EntityInfo &entityInfo = go.getComponent<EntityInfo>();
                     go.addComponent<BoxCollider2D>();
                     go.getComponent<BoxCollider2D>().size = {entityInfo.width, entityInfo.height};
-                    m_ctx.sceneManager.getActiveScene().getPhysics2d().registerRigidBody2D(go);
+                    m_ctx.getActiveScene().getPhysics2d().registerRigidBody2D(go);
                 });
         }
 
@@ -176,7 +179,7 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                 [&]
                 {
                     go.addComponent<CircleCollider2D>();
-                    m_ctx.sceneManager.getActiveScene().getPhysics2d().registerRigidBody2D(go);
+                    m_ctx.getActiveScene().getPhysics2d().registerRigidBody2D(go);
                 });
         }
 
@@ -186,7 +189,7 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                 [&]
                 {
                     go.addComponent<Sensor2D>();
-                    m_ctx.sceneManager.getActiveScene().getPhysics2d().registerSensor2D(go);
+                    m_ctx.getActiveScene().getPhysics2d().registerSensor2D(go);
                 });
         }
 
@@ -336,5 +339,20 @@ void PropertiesPanel::drawPopups()
         if (ImGui::Button("Cancel"))
             ImGui::CloseCurrentPopup();
         ImGui::EndPopup();
+    }
+}
+
+void PropertiesPanel::drawExportModel(GameObject &go)
+{
+    if(ImGui::Button("Export Model"))
+    {
+        YAML::Emitter out;
+        go.serialize(out);
+
+        EntityInfo &info = go.getComponent<EntityInfo>();
+        std::ofstream file(getGameModelsPath(info.tag + ".yaml"), std::ios::out | std::ios::trunc);
+        file << out.c_str();
+
+        std::cout << "Export model: " << info.tag << std::endl;
     }
 }

@@ -30,7 +30,7 @@ void SceneHierarchyPanel::draw()
 
 void SceneHierarchyPanel::drawSceneHierarchy()
 {
-    Scene &scene = m_ctx.sceneManager.getActiveScene();
+    Scene &scene = m_ctx.getActiveScene();
     auto &gameObjects = scene.getGameObjects();
 
     for (auto &go : gameObjects)

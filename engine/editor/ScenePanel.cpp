@@ -51,24 +51,25 @@ void ScenePanel::renderPlayPause()
 
         if (ImGui::Button(ICON_FA_PLAY))
         {
-            if (!m_ctx.sceneManager.isPlaying())
+            if (!m_ctx.isPlaying)
             {
-                m_ctx.sceneManager.startRuntimeScene();
+                m_ctx.startRuntimeScene();
+                m_ctx.isPlaying = true;
             }
         }
 
         if (ImGui::Button(ICON_FA_PAUSE))
         {
-            if (m_ctx.sceneManager.isPlaying())
+            if (m_ctx.isPlaying)
             {
-                m_ctx.sceneManager.pauseRuntimeScene();
-                m_ctx.sceneManager.m_isPlaying = false;
+                m_ctx.pauseRuntimeScene();
+                m_ctx.isPlaying = false;
             }
         }
 
         if (ImGui::Button(ICON_FA_STOP))
         {
-            m_ctx.sceneManager.stopRuntimeScene();
+            m_ctx.stopRuntimeScene();
         }
 
         ImGui::EndMenuBar();
@@ -139,87 +140,87 @@ void ScenePanel::renderMovementMode()
 
 void ScenePanel::renderSceneViewport()
 {
-    // TODO: this needs to be worked on more. At the moment
-    // we are storing the same scene's history in two d/t
-    // sceneHistorys as the updates happen on the active scene
-    // in SceneManager. All updates to c_ctx.sceneManager.getActive()
-    // should be updated at the editor level. SceneManager should only
-    // be concerned with gameplay. Not editor updates.
-    std::string title = m_ctx.getSelectedSceneHistory().isDirty() ? "Scene*" : "Scene";
+    std::string activeSceneName = m_ctx.getActiveScene().getTag();
+    std::string visibleTitle = activeSceneName + (m_ctx.getSelectedSceneHistory().isDirty() ? "*" : "");
+
+    // ImGui window identifiers are determined by everything after the ###
+    std::string titleWithWindowId = visibleTitle + "###ScenePanel";
     ImGui::PushStyleColor(ImGuiCol_MenuBarBg, IM_COL32(0, 0, 0, 255));
-    ImGui::Begin(title.c_str(), nullptr, ImGuiWindowFlags_MenuBar);
+    ImGui::Begin(titleWithWindowId.c_str(), nullptr, ImGuiWindowFlags_MenuBar);
     ImGui::PopStyleColor();
 
     renderPlayPause();
     renderMovementMode();
 
-    ImVec2 imGuiWindowSize = ImGui::GetContentRegionAvail(); // logical units
+    // viewport size + framebuffer update
+    ImVec2 imGuiWindowSize = ImGui::GetContentRegionAvail();
     ImGuiIO &io = ImGui::GetIO();
-    int pixelWidth = (int)(imGuiWindowSize.x * io.DisplayFramebufferScale.x + 0.5f);
-    int pixelHeight = (int)(imGuiWindowSize.y * io.DisplayFramebufferScale.y + 0.5f);
-
-    // fallback to at least 1x1
-    pixelWidth = std::max(1, pixelWidth);
-    pixelHeight = std::max(1, pixelHeight);
+    int pixelWidth = std::max(1, (int)(imGuiWindowSize.x * io.DisplayFramebufferScale.x + 0.5f));
+    int pixelHeight = std::max(1, (int)(imGuiWindowSize.y * io.DisplayFramebufferScale.y + 0.5f));
 
     m_ctx.frameBuffer.updateSize(pixelWidth, pixelHeight);
     m_ctx.editorCamera.onViewportResize(imGuiWindowSize.x, imGuiWindowSize.y);
 
+    // render framebuffer texture
     unsigned int framebufferTexture = m_ctx.frameBuffer.getColorTexture();
     ImGui::Image(framebufferTexture, imGuiWindowSize, ImVec2{0, 1}, ImVec2{1, 0});
 
-    if (ImGui::BeginDragDropTarget())
-    {
-        if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("SPRITE"))
-        {
-            m_ctx.performSceneEdit(
-                [&]
-                {
-                    IM_ASSERT(payload->DataSize == sizeof(int) || payload->DataSize == sizeof(SpritePayload));
-                    int spriteIndex = ((SpritePayload *)payload->Data)->spriteIndex;
-
-                    // Convert current mouse to world position
-                    const Camera &cam = m_ctx.editorCamera;
-
-                    std::filesystem::path texturePath = getTexturePathFromJson(m_ctx.selectedTextureJsonPath);
-                    std::shared_ptr<SpriteSheet> spriteSheet =
-                        AssetManager::instance().getSpriteSheet(m_ctx.selectedTextureJsonPath);
-
-                    int fbWidth, fbHeight;
-                    glfwGetFramebufferSize(m_ctx.window.getGlfwWindow(), &fbWidth, &fbHeight);
-
-                    MouseListener *mouse = MouseListener::instance();
-                    glm::vec2 worldPos = m_ctx.getWorldCoordinate(mouse->getMouseScreenPosition());
-
-                    // Create object here
-                    Sprite sprite = spriteSheet->getSprites()[spriteIndex];
-                    const float aspectRatio = sprite.width / sprite.height;
-                    GameObject &newObj =
-                        m_ctx.sceneManager.getActiveScene().addGameObject(32 * aspectRatio, 32, "_new");
-                    newObj.addComponent<Sprite>(sprite.topLeft, sprite.width, sprite.height, sprite.texture);
-                    newObj.getComponent<Transform>().position = {worldPos.x, worldPos.y, 0.0f};
-                });
-        }
-        ImGui::EndDragDropTarget();
-    }
+    // handle drag–drop
+    handleViewportDropTarget();
 
     m_ctx.scenePanelTopLeftPos = ImGui::GetItemRectMin();
     m_ctx.scenePanelSize = ImGui::GetItemRectSize();
 
-    // render gizmos in the same imgui Begin-End window
     renderGizmos();
-
-    // Store whether this specific image (scene window) is hovered
-    // We use this to distinguish mouse clicks in/outside our scene preview
     m_ctx.sceneImageHovered = ImGui::IsItemHovered();
 
     ImGui::End();
 }
 
+void ScenePanel::handleViewportDropTarget()
+{
+    if (!ImGui::BeginDragDropTarget())
+    {
+        return;
+    }
+
+    if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("SPRITE"))
+    {
+        m_ctx.performSceneEdit(
+            [&]()
+            {
+                createSpriteFromPayload(payload);
+            });
+    }
+
+    ImGui::EndDragDropTarget();
+}
+
+void ScenePanel::createSpriteFromPayload(const ImGuiPayload *payload)
+{
+    IM_ASSERT(payload->DataSize == sizeof(int) || payload->DataSize == sizeof(SpritePayload));
+    int spriteIndex = ((SpritePayload *)payload->Data)->spriteIndex;
+
+    std::filesystem::path texturePath = getTexturePathFromJson(m_ctx.selectedTextureJsonPath);
+    std::shared_ptr<SpriteSheet> spriteSheet = AssetManager::instance().getSpriteSheet(m_ctx.selectedTextureJsonPath);
+
+    MouseListener *mouse = MouseListener::instance();
+    glm::vec2 worldPos = m_ctx.getWorldCoordinate(mouse->getMouseScreenPosition());
+
+    Sprite sprite = spriteSheet->getSprites()[spriteIndex];
+    const float aspectRatio = sprite.width / sprite.height;
+
+    GameObject &newObj = m_ctx.getActiveScene().addGameObject(32 * aspectRatio, 32, "_new");
+    newObj.addComponent<Sprite>(sprite.topLeft, sprite.width, sprite.height, sprite.texture);
+    newObj.getComponent<Transform>().position = {worldPos.x, worldPos.y, 0.0f};
+}
+
 void ScenePanel::renderGizmos()
 {
     if (m_ctx.selectedObjects.size() != 1)
+    {
         return;
+    }
 
     GameObject &go = m_ctx.selectedObjects.back();
     Transform &transform = go.getComponent<Transform>();

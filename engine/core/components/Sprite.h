@@ -27,6 +27,6 @@ struct Sprite
 #ifdef EDITOR_BUILD
     void serialize(YAML::Emitter &out);
     void deserialize(const YAML::Node &in);
-    void drawInspector(Sprite &sprite);
+    void drawInspector();
 #endif
 };
