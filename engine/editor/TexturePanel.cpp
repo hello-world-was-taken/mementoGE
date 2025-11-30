@@ -52,6 +52,7 @@ void TexturePanel::draw()
     copyTextureToAssets();
     renderSelectedTexSheetPanel(false);
     renderAnimationPanel();
+    // renderSpriteSheetPreviewPanel();
 }
 
 void TexturePanel::renderTextureAssetsListPanel()
@@ -142,6 +143,7 @@ void TexturePanel::renderAnimationPanel()
                 ImVec4(0.0f, 0.0f, 0.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f)))
         {
         }
+        ImGui::PopID();
 
         if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
         {
@@ -154,8 +156,6 @@ void TexturePanel::renderAnimationPanel()
             ImGui::Text("Dragging animation %s", animName.c_str());
             ImGui::EndDragDropSource();
         }
-
-        ImGui::PopID();
         imguiId++;
 
         // handle wrapping

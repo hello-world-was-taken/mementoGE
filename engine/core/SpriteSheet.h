@@ -1,11 +1,14 @@
 #pragma once
 
+#include "core/AssetManager.h"
 #include "core/components/Sprite.h"
 
 #include "opengl/Texture.h"
 
-#include <memory>
 #include <filesystem>
+#include <memory>
+
+class AssetManager;
 
 /**
  * @brief Texture atlas sprite representation
@@ -16,27 +19,26 @@ public:
     SpriteSheet(std::shared_ptr<Texture> texture);
     ~SpriteSheet();
 
-    static std::shared_ptr<SpriteSheet> fromJson(const std::filesystem::path &jsonPath);
-
     void addSprite(Sprite &&sprite);
-    void updateSpriteSizes();
 
-    std::vector<Sprite> getSprites();
+    std::vector<Sprite>& getSprites();
     std::shared_ptr<Texture> getTexture();
 
-public:
-    // TODO: update - public for testing purposes
-    // TODO: we no longer need these since we started json load
-    float m_spriteW;
-    float m_spriteH;
-    float m_spriteGapX;
-    float m_spriteGapY;
+    // fromJson should only be called from AssetManager
+    friend AssetManager;
 
 private:
-    int m_columns;
-    int m_spriteCount;
+    static std::shared_ptr<SpriteSheet> fromJson(const std::filesystem::path &jsonPath);
 
+private:
     std::filesystem::path m_jsonPath;
     std::shared_ptr<Texture> m_texture;
+    // TODO: keeping this as a vector may affect the way sprite.getId() works.
+    // look into this more
     std::vector<Sprite> m_sprites;
+
+public:
+    // sprite representation of the whole spriteSheet.
+    // used for editor panels.
+    Sprite fullSprite;
 };

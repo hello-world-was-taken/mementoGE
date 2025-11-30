@@ -10,13 +10,18 @@ class AssetsPanel : public EditorPanel
 {
 public:
     AssetsPanel(EditorContext &ctx);
-    ~AssetsPanel();
+    ~AssetsPanel() override;
 
     void draw() override;
 
 private:
-    EditorContext &m_ctx;
+    void buildAssetsDockspace();
+
+    void drawFoldersPanel();
+    void drawContentPanel();
+    void drawSpritePanel();
 
 private:
-    void renderAssetsPanel();
+    bool m_rebuildDock = true; // rebuild dock on on first render
+    EditorContext &m_ctx;
 };

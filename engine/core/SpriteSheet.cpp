@@ -1,20 +1,21 @@
 #include "core/components/Sprite.h"
 
-#include "core/SpriteSheet.h"
 #include "core/GlResourceManager.h"
+#include "core/SpriteSheet.h"
 
 #include "opengl/Texture.h"
 
 #include "util/PathUtils.h"
 
-#include <memory>
-#include <string>
 #include <filesystem>
 #include <fstream>
+#include <memory>
 #include <nlohmann/json.h>
+#include <string>
 
 SpriteSheet::SpriteSheet(std::shared_ptr<Texture> texture) : m_texture{texture}
 {
+    fullSprite = Sprite{{0.0f, 0.0f}, (float)m_texture->getWidth(), (float)m_texture->getHeight(), m_texture};
 }
 
 std::shared_ptr<SpriteSheet> SpriteSheet::fromJson(const std::filesystem::path &jsonPath)
@@ -30,37 +31,11 @@ std::shared_ptr<SpriteSheet> SpriteSheet::fromJson(const std::filesystem::path &
 
     for (auto &[frameName, frameInfo] : data["frames"].items())
     {
-        spriteSheet->addSprite(
-            {
-                {frameInfo["x"].get<float>(), frameInfo["y"].get<float>()},
-                frameInfo["w"].get<float>(),
-                frameInfo["h"].get<float>(),
-                tex
-            });
+        spriteSheet->addSprite({{frameInfo["x"].get<float>(), frameInfo["y"].get<float>()}, frameInfo["w"].get<float>(),
+            frameInfo["h"].get<float>(), tex});
     }
 
     return spriteSheet;
-}
-
-void SpriteSheet::updateSpriteSizes()
-{
-    m_sprites.clear();
-
-    for (int i = 0; i < m_spriteCount; i++)
-    {
-
-        int col = i % m_columns;
-        int row = i / m_columns;
-
-        Sprite s{};
-        float x = col * (m_spriteW + m_spriteGapX);
-        float y = row * (m_spriteH + m_spriteGapY);
-        float w = m_spriteW;
-        float h = m_spriteH;
-
-        // TODO: emplace_back?
-        m_sprites.push_back(Sprite{glm::vec2{x, y}, w, h, m_texture});
-    }
 }
 
 SpriteSheet::~SpriteSheet()
@@ -73,7 +48,7 @@ void SpriteSheet::addSprite(Sprite &&sprite)
     m_sprites.push_back(sprite);
 }
 
-std::vector<Sprite> SpriteSheet::getSprites()
+std::vector<Sprite>& SpriteSheet::getSprites()
 {
     return m_sprites;
 }

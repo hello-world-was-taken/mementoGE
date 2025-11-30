@@ -8,6 +8,8 @@
 #include <memory>
 #include <string>
 
+class SpriteSheet;
+
 class AssetManager
 {
 public:

@@ -5,6 +5,8 @@
 #include "core/SceneManager.h"
 #include "core/Window.h"
 
+#include "core/components/Sprite.h"
+
 #include "editor/Constants.h"
 #include "editor/EditorInteractionMode.h"
 #include "editor/EditorMouseController.h"
@@ -41,9 +43,11 @@ struct EditorContext
     ImVec2 scenePanelTopLeftPos;
     ImVec2 scenePanelSize;
 
+    // TODO: improve the namings
     std::string selectedScenePath;
     std::string selectedTextureJsonPath;
     std::string selectedAssetChildFolderPath;
+    std::optional<std::reference_wrapper<Sprite>> selectedSprite;
 
     EditorInteractionMode interactionMode = EditorInteractionMode::None;
     std::vector<std::reference_wrapper<GameObject>> selectedObjects;

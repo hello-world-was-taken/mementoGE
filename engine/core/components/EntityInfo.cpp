@@ -31,10 +31,7 @@ void EntityInfo::drawInspector()
     ImGuiWrapper::Collapsable("Game Object",
         [&]
         {
-            char buffer[256];
-            std::snprintf(buffer, sizeof(buffer), "%s", tag.c_str());
-            if (ImGui::InputText("Tag", buffer, sizeof(buffer)))
-                tag = buffer;
+            ImGuiWrapper::InputTextSimple("Tag", tag);
 
             ImGui::DragInt("Width", reinterpret_cast<int *>(&width), 1.0f, 0, INT_MAX);
             ImGui::DragInt("Height", reinterpret_cast<int *>(&height), 1.0f, 0, INT_MAX);

@@ -16,5 +16,5 @@ BinPackParameters: false
 # Align access modifiers (public/private/protected) to the left edge
 AccessModifierOffset: -4
 
-# Return type on a single line
-# AlwaysBreakAfterReturnType: All
+
+InsertBraces: true

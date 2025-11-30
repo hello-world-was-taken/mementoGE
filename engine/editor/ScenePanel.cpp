@@ -10,7 +10,6 @@
 #include "editor/EditorContext.h"
 #include "editor/EditorPanel.h"
 #include "editor/ScenePanel.h"
-#include "editor/SpritePayload.h"
 
 #include "util/PathUtils.h"
 
@@ -179,35 +178,36 @@ void ScenePanel::renderSceneViewport()
 
 void ScenePanel::handleViewportDropTarget()
 {
-    if (!ImGui::BeginDragDropTarget())
+    if (ImGui::BeginDragDropTarget())
     {
-        return;
-    }
 
-    if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("SPRITE"))
-    {
-        m_ctx.performSceneEdit(
-            [&]()
-            {
-                createSpriteFromPayload(payload);
-            });
-    }
+        const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("SPRITE");
+        if (payload != nullptr)
+        {
+            m_ctx.performSceneEdit(
+                [&]()
+                {
+                    createSpriteFromPayload(payload);
+                });
+        }
 
-    ImGui::EndDragDropTarget();
+        ImGui::EndDragDropTarget();
+    }
 }
 
 void ScenePanel::createSpriteFromPayload(const ImGuiPayload *payload)
 {
-    IM_ASSERT(payload->DataSize == sizeof(int) || payload->DataSize == sizeof(SpritePayload));
-    int spriteIndex = ((SpritePayload *)payload->Data)->spriteIndex;
+    IM_ASSERT(payload->DataSize == sizeof(int));
+    if (!m_ctx.selectedSprite.has_value())
+    {
+        std::cout << "Tried to drop sprite to scene, but no sprite has been selected." << std::endl;
+        return;
+    }
 
-    std::filesystem::path texturePath = getTexturePathFromJson(m_ctx.selectedTextureJsonPath);
-    std::shared_ptr<SpriteSheet> spriteSheet = AssetManager::instance().getSpriteSheet(m_ctx.selectedTextureJsonPath);
-
+    Sprite &sprite = m_ctx.selectedSprite->get();
     MouseListener *mouse = MouseListener::instance();
     glm::vec2 worldPos = m_ctx.getWorldCoordinate(mouse->getMouseScreenPosition());
 
-    Sprite sprite = spriteSheet->getSprites()[spriteIndex];
     const float aspectRatio = sprite.width / sprite.height;
 
     GameObject &newObj = m_ctx.getActiveScene().addGameObject(32 * aspectRatio, 32, "_new");

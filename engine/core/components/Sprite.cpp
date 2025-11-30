@@ -1,16 +1,34 @@
 #include "core/components/Sprite.h"
 
 #ifdef EDITOR_BUILD
-#include "core/ImGuiWrapper.h"
 #include "core/GlResourceManager.h"
+#include "core/ImGuiWrapper.h"
 
 #include <imgui.h>
 #endif
 
+int GenerateUniqueID()
+{
+    static std::atomic<int> counter{1};
+    return counter++;
+}
+
+int Sprite::getId()
+{
+    if (id == -1)
+    {
+        id = GenerateUniqueID();
+    }
+
+    return id;
+}
+
 std::array<glm::vec2, 4> Sprite::getNormalizedTextureCoordinates() const
 {
     if (!texture)
+    {
         return {glm::vec2{0.0f}, glm::vec2{0.0f}, glm::vec2{0.0f}, glm::vec2{0.0f}};
+    }
 
     float texW = static_cast<float>(texture->getWidth());
     float texH = static_cast<float>(texture->getHeight());
@@ -56,7 +74,9 @@ void Sprite::serialize(YAML::Emitter &out)
     out << YAML::Key << "FlipY" << YAML::Value << flipY;
 
     if (texture)
+    {
         texture->serialize(out);
+    }
 
     out << YAML::EndMap;
 }

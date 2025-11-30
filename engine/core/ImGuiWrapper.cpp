@@ -1,6 +1,8 @@
-#include "core/ImGuiWrapper.h"
+#include "core/components/Sprite.h"
+
 #include "core/GLIncludes.h"
 #include "core/IconsFontAwesome4.h"
+#include "core/ImGuiWrapper.h"
 #include "core/Window.h"
 
 #include "util/PathUtils.h"
@@ -10,6 +12,7 @@
 #include <filesystem>
 #include <functional>
 #include <imgui.h>
+#include <memory>
 
 void ImGuiWrapper::setupImgui(Window &window)
 {
@@ -56,15 +59,21 @@ void ImGuiWrapper::beginDockspace()
     }
 
     if (!opt_padding)
+    {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    }
 
     ImGui::Begin("DockSpace Demo", nullptr, window_flags);
 
     if (!opt_padding)
+    {
         ImGui::PopStyleVar();
+    }
 
     if (opt_fullscreen)
+    {
         ImGui::PopStyleVar(2);
+    }
 
     ImGuiIO &io = ImGui::GetIO();
     if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
@@ -173,4 +182,57 @@ void ImGuiWrapper::SetupStyle()
     static const ImWchar icon_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
     std::filesystem::path fontPath = getFilePath("fonts/fontawesome-webfont.ttf");
     io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 13.0f, &config, icon_ranges);
+}
+
+bool ImGuiWrapper::InputTextSimple(const char *label, std::string &value)
+{
+    char buf[256];
+
+    memset(buf, 0, sizeof(buf));                  // clear buffer
+    strncpy(buf, value.c_str(), sizeof(buf) - 1); // copy current text into buffer
+
+    if (ImGui::InputText(label, buf, sizeof(buf)))
+    {
+        value = buf;
+        return true;
+    }
+
+    return false;
+}
+
+// Default height is 32.0f
+bool ImGuiWrapper::ImageButtonFixedHeight(Sprite &sprite)
+{
+    float fixed_height = 64.0f;
+    const ImVec4 tintColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+    const ImVec4 bgColor = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+
+    std::shared_ptr<Texture> &texture = sprite.texture;
+    float texW = texture->getWidth();
+    float texH = texture->getHeight();
+    unsigned int texId = texture->getTextureId();
+
+    std::array<glm::vec2, 4> textureCoordinates = sprite.getNormalizedTextureCoordinates();
+    glm::vec2 uv0 = textureCoordinates[0]; // topLeft
+    glm::vec2 uv1 = textureCoordinates[2]; // bottomRight
+
+    ImGui::PushID(sprite.getId());
+    // Protect against invalid texture size
+    if (texW <= 0.0f || texH <= 0.0f)
+    {
+        // fallback: draw a small square placeholder button
+        bool clicked = ImGui::ImageButton("invalidsize", texId, ImVec2(fixed_height, fixed_height),
+            ImVec2(uv0[0], uv0[1]), ImVec2(uv1[0], uv1[1]), ImVec4(0, 0, 0, 0), tintColor);
+
+        ImGui::PopID();
+        return clicked;
+    }
+
+    const float aspect = texW / texH;
+    const float width = fixed_height * aspect;
+    bool isClicked = ImGui::ImageButton(
+        "", texId, ImVec2(width, fixed_height), ImVec2(uv0[0], uv0[1]), ImVec2(uv1[0], uv1[1]), bgColor, tintColor);
+
+    ImGui::PopID();
+    return isClicked;
 }

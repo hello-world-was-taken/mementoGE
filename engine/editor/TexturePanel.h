@@ -24,4 +24,5 @@ private:
     void renderTextureAssetsListPanel();
     void renderAnimationPanel();
     void copyTextureToAssets();
+    // void renderSpriteSheetPreviewPanel();
 };

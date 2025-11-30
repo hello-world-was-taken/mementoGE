@@ -30,8 +30,8 @@ namespace fs = std::filesystem;
 EditorLayer::EditorLayer()
     : m_gridRenderer{static_cast<int>(LOGICAL_WIDTH), static_cast<int>(LOGICAL_HEIGHT), 32, m_ctx.editorCamera}
 {
-    ImGuiWrapper::setupImgui(m_ctx.window);
     m_window.setupCallBack();
+    ImGuiWrapper::setupImgui(m_ctx.window);
 
     m_ctx.getSelectedSceneHistory().pushInitialScene(m_ctx.getActiveScene());
 }
@@ -106,7 +106,7 @@ void EditorLayer::drawEditorUI()
     m_scenePanel.draw();
     m_sceneHierarchyPanel.draw();
     m_propertiesPanel.draw();
-    m_texturePanel.draw();
+    // m_texturePanel.draw();
     m_sceneListPanel.draw();
     m_assetsPanel.draw();
 
