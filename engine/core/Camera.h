@@ -4,11 +4,11 @@
 #include <glm/glm.hpp>
 
 
-class Camera
+class CameraOld
 {
 public:
-    Camera();
-    virtual ~Camera() = default;
+    CameraOld();
+    virtual ~CameraOld() = default;
 
     // Movement / rotation
     void setPosition(const glm::vec3 &position);

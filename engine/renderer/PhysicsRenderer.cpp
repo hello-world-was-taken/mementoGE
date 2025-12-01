@@ -24,7 +24,7 @@ PhysicsRenderer::~PhysicsRenderer()
     std::cout << "PhysicsRenderer destructor called" << std::endl;
 }
 
-void PhysicsRenderer::render(const Camera &camera, const std::vector<GameObject> &gameObjects)
+void PhysicsRenderer::render(const CameraOld &camera, const std::vector<GameObject> &gameObjects)
 {
 
     if (m_batch == nullptr)
@@ -101,7 +101,7 @@ void PhysicsRenderer::updateBoxCollider2DVertices(const GameObject &gameObject)
     m_vertices.push_back(makeVertex(topRight));
 }
 
-void PhysicsRenderer::updateVertices(const Camera &camera, const std::vector<GameObject> &gameObjects)
+void PhysicsRenderer::updateVertices(const CameraOld &camera, const std::vector<GameObject> &gameObjects)
 {
     m_vertices.clear();
 

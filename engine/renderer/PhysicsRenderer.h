@@ -23,12 +23,12 @@ public:
     PhysicsRenderer(const PhysicsRenderer &) = delete;
     PhysicsRenderer &operator=(const PhysicsRenderer &) = delete;
 
-    void render(const Camera &camera, const std::vector<GameObject> &gameObjects);
+    void render(const CameraOld &camera, const std::vector<GameObject> &gameObjects);
 
 private:
     void updateBoxCollider2DVertices(const GameObject &gameObject);
     void updateSensor2DVertices(const GameObject &gameObject);
-    void updateVertices(const Camera &camera, const std::vector<GameObject> &gameObjects);
+    void updateVertices(const CameraOld &camera, const std::vector<GameObject> &gameObjects);
     void generateIndexArray();
 
 private:

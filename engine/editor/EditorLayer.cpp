@@ -212,7 +212,7 @@ void EditorLayer::renderPerformancePanel()
 
 void EditorLayer::renderGrid()
 {
-    const Camera &cam = m_ctx.editorCamera;
+    const CameraOld &cam = m_ctx.editorCamera;
 
     if (!m_drawGrid)
         return;

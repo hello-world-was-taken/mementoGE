@@ -2,7 +2,7 @@
 
 #include "Camera.h"
 
-class SceneCamera : public Camera
+class SceneCamera : public CameraOld
 {
 public:
     SceneCamera();

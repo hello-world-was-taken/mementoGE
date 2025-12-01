@@ -4,7 +4,7 @@
 
 #include <glm/glm.hpp>
 
-class EditorCamera : public Camera
+class EditorCamera : public CameraOld
 {
 public:
     EditorCamera() = default;

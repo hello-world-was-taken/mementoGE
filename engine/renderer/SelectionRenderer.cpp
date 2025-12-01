@@ -16,7 +16,7 @@ SelectionRenderer::SelectionRenderer()
 SelectionRenderer::~SelectionRenderer() = default;
 
 void SelectionRenderer::render(
-    const Camera &camera, const std::vector<std::reference_wrapper<GameObject>> &selectedObjects)
+    const CameraOld &camera, const std::vector<std::reference_wrapper<GameObject>> &selectedObjects)
 {
     if (m_batch == nullptr)
         m_batch = std::make_unique<RenderBatch>(m_indices, GL_LINES);

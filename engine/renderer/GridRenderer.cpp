@@ -9,7 +9,7 @@
 #include <filesystem>
 #include <stdexcept>
 
-GridRenderer::GridRenderer(int width, int height, int tileSize, const Camera &camera)
+GridRenderer::GridRenderer(int width, int height, int tileSize, const CameraOld &camera)
     : m_width(width), m_height(height), m_tileSize(tileSize)
 {
     generateGridLines(camera);
@@ -35,7 +35,7 @@ GridRenderer::~GridRenderer()
     delete m_vao;
 }
 
-void GridRenderer::generateGridLines(const Camera &camera)
+void GridRenderer::generateGridLines(const CameraOld &camera)
 {
     m_vertices.clear();
 
@@ -77,7 +77,7 @@ void GridRenderer::generateGridLines(const Camera &camera)
     }
 }
 
-void GridRenderer::render(const Camera &camera)
+void GridRenderer::render(const CameraOld &camera)
 {
     m_shader->use();
     m_shader->setUniform4fv("u_view_matrix", camera.getViewMatrix());

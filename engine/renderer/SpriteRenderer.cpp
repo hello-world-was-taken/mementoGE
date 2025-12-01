@@ -1,6 +1,9 @@
 #include "core/components/Sprite.h"
+#include "core/components/RenderLayer.h"
 
 #include "renderer/SpriteRenderer.h"
+
+#include <iostream>
 
 SpriteRenderer::SpriteRenderer()
 {
@@ -11,10 +14,12 @@ SpriteRenderer::~SpriteRenderer()
 {
 }
 
-void SpriteRenderer::render(const Camera &camera, const std::vector<GameObject> &gameObjects)
+void SpriteRenderer::render(const CameraOld &camera, const std::vector<GameObject> &gameObjects)
 {
     if (m_batch == nullptr)
+    {
         m_batch = std::make_unique<RenderBatch>(m_indices, GL_TRIANGLES);
+    }
 
     updateVertices(camera, gameObjects);
     m_batch->setVertexData(m_vertices);
@@ -24,7 +29,7 @@ void SpriteRenderer::render(const Camera &camera, const std::vector<GameObject> 
 
 // TODO: once we start to use more textures and exceed the amount we can bind to openGL
 // at a time, we need to batch our calls per texture units
-void SpriteRenderer::updateVertices(const Camera &camera, const std::vector<GameObject> &gameObjects)
+void SpriteRenderer::updateVertices(const CameraOld &camera, const std::vector<GameObject> &gameObjects)
 {
     m_vertices.clear();
 
@@ -37,6 +42,14 @@ void SpriteRenderer::updateVertices(const Camera &camera, const std::vector<Game
         {
             return Vertex{pos, color, texCoord, float(texUnit)};
         };
+
+        if (!gameObject.hasComponent<RenderLayer>())
+        {
+            std::cerr << "Game Object doesn't have render layer componenet!" << std::endl;
+        }
+
+        // draw individual batches here
+
 
         if (gameObject.hasComponent<Sprite>())
         {

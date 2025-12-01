@@ -13,13 +13,13 @@
 class GridRenderer
 {
 public:
-    GridRenderer(int width, int height, int tileSize, const Camera &camera);
+    GridRenderer(int width, int height, int tileSize, const CameraOld &camera);
     ~GridRenderer();
 
-    void render(const Camera &camera);
+    void render(const CameraOld &camera);
 
 private:
-    void generateGridLines(const Camera &camera);
+    void generateGridLines(const CameraOld &camera);
 
     int m_width, m_height, m_tileSize;
     std::vector<Vertex> m_vertices;

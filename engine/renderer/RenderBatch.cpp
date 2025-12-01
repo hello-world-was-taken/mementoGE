@@ -81,7 +81,7 @@ void RenderBatch::setIndexData(std::vector<unsigned int> indices)
     m_ibo->updateIndicesData(m_indices.data(), m_indices.size());
 }
 
-void RenderBatch::render(const Camera &camera, int drawCount, std::shared_ptr<Shader> customShader)
+void RenderBatch::render(const CameraOld &camera, int drawCount, std::shared_ptr<Shader> customShader)
 {
     auto vertexShaderPath = getFilePath("shader/vertex.shader");
     auto fragmentShaderPath = getFilePath("shader/fragment.shader");

@@ -57,7 +57,7 @@ protected:
         m_sceneManager.update();
 
         // TODO: return const reference not shared_ptr. It is owned by the scene and is not shared.
-        const Camera &cam = m_sceneManager.getActiveScene().getCamera();
+        const CameraOld &cam = m_sceneManager.getActiveScene().getCamera();
         const auto &gameObjects = m_sceneManager.getActiveScene().getGameObjects();
 
         m_spriteRenderer.render(cam, gameObjects);
