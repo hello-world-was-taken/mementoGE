@@ -5,6 +5,7 @@
 #include "core/SceneManager.h"
 #include "core/Window.h"
 
+#include "core/components/RenderLayer.h"
 #include "core/components/Sprite.h"
 
 #include "editor/Constants.h"
@@ -58,6 +59,14 @@ struct EditorContext
     EditorCamera editorCamera;
     EditorMouseController editorMouseController;
     FrameBuffer frameBuffer{viewportWidth, viewportHeight};
+
+    std::unordered_map<RenderLayerType, bool> renderLayerVisibility = {
+        {RenderLayerType::Background, true},
+        {RenderLayerType::World, true},
+        {RenderLayerType::Foreground, true},
+        {RenderLayerType::UI, true},
+        {RenderLayerType::Debug, true},
+    };
 
     /*
      * screen is glfw window

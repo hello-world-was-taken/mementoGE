@@ -6,13 +6,13 @@
 #include "core/Scene.h"
 #include "core/Window.h"
 
+#include "editor/AssetsPanel.h"
 #include "editor/EditorContext.h"
 #include "editor/PropertiesPanel.h"
 #include "editor/SceneHierarchyPanel.h"
+#include "editor/SceneListPanel.h"
 #include "editor/ScenePanel.h"
 #include "editor/TexturePanel.h"
-#include "editor/SceneListPanel.h"
-#include "editor/AssetsPanel.h"
 
 #include "renderer/GridRenderer.h"
 #include "renderer/PhysicsRenderer.h"
@@ -38,6 +38,8 @@ public:
 private:
     void runLoop();
     void updateFrame();
+    void layeredRender();
+
     // imgui panels
     void renderGrid();
     void renderPerformancePanel();

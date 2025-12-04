@@ -25,9 +25,12 @@ add_library(${PROJECT_NAME} STATIC
     engine/core/components/EnemyState.cpp
     engine/core/components/Patrol.cpp
     engine/core/components/Sensor2D.cpp
+    engine/core/components/RenderLayer.cpp
+    engine/core/components/PostProcessSettings.cpp
+    engine/core/components/Camera.cpp
 
     engine/core/Window.cpp
-    engine/core/Camera.cpp
+    engine/core/Camera.cpp  # TODO: remove. we have it as a component now
     engine/core/SceneCamera.cpp
     engine/core/GameObject.cpp
     engine/core/SceneManager.cpp

@@ -12,6 +12,7 @@ LambdaBodyIndentation: Signature
 AllowShortLambdasOnASingleLine: None
 AlignAfterOpenBracket: DontAlign
 BinPackParameters: false
+BinPackArguments: false
 
 # Align access modifiers (public/private/protected) to the left edge
 AccessModifierOffset: -4

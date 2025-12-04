@@ -4,6 +4,7 @@
 
 #include "core/components/BoxCollider2D.h"
 #include "core/components/CircleCollider2D.h"
+#include "core/components/RenderLayer.h"
 #include "core/components/RigidBody2D.h"
 
 #include "core/Camera.h"
@@ -70,9 +71,8 @@ void EditorLayer::updateFrame()
             // render grid
             renderGrid();
 
-            m_physicsRenderer.render(m_ctx.editorCamera, m_ctx.getActiveScene().getGameObjects());
             m_selectionRenderer.render(m_ctx.editorCamera, m_ctx.selectedObjects);
-            m_spriteRenderer.render(m_ctx.editorCamera, m_ctx.getActiveScene().getGameObjects());
+            layeredRender();
 
             drawEditorUI();
 
@@ -80,6 +80,34 @@ void EditorLayer::updateFrame()
         });
 
     MouseListener::instance()->beginFrame();
+}
+
+// TODO: rename to layeredRender or sth
+void EditorLayer::layeredRender()
+{
+    auto &objects = m_ctx.getActiveScene().getGameObjects();
+
+    for (RenderLayerType layer : RENDER_LAYER_ORDER)
+    {
+        // Skip invisible layers
+        if (!m_ctx.renderLayerVisibility[layer])
+        {
+            continue;
+        }
+
+        std::vector<GameObject> layerObjects;
+
+        for (GameObject obj : objects)
+        {
+            if (obj.hasComponent<RenderLayer>() && obj.getComponent<RenderLayer>().layer == layer)
+            {
+                layerObjects.push_back(obj);
+            }
+        }
+
+        m_physicsRenderer.render(m_ctx.editorCamera, layerObjects);
+        m_spriteRenderer.render(m_ctx.editorCamera, layerObjects);
+    }
 }
 
 void EditorLayer::runLoop()
@@ -120,7 +148,9 @@ void EditorLayer::drawEditorUI()
 void EditorLayer::renderAddNewObjectPopup()
 {
     if (!m_ctx.showCreateObjectPopup)
+    {
         return;
+    }
 
     ImGui::SetNextWindowPos(m_ctx.createObjectPopupPos, ImGuiCond_Always);
     if (ImGui::BeginPopup("CreateObjectPopup"))
@@ -215,7 +245,9 @@ void EditorLayer::renderGrid()
     const CameraOld &cam = m_ctx.editorCamera;
 
     if (!m_drawGrid)
+    {
         return;
+    }
 
     m_gridRenderer.render(m_ctx.editorCamera);
 }
@@ -223,6 +255,19 @@ void EditorLayer::renderGrid()
 void EditorLayer::renderEditorProperties()
 {
     ImGui::Begin("Context");
+    ImGuiWrapper::Collapsable("Render Layers",
+        [&]
+        {
+            ImGui::Text("Toggle Layer Visibility");
+
+            for (RenderLayerType layer : RENDER_LAYER_ORDER)
+            {
+                const std::string name = RenderLayer::renderLayerTypeToString(layer);
+                bool *visible = &m_ctx.renderLayerVisibility[layer];
+
+                ImGui::Checkbox(name.c_str(), visible);
+            }
+        });
     ImGuiWrapper::Collapsable("Viewport",
         [&]
         {
@@ -385,7 +430,10 @@ void EditorLayer::drawMouseDebugPanel()
         bool pressed = mouse->wasMouseButtonPressed(btn.id);
         bool released = mouse->wasMouseButtonReleased(btn.id);
 
-        ImGui::Text("%s Button: Held=%s, Pressed=%s, Released=%s", btn.name, held ? "true" : "false",
-            pressed ? "true" : "false", released ? "true" : "false");
+        ImGui::Text("%s Button: Held=%s, Pressed=%s, Released=%s",
+            btn.name,
+            held ? "true" : "false",
+            pressed ? "true" : "false",
+            released ? "true" : "false");
     }
 }

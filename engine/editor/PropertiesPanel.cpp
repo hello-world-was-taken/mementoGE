@@ -2,9 +2,11 @@
 #include "core/components/EnemyState.h"
 #include "core/components/EntityInfo.h"
 #include "core/components/Patrol.h"
+#include "core/components/RenderLayer.h"
 #include "core/components/Sensor2D.h"
 #include "core/components/Sprite.h"
 #include "core/components/Transform.h"
+#include "core/components/PostProcessSettings.h"
 
 #include "core/Animator.h"
 #include "core/AssetManager.h"
@@ -56,7 +58,9 @@ void PropertiesPanel::renderPropertiesInWindow()
 void PropertiesPanel::renderPropertiesInPopup()
 {
     if (!m_ctx.showPropertiesPopup)
+    {
         return;
+    }
 
     // Place popup a little to the right of mouse click
     ImGui::SetNextWindowPos(m_ctx.propertiesPopupPos);
@@ -79,7 +83,9 @@ void PropertiesPanel::renderPropertiesInPopup()
 void PropertiesPanel::renderPropertiesPanel()
 {
     if (m_ctx.getActiveScene().getGameObjects().empty())
+    {
         return;
+    }
 
     if (m_ctx.selectedObjects.empty())
     {
@@ -92,12 +98,14 @@ void PropertiesPanel::renderPropertiesPanel()
     // TODO: look into entt::meta
     drawComponentInspector<EntityInfo>(go);
     drawComponentInspector<Transform>(go);
+    drawComponentInspector<RenderLayer>(go);
     drawComponentInspector<BoxCollider2D>(go);
     drawComponentInspector<RigidBody2D>(go);
     drawComponentInspector<EnemyState>(go);
     drawComponentInspector<Patrol>(go);
     drawComponentInspector<Sensor2D>(go);
     drawComponentInspector<Sprite>(go);
+    drawComponentInspector<PostProcessSettings>(go);
     drawAnimatorSettings(go);
     drawAddComponentCombo(go);
     drawExportModel(go);
@@ -117,7 +125,9 @@ void PropertiesPanel::renderPropertiesPanel()
 void PropertiesPanel::drawSpriteSettings(GameObject &go)
 {
     if (!go.hasComponent<Sprite>())
+    {
         return;
+    }
 
     Sprite &sprite = go.getComponent<Sprite>();
 
@@ -125,7 +135,9 @@ void PropertiesPanel::drawSpriteSettings(GameObject &go)
     ImGui::Text("Sprite Settings");
 
     if (ImGui::Checkbox("Flip Horizontally", &sprite.flipX))
+    {
         if (ImGui::Checkbox("Flip Vertically", &sprite.flipY))
+        {
 
             if (ImGui::Button("Change Sprite"))
             {
@@ -138,6 +150,8 @@ void PropertiesPanel::drawSpriteSettings(GameObject &go)
                     ImGui::OpenPopup("Select Sprite");
                 }
             }
+        }
+    }
 
     std::string texPath = sprite.texture->getFilePath();
     ImGui::Text("Current Sprite:");
@@ -148,7 +162,7 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
 {
     ImGui::Separator();
     SetFieldWidth(150);
-    // TODO: make them selectable at the component level like the other editor extensions
+    // TODO: using templates might be better than listing the selectables
     if (ImGui::BeginCombo("Add Component", "Select..."))
     {
         if (ImGui::Selectable("Rigidbody2D"))
@@ -220,6 +234,17 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                     go.addComponent<Patrol>();
                 });
         }
+
+        // TODO: this should only be selected for the camera
+        if (ImGui::Selectable("Post Processing Settings"))
+        {
+            m_ctx.performSceneEdit(
+                [&]
+                {
+                    go.addComponent<PostProcessSettings>();
+                });
+        }
+
         ImGui::EndCombo();
     }
 }
@@ -227,7 +252,9 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
 void PropertiesPanel::drawRigidBodySettings(GameObject &go)
 {
     if (!go.hasComponent<RigidBody2D>())
+    {
         return;
+    }
 
     RigidBody2D &rb = go.getComponent<RigidBody2D>();
     rb.drawInspector();
@@ -241,7 +268,9 @@ void PropertiesPanel::drawAnimatorSettings(GameObject &go)
         ImGui::Text("has enemyAiState");
     }
     if (!go.hasComponent<Animator>())
+    {
         return;
+    }
 
     auto &animator = go.getComponent<Animator>();
 
@@ -263,7 +292,9 @@ void PropertiesPanel::drawAnimatorSettings(GameObject &go)
                 animator.play(name, true);
             }
             if (selected)
+            {
                 ImGui::SetItemDefaultFocus();
+            }
         }
         ImGui::EndCombo();
     }
@@ -271,7 +302,9 @@ void PropertiesPanel::drawAnimatorSettings(GameObject &go)
     if (ImGui::Button(animator.animationPlayer.isPlaying() ? "Pause" : "Play"))
     {
         if (animator.animationPlayer.isPlaying())
+        {
             animator.animationPlayer.pause();
+        }
         else
         {
             if (!animator.currentAnimation.empty())
@@ -315,7 +348,9 @@ void PropertiesPanel::drawPopups()
         ImGui::Text("Please select a texture first!");
         ImGui::Separator();
         if (ImGui::Button("OK", ImVec2(120, 0)))
+        {
             ImGui::CloseCurrentPopup();
+        }
         ImGui::EndPopup();
     }
 
@@ -337,14 +372,16 @@ void PropertiesPanel::drawPopups()
                 }
             });
         if (ImGui::Button("Cancel"))
+        {
             ImGui::CloseCurrentPopup();
+        }
         ImGui::EndPopup();
     }
 }
 
 void PropertiesPanel::drawExportModel(GameObject &go)
 {
-    if(ImGui::Button("Export Model"))
+    if (ImGui::Button("Export Model"))
     {
         YAML::Emitter out;
         go.serialize(out);

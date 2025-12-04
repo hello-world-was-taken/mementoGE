@@ -2,6 +2,8 @@
 #include "core/components/EnemyState.h"
 #include "core/components/EntityInfo.h"
 #include "core/components/Patrol.h"
+#include "core/components/PostProcessSettings.h"
+#include "core/components/RenderLayer.h"
 #include "core/components/RigidBody2D.h"
 #include "core/components/Sensor2D.h"
 #include "core/components/Sprite.h"
@@ -18,17 +20,25 @@
 GameObject::GameObject(entt::registry &registry) : m_registry{&registry}
 {
     m_entity = m_registry->create();
+    addComponent<EntityInfo>();
     addComponent<Transform>();
+    addComponent<RenderLayer>();
 }
 
 GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGameObject, Physics2D &physics)
     : m_registry{&registry}
 {
     m_entity = m_registry->create();
+    // add required components to objects that were created previously
+    // and may not have them for backwards compatablity
+    addComponent<EntityInfo>();
+    addComponent<Transform>();
+    addComponent<RenderLayer>();
 
     // Deserialize Components
     deserializeComponent<EntityInfo>(serializedGameObject, "EntityInfo");
     deserializeComponent<Transform>(serializedGameObject, "Transform");
+    deserializeComponent<RenderLayer>(serializedGameObject, "RenderLayer");
     deserializeComponent<Sprite>(serializedGameObject, "Sprite");
     deserializeComponent<RigidBody2D>(serializedGameObject, "RigidBody2D", physics);
     deserializeComponent<BoxCollider2D>(serializedGameObject, "BoxCollider2D", physics);
@@ -36,29 +46,9 @@ GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGam
     deserializeComponent<Animator>(serializedGameObject, "Animator");
     deserializeComponent<EnemyState>(serializedGameObject, "EnemyState");
     deserializeComponent<Patrol>(serializedGameObject, "Patrol");
+    deserializeComponent<PostProcessSettings>(serializedGameObject, "PostProcessSettings");
 }
 
-GameObject::GameObject(GameObject &&other) : m_registry{other.m_registry}
-{
-    m_entity = other.m_entity;
-
-    other.m_registry = nullptr;
-    other.m_entity = entt::null;
-}
-
-GameObject &GameObject::operator=(GameObject &&other)
-{
-    if (this != &other)
-    {
-        m_registry = other.m_registry;
-        m_entity = other.m_entity;
-
-        other.m_registry = nullptr;
-        other.m_entity = entt::null;
-    }
-
-    return *this;
-}
 
 std::array<glm::vec3, 4> GameObject::getQuad() const
 {
@@ -75,8 +65,9 @@ std::array<glm::vec3, 4> GameObject::getQuad() const
     return std::array{topLeft, bottomLeft, bottomRight, topRight};
 }
 
-// TODO: shouldn't this be done in the GPU? It shouldn't matter that much for 2D, but as a principle.
-// Also is it possible to do that if we want to draw the batch in a single draw call?
+// TODO: shouldn't this be done in the GPU? It shouldn't matter that
+// much for 2D, but as a principle. Also is it possible to do that if
+// we want to draw the batch in a single draw call?
 std::array<glm::vec3, 4> GameObject::getWorldCoordinateQuad() const
 {
     Transform transform = getComponent<Transform>();
@@ -98,7 +89,8 @@ void GameObject::updateEntityReference(entt::registry &registry)
     m_registry = &registry;
 }
 
-// TODO: we can update this to use spatial grid or quadtree as an optimization
+// TODO: we can update this to use spatial grid or quadtree as an
+// optimization
 bool GameObject::containsPoint(glm::vec2 worldPoint) const
 {
     EntityInfo &entityInfo = getComponent<EntityInfo>();
@@ -116,6 +108,7 @@ bool GameObject::serialize(YAML::Emitter &out)
 
     serializeComponent<EntityInfo>(out);
     serializeComponent<Transform>(out);
+    serializeComponent<RenderLayer>(out);
     serializeComponent<Sprite>(out);
     serializeComponent<RigidBody2D>(out);
     serializeComponent<BoxCollider2D>(out);
@@ -124,6 +117,7 @@ bool GameObject::serialize(YAML::Emitter &out)
     serializeComponent<Animator>(out);
     serializeComponent<EnemyState>(out);
     serializeComponent<Patrol>(out);
+    serializeComponent<PostProcessSettings>(out);
 
     out << YAML::EndMap;
 

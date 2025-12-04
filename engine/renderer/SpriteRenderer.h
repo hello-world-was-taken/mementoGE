@@ -7,6 +7,7 @@
 
 #include "renderer/RenderBatch.h"
 
+#include <map>
 #include <memory>
 
 class SpriteRenderer
@@ -16,12 +17,13 @@ public:
     ~SpriteRenderer();
 
     void render(const CameraOld &camera, const std::vector<GameObject> &gameObjects);
+
+private:
     void updateVertices(const CameraOld &camera, const std::vector<GameObject> &gameObjects);
     void generateIndexArray();
 
 private:
     std::unique_ptr<RenderBatch> m_batch;
-
     std::vector<Vertex> m_vertices;
     std::vector<unsigned int> m_indices;
 };

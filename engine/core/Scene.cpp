@@ -59,7 +59,6 @@ Scene &Scene::operator=(Scene &&other)
             m_gameObjects.push_back(std::move(g));
         }
         other.m_gameObjects.clear();
-
     }
     return *this;
 }

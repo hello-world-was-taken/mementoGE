@@ -19,15 +19,25 @@
 #include <vector>
 #include <yaml-cpp/yaml.h>
 
-// TODO: can we make gameObject a light wrapper around entity?
-// maybe move the utilities to the scene?
+/**
+ * @brief A lightweight, non-owning wrapper around an entt::entity.
+ *
+ * GameObject does NOT own the underlying entity or any of its components.
+ * The Scene (and its entt::registry) is the sole owner.
+ *
+ * This class is designed to be:
+ *  - Copyable: copying creates another handle to the same entity.
+ *  - Movable: moving transfers the handle but does not affect the entity.
+ *  - Safe: a moved-from GameObject becomes an empty/invalid handle.
+ *
+ * GameObject is only a convenience layer to access components,
+ * perform serialization, and provide higher-level helper utilities.
+ */
 class GameObject
 {
 public:
     GameObject(entt::registry &registry);
     GameObject(entt::registry &registry, const YAML::Node &serializedGameObject, Physics2D &physics);
-    GameObject(GameObject &&other);
-    GameObject &operator=(GameObject &&other);
     ~GameObject() = default;
 
     template <typename Component, typename... Args> void addComponent(Args &&...args);
@@ -39,8 +49,6 @@ public:
     void deserializeComponent(const YAML::Node &serializedGameObject,
         const std::string &componentName,
         std::optional<std::reference_wrapper<Physics2D>> physics = std::nullopt);
-
-    void destroy();
 
     std::array<glm::vec3, 4> getQuad() const;
     std::array<glm::vec3, 4> getWorldCoordinateQuad() const;
@@ -68,6 +76,14 @@ private:
 
 template <typename Component, typename... Args> void GameObject::addComponent(Args &&...args)
 {
+    // Check if the entity already has this component
+    if (m_registry->any_of<Component>(m_entity))
+    {
+        std::cerr << "[GameObject] addComponent failed: entity " << static_cast<entt::id_type>(m_entity)
+                  << " already has component " << typeid(Component).name() << "\n";
+        return;
+    }
+
     m_registry->emplace<Component>(m_entity, std::forward<Args>(args)...);
 }
 

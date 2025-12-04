@@ -1,8 +1,8 @@
 #pragma once
 
-#include "editor/TexturePanel.h"
 #include "editor/EditorContext.h"
 #include "editor/EditorPanel.h"
+#include "editor/TexturePanel.h"
 
 #include <type_traits>
 
@@ -23,8 +23,7 @@ private:
     void renderPropertiesInWindow();
     void renderPropertiesInPopup();
 
-    template <typename T>
-    void drawComponentInspector(const GameObject &gameObject);
+    template <typename T> void drawComponentInspector(const GameObject &gameObject);
 
     void drawSpriteSettings(GameObject &go);
     void drawAddComponentCombo(GameObject &go);
@@ -35,23 +34,19 @@ private:
 };
 
 // using SFINAE to gurantee drawInspector function exists
-template <typename T, typename = void>
-struct has_drawInspector : std::false_type
+template <typename T, typename = void> struct has_drawInspector : std::false_type
 {
 };
 
 template <typename T>
-struct has_drawInspector<T, std::void_t<decltype(std::declval<T>().drawInspector())>>
-    : std::true_type
+struct has_drawInspector<T, std::void_t<decltype(std::declval<T>().drawInspector())>> : std::true_type
 {
 };
 
 // Helper variable template
-template <typename T>
-inline constexpr bool has_onImguiRender_v = has_drawInspector<T>::value;
+template <typename T> inline constexpr bool has_onImguiRender_v = has_drawInspector<T>::value;
 
-template <typename T>
-void PropertiesPanel::drawComponentInspector(const GameObject &gameObject)
+template <typename T> void PropertiesPanel::drawComponentInspector(const GameObject &gameObject)
 {
     if (gameObject.hasComponent<T>())
     {
@@ -59,7 +54,9 @@ void PropertiesPanel::drawComponentInspector(const GameObject &gameObject)
         if constexpr (has_onImguiRender_v<T>)
         {
             component.drawInspector();
-        } else {
+        }
+        else
+        {
             static_assert(false, "T must have drawInspector");
         }
     }

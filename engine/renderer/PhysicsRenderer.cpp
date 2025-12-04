@@ -24,11 +24,14 @@ PhysicsRenderer::~PhysicsRenderer()
     std::cout << "PhysicsRenderer destructor called" << std::endl;
 }
 
-void PhysicsRenderer::render(const CameraOld &camera, const std::vector<GameObject> &gameObjects)
+void PhysicsRenderer::render(
+    const CameraOld &camera, const std::vector<GameObject> &gameObjects)
 {
 
     if (m_batch == nullptr)
+    {
         m_batch = std::make_unique<RenderBatch>(m_indices, GL_LINES);
+    }
 
     updateVertices(camera, gameObjects);
 
@@ -57,7 +60,8 @@ void PhysicsRenderer::updateSensor2DVertices(const GameObject &gameObject)
     auto makeVertex = [&](const glm::vec3 &pos) -> Vertex
     {
         return Vertex{
-            pos, borderColor,
+            pos,
+            borderColor,
             glm::vec2(0.0f), // no texture
             -1.0f            // sentinel tex index
         };
@@ -89,7 +93,8 @@ void PhysicsRenderer::updateBoxCollider2DVertices(const GameObject &gameObject)
     auto makeVertex = [&](const glm::vec3 &pos) -> Vertex
     {
         return Vertex{
-            pos, borderColor,
+            pos,
+            borderColor,
             glm::vec2(0.0f), // no texture
             -1.0f            // sentinel tex index
         };
@@ -101,7 +106,8 @@ void PhysicsRenderer::updateBoxCollider2DVertices(const GameObject &gameObject)
     m_vertices.push_back(makeVertex(topRight));
 }
 
-void PhysicsRenderer::updateVertices(const CameraOld &camera, const std::vector<GameObject> &gameObjects)
+void PhysicsRenderer::updateVertices(
+    const CameraOld &camera, const std::vector<GameObject> &gameObjects)
 {
     m_vertices.clear();
 

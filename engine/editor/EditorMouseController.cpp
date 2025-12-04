@@ -282,7 +282,9 @@ std::optional<std::reference_wrapper<GameObject>> EditorMouseController::getGame
         }
 
         if (topObject)
+        {
             return *topObject; // reference_wrapper auto-constructed
+        }
     }
     return std::nullopt;
 }
