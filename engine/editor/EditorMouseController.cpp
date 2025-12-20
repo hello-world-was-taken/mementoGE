@@ -172,7 +172,7 @@ void EditorMouseController::handleZoom(EditorContext &ctx)
 
     // Adjust zoom level
     ctx.editorCamera.adjustZoom(mouse->getScrollDelta().x);
-    ctx.editorCamera.onViewportResize(ctx.frameBuffer.getWidth(), ctx.frameBuffer.getHeight());
+    ctx.editorCamera.onViewportResize(ctx.renderer2D.m_finalFBO.getWidth(), ctx.renderer2D.m_finalFBO.getHeight());
 }
 
 void EditorMouseController::handleDragging(
@@ -250,8 +250,8 @@ void EditorMouseController::moveCamera(EditorContext &ctx)
     int winWidth, winHeight;
     glfwGetWindowSize(ctx.window.getGlfwWindow(), &winWidth, &winHeight);
 
-    float scaleX = ctx.frameBuffer.getWidth() / winWidth;
-    float scaleY = ctx.frameBuffer.getHeight() / winHeight;
+    float scaleX = ctx.renderer2D.m_finalFBO.getWidth() / winWidth;
+    float scaleY = ctx.renderer2D.m_finalFBO.getHeight() / winHeight;
 
     glm::vec2 dragDelta = MouseListener::instance()->getMouseDelta();
 

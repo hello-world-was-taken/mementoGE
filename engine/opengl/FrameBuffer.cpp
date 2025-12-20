@@ -3,8 +3,7 @@
 
 #include "FrameBuffer.h"
 
-FrameBuffer::FrameBuffer(float width, float height)
-    : m_width{width}, m_height{height}
+FrameBuffer::FrameBuffer(float width, float height) : m_width{width}, m_height{height}
 {
     init();
 }
@@ -48,13 +47,12 @@ void FrameBuffer::init()
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE)
     {
-        std::cerr << "Framebuffer is not complete! status = 0x"
-                  << std::hex << status << std::dec << std::endl;
+        std::cerr << "Framebuffer is not complete! status = 0x" << std::hex << status << std::dec << std::endl;
     }
     else
     {
-        std::cout << "FrameBuffer init OK: " << m_width << "x" << m_height
-                  << " FBO:" << m_fbo << " TEX:" << m_textureColorBuffer << " RBO:" << m_rbo << std::endl;
+        std::cout << "FrameBuffer init OK: " << m_width << "x" << m_height << " FBO:" << m_fbo
+                  << " TEX:" << m_textureColorBuffer << " RBO:" << m_rbo << std::endl;
     }
 
     // unbind
@@ -109,7 +107,7 @@ bool FrameBuffer::shouldResize() const
     return m_shouldResize;
 }
 
-void FrameBuffer::updateSize(int width, int height)
+void FrameBuffer::queueSizeUpdate(int width, int height)
 {
     if (m_width != width || m_height != height)
     {

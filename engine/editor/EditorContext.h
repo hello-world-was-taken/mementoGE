@@ -13,7 +13,7 @@
 #include "editor/EditorMouseController.h"
 #include "editor/SceneHistory.h"
 
-#include "opengl/FrameBuffer.h"
+#include "renderer/Renderer2D.h"
 
 #include <functional>
 #include <map>
@@ -58,7 +58,7 @@ struct EditorContext
     std::unordered_map<std::string, SceneHistory> sceneHistoryByScenePathMap;
     EditorCamera editorCamera;
     EditorMouseController editorMouseController;
-    FrameBuffer frameBuffer{viewportWidth, viewportHeight};
+    Renderer2D renderer2D;
 
     std::unordered_map<RenderLayerType, bool> renderLayerVisibility = {
         {RenderLayerType::Background, true},

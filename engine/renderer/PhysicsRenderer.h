@@ -29,7 +29,6 @@ private:
     void updateBoxCollider2DVertices(const GameObject &gameObject);
     void updateSensor2DVertices(const GameObject &gameObject);
     void updateVertices(const CameraOld &camera, const std::vector<GameObject> &gameObjects);
-    void generateIndexArray();
 
 private:
     std::unique_ptr<RenderBatch> m_batch;

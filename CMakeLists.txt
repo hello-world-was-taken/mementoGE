@@ -60,6 +60,7 @@ add_library(${PROJECT_NAME} STATIC
     engine/editor/AssetsPanel.cpp
 
     # renderer
+    engine/renderer/Renderer2D.cpp
     engine/renderer/RenderBatch.cpp
     engine/renderer/SpriteRenderer.cpp
     engine/renderer/GridRenderer.cpp

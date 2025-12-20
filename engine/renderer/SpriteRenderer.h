@@ -1,5 +1,7 @@
 #pragma once
 
+#include "core/components/RenderLayer.h"
+
 #include "core/Camera.h"
 #include "core/GameObject.h"
 
@@ -19,8 +21,7 @@ public:
     void render(const CameraOld &camera, const std::vector<GameObject> &gameObjects);
 
 private:
-    void updateVertices(const CameraOld &camera, const std::vector<GameObject> &gameObjects);
-    void generateIndexArray();
+    void updateVertices(const std::vector<GameObject> &gameObjects);
 
 private:
     std::unique_ptr<RenderBatch> m_batch;

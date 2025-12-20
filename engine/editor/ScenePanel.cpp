@@ -157,11 +157,11 @@ void ScenePanel::renderSceneViewport()
     int pixelWidth = std::max(1, (int)(imGuiWindowSize.x * io.DisplayFramebufferScale.x + 0.5f));
     int pixelHeight = std::max(1, (int)(imGuiWindowSize.y * io.DisplayFramebufferScale.y + 0.5f));
 
-    m_ctx.frameBuffer.updateSize(pixelWidth, pixelHeight);
+    m_ctx.renderer2D.queueFrameBufferResize(pixelWidth, pixelHeight);
     m_ctx.editorCamera.onViewportResize(imGuiWindowSize.x, imGuiWindowSize.y);
 
     // render framebuffer texture
-    unsigned int framebufferTexture = m_ctx.frameBuffer.getColorTexture();
+    unsigned int framebufferTexture = m_ctx.renderer2D.getColorTexture();
     ImGui::Image(framebufferTexture, imGuiWindowSize, ImVec2{0, 1}, ImVec2{1, 0});
 
     // handle drag–drop
@@ -169,9 +169,9 @@ void ScenePanel::renderSceneViewport()
 
     m_ctx.scenePanelTopLeftPos = ImGui::GetItemRectMin();
     m_ctx.scenePanelSize = ImGui::GetItemRectSize();
+    m_ctx.sceneImageHovered = ImGui::IsItemHovered();
 
     renderGizmos();
-    m_ctx.sceneImageHovered = ImGui::IsItemHovered();
 
     ImGui::End();
 }
@@ -237,7 +237,9 @@ void ScenePanel::renderGizmos()
     ImVec2 xEnd = ImVec2(screenPos.x + axisLength, screenPos.y);
     drawList->AddLine(xStart, xEnd, IM_COL32(0, 255, 0, 255), 2.0f);
     // Arrowhead for X
-    drawList->AddTriangleFilled(ImVec2(xEnd.x, xEnd.y), ImVec2(xEnd.x - 6, xEnd.y - 4), ImVec2(xEnd.x - 6, xEnd.y + 4),
+    drawList->AddTriangleFilled(ImVec2(xEnd.x, xEnd.y),
+        ImVec2(xEnd.x - 6, xEnd.y - 4),
+        ImVec2(xEnd.x - 6, xEnd.y + 4),
         IM_COL32(0, 255, 0, 255));
     // Label for X
     drawList->AddText(ImVec2(xEnd.x + 4, xEnd.y - 6), IM_COL32(0, 255, 0, 255), "X");
@@ -247,7 +249,9 @@ void ScenePanel::renderGizmos()
     ImVec2 yEnd = ImVec2(screenPos.x, screenPos.y - axisLength);
     drawList->AddLine(yStart, yEnd, IM_COL32(0, 0, 255, 255), 2.0f);
     // Arrowhead for Y
-    drawList->AddTriangleFilled(ImVec2(yEnd.x, yEnd.y), ImVec2(yEnd.x - 4, yEnd.y + 6), ImVec2(yEnd.x + 4, yEnd.y + 6),
+    drawList->AddTriangleFilled(ImVec2(yEnd.x, yEnd.y),
+        ImVec2(yEnd.x - 4, yEnd.y + 6),
+        ImVec2(yEnd.x + 4, yEnd.y + 6),
         IM_COL32(0, 0, 255, 255));
     // Label for Y
     drawList->AddText(ImVec2(yEnd.x + 4, yEnd.y - 10), IM_COL32(0, 0, 255, 255), "Y");

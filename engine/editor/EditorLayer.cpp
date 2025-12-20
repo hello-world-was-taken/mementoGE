@@ -4,7 +4,6 @@
 
 #include "core/components/BoxCollider2D.h"
 #include "core/components/CircleCollider2D.h"
-#include "core/components/RenderLayer.h"
 #include "core/components/RigidBody2D.h"
 
 #include "core/Camera.h"
@@ -49,69 +48,6 @@ EditorContext &EditorLayer::getEditorContext()
 
 void EditorLayer::run()
 {
-    runLoop();
-}
-
-void EditorLayer::updateFrame()
-{
-    ImGuiWrapper::ImGuiFrame(
-        [&]()
-        {
-            handleEditorShortcuts();
-
-            m_ctx.frameBuffer.resize();
-            m_ctx.frameBuffer.bind();
-
-            // clearing our off screen frame buffer before each render
-            glClearColor(0.41176f, 0.41176f, 0.41176f, 1.00f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-            m_ctx.getActiveScene().update();
-
-            // render grid
-            renderGrid();
-
-            m_selectionRenderer.render(m_ctx.editorCamera, m_ctx.selectedObjects);
-            layeredRender();
-
-            drawEditorUI();
-
-            m_ctx.frameBuffer.unbind();
-        });
-
-    MouseListener::instance()->beginFrame();
-}
-
-// TODO: rename to layeredRender or sth
-void EditorLayer::layeredRender()
-{
-    auto &objects = m_ctx.getActiveScene().getGameObjects();
-
-    for (RenderLayerType layer : RENDER_LAYER_ORDER)
-    {
-        // Skip invisible layers
-        if (!m_ctx.renderLayerVisibility[layer])
-        {
-            continue;
-        }
-
-        std::vector<GameObject> layerObjects;
-
-        for (GameObject obj : objects)
-        {
-            if (obj.hasComponent<RenderLayer>() && obj.getComponent<RenderLayer>().layer == layer)
-            {
-                layerObjects.push_back(obj);
-            }
-        }
-
-        m_physicsRenderer.render(m_ctx.editorCamera, layerObjects);
-        m_spriteRenderer.render(m_ctx.editorCamera, layerObjects);
-    }
-}
-
-void EditorLayer::runLoop()
-{
     glfwSwapInterval(1);
 
     while (!glfwWindowShouldClose(m_window.getGlfwWindow()))
@@ -125,6 +61,32 @@ void EditorLayer::runLoop()
     }
 
     glfwTerminate();
+}
+
+void EditorLayer::updateFrame()
+{
+    ImGuiWrapper::ImGuiFrame(
+        [&]()
+        {
+            handleEditorShortcuts();
+
+            // TODO: expost setClearColor function in Renderer2D.h
+            // glClearColor(0.41176f, 0.41176f, 0.41176f, 1.00f);
+            // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            m_ctx.getActiveScene().update();
+
+            // render grid
+            renderGrid();
+
+            // TODO: use Render2D::setRendererEnablement to set which renderes are enabled
+            // on edit of toggle renderes would be a good place to set it.
+            m_ctx.renderer2D.renderScene(m_ctx.editorCamera, m_ctx.getActiveScene().getGameObjects());
+
+            drawEditorUI();
+        });
+
+    MouseListener::instance()->beginFrame();
 }
 
 void EditorLayer::drawEditorUI()
@@ -339,11 +301,11 @@ void EditorLayer::renderEditorProperties()
             ImGui::Text("Snapshot Idx: %u", m_ctx.getSelectedSceneHistory().getCurrentIndex());
         });
 
-    ImGuiWrapper::Collapsable("Framebuffer",
-        [&]
-        {
-            ImGui::Text("FB Size: %dx%d", (int)m_ctx.frameBuffer.getWidth(), (int)m_ctx.frameBuffer.getHeight());
-        });
+    // ImGuiWrapper::Collapsable("Framebuffer",
+    //     [&]
+    //     {
+    //         ImGui::Text("FB Size: %dx%d", (int)m_ctx.frameBuffer.getWidth(), (int)m_ctx.frameBuffer.getHeight());
+    //     });
 
     ImGui::End();
 }

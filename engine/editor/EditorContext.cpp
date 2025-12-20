@@ -30,8 +30,8 @@ glm::vec2 EditorContext::screenToLocal(glm::vec2 mousePos)
 
 glm::vec2 EditorContext::localToFrameBuffer(glm::vec2 localPos)
 {
-    float fbX = (localPos.x / scenePanelSize.x) * frameBuffer.getWidth();
-    float fbY = (localPos.y / scenePanelSize.y) * frameBuffer.getHeight();
+    float fbX = (localPos.x / scenePanelSize.x) * renderer2D.m_finalFBO.getWidth();
+    float fbY = (localPos.y / scenePanelSize.y) * renderer2D.m_finalFBO.getHeight();
 
     return {fbX, fbY};
 }
@@ -39,8 +39,8 @@ glm::vec2 EditorContext::localToFrameBuffer(glm::vec2 localPos)
 glm::vec2 EditorContext::frameBufferToWorld(glm::vec2 fbPos)
 {
     // Convert to Normalized Device Coordinates (NDC)
-    float ndcX = (fbPos.x / frameBuffer.getWidth()) * 2.0f - 1.0f;
-    float ndcY = (fbPos.y / frameBuffer.getHeight()) * 2.0f - 1.0f;
+    float ndcX = (fbPos.x / renderer2D.m_finalFBO.getWidth()) * 2.0f - 1.0f;
+    float ndcY = (fbPos.y / renderer2D.m_finalFBO.getHeight()) * 2.0f - 1.0f;
 
     // TODO: do we need to update z to layer images over one another?
     glm::vec4 clipCoords = glm::vec4(ndcX, ndcY, 0.0f, 1.0f);

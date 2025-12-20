@@ -19,11 +19,10 @@ public:
     SelectionRenderer(const SelectionRenderer &) = delete;
     SelectionRenderer &operator=(const SelectionRenderer &) = delete;
 
-    void render(const CameraOld &camera, const std::vector<std::reference_wrapper<GameObject>> &gameObjects);
+    void render(const CameraOld &camera, const std::vector<GameObject> &gameObjects);
 
 private:
-    void updateVertices(const std::vector<std::reference_wrapper<GameObject>> &selectedObjects);
-    void generateIndexArray();
+    void updateVertices(const std::vector<GameObject> &selectedObjects);
 
 private:
     std::unique_ptr<RenderBatch> m_batch;

@@ -36,9 +36,7 @@ public:
     EditorContext &getEditorContext();
 
 private:
-    void runLoop();
     void updateFrame();
-    void layeredRender();
 
     // imgui panels
     void renderGrid();

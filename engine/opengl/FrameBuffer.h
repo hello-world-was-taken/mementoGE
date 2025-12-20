@@ -25,7 +25,9 @@ public:
     void bind() const;
     void unbind() const;
 
-    void updateSize(int width, int height);
+    // queues resize for the next draw call
+    void queueSizeUpdate(int width, int height);
+    // if size update had been queued, it'll resize the frame buffer
     void resize();
 
     float getWidth();
