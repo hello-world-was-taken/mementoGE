@@ -53,32 +53,17 @@ inline std::filesystem::path getFilePath(const std::string &relative)
     return base / relative;
 }
 
+// Assets directory relative path only (no "./" or absolute paths).
+// Examples: "scenes/example_scene.yaml", "audio/explosion.wav"
 inline std::filesystem::path getGameAssetsPath(const std::string &relative)
 {
     // auto base = getExecutableDir();
     auto base = std::filesystem::path(std::string(GAME_ASSETS_DIR));
+    if (relative.empty())
+    {
+        return base;
+    }
     auto temp = base / relative;
-    return base / relative;
-}
-
-inline std::filesystem::path getGameScenesPath(const std::string &relative)
-{
-    // auto base = getExecutableDir();
-    auto base = std::filesystem::path(std::string(GAME_SCENES_DIR));
-    if (relative.empty())
-    {
-        return base;
-    }
-    return base / relative;
-}
-
-inline std::filesystem::path getGameModelsPath(const std::string &relative)
-{
-    auto base = std::filesystem::path(std::string(GAME_MODELS_DIR));
-    if (relative.empty())
-    {
-        return base;
-    }
     return base / relative;
 }
 

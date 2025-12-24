@@ -1,9 +1,9 @@
 #pragma once
 
 #include "core/components/Sprite.h"
+#include "core/AnimationMap.h"
 
 #include "core/AnimationPlayer.h"
-#include "core/AnimationMap.h"
 
 #include <memory>
 #include <string>
@@ -17,10 +17,13 @@ public:
     void update();
     const Sprite &getCurrentSprite() const;
 
-    void serialize(YAML::Emitter &out) const;
-    void deserialize(const YAML::Node &node);
+#ifdef EDITOR_BUILD
+    void serialize(YAML::Emitter &out);
+    void deserialize(const YAML::Node &in);
+    void drawInspector();
+#endif
 
-// private:
+    // private:
     // TODO: making them public to display on imgui
     std::map<std::string, std::string> animationSourceMap; // "walk" -> "assets/character.json"
     std::string currentAnimation;

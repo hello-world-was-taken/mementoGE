@@ -5,7 +5,7 @@
 #include "core/AssetManager.h"
 #include "core/SpriteSheet.h"
 
-#include "editor/SpritePayload.h"
+#include "editor/DragNDropPayloads.h"
 #include "editor/TexturePanel.h"
 
 #include "util/PathUtils.h"
@@ -34,7 +34,7 @@ inline std::vector<std::string> getTextureFiles(const std::string &folderPath)
         }
     }
 
-    // TODO: returning a copy everytime it gets called
+    // TODO: returning a copy everytime it gets called. NRVO maybe its fine?
     return textures;
 }
 
@@ -50,9 +50,6 @@ void TexturePanel::draw()
 {
     renderTextureAssetsListPanel();
     copyTextureToAssets();
-    renderSelectedTexSheetPanel(false);
-    renderAnimationPanel();
-    // renderSpriteSheetPreviewPanel();
 }
 
 void TexturePanel::renderTextureAssetsListPanel()
@@ -99,153 +96,5 @@ void TexturePanel::copyTextureToAssets()
         }
 
         ImGuiFileDialog::Instance()->Close();
-    }
-}
-
-void TexturePanel::renderAnimationPanel()
-{
-    ImGui::Begin("Animations");
-
-    if (m_ctx.selectedTextureJsonPath.empty())
-    {
-        ImGui::Text("First select a texture");
-        ImGui::End();
-        return;
-    }
-
-    auto path = getFilePath(m_ctx.selectedTextureJsonPath);
-    std::shared_ptr<AnimationMap> animationMap = AssetManager::instance().getAnimationMap(path);
-    ImTextureID texId = animationMap->getTexture()->getTextureId();
-
-    // create animation player for each animation
-    static std::unordered_map<std::string, AnimationPlayer> animationPlayerMap;
-
-    int imguiId = 0;
-    for (auto &[animName, animation] : animationMap->getAnimations())
-    {
-        auto it = animationPlayerMap.find(animName);
-        if (it == animationPlayerMap.end())
-        {
-            animationPlayerMap[animName] = AnimationPlayer{animation};
-        }
-        animationPlayerMap[animName].update();
-
-        std::array<glm::vec2, 4> texCoord =
-            animationPlayerMap[animName].getCurrentFrame().sprite.getNormalizedTextureCoordinates();
-        ImVec2 topLeft = ImVec2(texCoord[0].x, texCoord[0].y);
-        ImVec2 bottomRight = ImVec2(texCoord[2].x, texCoord[2].y);
-
-        float imgButtonWidth = 64;
-        float imgButtonHeight = 64;
-
-        ImGui::PushID(imguiId);
-        if (ImGui::ImageButton("", texId, ImVec2(imgButtonWidth, imgButtonHeight), topLeft, bottomRight,
-                ImVec4(0.0f, 0.0f, 0.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f)))
-        {
-        }
-        ImGui::PopID();
-
-        if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
-        {
-            AnimationPayload payload{};
-            strncpy(payload.animationName, animName.c_str(), sizeof(payload.animationName) - 1);
-            strncpy(payload.animationJsonPath, m_ctx.selectedTextureJsonPath.c_str(),
-                sizeof(payload.animationJsonPath) - 1);
-
-            ImGui::SetDragDropPayload("ANIMATION", &payload, sizeof(AnimationPayload));
-            ImGui::Text("Dragging animation %s", animName.c_str());
-            ImGui::EndDragDropSource();
-        }
-        imguiId++;
-
-        // handle wrapping
-        ImVec2 windowPos = ImGui::GetWindowPos();
-        ImVec2 windowSize = ImGui::GetWindowSize();
-
-        float windowX2 = windowPos.x + windowSize.x;
-        ImVec2 lastSpritePosition = ImGui::GetItemRectMax();
-        float lastSpriteX2 = lastSpritePosition.x;
-        float nextButtonX2 = lastSpriteX2 + imgButtonWidth;
-        if (imguiId < animationMap->getAnimations().size() && nextButtonX2 < windowX2)
-        {
-            ImGui::SameLine();
-        }
-    }
-
-    ImGui::End();
-}
-
-void TexturePanel::renderSelectedTexSheetPanel(bool isInModal, std::function<void(Sprite &sprite)> onClick)
-{
-    if (!isInModal)
-    {
-        ImGui::Begin("Sprites");
-    }
-
-    if (m_ctx.selectedTextureJsonPath.empty())
-    {
-        if (!isInModal)
-        {
-            ImGui::End();
-        }
-        return;
-    }
-
-    std::shared_ptr<SpriteSheet> spriteSheet = AssetManager::instance().getSpriteSheet(m_ctx.selectedTextureJsonPath);
-
-    std::shared_ptr<Texture> spriteSheetTexture = spriteSheet->getTexture();
-    int id = 0;
-    for (Sprite sprite : spriteSheet->getSprites())
-    {
-        float imgButtonWidth = 64;
-        float imgButtonHeight = 64;
-        std::array<glm::vec2, 4> textureCoordinates = sprite.getNormalizedTextureCoordinates();
-        ImTextureID texId = (ImTextureID)(uintptr_t)spriteSheetTexture->getTextureId();
-
-        // TODO: Add sprite IDs and use those to identify which sprite was clicked
-        ImGui::PushID(id);
-        if (ImGui::ImageButton("", texId, ImVec2(imgButtonWidth, imgButtonHeight),
-                ImVec2(textureCoordinates[0].x,
-                    textureCoordinates[0].y), // uv0 = top-left
-                ImVec2(textureCoordinates[2].x,
-                    textureCoordinates[2].y), // uv1 = bottom-right
-                ImVec4(0.0f, 0.0f, 0.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f)))
-        {
-            if (onClick != nullptr)
-            {
-                onClick(sprite);
-            }
-        }
-
-        // TODO: drag and drop should only be enabled when not in modal form
-        if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
-        {
-            SpritePayload payload{id};
-
-            ImGui::SetDragDropPayload("SPRITE", &payload, sizeof(SpritePayload));
-            ImGui::Text("Dragging sprite %d", id);
-            ImGui::EndDragDropSource();
-        }
-
-        ImGui::PopID();
-        id++;
-
-        // handle wrapping
-        ImVec2 windowPos = ImGui::GetWindowPos();
-        ImVec2 windowSize = ImGui::GetWindowSize();
-
-        float windowX2 = windowPos.x + windowSize.x;
-        ImVec2 lastSpritePosition = ImGui::GetItemRectMax();
-        float lastSpriteX2 = lastSpritePosition.x;
-        float nextButtonX2 = lastSpriteX2 + imgButtonWidth;
-        if (id < spriteSheet->getSprites().size() && nextButtonX2 < windowX2)
-        {
-            ImGui::SameLine();
-        }
-    }
-
-    if (!isInModal)
-    {
-        ImGui::End();
     }
 }

@@ -37,5 +37,7 @@ struct Sprite
     void serialize(YAML::Emitter &out);
     void deserialize(const YAML::Node &in);
     void drawInspector();
+
+    void handleSpriteDrop();
 #endif
 };

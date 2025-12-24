@@ -4,6 +4,8 @@
 #include "core/GlResourceManager.h"
 #include "core/ImGuiWrapper.h"
 
+#include "editor/DragNDropPayloads.h" // FIXME: core shouldn't depend on editor layer
+
 #include <imgui.h>
 #endif
 
@@ -105,19 +107,40 @@ void Sprite::deserialize(const YAML::Node &in)
     texture->bind();
 }
 
-// TODO: indent
 void Sprite::drawInspector()
 {
-    if (ImGui::CollapsingHeader("Sprite Component", ImGuiTreeNodeFlags_DefaultOpen))
+    ImGuiWrapper::Collapsable("Sprite",
+        [&]
+        {
+            ImGui::ColorEdit4("Color", &color.x);
+            ImGui::Checkbox("Flip X", &flipX);
+            ImGui::Checkbox("Flip Y", &flipY);
+
+            ImGui::Text("Texture: %s", texture ? texture->getFilePath().c_str() : "None");
+            ImGui::Separator();
+            ImGui::Text("Size: %.1f x %.1f", width, height);
+
+            // drag-n-drop
+            handleSpriteDrop();
+        });
+}
+
+// TODO: we need to make this undo-redoable
+void Sprite::handleSpriteDrop()
+{
+    if (ImGui::BeginDragDropTarget())
     {
-        ImGui::ColorEdit4("Color", &color.x);
-        ImGui::Checkbox("Flip X", &flipX);
-        ImGui::Checkbox("Flip Y", &flipY);
+        if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("SPRITE"))
+        {
+            IM_ASSERT(payload->DataSize == sizeof(SpritePayload));
+            SpritePayload spritePayload = *(SpritePayload*)payload->Data;
 
-        ImGui::Text("Texture: %s", texture ? texture->getFilePath().c_str() : "None");
-
-        ImGui::Separator();
-        ImGui::Text("Size: %.1f x %.1f", width, height);
+            topLeft = spritePayload.topLeft;
+            width = spritePayload.width;
+            height = spritePayload.height;
+            texture = spritePayload.texture;
+        }
+        ImGui::EndDragDropTarget();
     }
 }
 #endif // EDITOR_BUILD

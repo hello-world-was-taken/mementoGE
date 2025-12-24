@@ -28,6 +28,8 @@ add_library(${PROJECT_NAME} STATIC
     engine/core/components/RenderLayer.cpp
     engine/core/components/PostProcessSettings.cpp
     engine/core/components/Camera.cpp
+    engine/core/components/Animator.cpp
+    engine/core/components/Text.cpp
 
     engine/core/Window.cpp
     engine/core/Camera.cpp  # TODO: remove. we have it as a component now
@@ -43,7 +45,6 @@ add_library(${PROJECT_NAME} STATIC
     engine/core/AnimationMap.cpp
     engine/core/AssetManager.cpp
     engine/core/AnimationPlayer.cpp
-    engine/core/Animator.cpp
     engine/core/SystemRegistry.cpp
 
     # editor
@@ -56,7 +57,6 @@ add_library(${PROJECT_NAME} STATIC
     engine/editor/EditorMouseController.cpp
     engine/editor/EditorCamera.cpp
     engine/editor/SceneHistory.cpp
-    engine/editor/SceneListPanel.cpp
     engine/editor/AssetsPanel.cpp
 
     # renderer
@@ -105,10 +105,9 @@ target_link_libraries(${PROJECT_NAME}
 # comment out for release builds
 target_compile_definitions(${PROJECT_NAME} PRIVATE EDITOR_BUILD)
 
+# memento assets dir contains fonts, default shaders and so on
 set(MEMENTO_ASSET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets/")
 target_compile_definitions(${PROJECT_NAME} PRIVATE MEMENTO_ASSET_DIR="${MEMENTO_ASSET_DIR}")
 
 # should be passed from the game
-target_compile_definitions(${PROJECT_NAME} PUBLIC GAME_MODELS_DIR="${GAME_MODELS_DIR}")
-target_compile_definitions(${PROJECT_NAME} PUBLIC GAME_SCENES_DIR="${GAME_SCENES_DIR}")
 target_compile_definitions(${PROJECT_NAME} PUBLIC GAME_ASSETS_DIR="${GAME_ASSETS_DIR}")

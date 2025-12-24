@@ -5,9 +5,10 @@
 #include "core/components/RigidBody2D.h"
 #include "core/components/Sensor2D.h"
 #include "core/components/Sprite.h"
+#include "core/components/Text.h"
 #include "core/components/Transform.h"
 
-#include "core/Animator.h"
+#include "core/components/Animator.h"
 
 #include "core/GameObject.h"
 #include "core/Scene.h"
@@ -79,6 +80,7 @@ void SceneHierarchyPanel::drawGameObjectNode(GameObject &go)
         drawComponentRemoveRow<Animator>(go, "Animator");
         drawComponentRemoveRow<EnemyState>(go, "Enemy State");
         drawComponentRemoveRow<Patrol>(go, "Patrol");
+        drawComponentRemoveRow<Text>(go, "Text");
 
         ImGui::Unindent();
 

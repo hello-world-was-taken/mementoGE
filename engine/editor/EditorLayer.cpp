@@ -97,7 +97,6 @@ void EditorLayer::drawEditorUI()
     m_sceneHierarchyPanel.draw();
     m_propertiesPanel.draw();
     // m_texturePanel.draw();
-    m_sceneListPanel.draw();
     m_assetsPanel.draw();
 
     renderPerformancePanel();

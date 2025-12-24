@@ -27,18 +27,5 @@ void main()
     if(texColor.a < 0.1)
         discard;
 
-    /*
-        // For GLSL below 3.3
-        if (slot == 0) texColor = texture(textures[0], v_texture_coordinate);
-        else if (slot == 1) texColor = texture(textures[1], v_texture_coordinate);
-        else if (slot == 2) texColor = texture(textures[2], v_texture_coordinate);
-        else if (slot == 3) texColor = texture(textures[3], v_texture_coordinate);
-        else if (slot == 4) texColor = texture(textures[4], v_texture_coordinate);
-        else if (slot == 5) texColor = texture(textures[5], v_texture_coordinate);
-        else if (slot == 6) texColor = texture(textures[6], v_texture_coordinate);
-        else if (slot == 7) texColor = texture(textures[7], v_texture_coordinate);
-    */
-
-    // TODO: support tiniting
-    FragColor = texColor;
+    FragColor = texColor * v_color;
 }

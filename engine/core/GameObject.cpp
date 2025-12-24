@@ -7,10 +7,11 @@
 #include "core/components/RigidBody2D.h"
 #include "core/components/Sensor2D.h"
 #include "core/components/Sprite.h"
+#include "core/components/Text.h"
 #include "core/components/Transform.h"
 
-#include "core/Animator.h"
 #include "core/GameObject.h"
+#include "core/components/Animator.h"
 
 #include "physics/Physics2D.h"
 
@@ -46,9 +47,9 @@ GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGam
     deserializeComponent<Animator>(serializedGameObject, "Animator");
     deserializeComponent<EnemyState>(serializedGameObject, "EnemyState");
     deserializeComponent<Patrol>(serializedGameObject, "Patrol");
+    deserializeComponent<Text>(serializedGameObject, "Text");
     deserializeComponent<PostProcessSettings>(serializedGameObject, "PostProcessSettings");
 }
-
 
 std::array<glm::vec3, 4> GameObject::getQuad() const
 {
@@ -114,9 +115,9 @@ bool GameObject::serialize(YAML::Emitter &out)
     serializeComponent<BoxCollider2D>(out);
     serializeComponent<Sensor2D>(out);
     serializeComponent<Animator>(out);
-    serializeComponent<Animator>(out);
     serializeComponent<EnemyState>(out);
     serializeComponent<Patrol>(out);
+    serializeComponent<Text>(out);
     serializeComponent<PostProcessSettings>(out);
 
     out << YAML::EndMap;

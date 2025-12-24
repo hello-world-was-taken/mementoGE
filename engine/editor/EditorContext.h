@@ -48,6 +48,7 @@ struct EditorContext
     std::string selectedScenePath;
     std::string selectedTextureJsonPath;
     std::string selectedAssetChildFolderPath;
+    std::string selectedFontPath;
     std::optional<std::reference_wrapper<Sprite>> selectedSprite;
 
     EditorInteractionMode interactionMode = EditorInteractionMode::None;

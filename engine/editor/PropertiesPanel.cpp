@@ -2,20 +2,21 @@
 #include "core/components/EnemyState.h"
 #include "core/components/EntityInfo.h"
 #include "core/components/Patrol.h"
+#include "core/components/PostProcessSettings.h"
 #include "core/components/RenderLayer.h"
 #include "core/components/Sensor2D.h"
 #include "core/components/Sprite.h"
+#include "core/components/Text.h"
 #include "core/components/Transform.h"
-#include "core/components/PostProcessSettings.h"
 
-#include "core/Animator.h"
 #include "core/AssetManager.h"
 #include "core/SpriteSheet.h"
+#include "core/components/Animator.h"
 
+#include "editor/DragNDropPayloads.h"
 #include "editor/EditorContext.h"
 #include "editor/EditorPanel.h"
 #include "editor/PropertiesPanel.h"
-#include "editor/SpritePayload.h"
 #include "editor/TexturePanel.h"
 
 #include "util/PathUtils.h"
@@ -103,10 +104,11 @@ void PropertiesPanel::renderPropertiesPanel()
     drawComponentInspector<RigidBody2D>(go);
     drawComponentInspector<EnemyState>(go);
     drawComponentInspector<Patrol>(go);
+    drawComponentInspector<Text>(go);
     drawComponentInspector<Sensor2D>(go);
     drawComponentInspector<Sprite>(go);
     drawComponentInspector<PostProcessSettings>(go);
-    drawAnimatorSettings(go);
+    drawComponentInspector<Animator>(go);
     drawAddComponentCombo(go);
     drawExportModel(go);
 
@@ -122,47 +124,13 @@ void PropertiesPanel::renderPropertiesPanel()
     drawPopups();
 }
 
-void PropertiesPanel::drawSpriteSettings(GameObject &go)
-{
-    if (!go.hasComponent<Sprite>())
-    {
-        return;
-    }
-
-    Sprite &sprite = go.getComponent<Sprite>();
-
-    ImGui::Separator();
-    ImGui::Text("Sprite Settings");
-
-    if (ImGui::Checkbox("Flip Horizontally", &sprite.flipX))
-    {
-        if (ImGui::Checkbox("Flip Vertically", &sprite.flipY))
-        {
-
-            if (ImGui::Button("Change Sprite"))
-            {
-                if (m_ctx.selectedTextureJsonPath.empty())
-                {
-                    ImGui::OpenPopup("MissingTexturePopup");
-                }
-                else
-                {
-                    ImGui::OpenPopup("Select Sprite");
-                }
-            }
-        }
-    }
-
-    std::string texPath = sprite.texture->getFilePath();
-    ImGui::Text("Current Sprite:");
-    ImGui::TextWrapped("%s", texPath.c_str());
-}
-
 void PropertiesPanel::drawAddComponentCombo(GameObject &go)
 {
     ImGui::Separator();
     SetFieldWidth(150);
-    // TODO: using templates might be better than listing the selectables
+    // TODO: using templates might be better than listing the selectables. We have ones that have
+    // physics call and one without a simple if constexpr
+    // would suffice I think
     if (ImGui::BeginCombo("Add Component", "Select..."))
     {
         if (ImGui::Selectable("Rigidbody2D"))
@@ -235,6 +203,15 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                 });
         }
 
+        if (ImGui::Selectable("Text"))
+        {
+            m_ctx.performSceneEdit(
+                [&]
+                {
+                    go.addComponent<Text>();
+                });
+        }
+
         // TODO: this should only be selected for the camera
         if (ImGui::Selectable("Post Processing Settings"))
         {
@@ -260,86 +237,6 @@ void PropertiesPanel::drawRigidBodySettings(GameObject &go)
     rb.drawInspector();
 }
 
-void PropertiesPanel::drawAnimatorSettings(GameObject &go)
-{
-    if (go.hasComponent<EnemyState>())
-    {
-        ImGui::Separator();
-        ImGui::Text("has enemyAiState");
-    }
-    if (!go.hasComponent<Animator>())
-    {
-        return;
-    }
-
-    auto &animator = go.getComponent<Animator>();
-
-    ImGui::Separator();
-    ImGui::BeginChild("AnimatorBox", ImVec2(0, 150), true, ImGuiWindowFlags_NoScrollbar);
-    ImGui::Text("Animator");
-
-    ImGui::Text("Current Animation: %s", animator.currentAnimation.c_str());
-
-    SetFieldWidth(150);
-    if (ImGui::BeginCombo("Animation", animator.currentAnimation.c_str()))
-    {
-        for (auto &[name, animJsonPath] : animator.animationSourceMap)
-        {
-            bool selected = (name == animator.currentAnimation);
-            if (ImGui::Selectable(name.c_str(), selected))
-            {
-                // TODO: do we need the loop?
-                animator.play(name, true);
-            }
-            if (selected)
-            {
-                ImGui::SetItemDefaultFocus();
-            }
-        }
-        ImGui::EndCombo();
-    }
-
-    if (ImGui::Button(animator.animationPlayer.isPlaying() ? "Pause" : "Play"))
-    {
-        if (animator.animationPlayer.isPlaying())
-        {
-            animator.animationPlayer.pause();
-        }
-        else
-        {
-            if (!animator.currentAnimation.empty())
-            {
-                animator.play(animator.currentAnimation); // TODO: why pass it, just use it inside
-            }
-        }
-    }
-
-    ImGui::SameLine();
-    if (ImGui::Button("Stop"))
-    {
-        animator.animationPlayer.stop();
-    }
-
-    ImGui::EndChild();
-    if (ImGui::BeginDragDropTarget())
-    {
-        if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("ANIMATION"))
-        {
-            IM_ASSERT(payload->DataSize == sizeof(AnimationPayload));
-            AnimationPayload animPayload = *((AnimationPayload *)payload->Data);
-
-            if (m_ctx.selectedObjects.empty())
-            {
-                std::cout << "No game object selected" << std::endl;
-                return;
-            }
-            GameObject &go = m_ctx.selectedObjects.back();
-            go.getComponent<Animator>().animationSourceMap[animPayload.animationName] = animPayload.animationJsonPath;
-        }
-        ImGui::EndDragDropTarget();
-    }
-}
-
 void PropertiesPanel::drawPopups()
 {
     // Missing texture
@@ -348,30 +245,6 @@ void PropertiesPanel::drawPopups()
         ImGui::Text("Please select a texture first!");
         ImGui::Separator();
         if (ImGui::Button("OK", ImVec2(120, 0)))
-        {
-            ImGui::CloseCurrentPopup();
-        }
-        ImGui::EndPopup();
-    }
-
-    // Sprite picker
-    if (ImGui::BeginPopupModal("Select Sprite", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-    {
-        m_texturePanel.renderSelectedTexSheetPanel(true,
-            [&](Sprite &sprite)
-            {
-                if (m_ctx.selectedObjects.empty())
-                {
-                    GameObject &go = m_ctx.selectedObjects.back();
-                    if (go.hasComponent<Sprite>())
-                    {
-                        go.removeComponent<Sprite>();
-                    }
-
-                    go.addComponent<Sprite>(sprite.topLeft, sprite.width, sprite.height, sprite.texture);
-                }
-            });
-        if (ImGui::Button("Cancel"))
         {
             ImGui::CloseCurrentPopup();
         }
@@ -387,7 +260,7 @@ void PropertiesPanel::drawExportModel(GameObject &go)
         go.serialize(out);
 
         EntityInfo &info = go.getComponent<EntityInfo>();
-        std::ofstream file(getGameModelsPath(info.tag + ".yaml"), std::ios::out | std::ios::trunc);
+        std::ofstream file(getGameAssetsPath("models/" + info.tag + ".yaml"), std::ios::out | std::ios::trunc);
         file << out.c_str();
 
         std::cout << "Export model: " << info.tag << std::endl;

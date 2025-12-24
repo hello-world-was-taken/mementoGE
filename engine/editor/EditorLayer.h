@@ -10,7 +10,6 @@
 #include "editor/EditorContext.h"
 #include "editor/PropertiesPanel.h"
 #include "editor/SceneHierarchyPanel.h"
-#include "editor/SceneListPanel.h"
 #include "editor/ScenePanel.h"
 #include "editor/TexturePanel.h"
 
@@ -57,7 +56,6 @@ private:
     SceneHierarchyPanel m_sceneHierarchyPanel{m_ctx};
     TexturePanel m_texturePanel{m_ctx};
     PropertiesPanel m_propertiesPanel{m_ctx, m_texturePanel};
-    SceneListPanel m_sceneListPanel{m_ctx};
     AssetsPanel m_assetsPanel{m_ctx};
 
     MovementMode m_movementMode = MovementMode::Free;

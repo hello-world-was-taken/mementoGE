@@ -1,8 +1,13 @@
 #include "core/components/Sprite.h"
+#include "core/components/Text.h"
 
 #include "renderer/SpriteRenderer.h"
 #include "renderer/util.h"
 
+#include "util/PathUtils.h"
+
+#include <algorithm>
+#include <filesystem>
 #include <iostream>
 
 SpriteRenderer::SpriteRenderer()
@@ -44,6 +49,19 @@ void SpriteRenderer::updateVertices(const std::vector<GameObject> &gameObjects)
 
     for (const GameObject &gameObject : gameObjects)
     {
+        // add text vertices if object has them
+        if (gameObject.hasComponent<Text>())
+        {
+            Text &text = gameObject.getComponent<Text>();
+            text.rebuild(); // FIXME: we should only rebuild when dirty.
+            std::for_each(text.vertices.begin(),
+                text.vertices.end(),
+                [&](Vertex &vertex)
+                {
+                    m_vertices.push_back(vertex);
+                });
+        }
+
         if (!gameObject.hasComponent<Sprite>())
         {
             continue;

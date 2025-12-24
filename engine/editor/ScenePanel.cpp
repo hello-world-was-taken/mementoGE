@@ -7,6 +7,7 @@
 #include "core/MouseListener.h"
 #include "core/SpriteSheet.h"
 
+#include "editor/DragNDropPayloads.h"
 #include "editor/EditorContext.h"
 #include "editor/EditorPanel.h"
 #include "editor/ScenePanel.h"
@@ -197,7 +198,7 @@ void ScenePanel::handleViewportDropTarget()
 
 void ScenePanel::createSpriteFromPayload(const ImGuiPayload *payload)
 {
-    IM_ASSERT(payload->DataSize == sizeof(int));
+    IM_ASSERT(payload->DataSize == sizeof(SpritePayload));
     if (!m_ctx.selectedSprite.has_value())
     {
         std::cout << "Tried to drop sprite to scene, but no sprite has been selected." << std::endl;

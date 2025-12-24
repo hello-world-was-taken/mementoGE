@@ -1,7 +1,7 @@
 #include "core/components/EntityInfo.h"
 #include "core/components/Sprite.h"
 
-#include "core/Animator.h"
+#include "core/components/Animator.h"
 #include "core/Scene.h"
 #include "core/SystemRegistry.h"
 

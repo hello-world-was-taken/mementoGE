@@ -20,6 +20,8 @@ private:
     void drawFoldersPanel();
     void drawContentPanel();
     void drawSpritePanel();
+    void drawAnimationPanel();
+    void drawBoundTextures();
 
 private:
     bool m_rebuildDock = true; // rebuild dock on on first render
