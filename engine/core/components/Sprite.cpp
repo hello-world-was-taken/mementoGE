@@ -121,6 +121,8 @@ void Sprite::drawInspector()
             ImGui::Text("Size: %.1f x %.1f", width, height);
 
             // drag-n-drop
+            // TODO: the drag area is too small. Only the above font text. Might be better
+            // to use begin child to make the whole area droppable.
             handleSpriteDrop();
         });
 }

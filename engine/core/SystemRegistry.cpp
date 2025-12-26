@@ -11,7 +11,7 @@ FactoryFunc SystemRegistry::create(const std::string &systemName)
     auto it = m_systemRegistry.find(systemName);
     if (it == m_systemRegistry.end())
     {
-        std::cout << "System not recognized. Likely not registered." << std::endl;
+        std::cout << "System [name: " << systemName << "] not recognized. Likely not registered." << std::endl;
     }
 
     return m_systemRegistry[systemName];

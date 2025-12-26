@@ -1,6 +1,7 @@
 #include "core/components/BoxCollider2D.h"
 #include "core/components/EnemyState.h"
 #include "core/components/EntityInfo.h"
+#include "core/components/ParticleEmitter.h"
 #include "core/components/Patrol.h"
 #include "core/components/PostProcessSettings.h"
 #include "core/components/RenderLayer.h"
@@ -48,6 +49,7 @@ GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGam
     deserializeComponent<EnemyState>(serializedGameObject, "EnemyState");
     deserializeComponent<Patrol>(serializedGameObject, "Patrol");
     deserializeComponent<Text>(serializedGameObject, "Text");
+    deserializeComponent<ParticleEmitter>(serializedGameObject, "ParticleEmitter");
     deserializeComponent<PostProcessSettings>(serializedGameObject, "PostProcessSettings");
 }
 
@@ -118,6 +120,7 @@ bool GameObject::serialize(YAML::Emitter &out)
     serializeComponent<EnemyState>(out);
     serializeComponent<Patrol>(out);
     serializeComponent<Text>(out);
+    serializeComponent<ParticleEmitter>(out);
     serializeComponent<PostProcessSettings>(out);
 
     out << YAML::EndMap;

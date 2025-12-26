@@ -7,6 +7,7 @@
 #include "core/components/Sensor2D.h"
 #include "core/components/Sprite.h"
 #include "core/components/Text.h"
+#include "core/components/ParticleEmitter.h"
 #include "core/components/Transform.h"
 
 #include "core/AssetManager.h"
@@ -105,6 +106,7 @@ void PropertiesPanel::renderPropertiesPanel()
     drawComponentInspector<EnemyState>(go);
     drawComponentInspector<Patrol>(go);
     drawComponentInspector<Text>(go);
+    drawComponentInspector<ParticleEmitter>(go);
     drawComponentInspector<Sensor2D>(go);
     drawComponentInspector<Sprite>(go);
     drawComponentInspector<PostProcessSettings>(go);
@@ -209,6 +211,15 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                 [&]
                 {
                     go.addComponent<Text>();
+                });
+        }
+
+        if (ImGui::Selectable("Particle Emitter"))
+        {
+            m_ctx.performSceneEdit(
+                [&]
+                {
+                    go.addComponent<ParticleEmitter>();
                 });
         }
 

@@ -1,6 +1,7 @@
 #include "core/components/BoxCollider2D.h"
 #include "core/components/EnemyState.h"
 #include "core/components/EntityInfo.h"
+#include "core/components/ParticleEmitter.h"
 #include "core/components/Patrol.h"
 #include "core/components/RigidBody2D.h"
 #include "core/components/Sensor2D.h"
@@ -81,6 +82,7 @@ void SceneHierarchyPanel::drawGameObjectNode(GameObject &go)
         drawComponentRemoveRow<EnemyState>(go, "Enemy State");
         drawComponentRemoveRow<Patrol>(go, "Patrol");
         drawComponentRemoveRow<Text>(go, "Text");
+        drawComponentRemoveRow<ParticleEmitter>(go, "Particle Emitter");
 
         ImGui::Unindent();
 

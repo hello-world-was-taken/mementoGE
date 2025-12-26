@@ -1,4 +1,6 @@
 #include "core/components/Text.h"
+#include "core/components/Transform.h"
+
 #include "core/AssetManager.h"
 
 #include "opengl/Vertex.h"
@@ -17,7 +19,7 @@
 // FIXME: for the moment rebuild gets called everyframe in sprite renderer.
 // Also, small letters don't align with the baseline. But that is okay for
 // the current usecase.
-void Text::rebuild()
+void Text::rebuild(Transform &transform)
 {
     vertices.clear();
 
@@ -27,9 +29,7 @@ void Text::rebuild()
         return;
     }
 
-    // TODO: how can we use gameobject's Transform here?
-    // should we pass it when calling rebuild in sprite renderer?
-    glm::vec3 position = {100.0f, 100.0f, 0.0f};
+    glm::vec3 position = transform.position;
     for (const char &ch : content)
     {
         const stbtt_packedchar &packedChar = font->getPackedChar(ch);
@@ -123,8 +123,6 @@ void Text::deserialize(const YAML::Node &in)
         std::string fontPath = textNode["Font"].as<std::string>();
         font = AssetManager::instance().getFont(fontPath);
     }
-
-    rebuild();
 }
 
 void Text::drawInspector()
@@ -151,6 +149,8 @@ void Text::drawInspector()
             ImGui::Text("Font: %s", font ? font->fontPath.c_str() : "None");
 
             // Font drag & drop
+            // TODO: the drag area is too small. Only the above font text. Might be better
+            // to use begin child to make the whole area droppable.
             if (ImGui::BeginDragDropTarget())
             {
                 if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("FONT"))
@@ -164,8 +164,6 @@ void Text::drawInspector()
                 }
                 ImGui::EndDragDropTarget();
             }
-
-            rebuild();
         });
 }
 #endif

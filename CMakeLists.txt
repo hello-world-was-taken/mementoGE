@@ -30,6 +30,7 @@ add_library(${PROJECT_NAME} STATIC
     engine/core/components/Camera.cpp
     engine/core/components/Animator.cpp
     engine/core/components/Text.cpp
+    engine/core/components/ParticleEmitter.cpp
 
     engine/core/Window.cpp
     engine/core/Camera.cpp  # TODO: remove. we have it as a component now
@@ -46,6 +47,7 @@ add_library(${PROJECT_NAME} STATIC
     engine/core/AssetManager.cpp
     engine/core/AnimationPlayer.cpp
     engine/core/SystemRegistry.cpp
+    engine/core/ParticleSystem.cpp
 
     # editor
     engine/editor/EditorLayer.cpp

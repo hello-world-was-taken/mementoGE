@@ -1,5 +1,6 @@
 #include "core/components/Sprite.h"
 #include "core/components/Text.h"
+#include "core/components/ParticleEmitter.h"
 
 #include "renderer/SpriteRenderer.h"
 #include "renderer/util.h"
@@ -9,6 +10,17 @@
 #include <algorithm>
 #include <filesystem>
 #include <iostream>
+
+static std::array<glm::vec3, 4> makeQuadFromCenter(const glm::vec3 &center, float size)
+{
+    float h = size * 0.5f;
+    return {
+        glm::vec3(center.x - h, center.y - h, center.z),
+        glm::vec3(center.x + h, center.y - h, center.z),
+        glm::vec3(center.x + h, center.y + h, center.z),
+        glm::vec3(center.x - h, center.y + h, center.z),
+    };
+}
 
 SpriteRenderer::SpriteRenderer()
 {
@@ -49,11 +61,12 @@ void SpriteRenderer::updateVertices(const std::vector<GameObject> &gameObjects)
 
     for (const GameObject &gameObject : gameObjects)
     {
-        // add text vertices if object has them
+        // text
         if (gameObject.hasComponent<Text>())
         {
             Text &text = gameObject.getComponent<Text>();
-            text.rebuild(); // FIXME: we should only rebuild when dirty.
+            Transform &transform = gameObject.getComponent<Transform>();
+            text.rebuild(transform); // FIXME: we should only rebuild when dirty.
             std::for_each(text.vertices.begin(),
                 text.vertices.end(),
                 [&](Vertex &vertex)
@@ -62,26 +75,48 @@ void SpriteRenderer::updateVertices(const std::vector<GameObject> &gameObjects)
                 });
         }
 
-        if (!gameObject.hasComponent<Sprite>())
+        // sprite
+        if (gameObject.hasComponent<Sprite>())
         {
-            continue;
+            Sprite &sprite = gameObject.getComponent<Sprite>();
+
+            std::array<glm::vec3, 4> quad = gameObject.getWorldCoordinateQuad();
+            auto texCoords = sprite.getNormalizedTextureCoordinates();
+            float texUnit = (float)sprite.texture->getTextureUnit();
+
+            // TODO: this should be moved to the base renderer class or should be a common utility
+            auto makeVertex = [&](const glm::vec3 &pos, const glm::vec4 &color, const glm::vec2 &uv, float t)
+            {
+                return Vertex{pos, color, uv, t};
+            };
+
+            m_vertices.push_back(makeVertex(quad[0], sprite.color, texCoords[0], texUnit));
+            m_vertices.push_back(makeVertex(quad[1], sprite.color, texCoords[1], texUnit));
+            m_vertices.push_back(makeVertex(quad[2], sprite.color, texCoords[2], texUnit));
+            m_vertices.push_back(makeVertex(quad[3], sprite.color, texCoords[3], texUnit));
         }
 
-        Sprite &sprite = gameObject.getComponent<Sprite>();
-
-        std::array<glm::vec3, 4> quad = gameObject.getWorldCoordinateQuad();
-        auto texCoords = sprite.getNormalizedTextureCoordinates();
-        float texUnit = (float)sprite.texture->getTextureUnit();
-
-        // TODO: this should be moved to the base renderer class or should be a common utility
-        auto makeVertex = [&](const glm::vec3 &pos, const glm::vec4 &color, const glm::vec2 &uv, float t)
+        // particle
+        if (gameObject.hasComponent<ParticleEmitter>())
         {
-            return Vertex{pos, color, uv, t};
-        };
+            const auto &emitter = gameObject.getComponent<ParticleEmitter>();
+            // TODO: for now, lets just use color. -1 is treated as a special case in the fragment shader
+            float texUnit = -1;
 
-        m_vertices.push_back(makeVertex(quad[0], sprite.color, texCoords[0], texUnit));
-        m_vertices.push_back(makeVertex(quad[1], sprite.color, texCoords[1], texUnit));
-        m_vertices.push_back(makeVertex(quad[2], sprite.color, texCoords[2], texUnit));
-        m_vertices.push_back(makeVertex(quad[3], sprite.color, texCoords[3], texUnit));
+            auto makeVertex = [&](const glm::vec3 &pos, const glm::vec4 &color, const glm::vec2 &uv, float t)
+            {
+                return Vertex{pos, color, uv, t};
+            };
+
+            for (const Particle &p : emitter.particles)
+            {
+                auto quad = makeQuadFromCenter(p.pos, p.size);
+
+                m_vertices.push_back(makeVertex(quad[0], p.color, {0.0f, 0.0f}, texUnit));
+                m_vertices.push_back(makeVertex(quad[1], p.color, {0.0f, 0.0f}, texUnit));
+                m_vertices.push_back(makeVertex(quad[2], p.color, {0.0f, 0.0f}, texUnit));
+                m_vertices.push_back(makeVertex(quad[3], p.color, {0.0f, 0.0f}, texUnit));
+            }
+        }
     }
 }

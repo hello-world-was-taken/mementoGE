@@ -1,5 +1,7 @@
 #pragma once
 
+#include "core/components/Transform.h"
+
 #include "core/Font.h"
 
 #include "opengl/Vertex.h"
@@ -15,11 +17,6 @@
 
 struct Text
 {
-    Text()
-    {
-        rebuild();
-    }
-
     std::string content = "Text";
     std::shared_ptr<Font> font;
 
@@ -32,7 +29,7 @@ struct Text
     std::vector<Vertex> vertices;
 
     bool needsRebuild = true; // TODO: not being used
-    void rebuild();
+    void rebuild(Transform &transform);
 
 #ifdef EDITOR_BUILD
     void serialize(YAML::Emitter &out);
