@@ -42,7 +42,7 @@ void GridRenderer::generateGridLines(const CameraOld &camera)
     // Default color or texcoord, unused in this case
     glm::vec4 color = glm::vec4(1.0f); // optional
     glm::vec2 texCoord = glm::vec2(0.0f);
-    float texIndex = 0.0f;
+    int texSlot = 0;
 
     // to support grid rendering while zooming and camera move
     glm::mat4 invViewProj = glm::inverse(camera.getProjectionMatrix() * camera.getViewMatrix());
@@ -67,13 +67,13 @@ void GridRenderer::generateGridLines(const CameraOld &camera)
     m_vertices.clear();
     for (int x = startX; x <= endX; x += m_tileSize)
     {
-        m_vertices.emplace_back(Vertex{glm::vec3(x, startY, 0), color, texCoord, texIndex});
-        m_vertices.emplace_back(Vertex{glm::vec3(x, endY, 0), color, texCoord, texIndex});
+        m_vertices.emplace_back(Vertex{glm::vec3(x, startY, 0), color, texCoord, texSlot});
+        m_vertices.emplace_back(Vertex{glm::vec3(x, endY, 0), color, texCoord, texSlot});
     }
     for (int y = startY; y <= endY; y += m_tileSize)
     {
-        m_vertices.emplace_back(Vertex{glm::vec3(startX, y, 0), color, texCoord, texIndex});
-        m_vertices.emplace_back(Vertex{glm::vec3(endX, y, 0), color, texCoord, texIndex});
+        m_vertices.emplace_back(Vertex{glm::vec3(startX, y, 0), color, texCoord, texSlot});
+        m_vertices.emplace_back(Vertex{glm::vec3(endX, y, 0), color, texCoord, texSlot});
     }
 }
 

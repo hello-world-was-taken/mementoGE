@@ -29,13 +29,26 @@ void VertexArray::attachVertexAttribute(VertexAttribute vertex_attribute)
     // Think of layout(location = 0) in vec3 position; and so on
     // in the shaders.
     glEnableVertexAttribArray(m_vertex_attributes_idx);
-    glVertexAttribPointer(
-        m_vertex_attributes_idx,
-        vertex_attribute.m_vector_length,
-        vertex_attribute.m_type,
-        vertex_attribute.m_normalized,
-        vertex_attribute.m_stride,
-        (void *)vertex_attribute.m_offset);
+
+    // glVertexAttribPointer would convert your integers to floats internally.
+    // So, we need to use glVertexAttribIPointer
+    if (vertex_attribute.m_type == GL_INT || vertex_attribute.m_type == GL_UNSIGNED_INT)
+    {
+        glVertexAttribIPointer(m_vertex_attributes_idx,
+            vertex_attribute.m_vector_length,
+            vertex_attribute.m_type,
+            vertex_attribute.m_stride,
+            vertex_attribute.m_offset);
+    }
+    else
+    {
+        glVertexAttribPointer(m_vertex_attributes_idx,
+            vertex_attribute.m_vector_length,
+            vertex_attribute.m_type,
+            vertex_attribute.m_normalized,
+            vertex_attribute.m_stride,
+            vertex_attribute.m_offset);
+    }
 
     m_vertex_attributes_idx++;
 }

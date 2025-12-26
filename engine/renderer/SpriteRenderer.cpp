@@ -1,6 +1,6 @@
+#include "core/components/ParticleEmitter.h"
 #include "core/components/Sprite.h"
 #include "core/components/Text.h"
-#include "core/components/ParticleEmitter.h"
 
 #include "renderer/SpriteRenderer.h"
 #include "renderer/util.h"
@@ -82,18 +82,19 @@ void SpriteRenderer::updateVertices(const std::vector<GameObject> &gameObjects)
 
             std::array<glm::vec3, 4> quad = gameObject.getWorldCoordinateQuad();
             auto texCoords = sprite.getNormalizedTextureCoordinates();
-            float texUnit = (float)sprite.texture->getTextureUnit();
+            int texSlot = sprite.texture->getTextureSlot();
+            sprite.texture->bind();
 
             // TODO: this should be moved to the base renderer class or should be a common utility
-            auto makeVertex = [&](const glm::vec3 &pos, const glm::vec4 &color, const glm::vec2 &uv, float t)
+            auto makeVertex = [&](const glm::vec3 &pos, const glm::vec4 &color, const glm::vec2 &uv, int t)
             {
                 return Vertex{pos, color, uv, t};
             };
 
-            m_vertices.push_back(makeVertex(quad[0], sprite.color, texCoords[0], texUnit));
-            m_vertices.push_back(makeVertex(quad[1], sprite.color, texCoords[1], texUnit));
-            m_vertices.push_back(makeVertex(quad[2], sprite.color, texCoords[2], texUnit));
-            m_vertices.push_back(makeVertex(quad[3], sprite.color, texCoords[3], texUnit));
+            m_vertices.push_back(makeVertex(quad[0], sprite.color, texCoords[0], texSlot));
+            m_vertices.push_back(makeVertex(quad[1], sprite.color, texCoords[1], texSlot));
+            m_vertices.push_back(makeVertex(quad[2], sprite.color, texCoords[2], texSlot));
+            m_vertices.push_back(makeVertex(quad[3], sprite.color, texCoords[3], texSlot));
         }
 
         // particle
@@ -101,9 +102,9 @@ void SpriteRenderer::updateVertices(const std::vector<GameObject> &gameObjects)
         {
             const auto &emitter = gameObject.getComponent<ParticleEmitter>();
             // TODO: for now, lets just use color. -1 is treated as a special case in the fragment shader
-            float texUnit = -1;
+            int texSlot = -1;
 
-            auto makeVertex = [&](const glm::vec3 &pos, const glm::vec4 &color, const glm::vec2 &uv, float t)
+            auto makeVertex = [&](const glm::vec3 &pos, const glm::vec4 &color, const glm::vec2 &uv, int t)
             {
                 return Vertex{pos, color, uv, t};
             };
@@ -112,10 +113,10 @@ void SpriteRenderer::updateVertices(const std::vector<GameObject> &gameObjects)
             {
                 auto quad = makeQuadFromCenter(p.pos, p.size);
 
-                m_vertices.push_back(makeVertex(quad[0], p.color, {0.0f, 0.0f}, texUnit));
-                m_vertices.push_back(makeVertex(quad[1], p.color, {0.0f, 0.0f}, texUnit));
-                m_vertices.push_back(makeVertex(quad[2], p.color, {0.0f, 0.0f}, texUnit));
-                m_vertices.push_back(makeVertex(quad[3], p.color, {0.0f, 0.0f}, texUnit));
+                m_vertices.push_back(makeVertex(quad[0], p.color, {0.0f, 0.0f}, texSlot));
+                m_vertices.push_back(makeVertex(quad[1], p.color, {0.0f, 0.0f}, texSlot));
+                m_vertices.push_back(makeVertex(quad[2], p.color, {0.0f, 0.0f}, texSlot));
+                m_vertices.push_back(makeVertex(quad[3], p.color, {0.0f, 0.0f}, texSlot));
             }
         }
     }

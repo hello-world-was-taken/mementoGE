@@ -59,16 +59,16 @@ void Text::rebuild(Transform &transform)
             {alignedQuad.s1, alignedQuad.t1},
         };
 
-        auto makeVertex = [&](const glm::vec3 &pos, const glm::vec4 &color, const glm::vec2 &uv, float t)
+        auto makeVertex = [&](const glm::vec3 &pos, const glm::vec4 &color, const glm::vec2 &uv, int t)
         {
             return Vertex{pos, color, uv, t};
         };
 
-        auto texUnit = font->atlasTexture->getTextureUnit();
-        vertices.push_back(makeVertex(glyphVertices[0], color, glyphTextureCoords[0], texUnit));
-        vertices.push_back(makeVertex(glyphVertices[1], color, glyphTextureCoords[1], texUnit));
-        vertices.push_back(makeVertex(glyphVertices[2], color, glyphTextureCoords[2], texUnit));
-        vertices.push_back(makeVertex(glyphVertices[3], color, glyphTextureCoords[3], texUnit));
+        auto texSlot = font->atlasTexture->getTextureSlot();
+        vertices.push_back(makeVertex(glyphVertices[0], color, glyphTextureCoords[0], texSlot));
+        vertices.push_back(makeVertex(glyphVertices[1], color, glyphTextureCoords[1], texSlot));
+        vertices.push_back(makeVertex(glyphVertices[2], color, glyphTextureCoords[2], texSlot));
+        vertices.push_back(makeVertex(glyphVertices[3], color, glyphTextureCoords[3], texSlot));
 
         position += glm::vec3(size, 0.0f, 0.0f);
     }

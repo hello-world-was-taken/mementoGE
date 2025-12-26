@@ -14,4 +14,4 @@ constexpr float LOGICAL_WIDTH = TILE_SIZE * LOGICAL_WIDTH_TILES;   // 512 units
 constexpr float LOGICAL_HEIGHT = TILE_SIZE * LOGICAL_HEIGHT_TILES; // 288 units
 
 // OpenGL / Rendering
-constexpr int MAX_TEXTURE_UNITS = 16; // Maximum textures per batch
+constexpr int MAX_TEXTURE_SLOTS = 16; // Maximum textures per batch

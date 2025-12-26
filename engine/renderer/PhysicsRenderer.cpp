@@ -68,7 +68,7 @@ void PhysicsRenderer::updateSensor2DVertices(const GameObject &gameObject)
             pos,
             borderColor,
             glm::vec2(0.0f), // no texture
-            -1.0f            // sentinel tex index
+            -1               // sentinel tex index
         };
     };
 
@@ -101,7 +101,7 @@ void PhysicsRenderer::updateBoxCollider2DVertices(const GameObject &gameObject)
             pos,
             borderColor,
             glm::vec2(0.0f), // no texture
-            -1.0f            // sentinel tex index
+            -1               // sentinel tex index
         };
     };
 

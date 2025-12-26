@@ -8,6 +8,7 @@
 #include "opengl/VertexAttribute.h"
 
 #include "renderer/RenderBatch.h"
+#include "renderer/Constants.h"
 
 #include "util/log_error.h"
 #include "util/PathUtils.h"
@@ -36,7 +37,7 @@ RenderBatch::~RenderBatch()
 void RenderBatch::setupBuffers()
 {
     // TODO: We may not use the total space.
-    unsigned int bufferSize = 1000 * 4 * sizeof(Vertex);
+    unsigned int bufferSize = BATCH_SIZE * VERTEX_PER_QUAD * sizeof(Vertex);
 
     m_vao = std::make_unique<VertexArray>();
     m_vao->bind();
@@ -47,7 +48,7 @@ void RenderBatch::setupBuffers()
     m_vao->attachVertexAttribute({3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0});
     m_vao->attachVertexAttribute({4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, color)});
     m_vao->attachVertexAttribute({2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, texture)});
-    m_vao->attachVertexAttribute({1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, texIndex)});
+    m_vao->attachVertexAttribute({1, GL_INT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, texSlot)});
 
     if (m_drawMode == GL_TRIANGLES)
     {
@@ -65,7 +66,7 @@ void RenderBatch::setupBuffers()
     m_vao->unbind();
 }
 
-void RenderBatch::setVertexData(std::vector<Vertex> vertices)
+void RenderBatch::setVertexData(std::vector<Vertex> &vertices)
 {
     m_vertices.clear();
     m_vertices.insert(m_vertices.end(), vertices.begin(), vertices.end());
@@ -73,7 +74,7 @@ void RenderBatch::setVertexData(std::vector<Vertex> vertices)
     m_vbo->updateBufferData(m_vertices);
 }
 
-void RenderBatch::setIndexData(std::vector<unsigned int> indices)
+void RenderBatch::setIndexData(std::vector<unsigned int> &indices)
 {
     m_indices.clear();
     m_indices.insert(m_indices.end(), indices.begin(), indices.end());

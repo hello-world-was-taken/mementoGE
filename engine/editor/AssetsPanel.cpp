@@ -6,6 +6,7 @@
 #include "core/SpriteSheet.h"
 
 #include "editor/AssetsPanel.h"
+#include "editor/Constants.h"
 #include "editor/DragNDropPayloads.h"
 
 #include "util/PathUtils.h"
@@ -278,19 +279,14 @@ void AssetsPanel::drawSpritePanel()
                 ImVec4(0.0f, 0.0f, 0.0f, 1.0f),
                 ImVec4(1.0f, 1.0f, 1.0f, 1.0f)))
         {
-            m_ctx.selectedSprite = sprite;
         }
         ImGui::PopID();
 
         // Drag & drop source
         if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
         {
-            m_ctx.selectedSprite = sprite;
             int id = sprite.getId();
 
-            // ScenePanel ignores the payload and relies on m_ctx.selectedSprite instead.
-            // A payload is still required by ImGui to initiate drag-and-drop, and is
-            // consumed in other drop targets where editor context is unavailable.
             SpritePayload payload{sprite.topLeft, sprite.width, sprite.height, sprite.texture};
             ImGui::SetDragDropPayload("SPRITE", &payload, sizeof(SpritePayload));
             ImGui::Text("Dragging sprite %d", id);
@@ -397,7 +393,6 @@ void AssetsPanel::drawBoundTextures()
 {
     ImGui::Begin("Bound Textures##AssetsPanel");
 
-    constexpr int MAX_TEXTURE_UNITS = 16;
     constexpr float PREVIEW_SIZE = 256.0f;
 
     // Save previous active texture
@@ -414,16 +409,16 @@ void AssetsPanel::drawBoundTextures()
     boundTextures.clear();
 
     // Gather bound textures
-    for (int unit = 0; unit < MAX_TEXTURE_UNITS; ++unit)
+    for (int texSlot = 0; texSlot < MAX_TEXTURE_SLOTS; ++texSlot)
     {
-        glActiveTexture(GL_TEXTURE0 + unit);
+        glActiveTexture(GL_TEXTURE0 + texSlot);
 
         GLint tex = 0;
         glGetIntegerv(GL_TEXTURE_BINDING_2D, &tex);
 
         if (tex != 0)
         {
-            boundTextures.push_back({unit, (GLuint)tex});
+            boundTextures.push_back({texSlot, (GLuint)tex});
         }
     }
 
@@ -441,12 +436,12 @@ void AssetsPanel::drawBoundTextures()
         std::string previewText = ("Tex Slot " + std::to_string(boundTextures[selectedIndex].texSlot) + " | Tex Id " +
                                    std::to_string(boundTextures[selectedIndex].texId));
 
-        if (ImGui::BeginCombo("Texture Unit", previewText.c_str()))
+        if (ImGui::BeginCombo("Texture Slot", previewText.c_str()))
         {
             for (int i = 0; i < (int)boundTextures.size(); ++i)
             {
                 bool selected = (i == selectedIndex);
-                std::string label = "Unit " + std::to_string(boundTextures[i].texSlot) + " | Tex " +
+                std::string label = "Slot " + std::to_string(boundTextures[i].texSlot) + " | Tex " +
                                     std::to_string(boundTextures[i].texId);
 
                 if (ImGui::Selectable(label.c_str(), selected))

@@ -32,7 +32,7 @@ private:
     GlResourceManager(GlResourceManager &&) = delete;
     GlResourceManager &operator=(GlResourceManager &&) = delete;
 
-    unsigned int m_textureUnit = 1;
+    unsigned int m_textureSlot = 1;
 
     // Font pixel height
     float fontSize = 64.0f;

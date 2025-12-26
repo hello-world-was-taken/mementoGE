@@ -29,18 +29,12 @@ public:
     RenderBatch(std::vector<unsigned int> indices, GLenum drawMode);
     ~RenderBatch();
 
-    void setVertexData(std::vector<Vertex> vertices);
-    void setIndexData(std::vector<unsigned int> indices);
+    void setVertexData(std::vector<Vertex> &vertices);
+    void setIndexData(std::vector<unsigned int> &indices);
     void render(const CameraOld &camera, int drawCount = 1000 * 6, std::shared_ptr<Shader> customShader = nullptr);
 
 private:
     void setupBuffers();
-
-public:
-    const int BATCH_SIZE = 1000;
-    const int VERTEX_PER_QUAD = 4;
-    const int INDICES_PER_QUAD = 6;
-    const int INDICES_PER_LINE_QUAD = 8;
 
 private:
     GLenum m_drawMode;

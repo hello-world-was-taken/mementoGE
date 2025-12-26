@@ -123,7 +123,7 @@ void Shader::setUniform4f(const std::string &name, glm::vec4 value)
     glUniform4f(getUniformLocation(name), value.x, value.y, value.z, value.w);
 }
 
-void Shader::setMultipleTextureUnits(const std::string &name, int *texture_units, int size)
+void Shader::setMultipleTextureUnits(const std::string &name, int *textureSlots, int size)
 {
-    glUniform1iv(getUniformLocation(name), size, texture_units);
+    glUniform1iv(getUniformLocation(name), size, textureSlots);
 }

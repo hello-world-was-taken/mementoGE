@@ -12,7 +12,7 @@ public:
     Texture(); // TODO: should only be used for serialization
     ~Texture();
     unsigned int getTextureId() const;
-    unsigned int getTextureUnit() const;
+    unsigned int getTextureSlot() const;
     bool isTextureAtlas() const;
     void bind() const;
     void unbind() const;
@@ -33,7 +33,7 @@ private:
     int m_nrChannels = 4; // 4 for png, 3 for jpg
     int m_width = 0;
     int m_height = 0;
-    unsigned int m_textureUnit = 0; // The texture slot in the shader. Default is 0 meaning use the color set.
+    unsigned int m_textureSlot = 0; // The texture slot in the shader. Default is 0 meaning use the color set.
     unsigned char *m_textureBuffer = nullptr;
     bool m_isTextureAtlas = false;
     std::string m_texturePath; // could be null when texture is font since we do the loading and rasterization in memory

@@ -14,7 +14,7 @@ public:
     void setUniform1f(const std::string &name, float value);
     void setUniform4fv(const std::string &name, glm::mat4 value);
     void setUniform4f(const std::string &name, glm::vec4 value);
-    void setMultipleTextureUnits(const std::string &name, int *texture_units, int size);
+    void setMultipleTextureUnits(const std::string &name, int *textureSlots, int size);
 
 private:
     unsigned int m_id;

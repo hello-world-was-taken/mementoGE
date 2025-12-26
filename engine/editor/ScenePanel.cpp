@@ -199,20 +199,15 @@ void ScenePanel::handleViewportDropTarget()
 void ScenePanel::createSpriteFromPayload(const ImGuiPayload *payload)
 {
     IM_ASSERT(payload->DataSize == sizeof(SpritePayload));
-    if (!m_ctx.selectedSprite.has_value())
-    {
-        std::cout << "Tried to drop sprite to scene, but no sprite has been selected." << std::endl;
-        return;
-    }
-
-    Sprite &sprite = m_ctx.selectedSprite->get();
+    SpritePayload spritePayload = *(SpritePayload *)payload->Data;
     MouseListener *mouse = MouseListener::instance();
     glm::vec2 worldPos = m_ctx.getWorldCoordinate(mouse->getMouseScreenPosition());
 
-    const float aspectRatio = sprite.width / sprite.height;
+    const float aspectRatio = spritePayload.width / spritePayload.height;
 
     GameObject &newObj = m_ctx.getActiveScene().addGameObject(32 * aspectRatio, 32, "_new");
-    newObj.addComponent<Sprite>(sprite.topLeft, sprite.width, sprite.height, sprite.texture);
+    newObj.addComponent<Sprite>(
+        spritePayload.topLeft, spritePayload.width, spritePayload.height, spritePayload.texture);
     newObj.getComponent<Transform>().position = {worldPos.x, worldPos.y, 0.0f};
 }
 

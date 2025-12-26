@@ -67,7 +67,7 @@ void SelectionRenderer::updateVertices(const std::vector<GameObject> &selectedOb
                 pos,
                 selectionColor,
                 glm::vec2(0.0f), // no texture
-                -1.0f            // sentinel tex index
+                -1               // sentinel tex index
             };
         };
 
@@ -77,4 +77,3 @@ void SelectionRenderer::updateVertices(const std::vector<GameObject> &selectedOb
         m_vertices.push_back(makeVertex(topRight));
     }
 }
-

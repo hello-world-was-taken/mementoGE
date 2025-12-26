@@ -37,17 +37,17 @@ std::shared_ptr<Shader> GlResourceManager::getShaderProgram(
 // we have two d/t classes now. SpriteSheet.h and just Sprite.h
 std::shared_ptr<Texture> GlResourceManager::getTexture(const std::string &texturePath, bool isSpriteSheet)
 {
-    if (m_textureUnit == 16)
+    if (m_textureSlot == 16)
     {
-        // we use textureUnit 16 for framebuffer texture
+        // we use textureSlot 16 for framebuffer texture
         throw std::runtime_error("mementoGE: Max texture limit reached!");
     }
 
     auto it = textureByPath.find(texturePath);
     if (it == textureByPath.end())
     {
-        auto texture = std::make_shared<Texture>(texturePath.c_str(), m_textureUnit, isSpriteSheet);
-        m_textureUnit++;
+        auto texture = std::make_shared<Texture>(texturePath.c_str(), m_textureSlot, isSpriteSheet);
+        m_textureSlot++;
         textureByPath[texturePath] = texture;
 
         texture->bind(); // auto-bind on load
@@ -59,9 +59,9 @@ std::shared_ptr<Texture> GlResourceManager::getTexture(const std::string &textur
 
 std::shared_ptr<Texture> GlResourceManager::getFontTexture(const std::string &fontPath)
 {
-    if (m_textureUnit == 16)
+    if (m_textureSlot == 16)
     {
-        // we use textureUnit 16 for framebuffer texture
+        // we use textureSlot 16 for framebuffer texture
         throw std::runtime_error("mementoGE: Max texture limit reached!");
     }
 
@@ -96,8 +96,8 @@ std::shared_ptr<Texture> GlResourceManager::getFontTexture(const std::string &fo
         fontAtlasBitmap.get(), // Font Atlas bitmap data
         fontAtlasWidth,
         fontAtlasHeight,
-        0,                     // Stride in bytes
-        1,                     // Padding between the glyphs
+        0, // Stride in bytes
+        1, // Padding between the glyphs
         nullptr);
 
     stbtt_PackFontRange(&ctx,      // stbtt_pack_context
@@ -132,8 +132,8 @@ std::shared_ptr<Texture> GlResourceManager::getFontTexture(const std::string &fo
     alignedQuadByPath[fontPath] = std::move(alignedQuads);
 
     // create font texture
-    auto texture = std::make_shared<Texture>(fontAtlasBitmap.get(), m_textureUnit, fontAtlasWidth, fontAtlasHeight);
-    m_textureUnit++;
+    auto texture = std::make_shared<Texture>(fontAtlasBitmap.get(), m_textureSlot, fontAtlasWidth, fontAtlasHeight);
+    m_textureSlot++;
     textureByPath[fontPath] = texture;
 
     texture->bind(); // auto-bind on load
