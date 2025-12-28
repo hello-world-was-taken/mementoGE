@@ -6,7 +6,7 @@ SystemRegistry &SystemRegistry::instance()
     return systemRegistry;
 }
 
-FactoryFunc SystemRegistry::create(const std::string &systemName)
+std::shared_ptr<ISystem> SystemRegistry::get(const std::string &systemName)
 {
     auto it = m_systemRegistry.find(systemName);
     if (it == m_systemRegistry.end())
@@ -14,5 +14,5 @@ FactoryFunc SystemRegistry::create(const std::string &systemName)
         std::cout << "System [name: " << systemName << "] not recognized. Likely not registered." << std::endl;
     }
 
-    return m_systemRegistry[systemName];
+    return it->second;
 }

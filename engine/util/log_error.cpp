@@ -1,5 +1,8 @@
 #include "log_error.h"
 
+#include <AL/al.h>
+#include <AL/alc.h>
+
 // TODO: We should update this to a MACRO
 void glClearError() {
     while (glGetError() != GL_NO_ERROR);
@@ -13,6 +16,24 @@ bool glCheckError(const char* functionName, const char* file, int line) {
         return false;
     }
     return true;
+}
+
+void checkAlcError(ALCdevice *device, const char *msg)
+{
+    ALenum err = alcGetError(device);
+    if (err != ALC_NO_ERROR)
+    {
+        std::cerr << "[OpenAL al] " << msg << " : " << alGetString(err) << "\n";
+    }
+}
+
+void checkAlError(const char *msg)
+{
+    ALenum err = alGetError();
+    if (err != AL_NO_ERROR)
+    {
+        std::cerr << "[OpenAL al] " << msg << " : " << alGetString(err) << "\n";
+    }
 }
 
 void printPWD()

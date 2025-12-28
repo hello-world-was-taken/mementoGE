@@ -76,6 +76,11 @@ inline const char *getIconForItem(const AssetItem &item)
         return ICON_FA_FONT;
     }
 
+    if (item.extension == ".wav")
+    {
+        return ICON_FA_FILE_AUDIO_O;
+    }
+
     // fallback
     return ICON_FA_FILE_O;
 }
@@ -244,7 +249,35 @@ void AssetsPanel::drawContentPanel()
                 ImGui::EndDragDropSource();
             }
         }
-        else if (item.extension != ".json")
+        else if (item.extension == ".wav")
+        {
+            std::string label = std::string(getIconForItem(item)) + "  " + item.nameWithoutExtention;
+
+            if (ImGui::Selectable(label.c_str(), false))
+            {
+                // TODO: do we want to track selected audio?
+            }
+
+            // Drag & drop source
+            if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+            {
+                AudioPayload payload{};
+                strncpy(payload.filePath, currentContentFullPath.c_str(), sizeof(payload.filePath) - 1);
+
+                ImGui::SetDragDropPayload("AUDIO", &payload, sizeof(AudioPayload));
+                ImGui::Text("Dragging audio %s", currentContentFullPath.c_str());
+
+                ImGui::EndDragDropSource();
+            }
+        }
+        else if (item.extension == ".json")
+        {
+            // json extension are used with images to represent sprites
+            // and animation. We'll update that format to our own .meme
+            // at some point, but 'till then ignore them.
+            continue;
+        }
+        else
         {
             std::string label = std::string(getIconForItem(item)) + "  " + item.nameWithoutExtention;
             ImGui::Selectable(label.c_str());

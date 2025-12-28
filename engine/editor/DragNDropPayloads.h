@@ -25,3 +25,8 @@ struct FontPayload
 {
     char fontPath[256];
 };
+
+struct AudioPayload
+{
+    char filePath[256];
+};

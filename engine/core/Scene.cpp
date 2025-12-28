@@ -234,8 +234,8 @@ void Scene::addSystem(const std::string &systemName)
         return;
     }
 
-    std::unique_ptr<ISystem> system = SystemRegistry::instance().create(systemName)(); // create returns a lamda
-    m_systems.push_back(std::unique_ptr<ISystem>(system.release()));
+    std::shared_ptr<ISystem> system = SystemRegistry::instance().get(systemName);
+    m_systems.push_back(system);
     m_systemNames.push_back(systemName);
 }
 
@@ -276,15 +276,12 @@ void Scene::deserialize(const YAML::Node &in)
         std::cout << "Deserializing Scene: " << it->first.as<std::string>() << std::endl;
         mTag = it->first.as<std::string>();
 
-        // Deserializing Game Objects
-        YAML::Node gameObjects = it->second["GameObjects"];
-        for (const auto &it : gameObjects)
-        {
-            GameObject gameObj{m_registry, it.second, m_physicsWorld};
-            m_gameObjects.push_back(std::move(gameObj));
-        }
-
         // Deserializing Systems
+        // FIXME: Systems should be deserialized first as there might be game object
+        // components that depend on system initialization. An example is Audio
+        // System that initializes, OpenAL context, without which AudioSource
+        // component won't work. Ideally, we would want to avoid dependencies
+        // like this. Refactor.
         if (it->second["Systems"])
         {
             YAML::Node systems = it->second["Systems"];
@@ -292,6 +289,14 @@ void Scene::deserialize(const YAML::Node &in)
             {
                 addSystem(system.as<std::string>());
             }
+        }
+
+        // Deserializing Game Objects
+        YAML::Node gameObjects = it->second["GameObjects"];
+        for (const auto &it : gameObjects)
+        {
+            GameObject gameObj{m_registry, it.second, m_physicsWorld};
+            m_gameObjects.push_back(std::move(gameObj));
         }
     }
 }

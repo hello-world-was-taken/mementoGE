@@ -31,6 +31,7 @@ public:
     void run();
     void drawEditorUI(); // Render ImGui windows here
 
+
     void setScene(std::shared_ptr<Scene> scene);
     EditorContext &getEditorContext();
 
@@ -52,6 +53,7 @@ private:
 private:
     Window m_window;
     EditorContext m_ctx{m_window};
+
     ScenePanel m_scenePanel{m_ctx};
     SceneHierarchyPanel m_sceneHierarchyPanel{m_ctx};
     TexturePanel m_texturePanel{m_ctx};

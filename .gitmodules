@@ -23,3 +23,6 @@
 [submodule "engine/lib/sawyer"]
 	path = engine/lib/sawyer
 	url = git@github.com:hello-world-was-taken/sawyer.git
+[submodule "engine/lib/openal-soft"]
+	path = engine/lib/openal-soft
+	url = git@github.com:hello-world-was-taken/openal-soft.git

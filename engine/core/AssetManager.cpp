@@ -57,3 +57,17 @@ std::shared_ptr<Font> AssetManager::getFont(const std::string &fontPath)
 
     return font;
 }
+
+unsigned int AssetManager::getAudioClip(const std::string &audioPath)
+{
+    auto it = audioByPath.find(audioPath);
+    if (it != audioByPath.end())
+    {
+        return it->second;
+    }
+
+    unsigned int buffer = AudioResourceManager::instance().getAudioBuffer(audioPath);
+
+    audioByPath[audioPath] = buffer;
+    return buffer;
+}

@@ -13,7 +13,9 @@ find_package(GLEW REQUIRED)
 add_subdirectory(engine/lib/glfw)
 add_subdirectory(engine/lib/yaml-cpp)
 add_subdirectory(engine/lib/box2d)
+add_subdirectory(engine/lib/openal-soft)
 add_subdirectory(engine/opengl)
+
 
 add_library(${PROJECT_NAME} STATIC
     # core
@@ -31,6 +33,7 @@ add_library(${PROJECT_NAME} STATIC
     engine/core/components/Animator.cpp
     engine/core/components/Text.cpp
     engine/core/components/ParticleEmitter.cpp
+    engine/core/components/AudioSource.cpp
 
     engine/core/Window.cpp
     engine/core/Camera.cpp  # TODO: remove. we have it as a component now
@@ -48,6 +51,9 @@ add_library(${PROJECT_NAME} STATIC
     engine/core/AnimationPlayer.cpp
     engine/core/SystemRegistry.cpp
     engine/core/ParticleSystem.cpp
+    engine/core/AudioSystem.cpp
+    engine/core/AudioResourceManager.cpp
+    engine/core/AudioPlayer.cpp
 
     # editor
     engine/editor/EditorLayer.cpp
@@ -94,11 +100,12 @@ target_include_directories(${PROJECT_NAME}
     PUBLIC engine/lib
     PUBLIC engine/lib/glm
     PUBLIC engine/lib/imgui
+    PUBLIC engine/lib/openal-soft/include
     PRIVATE engine/lib/ImguiFileDialog
 )
 
 target_link_libraries(${PROJECT_NAME}
-    PUBLIC glfw yaml-cpp box2d
+    PUBLIC glfw yaml-cpp box2d OpenAL
     PUBLIC OpenGL::GL
     PUBLIC GLEW::GLEW
     PRIVATE opengl

@@ -66,7 +66,7 @@ After compiling, you can run the engine like so:
 ## Remaining Features / TODO
 
 - [ ] Zoom centering on mouse cursor
-- [ ] Support for touchpad gestures (pinch-to-zoom, two-finger pan)
+- [x] Support for touchpad gestures (pinch-to-zoom, two-finger pan)
 - [x] Dedicated event system (abstract input handling from ImGui + GLFW)
 - [x] Scene serialization (saving/loading scenes)
 - [x] Prefab system for reusable GameObjects
@@ -74,7 +74,7 @@ After compiling, you can run the engine like so:
 - [ ] (`inprogress`) Gizmo tools - (translate/rotate/scale handles)
 - [ ] Custom shader and material editing support
 - [x] Physics integration (Box2D)
-- [ ] Audio system (OpenAL or FMOD)
+- [x] Audio system (OpenAL)
 - [x] Hot-reload shaders and assets during runtime
 - [x] Cross-platform support (Window/MacOS)
 - [x] Sprite based animation

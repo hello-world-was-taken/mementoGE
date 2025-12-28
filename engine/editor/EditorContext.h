@@ -2,7 +2,6 @@
 
 #include "core/Camera.h"
 #include "core/Scene.h"
-#include "core/SceneManager.h"
 #include "core/Window.h"
 
 #include "core/components/RenderLayer.h"

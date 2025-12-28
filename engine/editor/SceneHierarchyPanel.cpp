@@ -8,6 +8,7 @@
 #include "core/components/Sprite.h"
 #include "core/components/Text.h"
 #include "core/components/Transform.h"
+#include "core/components/AudioSource.h"
 
 #include "core/components/Animator.h"
 
@@ -79,6 +80,7 @@ void SceneHierarchyPanel::drawGameObjectNode(GameObject &go)
         drawComponentRemoveRow<BoxCollider2D>(go, "BoxCollider2D");
         drawComponentRemoveRow<Sensor2D>(go, "Sensor2D");
         drawComponentRemoveRow<Animator>(go, "Animator");
+        drawComponentRemoveRow<AudioSource>(go, "Audio Source");
         drawComponentRemoveRow<EnemyState>(go, "Enemy State");
         drawComponentRemoveRow<Patrol>(go, "Patrol");
         drawComponentRemoveRow<Text>(go, "Text");

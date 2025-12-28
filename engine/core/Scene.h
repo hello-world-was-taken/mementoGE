@@ -73,6 +73,6 @@ private:
     SceneCamera m_sceneCamera;
     std::vector<GameObject> m_gameObjects;
 
-    std::vector<std::unique_ptr<ISystem>> m_systems;
+    std::vector<std::shared_ptr<ISystem>> m_systems;
     std::vector<std::string> m_systemNames;
 };

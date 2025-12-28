@@ -9,6 +9,7 @@
 #include "core/components/Text.h"
 #include "core/components/ParticleEmitter.h"
 #include "core/components/Transform.h"
+#include "core/components/AudioSource.h"
 
 #include "core/AssetManager.h"
 #include "core/SpriteSheet.h"
@@ -111,6 +112,7 @@ void PropertiesPanel::renderPropertiesPanel()
     drawComponentInspector<Sprite>(go);
     drawComponentInspector<PostProcessSettings>(go);
     drawComponentInspector<Animator>(go);
+    drawComponentInspector<AudioSource>(go);
     drawAddComponentCombo(go);
     drawExportModel(go);
 
@@ -183,6 +185,15 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                 [&]
                 {
                     go.addComponent<Animator>();
+                });
+        }
+
+        if (ImGui::Selectable("Audio Source"))
+        {
+            m_ctx.performSceneEdit(
+                [&]
+                {
+                    go.addComponent<AudioSource>();
                 });
         }
 

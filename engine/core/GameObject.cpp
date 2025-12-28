@@ -1,3 +1,4 @@
+#include "core/components/AudioSource.h"
 #include "core/components/BoxCollider2D.h"
 #include "core/components/EnemyState.h"
 #include "core/components/EntityInfo.h"
@@ -46,6 +47,7 @@ GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGam
     deserializeComponent<BoxCollider2D>(serializedGameObject, "BoxCollider2D", physics);
     deserializeComponent<Sensor2D>(serializedGameObject, "Sensor2D", physics);
     deserializeComponent<Animator>(serializedGameObject, "Animator");
+    deserializeComponent<AudioSource>(serializedGameObject, "AudioSource");
     deserializeComponent<EnemyState>(serializedGameObject, "EnemyState");
     deserializeComponent<Patrol>(serializedGameObject, "Patrol");
     deserializeComponent<Text>(serializedGameObject, "Text");
@@ -117,6 +119,7 @@ bool GameObject::serialize(YAML::Emitter &out)
     serializeComponent<BoxCollider2D>(out);
     serializeComponent<Sensor2D>(out);
     serializeComponent<Animator>(out);
+    serializeComponent<AudioSource>(out);
     serializeComponent<EnemyState>(out);
     serializeComponent<Patrol>(out);
     serializeComponent<Text>(out);
