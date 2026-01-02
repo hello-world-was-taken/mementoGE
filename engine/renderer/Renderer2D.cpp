@@ -46,14 +46,18 @@ bool Renderer2D::hasRendererTypeEnabled(RendererType flag)
     return (static_cast<uint32_t>(m_enabledRenderers) & static_cast<uint32_t>(flag)) != 0;
 }
 
+void Renderer2D::setClearColor(glm::vec4 color)
+{
+    clearColor = color;
+}
+
 void Renderer2D::renderLayers(const CameraOld &camera, const std::vector<GameObject> &objects)
 {
     for (RenderLayerType layer : RENDER_LAYER_ORDER)
     {
         m_finalFBO.bind();
 
-        // TODO: we should expose an api to set clear color
-        glClearColor(0.41176f, 0.41176f, 0.41176f, 1.00f);
+        glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // if (hasRendererTypeEnabled(RendererType::Grid))

@@ -172,7 +172,10 @@ void ScenePanel::renderSceneViewport()
     m_ctx.scenePanelSize = ImGui::GetItemRectSize();
     m_ctx.sceneImageHovered = ImGui::IsItemHovered();
 
-    renderGizmos();
+    if (!m_ctx.isPlaying)
+    {
+        renderGizmos();
+    }
 
     ImGui::End();
 }

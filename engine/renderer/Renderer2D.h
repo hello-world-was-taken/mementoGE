@@ -22,6 +22,7 @@ public:
 
     void queueFrameBufferResize(int width, int height);
     void setRendererEnablement(RendererType enablements);
+    void setClearColor(glm::vec4 color);
 
     void renderScene(const CameraOld &camera, const std::vector<GameObject> &objects);
 
@@ -32,8 +33,8 @@ private:
 
     bool hasRendererTypeEnabled(RendererType flag);
 
-    // FIXME: making it public for testing purposes.
 public:
+    // FIXME: making it public for testing purposes.
     FrameBuffer m_finalFBO{1000, 1000};
 
 private:
@@ -46,4 +47,6 @@ private:
 
     int m_width = 0;
     int m_height = 0;
+
+    glm::vec4 clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
 };

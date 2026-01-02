@@ -70,17 +70,22 @@ void EditorLayer::updateFrame()
         {
             handleEditorShortcuts();
 
-            // TODO: expost setClearColor function in Renderer2D.h
-            // glClearColor(0.41176f, 0.41176f, 0.41176f, 1.00f);
-            // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            if (m_ctx.isPlaying)
+            {
+                m_ctx.renderer2D.setClearColor(playModeClearColor);
+                m_ctx.renderer2D.setRendererEnablement(RendererType::Sprite);
+            }
+            else
+            {
+                m_ctx.renderer2D.setClearColor(editorModeClearColor);
+                m_ctx.renderer2D.setRendererEnablement(RendererType::All);
+            }
 
             m_ctx.getActiveScene().update();
 
             // render grid
             renderGrid();
 
-            // TODO: use Render2D::setRendererEnablement to set which renderes are enabled
-            // on edit of toggle renderes would be a good place to set it.
             m_ctx.renderer2D.renderScene(m_ctx.editorCamera, m_ctx.getActiveScene().getGameObjects());
 
             drawEditorUI();

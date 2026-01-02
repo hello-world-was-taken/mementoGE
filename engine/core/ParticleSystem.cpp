@@ -45,7 +45,9 @@ void ParticleSystem::update(entt::registry &registry)
         {
             Particle p;
             p.pos = transform.position + emitter.spawnOffset;
-            p.vel = emitter.baseVelocity; // add randomness as needed
+            p.vel = {random(0.0f, emitter.baseVelocity.x),
+                random(0.0f, emitter.baseVelocity.y),
+                0.0f};
             p.maxLife = p.life = random(emitter.minLife, emitter.maxLife);
             p.size = random(emitter.minSize, emitter.maxSize);
             // start with emitter color

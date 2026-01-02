@@ -31,7 +31,6 @@ public:
     void run();
     void drawEditorUI(); // Render ImGui windows here
 
-
     void setScene(std::shared_ptr<Scene> scene);
     EditorContext &getEditorContext();
 
@@ -64,7 +63,7 @@ private:
     bool m_drawGrid = false;
 
     GridRenderer m_gridRenderer;
-    PhysicsRenderer m_physicsRenderer;
-    SelectionRenderer m_selectionRenderer;
-    SpriteRenderer m_spriteRenderer;
+
+    glm::vec4 editorModeClearColor = {0.41176f, 0.41176f, 0.41176f, 1.00f};
+    glm::vec4 playModeClearColor = {0.0f, 0.0f, 0.0f, 1.0f};
 };

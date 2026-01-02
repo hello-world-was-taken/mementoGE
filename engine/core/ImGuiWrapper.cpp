@@ -24,7 +24,9 @@ void ImGuiWrapper::setupImgui(Window &window)
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
     // TODO: disabling now because of window positioning mismatch
     // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;   // Enable Multi-Viewport
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    // FIXME: disabling keyboard nav to avoid menubar
+    // element selection in play mode
+    // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     // TODO: for now
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
 
