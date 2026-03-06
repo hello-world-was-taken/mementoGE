@@ -7,6 +7,7 @@ enum class EventType
     None = 0,
     Key, // keyboard keys
     KeyRepeat,
+    KeyRelease,
     MouseMove,
     MouseRightClick,
     MouseLeftClick,

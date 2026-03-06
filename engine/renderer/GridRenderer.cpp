@@ -14,10 +14,10 @@ GridRenderer::GridRenderer(int width, int height, int tileSize, const CameraOld 
 {
     generateGridLines(camera);
 
-    m_vao = new VertexArray();
+    m_vao = std::make_unique<VertexArray>();
     m_vao->bind();
 
-    m_vbo = new VertexBuffer(m_vertices.size() * sizeof(Vertex), GL_DYNAMIC_DRAW);
+    m_vbo = std::make_unique<VertexBuffer>(m_vertices.size() * sizeof(Vertex), GL_DYNAMIC_DRAW);
     m_vbo->bind();
 
     m_vao->attachVertexAttribute(VertexAttribute{3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0}); // position
@@ -31,8 +31,6 @@ GridRenderer::GridRenderer(int width, int height, int tileSize, const CameraOld 
 
 GridRenderer::~GridRenderer()
 {
-    delete m_vbo;
-    delete m_vao;
 }
 
 void GridRenderer::generateGridLines(const CameraOld &camera)

@@ -19,7 +19,7 @@ public:
 private:
     unsigned int m_id;
 
-    char *parseShader(const std::string &file_path);
+    std::string parseShader(const std::string &file_path);
     void checkShaderCompileErrors(unsigned int shader_id, const char *shader_type);
     int getUniformLocation(const std::string &name);
 };

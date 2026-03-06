@@ -20,7 +20,7 @@ public:
     ~FrameBuffer();
 
     void init();
-    void destory();
+    void destroy();
 
     void bind() const;
     void unbind() const;

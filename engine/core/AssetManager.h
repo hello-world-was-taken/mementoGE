@@ -1,6 +1,5 @@
 #pragma once
 
-#pragma once
 #include "core/AnimationMap.h"
 #include "core/AudioResourceManager.h"
 #include "core/Font.h"

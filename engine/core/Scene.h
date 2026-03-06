@@ -49,7 +49,7 @@ public:
 
     void addSystem(const std::string &systemName);
     void addRigidBody2DToWorld();
-    void setGraivty(glm::vec2 gravity);
+    void setGravity(glm::vec2 gravity);
 
     std::vector<GameObject> &getGameObjects();
     SceneCamera &getCamera();

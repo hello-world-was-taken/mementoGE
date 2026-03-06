@@ -1,10 +1,10 @@
 #pragma once
 
-#include "core/GLIncludes.h"
 #include "core/Camera.h"
+#include "core/GLIncludes.h"
 
-#include <iostream>
 #include <glm/glm.hpp>
+#include <iostream>
 #include <memory>
 
 class MouseListener
@@ -33,7 +33,7 @@ private:
     MouseListener() = default;
 
     glm::vec2 m_mousePos = {0.0f, 0.0f};
-    glm::vec2 m_previMousePos = {0.0f, 0.0f};
+    glm::vec2 m_prevMousePos = {0.0f, 0.0f};
     glm::vec2 m_scrollDelta = {0.0f, 0.0f};
     glm::vec2 m_dragStart;
 

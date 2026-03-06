@@ -216,7 +216,7 @@ Physics2D &Scene::getPhysics2d()
     return m_physicsWorld;
 }
 
-void Scene::setGraivty(glm::vec2 gravity)
+void Scene::setGravity(glm::vec2 gravity)
 {
     m_physicsWorld.setGravity(gravity);
 }

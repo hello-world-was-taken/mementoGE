@@ -56,7 +56,9 @@ bool SceneHistory::canRedo() const
 void SceneHistory::undo(SceneManager &sceneManager)
 {
     if (!canUndo())
+    {
         return;
+    }
     m_currentIndex--;
 
     applySnapshot(sceneManager);
@@ -65,7 +67,9 @@ void SceneHistory::undo(SceneManager &sceneManager)
 void SceneHistory::redo(SceneManager &sceneManager)
 {
     if (!canRedo())
+    {
         return;
+    }
     m_currentIndex++;
 
     applySnapshot(sceneManager);

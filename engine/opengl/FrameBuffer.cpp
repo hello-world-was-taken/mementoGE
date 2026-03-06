@@ -61,7 +61,7 @@ void FrameBuffer::init()
 
 FrameBuffer::~FrameBuffer()
 {
-    destory();
+    destroy();
 }
 
 void FrameBuffer::bind() const
@@ -81,7 +81,7 @@ GLuint FrameBuffer::getColorTexture() const
     return m_textureColorBuffer;
 }
 
-void FrameBuffer::destory()
+void FrameBuffer::destroy()
 {
     glDeleteFramebuffers(1, &m_fbo);
     glDeleteTextures(1, &m_textureColorBuffer);
@@ -121,7 +121,7 @@ void FrameBuffer::resize()
 {
     if (m_shouldResize)
     {
-        destory();
+        destroy();
         init();
         m_shouldResize = false;
     }

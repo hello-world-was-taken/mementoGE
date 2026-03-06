@@ -1,8 +1,9 @@
 #include "core/EventHandler.h"
 
+#include <imgui.h>
 #include <iostream>
 
-EventHandler *EventHandler::instance()
+    EventHandler *EventHandler::instance()
 {
     static EventHandler instance;
     return &instance;
@@ -22,10 +23,18 @@ void EventHandler::glfwKeyCallBack(GLFWwindow *window, int key, int scancode, in
     {
         if (key == glfwKey)
         {
-            bool isPressed = (action != GLFW_RELEASE);
-            const EventType eventType = (action == GLFW_REPEAT) ? EventType::KeyRepeat : EventType::Key;
-            listener->m_keyStates[type] = isPressed;
-            listener->m_eventQueue.push(Event{name, eventType, isPressed, type, cmd, ctrl, shift, alt});
+            switch (action)
+            {
+            case GLFW_PRESS:
+                listener->m_keyStates[type] = true;
+                listener->m_eventQueue.push(Event{name, EventType::Key, true, type, cmd, ctrl, shift, alt});
+            case GLFW_REPEAT:
+                listener->m_keyStates[type] = true;
+                listener->m_eventQueue.push(Event{name, EventType::KeyRepeat, true, type, cmd, ctrl, shift, alt});
+            case GLFW_RELEASE:
+                listener->m_keyStates[type] = false;
+                listener->m_eventQueue.push(Event{name, EventType::KeyRelease, false, type, cmd, ctrl, shift, alt});
+            }
         }
     };
 

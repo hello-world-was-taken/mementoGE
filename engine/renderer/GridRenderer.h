@@ -24,7 +24,7 @@ private:
     int m_width, m_height, m_tileSize;
     std::vector<Vertex> m_vertices;
 
-    VertexArray *m_vao;
-    VertexBuffer *m_vbo;
+    std::unique_ptr<VertexArray> m_vao;
+    std::unique_ptr<VertexBuffer> m_vbo;
     std::shared_ptr<Shader> m_shader;
 };

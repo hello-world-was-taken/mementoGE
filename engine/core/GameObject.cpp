@@ -119,7 +119,6 @@ bool GameObject::serialize(YAML::Emitter &out)
     serializeComponent<BoxCollider2D>(out);
     serializeComponent<Sensor2D>(out);
     serializeComponent<Animator>(out);
-    serializeComponent<AudioSource>(out);
     serializeComponent<EnemyState>(out);
     serializeComponent<Patrol>(out);
     serializeComponent<Text>(out);

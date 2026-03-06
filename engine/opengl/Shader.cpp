@@ -7,16 +7,18 @@
 
 Shader::Shader(const char *vertex_path, const char *fragment_path)
 {
-    const char *vertex_source = parseShader(vertex_path);
-    const char *fragment_source = parseShader(fragment_path);
+    std::string vertex_source = parseShader(vertex_path);
+    std::string fragment_source = parseShader(fragment_path);
 
     unsigned int vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex_shader, 1, &vertex_source, NULL);
+    const char *vertex_source_cstr = vertex_source.c_str();
+    glShaderSource(vertex_shader, 1, &vertex_source_cstr, NULL);
     glCompileShader(vertex_shader);
     checkShaderCompileErrors(vertex_shader, "VERTEX");
 
     unsigned int fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &fragment_source, NULL);
+    const char *fragment_source_cstr = fragment_source.c_str();
+    glShaderSource(fragment_shader, 1, &fragment_source_cstr, NULL);
     glCompileShader(fragment_shader);
     checkShaderCompileErrors(fragment_shader, "FRAGMENT");
 
@@ -31,11 +33,6 @@ Shader::Shader(const char *vertex_path, const char *fragment_path)
 
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
-
-    // TODO: Am not sure if this is the right way to go about it.
-    // but we need to remove the dynamically allocated memory
-    delete[] vertex_source;
-    delete[] fragment_source;
 }
 
 Shader::~Shader()
@@ -49,7 +46,7 @@ void Shader::use()
 }
 
 // TODO: use sstream to read the file
-char *Shader::parseShader(const std::string &filePath)
+std::string Shader::parseShader(const std::string &filePath)
 {
     std::ifstream stream(filePath);
     std::string line;
@@ -67,11 +64,7 @@ char *Shader::parseShader(const std::string &filePath)
     }
 
     stream.close();
-    // Dynamically allocate memory for the C-style string
-    char *shader_cstr = new char[shader.length() + 1];
-    std::strcpy(shader_cstr, shader.c_str());
-
-    return shader_cstr;
+    return shader;
 };
 
 void Shader::checkShaderCompileErrors(unsigned int shader_id, const char *shader_type)
