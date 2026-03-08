@@ -10,6 +10,7 @@
 #include "core/components/Sensor2D.h"
 #include "core/components/Sprite.h"
 #include "core/components/Text.h"
+#include "core/components/TextAnchor.h"
 #include "core/components/Transform.h"
 
 #include "core/GameObject.h"
@@ -51,6 +52,7 @@ GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGam
     deserializeComponent<EnemyState>(serializedGameObject, "EnemyState");
     deserializeComponent<Patrol>(serializedGameObject, "Patrol");
     deserializeComponent<Text>(serializedGameObject, "Text");
+    deserializeComponent<TextAnchor>(serializedGameObject, "TextAnchor");
     deserializeComponent<ParticleEmitter>(serializedGameObject, "ParticleEmitter");
     deserializeComponent<PostProcessSettings>(serializedGameObject, "PostProcessSettings");
 }
@@ -122,6 +124,7 @@ bool GameObject::serialize(YAML::Emitter &out)
     serializeComponent<EnemyState>(out);
     serializeComponent<Patrol>(out);
     serializeComponent<Text>(out);
+    serializeComponent<TextAnchor>(out);
     serializeComponent<ParticleEmitter>(out);
     serializeComponent<PostProcessSettings>(out);
 

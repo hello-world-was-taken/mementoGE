@@ -29,7 +29,13 @@ void Text::rebuild(Transform &transform)
         return;
     }
 
+    // Start from the owning object's transform position, then apply the
+    // text's local offset that layout systems (e.g. TextLayoutSystem)
+    // compute. This keeps the game object's Transform stable while
+    // allowing text to be positioned relative to it.
     glm::vec3 position = transform.position;
+    position.x += localOffset.x;
+    position.y += localOffset.y;
     for (const char &ch : content)
     {
         const stbtt_packedchar &packedChar = font->getPackedChar(ch);

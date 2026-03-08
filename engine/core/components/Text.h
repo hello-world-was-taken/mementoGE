@@ -26,6 +26,12 @@ struct Text
     float letterSpacing = 0.0f;
     float lineSpacing = 0.0f;
 
+    // Offset in local space from the owning game object's Transform position.
+    // This is computed by layout systems (e.g. TextLayoutSystem) so that
+    // we don't move the actual game object, only where the text is drawn
+    // relative to it.
+    glm::vec2 localOffset = {0.0f, 0.0f};
+
     std::vector<Vertex> vertices;
 
     bool needsRebuild = true; // TODO: not being used

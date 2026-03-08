@@ -1,9 +1,9 @@
 #include "core/components/EntityInfo.h"
 #include "core/components/Sprite.h"
 
-#include "core/components/Animator.h"
 #include "core/Scene.h"
 #include "core/SystemRegistry.h"
+#include "core/components/Animator.h"
 
 #include "util/Time.h"
 
@@ -96,6 +96,7 @@ void Scene::update()
 {
     if (m_play)
     {
+        // In play mode, run all systems.
         for (auto &system : m_systems)
         {
             system->update(m_registry);
@@ -105,6 +106,19 @@ void Scene::update()
         m_physicsWorld.simulate(Time::deltaTime(), m_registry);
 
         animate();
+    }
+    else
+    {
+        // When not playing (editor mode), run only systems that should
+        // affect the editor view. For now, always run TextLayoutSystem
+        // so text anchoring updates while editing.
+        for (std::size_t i = 0; i < m_systems.size(); ++i)
+        {
+            if (m_systemNames[i] == "TextLayoutSystem")
+            {
+                m_systems[i]->update(m_registry);
+            }
+        }
     }
 }
 
@@ -173,7 +187,8 @@ GameObject &Scene::addGameObject(unsigned int width, unsigned int height, std::s
 
 void Scene::removeGameObject(entt::entity gameObject)
 {
-    auto it = std::find_if(m_gameObjects.begin(), m_gameObjects.end(),
+    auto it = std::find_if(m_gameObjects.begin(),
+        m_gameObjects.end(),
         [&](GameObject &go)
         {
             return go.getEntityId() == gameObject;
