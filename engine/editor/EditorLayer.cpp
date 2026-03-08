@@ -103,6 +103,7 @@ void EditorLayer::drawEditorUI()
     m_propertiesPanel.draw();
     // m_texturePanel.draw();
     m_assetsPanel.draw();
+    m_spriteSheetEditorPanel.draw();
 
     renderPerformancePanel();
     renderEditorProperties();
@@ -218,6 +219,7 @@ void EditorLayer::renderGrid()
     m_gridRenderer.render(m_ctx.editorCamera);
 }
 
+// TODO: move to separate panel
 void EditorLayer::renderEditorProperties()
 {
     ImGui::Begin("Context");
@@ -271,6 +273,40 @@ void EditorLayer::renderEditorProperties()
 
             ImGui::Text("Mouse Screen: (%.1f, %.1f)", mouseScreen.x, mouseScreen.y);
             ImGui::Text("Mouse World:  (%.2f, %.2f)", world.x, world.y);
+        });
+
+    ImGuiWrapper::Collapsable("Key Listener State",
+        [&]
+        {
+            EventHandler *handler = EventHandler::instance();
+
+            struct KeyInfo
+            {
+                KeyType type;
+                const char *name;
+            };
+
+            const KeyInfo keys[] = {
+                {KeyType::W, "W"},
+                {KeyType::A, "A"},
+                {KeyType::S, "S"},
+                {KeyType::D, "D"},
+                {KeyType::Space, "Space"},
+                {KeyType::Z, "Z"},
+                {KeyType::Y, "Y"},
+                {KeyType::LeftArrow, "Left Arrow"},
+                {KeyType::RightArrow, "Right Arrow"},
+                {KeyType::UpArrow, "Up Arrow"},
+                {KeyType::DownArrow, "Down Arrow"},
+                {KeyType::Escape, "Escape"},
+            };
+
+            ImGui::Text("Tracked Keys:");
+            for (const auto &key : keys)
+            {
+                bool pressed = handler->isKeyPressed(key.type);
+                ImGui::Text("%s: %s", key.name, pressed ? "Pressed" : "Released");
+            }
         });
 
     ImGuiWrapper::Collapsable("Selected Objects",

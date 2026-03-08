@@ -3,7 +3,7 @@
 #include <imgui.h>
 #include <iostream>
 
-    EventHandler *EventHandler::instance()
+EventHandler *EventHandler::instance()
 {
     static EventHandler instance;
     return &instance;
@@ -28,12 +28,15 @@ void EventHandler::glfwKeyCallBack(GLFWwindow *window, int key, int scancode, in
             case GLFW_PRESS:
                 listener->m_keyStates[type] = true;
                 listener->m_eventQueue.push(Event{name, EventType::Key, true, type, cmd, ctrl, shift, alt});
+                break;
             case GLFW_REPEAT:
                 listener->m_keyStates[type] = true;
                 listener->m_eventQueue.push(Event{name, EventType::KeyRepeat, true, type, cmd, ctrl, shift, alt});
+                break;
             case GLFW_RELEASE:
                 listener->m_keyStates[type] = false;
                 listener->m_eventQueue.push(Event{name, EventType::KeyRelease, false, type, cmd, ctrl, shift, alt});
+                break;
             }
         }
     };

@@ -1,15 +1,16 @@
+#include "core/components/AudioSource.h"
 #include "core/components/CircleCollider2D.h"
 #include "core/components/EnemyState.h"
 #include "core/components/EntityInfo.h"
+#include "core/components/ParticleEmitter.h"
 #include "core/components/Patrol.h"
 #include "core/components/PostProcessSettings.h"
 #include "core/components/RenderLayer.h"
 #include "core/components/Sensor2D.h"
 #include "core/components/Sprite.h"
 #include "core/components/Text.h"
-#include "core/components/ParticleEmitter.h"
+#include "core/components/TextAnchor.h"
 #include "core/components/Transform.h"
-#include "core/components/AudioSource.h"
 
 #include "core/AssetManager.h"
 #include "core/SpriteSheet.h"
@@ -107,6 +108,7 @@ void PropertiesPanel::renderPropertiesPanel()
     drawComponentInspector<EnemyState>(go);
     drawComponentInspector<Patrol>(go);
     drawComponentInspector<Text>(go);
+    drawComponentInspector<TextAnchor>(go);
     drawComponentInspector<ParticleEmitter>(go);
     drawComponentInspector<Sensor2D>(go);
     drawComponentInspector<Sprite>(go);
@@ -222,6 +224,16 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                 [&]
                 {
                     go.addComponent<Text>();
+                });
+        }
+
+        // TODO: should we just add text anchor properties to Text?
+        if (ImGui::Selectable("Text Anchor"))
+        {
+            m_ctx.performSceneEdit(
+                [&]
+                {
+                    go.addComponent<TextAnchor>();
                 });
         }
 

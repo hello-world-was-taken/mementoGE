@@ -32,6 +32,7 @@ add_library(${PROJECT_NAME} STATIC
     engine/core/components/Camera.cpp
     engine/core/components/Animator.cpp
     engine/core/components/Text.cpp
+    engine/core/components/TextAnchor.cpp
     engine/core/components/ParticleEmitter.cpp
     engine/core/components/AudioSource.cpp
 
@@ -51,6 +52,7 @@ add_library(${PROJECT_NAME} STATIC
     engine/core/AnimationPlayer.cpp
     engine/core/SystemRegistry.cpp
     engine/core/ParticleSystem.cpp
+    engine/core/TextLayoutSystem.cpp
     engine/core/AudioSystem.cpp
     engine/core/AudioResourceManager.cpp
     engine/core/AudioPlayer.cpp
@@ -65,7 +67,8 @@ add_library(${PROJECT_NAME} STATIC
     engine/editor/EditorMouseController.cpp
     engine/editor/EditorCamera.cpp
     engine/editor/SceneHistory.cpp
-    engine/editor/AssetsPanel.cpp
+        engine/editor/AssetsPanel.cpp
+        engine/editor/SpriteSheetEditorPanel.cpp
 
     # renderer
     engine/renderer/Renderer2D.cpp

@@ -11,6 +11,7 @@
 #include "editor/PropertiesPanel.h"
 #include "editor/SceneHierarchyPanel.h"
 #include "editor/ScenePanel.h"
+#include "editor/SpriteSheetEditorPanel.h"
 #include "editor/TexturePanel.h"
 
 #include "renderer/GridRenderer.h"
@@ -58,6 +59,7 @@ private:
     TexturePanel m_texturePanel{m_ctx};
     PropertiesPanel m_propertiesPanel{m_ctx, m_texturePanel};
     AssetsPanel m_assetsPanel{m_ctx};
+    SpriteSheetEditorPanel m_spriteSheetEditorPanel{m_ctx};
 
     MovementMode m_movementMode = MovementMode::Free;
     bool m_drawGrid = false;
