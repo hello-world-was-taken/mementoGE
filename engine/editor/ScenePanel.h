@@ -3,8 +3,8 @@
 
 #include "opengl/FrameBuffer.h"
 
-#include <memory>
 #include <imgui.h>
+#include <memory>
 
 class ScenePanel : public EditorPanel
 {
@@ -24,4 +24,5 @@ private:
     void renderSceneViewport();
     void handleViewportDropTarget();
     void createSpriteFromPayload(const ImGuiPayload *payload);
+    void createModelFromPayload(const ImGuiPayload *payload);
 };

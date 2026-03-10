@@ -20,7 +20,6 @@
 #include "editor/EditorContext.h"
 #include "editor/EditorPanel.h"
 #include "editor/PropertiesPanel.h"
-#include "editor/TexturePanel.h"
 
 #include "util/PathUtils.h"
 
@@ -37,8 +36,8 @@ inline void SetFieldWidth(float w = 120.0f)
     ImGui::SetNextItemWidth(w);
 }
 
-PropertiesPanel::PropertiesPanel(EditorContext &ctx, TexturePanel &texturePanel)
-    : EditorPanel{ctx}, m_ctx{ctx}, m_texturePanel{texturePanel}
+PropertiesPanel::PropertiesPanel(EditorContext &ctx)
+    : EditorPanel{ctx}, m_ctx{ctx}
 {
 }
 
@@ -291,7 +290,25 @@ void PropertiesPanel::drawExportModel(GameObject &go)
     if (ImGui::Button("Export Model"))
     {
         YAML::Emitter out;
-        go.serialize(out);
+        // FIXME: For models, we serialize only the component map (no top-level
+        // entity name wrapper) so that it can be loaded directly into
+        // GameObject's deserialization path.
+        out << YAML::BeginMap;
+        go.serializeComponent<EntityInfo>(out);
+        go.serializeComponent<Transform>(out);
+        go.serializeComponent<RenderLayer>(out);
+        go.serializeComponent<Sprite>(out);
+        go.serializeComponent<RigidBody2D>(out);
+        go.serializeComponent<BoxCollider2D>(out);
+        go.serializeComponent<Sensor2D>(out);
+        go.serializeComponent<Animator>(out);
+        go.serializeComponent<EnemyState>(out);
+        go.serializeComponent<Patrol>(out);
+        go.serializeComponent<Text>(out);
+        go.serializeComponent<TextAnchor>(out);
+        go.serializeComponent<ParticleEmitter>(out);
+        go.serializeComponent<PostProcessSettings>(out);
+        out << YAML::EndMap;
 
         EntityInfo &info = go.getComponent<EntityInfo>();
         std::ofstream file(getGameAssetsPath("models/" + info.tag + ".yaml"), std::ios::out | std::ios::trunc);

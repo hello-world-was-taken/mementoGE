@@ -45,6 +45,7 @@ public:
     Scene clone(std::string tag);
 
     GameObject &addGameObject(unsigned int width, unsigned int height, std::string &&tag);
+    GameObject &addGameObjectFromModel(const std::string &modelPath);
     void removeGameObject(entt::entity);
 
     void addSystem(const std::string &systemName);

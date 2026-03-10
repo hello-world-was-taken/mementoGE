@@ -30,3 +30,8 @@ struct AudioPayload
 {
     char filePath[256];
 };
+
+struct ModelPayload
+{
+    char filePath[256];
+};

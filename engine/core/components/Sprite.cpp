@@ -134,7 +134,7 @@ void Sprite::handleSpriteDrop()
         if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("SPRITE"))
         {
             IM_ASSERT(payload->DataSize == sizeof(SpritePayload));
-            SpritePayload spritePayload = *(SpritePayload*)payload->Data;
+            SpritePayload spritePayload = *(SpritePayload *)payload->Data;
 
             topLeft = spritePayload.topLeft;
             width = spritePayload.width;

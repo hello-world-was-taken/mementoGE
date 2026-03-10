@@ -1,3 +1,6 @@
+// Enable ImGui math operators for this translation unit before including imgui.h
+#define IMGUI_DEFINE_MATH_OPERATORS
+
 #include "core/AnimationMap.h"
 #include "core/AnimationPlayer.h"
 #include "core/AssetManager.h"
@@ -11,7 +14,9 @@
 
 #include "util/PathUtils.h"
 
+#include <ImGuiFileDialog/ImGuiFileDialog.h>
 #include <filesystem>
+#include <fstream>
 #include <imgui.h>
 #include <imgui/imgui_internal.h>
 #include <memory>
@@ -198,11 +203,152 @@ void AssetsPanel::drawFoldersPanel()
     ImGui::End();
 }
 
+// FIXME: this function is doing a lot of things.
 void AssetsPanel::drawContentPanel()
 {
     ImGui::Begin("AssetsContent");
 
     std::string selectedFolderPath = std::string(GAME_ASSETS_DIR) + m_ctx.selectedAssetChildFolderPath;
+
+    // Folder-specific header actions (import/create) by asset type.
+    if (m_ctx.selectedAssetChildFolderPath == "scenes")
+    {
+        static char newSceneName[64] = "";
+
+        ImGui::InputText("Scene Name", newSceneName, IM_ARRAYSIZE(newSceneName));
+        ImGui::SameLine();
+        if (ImGui::Button("Create Scene") && newSceneName[0] != '\0')
+        {
+            std::string sceneName = newSceneName;
+
+            // Build the full path for the new scene asset.
+            std::string scenePath = selectedFolderPath + "/" + sceneName + ".yaml";
+
+            if (!fs::exists(scenePath))
+            {
+                // Insert a fresh Scene into the editor context and select it.
+                m_ctx.sceneByScenePathMap.insert_or_assign(scenePath, Scene{std::move(sceneName)});
+                m_ctx.selectedScenePath = scenePath;
+
+                // Persist the new scene to disk using the existing helper.
+                m_ctx.serializaActiveScene();
+
+                // Clear name for next creation.
+                newSceneName[0] = '\0';
+            }
+        }
+
+        ImGui::Separator();
+    }
+    else if (m_ctx.selectedAssetChildFolderPath == "audio")
+    {
+        if (ImGui::Button("Import Audio"))
+        {
+            ImGuiFileDialog::Instance()->OpenDialog("ImportAudioFile", "Select Audio", ".wav,.ogg");
+        }
+
+        if (ImGuiFileDialog::Instance()->Display("ImportAudioFile"))
+        {
+            if (ImGuiFileDialog::Instance()->IsOk())
+            {
+                std::string src = ImGuiFileDialog::Instance()->GetFilePathName();
+                std::string fileName = ImGuiFileDialog::Instance()->GetCurrentFileName();
+                fs::path destPath = getGameAssetsPath("audio") / fileName;
+
+                try
+                {
+                    fs::create_directories(destPath.parent_path());
+                    fs::copy_file(src, destPath, fs::copy_options::update_existing);
+                }
+                catch (const fs::filesystem_error &e)
+                {
+                    std::cerr << "Failed to copy audio: " << e.what() << std::endl;
+                }
+            }
+
+            ImGuiFileDialog::Instance()->Close();
+        }
+
+        ImGui::Separator();
+    }
+    else if (m_ctx.selectedAssetChildFolderPath == "fonts")
+    {
+        if (ImGui::Button("Import Font"))
+        {
+            ImGuiFileDialog::Instance()->OpenDialog("ImportFontFile", "Select Font", ".ttf");
+        }
+
+        if (ImGuiFileDialog::Instance()->Display("ImportFontFile"))
+        {
+            if (ImGuiFileDialog::Instance()->IsOk())
+            {
+                std::string src = ImGuiFileDialog::Instance()->GetFilePathName();
+                std::string fileName = ImGuiFileDialog::Instance()->GetCurrentFileName();
+                fs::path destPath = getGameAssetsPath("fonts") / fileName;
+
+                try
+                {
+                    fs::create_directories(destPath.parent_path());
+                    fs::copy_file(src, destPath, fs::copy_options::update_existing);
+                }
+                catch (const fs::filesystem_error &e)
+                {
+                    std::cerr << "Failed to copy font: " << e.what() << std::endl;
+                }
+            }
+
+            ImGuiFileDialog::Instance()->Close();
+        }
+
+        ImGui::Separator();
+    }
+    else if (m_ctx.selectedAssetChildFolderPath == "texture")
+    {
+        if (ImGui::Button("Import Texture"))
+        {
+            ImGuiFileDialog::Instance()->OpenDialog("ImportTextureFile", "Select Texture", ".png,.jpg,.jpeg");
+        }
+
+        if (ImGuiFileDialog::Instance()->Display("ImportTextureFile"))
+        {
+            if (ImGuiFileDialog::Instance()->IsOk())
+            {
+                std::string src = ImGuiFileDialog::Instance()->GetFilePathName();
+                std::string fileName = ImGuiFileDialog::Instance()->GetCurrentFileName();
+                fs::path destPath = getGameAssetsPath("texture") / fileName;
+
+                try
+                {
+                    fs::create_directories(destPath.parent_path());
+                    fs::copy_file(src, destPath, fs::copy_options::update_existing);
+
+                    // Create a matching empty spritesheet JSON if it does not exist yet.
+                    fs::path jsonPath = destPath.parent_path() / (destPath.stem().string() + ".json");
+                    if (!fs::exists(jsonPath))
+                    {
+                        std::ofstream jsonFile(jsonPath);
+                        if (jsonFile.is_open())
+                        {
+                            // Match existing format: meta.texture, frames object, animations object.
+                            jsonFile << "{\n";
+                            jsonFile << "  \"meta\": { \"texture\": \"" << fileName << "\" },\n";
+                            jsonFile << "  \"frames\": {},\n";
+                            jsonFile << "  \"animations\": {}\n";
+                            jsonFile << "}\n";
+                        }
+                    }
+                }
+                catch (const fs::filesystem_error &e)
+                {
+                    std::cerr << "Failed to copy texture: " << e.what() << std::endl;
+                }
+            }
+
+            ImGuiFileDialog::Instance()->Close();
+        }
+
+        ImGui::Separator();
+    }
     auto contents = getDirectoryContents(selectedFolderPath);
 
     for (const auto &item : contents)
@@ -223,9 +369,36 @@ void AssetsPanel::drawContentPanel()
         else if (item.extension == ".yaml" || item.extension == ".yml")
         {
             std::string label = std::string(getIconForItem(item)) + "  " + item.nameWithoutExtention;
-            if (ImGui::Selectable(label.c_str(), m_ctx.selectedScenePath == currentContentFullPath))
+
+            // Scene assets live under assets/scenes; clicking selects a scene.
+            if (m_ctx.selectedAssetChildFolderPath == "scenes")
             {
-                m_ctx.selectedScenePath = currentContentFullPath;
+                if (ImGui::Selectable(label.c_str(), m_ctx.selectedScenePath == currentContentFullPath))
+                {
+                    m_ctx.selectedScenePath = currentContentFullPath;
+                }
+            }
+            // Model assets live under assets/models; they are serialized GameObjects
+            // and can be dragged into the scene viewport to instantiate.
+            else if (m_ctx.selectedAssetChildFolderPath == "models")
+            {
+                ImGui::Selectable(label.c_str(), false);
+
+                // Drag & drop source for models
+                if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+                {
+                    ModelPayload payload{};
+                    strncpy(payload.filePath, currentContentFullPath.c_str(), sizeof(payload.filePath) - 1);
+
+                    ImGui::SetDragDropPayload("MODEL", &payload, sizeof(ModelPayload));
+                    ImGui::Text("Dragging model %s", currentContentFullPath.c_str());
+                    ImGui::EndDragDropSource();
+                }
+            }
+            else
+            {
+                // Other YAML assets: just list them for now.
+                ImGui::Selectable(label.c_str(), false);
             }
         }
         else if (item.extension == ".ttf")

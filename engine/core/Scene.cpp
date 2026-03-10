@@ -185,6 +185,24 @@ GameObject &Scene::addGameObject(unsigned int width, unsigned int height, std::s
     return m_gameObjects.back();
 }
 
+GameObject &Scene::addGameObjectFromModel(const std::string &modelPath)
+{
+    YAML::Node root;
+    try
+    {
+        root = YAML::LoadFile(modelPath);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Failed to load model file: " << modelPath << " error: " << e.what() << std::endl;
+        throw e;
+    }
+
+    GameObject gameObj{m_registry, root, m_physicsWorld};
+    m_gameObjects.push_back(std::move(gameObj));
+    return m_gameObjects.back();
+}
+
 void Scene::removeGameObject(entt::entity gameObject)
 {
     auto it = std::find_if(m_gameObjects.begin(),
