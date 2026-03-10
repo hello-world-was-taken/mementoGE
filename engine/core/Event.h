@@ -28,6 +28,7 @@ enum class KeyType
     A,
     S,
     D,
+    M,
     Z,
     Y,
     Cmd,

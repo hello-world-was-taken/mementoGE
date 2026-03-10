@@ -101,7 +101,6 @@ void EditorLayer::drawEditorUI()
     m_scenePanel.draw();
     m_sceneHierarchyPanel.draw();
     m_propertiesPanel.draw();
-    // m_texturePanel.draw();
     m_assetsPanel.draw();
     m_spriteSheetEditorPanel.draw();
 
@@ -291,6 +290,7 @@ void EditorLayer::renderEditorProperties()
                 {KeyType::A, "A"},
                 {KeyType::S, "S"},
                 {KeyType::D, "D"},
+                {KeyType::M, "M"},
                 {KeyType::Space, "Space"},
                 {KeyType::Z, "Z"},
                 {KeyType::Y, "Y"},
@@ -394,6 +394,34 @@ void EditorLayer::handleEditorShortcuts()
             }
         }
     }
+
+    // Keyboard shortcuts for editor interaction modes (hold-based)
+    // - Hold Space  : Gliding (pan camera)
+    // - Hold M      : MoveObjects (drag selected objects)
+    // - Hold S      : Selection mode
+    // These work in addition to the toolbar buttons and temporarily
+    // override the interaction mode while the key is held.
+
+    bool spaceHeld = eventHandler->isKeyPressed(KeyType::Space);
+    bool mHeld = eventHandler->isKeyPressed(KeyType::M);
+    bool sHeld = eventHandler->isKeyPressed(KeyType::S);
+
+    EditorInteractionMode newMode = m_ctx.baseInteractionMode;
+
+    if (spaceHeld)
+    {
+        newMode = EditorInteractionMode::Gliding;
+    }
+    else if (mHeld)
+    {
+        newMode = EditorInteractionMode::MoveObjects;
+    }
+    else if (sHeld)
+    {
+        newMode = EditorInteractionMode::Selection;
+    }
+
+    m_ctx.interactionMode = newMode;
 }
 
 // TODO: do we need this now?

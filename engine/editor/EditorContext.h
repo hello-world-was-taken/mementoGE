@@ -49,7 +49,11 @@ struct EditorContext
     std::string selectedAssetChildFolderPath;
     std::string selectedFontPath;
 
+    // Base interaction mode selected via the UI (toolbar).
+    // Keyboard shortcuts can temporarily override interactionMode
+    // but should not change baseInteractionMode.
     EditorInteractionMode interactionMode = EditorInteractionMode::None;
+    EditorInteractionMode baseInteractionMode = EditorInteractionMode::None;
     std::vector<std::reference_wrapper<GameObject>> selectedObjects;
     std::vector<glm::vec2> selectedGameObjectsDragOffset;
 

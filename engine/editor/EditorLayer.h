@@ -12,7 +12,6 @@
 #include "editor/SceneHierarchyPanel.h"
 #include "editor/ScenePanel.h"
 #include "editor/SpriteSheetEditorPanel.h"
-#include "editor/TexturePanel.h"
 
 #include "renderer/GridRenderer.h"
 #include "renderer/PhysicsRenderer.h"
@@ -56,8 +55,7 @@ private:
 
     ScenePanel m_scenePanel{m_ctx};
     SceneHierarchyPanel m_sceneHierarchyPanel{m_ctx};
-    TexturePanel m_texturePanel{m_ctx};
-    PropertiesPanel m_propertiesPanel{m_ctx, m_texturePanel};
+    PropertiesPanel m_propertiesPanel{m_ctx};
     AssetsPanel m_assetsPanel{m_ctx};
     SpriteSheetEditorPanel m_spriteSheetEditorPanel{m_ctx};
 

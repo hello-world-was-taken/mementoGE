@@ -2,21 +2,19 @@
 
 #include "editor/EditorContext.h"
 #include "editor/EditorPanel.h"
-#include "editor/TexturePanel.h"
 
 #include <type_traits>
 
 class PropertiesPanel : public EditorPanel
 {
 public:
-    PropertiesPanel(EditorContext &ctx, TexturePanel &texturePanel);
+    PropertiesPanel(EditorContext &ctx);
     ~PropertiesPanel();
 
     void draw() override;
 
 private:
     EditorContext &m_ctx;
-    TexturePanel &m_texturePanel;
 
 private:
     void renderPropertiesPanel();

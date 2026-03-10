@@ -97,11 +97,15 @@ void ScenePanel::renderMovementMode()
         {
             if (m_ctx.interactionMode == mode)
             {
-                m_ctx.interactionMode = EditorInteractionMode::None; // Deselect
+                // Deselect back to no explicit interaction mode
+                m_ctx.interactionMode = EditorInteractionMode::None;
+                m_ctx.baseInteractionMode = EditorInteractionMode::None;
             }
             else
             {
-                m_ctx.interactionMode = mode; // Select
+                // Update both the base (persistent) mode and the current mode
+                m_ctx.baseInteractionMode = mode;
+                m_ctx.interactionMode = mode;
             }
         }
 
@@ -184,14 +188,21 @@ void ScenePanel::handleViewportDropTarget()
 {
     if (ImGui::BeginDragDropTarget())
     {
-
-        const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("SPRITE");
-        if (payload != nullptr)
+        if (const ImGuiPayload *spritePayload = ImGui::AcceptDragDropPayload("SPRITE"))
         {
             m_ctx.performSceneEdit(
                 [&]()
                 {
-                    createSpriteFromPayload(payload);
+                    createSpriteFromPayload(spritePayload);
+                });
+        }
+
+        if (const ImGuiPayload *modelPayload = ImGui::AcceptDragDropPayload("MODEL"))
+        {
+            m_ctx.performSceneEdit(
+                [&]()
+                {
+                    createModelFromPayload(modelPayload);
                 });
         }
 
@@ -211,6 +222,19 @@ void ScenePanel::createSpriteFromPayload(const ImGuiPayload *payload)
     GameObject &newObj = m_ctx.getActiveScene().addGameObject(32 * aspectRatio, 32, "_new");
     newObj.addComponent<Sprite>(
         spritePayload.topLeft, spritePayload.width, spritePayload.height, spritePayload.texture);
+    newObj.getComponent<Transform>().position = {worldPos.x, worldPos.y, 0.0f};
+}
+
+void ScenePanel::createModelFromPayload(const ImGuiPayload *payload)
+{
+    IM_ASSERT(payload->DataSize == sizeof(ModelPayload));
+    ModelPayload modelPayload = *(ModelPayload *)payload->Data;
+
+    MouseListener *mouse = MouseListener::instance();
+    glm::vec2 worldPos = m_ctx.getWorldCoordinate(mouse->getMouseScreenPosition());
+
+    Scene &scene = m_ctx.getActiveScene();
+    GameObject &newObj = scene.addGameObjectFromModel(modelPayload.filePath);
     newObj.getComponent<Transform>().position = {worldPos.x, worldPos.y, 0.0f};
 }
 
