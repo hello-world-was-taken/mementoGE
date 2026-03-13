@@ -1,8 +1,8 @@
 #include "core/components/BoxCollider2D.h"
+#include "core/components/EntityInfo.h"
 #include "core/components/RigidBody2D.h"
 #include "core/components/Sensor2D.h"
 #include "core/components/Transform.h"
-#include "core/components/EntityInfo.h"
 
 #include "physics/Physics2D.h"
 
@@ -60,7 +60,13 @@ void Physics2D::simulate(float timestep, entt::registry &registry)
     {
 
         auto &rb = registry.get<RigidBody2D>(entity);
-        b2Body_SetLinearVelocity(rb.bodyId, {rb.velocity.x, rb.velocity.y});
+        // Only push velocities to valid Box2D bodies. A bodyId can become
+        // invalid if the underlying body was destroyed (for example, when
+        // a game object with a RigidBody2D is removed from the world).
+        if (b2Body_IsValid(rb.bodyId))
+        {
+            b2Body_SetLinearVelocity(rb.bodyId, {rb.velocity.x, rb.velocity.y});
+        }
     }
 
     b2World_Step(m_worldId, Time::deltaTime(), 4);
@@ -73,6 +79,34 @@ void Physics2D::simulate(float timestep, entt::registry &registry)
 void Physics2D::setGravity(glm::vec2 gravity)
 {
     b2World_SetGravity(m_worldId, b2Vec2{gravity.x, gravity.y});
+}
+
+void Physics2D::removeRigidbody(entt::entity entity, entt::registry &registry)
+{
+    if (!registry.valid(entity))
+    {
+        return;
+    }
+
+    if (registry.any_of<RigidBody2D>(entity))
+    {
+        auto &rb = registry.get<RigidBody2D>(entity);
+
+        if (b2Body_IsValid(rb.bodyId))
+        {
+            b2DestroyBody(rb.bodyId);
+        }
+
+        rb.bodyId = b2_nullBodyId;
+    }
+
+    // Clear sensor overlap for this entity so no stale references remain.
+    auto sensorsView = registry.view<Sensor2D>();
+    for (entt::entity sensorEntity : sensorsView)
+    {
+        auto &list = sensorsView.get<Sensor2D>(sensorEntity).overlappingObjects;
+        list.erase(std::remove(list.begin(), list.end(), entity), list.end());
+    }
 }
 
 void Physics2D::registerRigidBody2D(GameObject &obj)
@@ -233,7 +267,6 @@ void Physics2D::processContactEvents(entt::registry &registry)
         {
             auto &list = registry.get<Sensor2D>(visitorEntity).overlappingObjects;
             list.erase(std::remove(list.begin(), list.end(), sensorEntity), list.end());
-
         }
     }
 }

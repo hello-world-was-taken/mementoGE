@@ -1,3 +1,4 @@
+#include "core/components/AudioSource.h"
 #include "core/components/BoxCollider2D.h"
 #include "core/components/EnemyState.h"
 #include "core/components/EntityInfo.h"
@@ -8,10 +9,10 @@
 #include "core/components/Sprite.h"
 #include "core/components/Text.h"
 #include "core/components/Transform.h"
-#include "core/components/AudioSource.h"
 
 #include "core/components/Animator.h"
 
+#include "core/ComponentRegistry.h"
 #include "core/GameObject.h"
 #include "core/Scene.h"
 
@@ -85,6 +86,35 @@ void SceneHierarchyPanel::drawGameObjectNode(GameObject &go)
         drawComponentRemoveRow<Patrol>(go, "Patrol");
         drawComponentRemoveRow<Text>(go, "Text");
         drawComponentRemoveRow<ParticleEmitter>(go, "Particle Emitter");
+
+        // Let game code provide remove-rows for its own components via
+        // the global component registry.
+        const auto &extraEntries = ComponentRegistry::instance().getEntries();
+        for (const auto &entry : extraEntries)
+        {
+            if (!entry.removeComponent)
+            {
+                continue;
+            }
+
+            bool removeComponent = false;
+
+            ImGui::PushID(entry.name.c_str());
+            ImGui::Text(ICON_FA_SUPERPOWERS "%s", entry.name.c_str());
+
+            ImGui::SameLine(ImGui::GetContentRegionAvail().x - 20);
+            if (ImGui::SmallButton("X"))
+            {
+                removeComponent = true;
+            }
+
+            if (removeComponent)
+            {
+                entry.removeComponent(go);
+            }
+
+            ImGui::PopID();
+        }
 
         ImGui::Unindent();
 

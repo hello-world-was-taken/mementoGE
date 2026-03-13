@@ -1,15 +1,15 @@
 #include "core/SceneManager.h"
-#include "core/components/Sprite.h"
-#include "core/SpriteSheet.h"
-#include "core/GameObject.h"
 #include "core/Camera.h"
+#include "core/GameObject.h"
+#include "core/SpriteSheet.h"
+#include "core/components/Sprite.h"
 
 #include "util/PathUtils.h"
 
-#include <yaml-cpp/yaml.h>
 #include <filesystem>
 #include <fstream>
 #include <stdexcept>
+#include <yaml-cpp/yaml.h>
 
 SceneManager::SceneManager()
 {

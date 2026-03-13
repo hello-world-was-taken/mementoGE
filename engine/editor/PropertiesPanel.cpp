@@ -13,6 +13,7 @@
 #include "core/components/Transform.h"
 
 #include "core/AssetManager.h"
+#include "core/ComponentRegistry.h"
 #include "core/SpriteSheet.h"
 #include "core/components/Animator.h"
 
@@ -36,8 +37,7 @@ inline void SetFieldWidth(float w = 120.0f)
     ImGui::SetNextItemWidth(w);
 }
 
-PropertiesPanel::PropertiesPanel(EditorContext &ctx)
-    : EditorPanel{ctx}, m_ctx{ctx}
+PropertiesPanel::PropertiesPanel(EditorContext &ctx) : EditorPanel{ctx}, m_ctx{ctx}
 {
 }
 
@@ -114,6 +114,17 @@ void PropertiesPanel::renderPropertiesPanel()
     drawComponentInspector<PostProcessSettings>(go);
     drawComponentInspector<Animator>(go);
     drawComponentInspector<AudioSource>(go);
+
+    // Let game code draw inspectors for its own components via the
+    // global component registry.
+    const auto &extraEntries = ComponentRegistry::instance().getEntries();
+    for (const auto &entry : extraEntries)
+    {
+        if (entry.drawInspector)
+        {
+            entry.drawInspector(go);
+        }
+    }
     drawAddComponentCombo(go);
     drawExportModel(go);
 
@@ -245,6 +256,25 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                 });
         }
 
+        // Game-specific components registered via the component registry.
+        const auto &extraEntries = ComponentRegistry::instance().getEntries();
+        for (const auto &entry : extraEntries)
+        {
+            if (!entry.addComponent)
+            {
+                continue;
+            }
+
+            if (ImGui::Selectable(entry.name.c_str()))
+            {
+                m_ctx.performSceneEdit(
+                    [&]
+                    {
+                        entry.addComponent(go);
+                    });
+            }
+        }
+
         // TODO: this should only be selected for the camera
         if (ImGui::Selectable("Post Processing Settings"))
         {
@@ -308,6 +338,17 @@ void PropertiesPanel::drawExportModel(GameObject &go)
         go.serializeComponent<TextAnchor>(out);
         go.serializeComponent<ParticleEmitter>(out);
         go.serializeComponent<PostProcessSettings>(out);
+
+        // Let game code extend model export with its own components
+        // via the same registry used for scene serialization.
+        const auto &extraEntries = ComponentRegistry::instance().getEntries();
+        for (const auto &entry : extraEntries)
+        {
+            if (entry.serialize)
+            {
+                entry.serialize(go, out);
+            }
+        }
         out << YAML::EndMap;
 
         EntityInfo &info = go.getComponent<EntityInfo>();

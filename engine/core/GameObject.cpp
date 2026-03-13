@@ -13,6 +13,7 @@
 #include "core/components/TextAnchor.h"
 #include "core/components/Transform.h"
 
+#include "core/ComponentRegistry.h"
 #include "core/GameObject.h"
 #include "core/components/Animator.h"
 
@@ -55,6 +56,16 @@ GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGam
     deserializeComponent<TextAnchor>(serializedGameObject, "TextAnchor");
     deserializeComponent<ParticleEmitter>(serializedGameObject, "ParticleEmitter");
     deserializeComponent<PostProcessSettings>(serializedGameObject, "PostProcessSettings");
+
+    // Let game code plug in additional component deserialization.
+    const auto &extraEntries = ComponentRegistry::instance().getEntries();
+    for (const auto &entry : extraEntries)
+    {
+        if (entry.deserialize)
+        {
+            entry.deserialize(*this, serializedGameObject);
+        }
+    }
 }
 
 std::array<glm::vec3, 4> GameObject::getQuad() const
@@ -127,6 +138,16 @@ bool GameObject::serialize(YAML::Emitter &out)
     serializeComponent<TextAnchor>(out);
     serializeComponent<ParticleEmitter>(out);
     serializeComponent<PostProcessSettings>(out);
+
+    // Let game code plug in additional component serialization.
+    const auto &extraEntries = ComponentRegistry::instance().getEntries();
+    for (const auto &entry : extraEntries)
+    {
+        if (entry.serialize)
+        {
+            entry.serialize(*this, out);
+        }
+    }
 
     out << YAML::EndMap;
 

@@ -292,6 +292,7 @@ void EditorLayer::renderEditorProperties()
                 {KeyType::D, "D"},
                 {KeyType::M, "M"},
                 {KeyType::Space, "Space"},
+                {KeyType::Enter, "Enter"},
                 {KeyType::Z, "Z"},
                 {KeyType::Y, "Y"},
                 {KeyType::LeftArrow, "Left Arrow"},

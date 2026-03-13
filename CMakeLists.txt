@@ -90,6 +90,7 @@ add_library(${PROJECT_NAME} STATIC
     engine/lib/imgui/imgui.cpp
 
     engine/lib/imgui/imgui_draw.cpp
+    engine/core/ComponentRegistry.cpp
     engine/lib/imgui/imgui_widgets.cpp
     engine/lib/imgui/imgui_tables.cpp
     engine/lib/imgui/backends/imgui_impl_glfw.cpp

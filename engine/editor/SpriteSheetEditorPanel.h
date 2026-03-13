@@ -24,6 +24,12 @@ private:
     void generateBoundingBoxes();
     void generateSpritesJson(bool onlyEnabled);
 
+    enum class BackgroundDetectionMode
+    {
+        Transparent, // treat alpha==0 as background
+        FirstPixel   // treat the first pixel's RGB as background color
+    };
+
     struct Box
     {
         glm::vec2 min; // in texture pixel space
@@ -36,6 +42,8 @@ private:
 
     std::vector<Box> m_boxes;
     bool m_boxesGenerated = false;
+
+    BackgroundDetectionMode m_backgroundMode = BackgroundDetectionMode::Transparent;
 
     int m_selectedIndex = -1;
 

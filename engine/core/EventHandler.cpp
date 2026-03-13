@@ -48,12 +48,14 @@ void EventHandler::glfwKeyCallBack(GLFWwindow *window, int key, int scancode, in
     updateKey(GLFW_KEY_DOWN, KeyType::DownArrow, "DownArrowKey");
     updateKey(GLFW_KEY_ESCAPE, KeyType::Escape, "EscapeKey");
 
-    // WASD and Space
+    // WASD, Space, Enter
     updateKey(GLFW_KEY_W, KeyType::W, "WKey");
     updateKey(GLFW_KEY_A, KeyType::A, "AKey");
     updateKey(GLFW_KEY_S, KeyType::S, "SKey");
     updateKey(GLFW_KEY_D, KeyType::D, "DKey");
     updateKey(GLFW_KEY_SPACE, KeyType::Space, "SpaceKey");
+
+    updateKey(GLFW_KEY_ENTER, KeyType::Enter, "EnterKey");
 
     updateKey(GLFW_KEY_M, KeyType::M, "MKey");
 

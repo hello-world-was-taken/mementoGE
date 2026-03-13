@@ -106,11 +106,34 @@ void SpriteSheetEditorPanel::generateBoundingBoxes()
         return x >= 0 && y >= 0 && x < width && y < height;
     };
 
-    auto isOpaque = [&](int x, int y)
+    // Determine background color when using the FirstPixel mode.
+    bool useFirstPixelMode = (m_backgroundMode == BackgroundDetectionMode::FirstPixel);
+    unsigned char firstR = 0;
+    unsigned char firstG = 0;
+    unsigned char firstB = 0;
+    if (useFirstPixelMode)
+    {
+        const unsigned char *firstPx = data; // pixel at (0, 0)
+        firstR = firstPx[0];
+        firstG = firstPx[1];
+        firstB = firstPx[2];
+    }
+
+    // Decide whether a pixel belongs to foreground (sprite) or
+    // background based on the current background detection mode.
+    auto isForeground = [&](int x, int y)
     {
         int i = idx(x, y);
         const unsigned char *px = data + i * 4; // RGBA
-        return px[3] > 0;                       // any non-zero alpha
+
+        if (useFirstPixelMode)
+        {
+            bool isBg = (px[0] == firstR && px[1] == firstG && px[2] == firstB);
+            return !isBg;
+        }
+
+        // Transparent mode: anything with non-zero alpha is part of a sprite.
+        return px[3] > 0;
     };
 
     // Flood fill from a starting opaque pixel to collect a 4-connected
@@ -144,7 +167,7 @@ void SpriteSheetEditorPanel::generateBoundingBoxes()
                 }
 
                 int vi = idx(nx, ny);
-                if (visited[vi] || !isOpaque(nx, ny))
+                if (visited[vi] || !isForeground(nx, ny))
                 {
                     visited[vi] = visited[vi] ? 1 : visited[vi];
                     continue;
@@ -161,7 +184,7 @@ void SpriteSheetEditorPanel::generateBoundingBoxes()
         for (int x = 0; x < width; ++x)
         {
             int i = idx(x, y);
-            if (visited[i] || !isOpaque(x, y))
+            if (visited[i] || !isForeground(x, y))
             {
                 visited[i] = 1;
                 continue;
@@ -204,9 +227,9 @@ void SpriteSheetEditorPanel::generateSpritesJson(bool onlyEnabled)
         return;
     }
 
-    // Derive output path from texture name, e.g. <name>_generated.json
+    // Derive output path from texture name, e.g. <name>.json
     auto texturePath = getGameAssetsPath("texture") / m_textureNames[m_selectedTexture];
-    std::filesystem::path outputPath = texturePath.parent_path() / (texturePath.stem().string() + "_generated.json");
+    std::filesystem::path outputPath = texturePath.parent_path() / (texturePath.stem().string() + ".json");
 
     nlohmann::json root;
     root["meta"]["texture"] = texturePath.filename().string();
@@ -325,6 +348,32 @@ void SpriteSheetEditorPanel::draw()
         return;
     }
 
+    // Background detection mode: Transparent (alpha) or First Pixel color
+    ImGui::TextUnformatted("Background Mode:");
+    ImGui::SameLine();
+    bool wasTransparent = (m_backgroundMode == BackgroundDetectionMode::Transparent);
+    bool transparent = wasTransparent;
+    if (ImGui::RadioButton("Transparent", transparent))
+    {
+        if (!wasTransparent)
+        {
+            m_backgroundMode = BackgroundDetectionMode::Transparent;
+            m_boxes.clear();
+            m_boxesGenerated = false;
+        }
+    }
+    ImGui::SameLine();
+    bool wasFirstPixel = (m_backgroundMode == BackgroundDetectionMode::FirstPixel);
+    bool firstPixel = wasFirstPixel;
+    if (ImGui::RadioButton("First Pixel", firstPixel))
+    {
+        if (!wasFirstPixel)
+        {
+            m_backgroundMode = BackgroundDetectionMode::FirstPixel;
+            m_boxes.clear();
+            m_boxesGenerated = false;
+        }
+    }
 
     // Fit image within available content region while preserving aspect ratio
     ImVec2 avail = ImGui::GetContentRegionAvail();

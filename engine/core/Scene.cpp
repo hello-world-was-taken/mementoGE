@@ -106,6 +106,9 @@ void Scene::update()
         m_physicsWorld.simulate(Time::deltaTime(), m_registry);
 
         animate();
+
+        // Keep the GameObject list in sync with the registry in runtime.
+        cleanupDestroyedGameObjects();
     }
     else
     {
@@ -120,6 +123,17 @@ void Scene::update()
             }
         }
     }
+}
+
+void Scene::cleanupDestroyedGameObjects()
+{
+    m_gameObjects.erase(std::remove_if(m_gameObjects.begin(),
+                            m_gameObjects.end(),
+                            [&](GameObject &go)
+                            {
+                                return !m_registry.valid(go.getEntityId());
+                            }),
+        m_gameObjects.end());
 }
 
 void Scene::play()
@@ -217,6 +231,10 @@ void Scene::removeGameObject(entt::entity gameObject)
         std::cout << "game object deleted" << std::endl;
         m_gameObjects.erase(it);
     }
+
+    // Ensure any physics body associated with this entity is also removed
+    // from the Box2D world before destroying the ECS entity.
+    m_physicsWorld.removeRigidbody(gameObject, m_registry);
     m_registry.destroy(gameObject);
 }
 

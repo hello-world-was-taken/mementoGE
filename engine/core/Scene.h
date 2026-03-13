@@ -62,6 +62,9 @@ public:
     Physics2D &getPhysics2d();
 
 private:
+    // Remove any GameObject wrappers whose underlying entt entity was destroyed.
+    void cleanupDestroyedGameObjects();
+
     bool m_play = false;
 
     std::string mTag;

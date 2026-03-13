@@ -30,7 +30,9 @@ public:
     void registerBoxCollider2D(GameObject &obj);
     void registerSensor2D(GameObject &obj);
 
-    void removeRigidbody(entt::entity entity);
+    // Remove the physics body (and associated sensor contacts) for an entity.
+    // The caller must pass the registry that owns the entity.
+    void removeRigidbody(entt::entity entity, entt::registry &registry);
 
     void setGravity(glm::vec2 gravity);
 
