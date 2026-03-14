@@ -1,5 +1,20 @@
 #include "editor/EditorContext.h"
 
+#include "core/ComponentRegistry.h"
+#include "core/components/Animator.h"
+#include "core/components/AudioSource.h"
+#include "core/components/EntityInfo.h"
+#include "core/components/ParticleEmitter.h"
+#include "core/components/Patrol.h"
+#include "core/components/PostProcessSettings.h"
+#include "core/components/RenderLayer.h"
+#include "core/components/RigidBody2D.h"
+#include "core/components/Sensor2D.h"
+#include "core/components/Sprite.h"
+#include "core/components/Text.h"
+#include "core/components/TextAnchor.h"
+#include "core/components/Transform.h"
+
 #include "util/PathUtils.h"
 
 #include <fstream>
@@ -11,7 +26,9 @@ glm::vec2 EditorContext::getWorldCoordinate(glm::vec2 mouseScreenCoords)
 
     // Make sure the mouse is inside the image
     if (localPos.x < 0 || localPos.y < 0 || localPos.x > scenePanelSize.x || localPos.y > scenePanelSize.y)
+    {
         return glm::vec2(-1.0f);
+    }
 
     return frameBufferToWorld(framebufferPos);
 }
@@ -170,6 +187,8 @@ void EditorContext::startRuntimeScene()
     // always insert/assign in playmode
     sceneByScenePathMap.insert_or_assign("runtime_scene", getActiveScene().clone("runtime_scene"));
     isPlaying = true;
+    selectedObjects.clear();
+    selectedGameObjectsDragOffset.clear();
     getActiveScene().play();
 }
 
@@ -183,6 +202,8 @@ void EditorContext::stopRuntimeScene()
 {
     sceneByScenePathMap.erase("runtime_scene");
     isPlaying = false;
+    selectedObjects.clear();
+    selectedGameObjectsDragOffset.clear();
 }
 
 // TODO: move this to editor layer
@@ -201,6 +222,8 @@ void EditorContext::deserializeSelectedScene()
 
     Scene scene{std::move(serializedScene)};
     sceneByScenePathMap.insert({selectedScenePath, std::move(scene)});
+    selectedObjects.clear();
+    selectedGameObjectsDragOffset.clear();
     std::cout << "Deserialized scene from scene.yaml" << std::endl;
 }
 
@@ -214,4 +237,84 @@ void EditorContext::serializaActiveScene()
     file << out.c_str();
 
     std::cout << "Serialized scene to: " << sceneName << ".yaml" << std::endl;
+}
+
+void EditorContext::copySelectedObjectsToClipboard()
+{
+    clipboardSerializedObjects.clear();
+
+    if (selectedObjects.empty())
+    {
+        return;
+    }
+
+    for (GameObject &go : selectedObjects)
+    {
+        YAML::Emitter out;
+        auto e = go.getComponent<EntityInfo>();
+        std::cout << "Tag: " << e.tag << std::endl;
+        // Serialize just the component map (no top-level tag), using the
+        // same pattern as PropertiesPanel::drawExportModel so that copy /
+        // paste and model export stay in sync. If this format changes,
+        // FIXME: update both places or extract a shared helper.
+        out << YAML::BeginMap;
+        go.serializeComponent<EntityInfo>(out);
+        go.serializeComponent<Transform>(out);
+        go.serializeComponent<RenderLayer>(out);
+        go.serializeComponent<Sprite>(out);
+        go.serializeComponent<RigidBody2D>(out);
+        go.serializeComponent<BoxCollider2D>(out);
+        go.serializeComponent<Sensor2D>(out);
+        go.serializeComponent<Animator>(out);
+        go.serializeComponent<AudioSource>(out);
+        go.serializeComponent<EnemyState>(out);
+        go.serializeComponent<Patrol>(out);
+        go.serializeComponent<Text>(out);
+        go.serializeComponent<TextAnchor>(out);
+        go.serializeComponent<ParticleEmitter>(out);
+        go.serializeComponent<PostProcessSettings>(out);
+
+        const auto &extraEntries = ComponentRegistry::instance().getEntries();
+        for (const auto &entry : extraEntries)
+        {
+            if (entry.serialize)
+            {
+                entry.serialize(go, out);
+            }
+        }
+        out << YAML::EndMap;
+        clipboardSerializedObjects.push_back(out.c_str());
+    }
+}
+
+void EditorContext::pasteClipboardObjects()
+{
+    if (clipboardSerializedObjects.empty())
+    {
+        return;
+    }
+
+    Scene &scene = getActiveScene();
+
+    // Offset pasted objects slightly so they don't overlap originals and it is
+    // visually obvious that a paste occurred.
+    const glm::vec2 pasteOffset{16.0f, 16.0f};
+
+    for (const std::string &yaml : clipboardSerializedObjects)
+    {
+        YAML::Node components = YAML::Load(yaml);
+        if (!components || components.size() == 0)
+        {
+            continue;
+        }
+
+        GameObject &newObj = scene.addGameObjectFromSerialized(components);
+
+        if (newObj.hasComponent<Transform>())
+        {
+            Transform &transform = newObj.getComponent<Transform>();
+            transform.position = {
+                transform.position.x + pasteOffset.x, transform.position.y + pasteOffset.y, transform.position.z};
+        }
+    }
 }

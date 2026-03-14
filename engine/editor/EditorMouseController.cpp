@@ -222,7 +222,6 @@ void EditorMouseController::handleDragging(
 
 void EditorMouseController::moveSelectedGameObjects(EditorContext &ctx, glm::vec2 mouseWorldPos)
 {
-    std::cout << "Moving object" << std::endl;
     if (ctx.selectedObjects.size() != ctx.selectedGameObjectsDragOffset.size())
     {
         std::cout << "moveSelectedGameObjects invalid state" << std::endl;
@@ -232,7 +231,7 @@ void EditorMouseController::moveSelectedGameObjects(EditorContext &ctx, glm::vec
 
     for (int i = 0; i < ctx.selectedObjects.size(); ++i)
     {
-        const auto &go = ctx.selectedObjects[i];
+        GameObject &go = ctx.selectedObjects[i];
         glm::vec2 dragOffset = ctx.selectedGameObjectsDragOffset[i];
 
         if (m_movementMode == MovementMode::SnapToGrid)
@@ -245,14 +244,14 @@ void EditorMouseController::moveSelectedGameObjects(EditorContext &ctx, glm::vec
             float snappedX = std::floor(mouseWorldPos.x / gridSize) * gridSize;
             float snappedY = std::floor(mouseWorldPos.y / gridSize) * gridSize;
 
-            Transform &transform = go.get().getComponent<Transform>();
+            Transform &transform = go.getComponent<Transform>();
             transform.position = {snappedX, snappedY, transform.position.z};
         }
         else if (m_movementMode == MovementMode::Free)
         {
             glm::vec2 newPos = mouseWorldPos + dragOffset;
 
-            Transform &transform = go.get().getComponent<Transform>();
+            Transform &transform = go.getComponent<Transform>();
             transform.position = {newPos.x, newPos.y, transform.position.z};
         }
     }

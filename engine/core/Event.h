@@ -29,6 +29,8 @@ enum class KeyType
     S,
     D,
     M,
+    C,
+    V,
     Enter,
     Z,
     Y,

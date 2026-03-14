@@ -54,8 +54,12 @@ struct EditorContext
     // but should not change baseInteractionMode.
     EditorInteractionMode interactionMode = EditorInteractionMode::None;
     EditorInteractionMode baseInteractionMode = EditorInteractionMode::None;
-    std::vector<std::reference_wrapper<GameObject>> selectedObjects;
+    // We clear this when the active scene changes.
+    std::vector<GameObject> selectedObjects;
     std::vector<glm::vec2> selectedGameObjectsDragOffset;
+
+    // Serialized copies of selected objects for in-editor copy/paste.
+    std::vector<std::string> clipboardSerializedObjects;
 
     std::unordered_map<std::string, Scene> sceneByScenePathMap;
     std::unordered_map<std::string, SceneHistory> sceneHistoryByScenePathMap;
@@ -103,6 +107,10 @@ struct EditorContext
 
     void deserializeSelectedScene();
     void serializaActiveScene();
+
+    // Copy/paste selected GameObjects within the active scene.
+    void copySelectedObjectsToClipboard();
+    void pasteClipboardObjects();
 
     template <typename Func> void performSceneEdit(Func &&editFunc);
 };

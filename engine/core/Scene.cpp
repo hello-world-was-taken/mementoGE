@@ -217,6 +217,15 @@ GameObject &Scene::addGameObjectFromModel(const std::string &modelPath)
     return m_gameObjects.back();
 }
 
+GameObject &Scene::addGameObjectFromSerialized(const YAML::Node &serializedGameObject)
+{
+    // FIXME: Keep this in sync with addGameObjectFromModel and
+    // GameObject::GameObject(entt::registry&, const YAML::Node&, Physics2D&).
+    GameObject gameObj{m_registry, serializedGameObject, m_physicsWorld};
+    m_gameObjects.push_back(std::move(gameObj));
+    return m_gameObjects.back();
+}
+
 void Scene::removeGameObject(entt::entity gameObject)
 {
     auto it = std::find_if(m_gameObjects.begin(),

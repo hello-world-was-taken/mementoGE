@@ -291,6 +291,8 @@ void EditorLayer::renderEditorProperties()
                 {KeyType::S, "S"},
                 {KeyType::D, "D"},
                 {KeyType::M, "M"},
+                {KeyType::C, "C"},
+                {KeyType::V, "V"},
                 {KeyType::Space, "Space"},
                 {KeyType::Enter, "Enter"},
                 {KeyType::Z, "Z"},
@@ -318,7 +320,7 @@ void EditorLayer::renderEditorProperties()
             {
                 for (size_t i = 0; i < m_ctx.selectedObjects.size(); i++)
                 {
-                    GameObject &obj = m_ctx.selectedObjects[i].get();
+                    GameObject &obj = m_ctx.selectedObjects[i];
                     EntityInfo &entityInfo = obj.getComponent<EntityInfo>();
                     ImGui::Text("[%zu] %s (ID: %u)", i, entityInfo.tag.c_str(), (unsigned int)obj.getEntityId());
                 }
@@ -392,6 +394,22 @@ void EditorLayer::handleEditorShortcuts()
                 m_ctx.serializaActiveScene();                // write to disk
                 m_ctx.getSelectedSceneHistory().markSaved(); // clear the "*" dirty flag
                 std::cout << "Scene saved.\n";
+            }
+
+            // Copy selected game objects (Cmd + C)
+            else if (e.type == EventType::Key && e.keyType == KeyType::C && e.cmd == true)
+            {
+                m_ctx.copySelectedObjectsToClipboard();
+            }
+
+            // Paste copied game objects (Cmd + V)
+            else if (e.type == EventType::Key && e.keyType == KeyType::V && e.cmd == true)
+            {
+                m_ctx.performSceneEdit(
+                    [&]
+                    {
+                        m_ctx.pasteClipboardObjects();
+                    });
             }
         }
     }

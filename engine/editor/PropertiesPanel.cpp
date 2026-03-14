@@ -96,7 +96,7 @@ void PropertiesPanel::renderPropertiesPanel()
         return;
     }
 
-    GameObject &go = m_ctx.selectedObjects.back().get();
+    GameObject &go = m_ctx.selectedObjects.back();
 
     // TODO: look into entt::meta
     drawComponentInspector<EntityInfo>(go);
