@@ -180,7 +180,10 @@ void EditorMouseController::handleDragging(
 {
     MouseListener *mouse = MouseListener::instance();
 
-    if (mouse->isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT))
+    bool leftHeld = mouse->isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT);
+    bool leftReleased = mouse->wasMouseButtonReleased(GLFW_MOUSE_BUTTON_LEFT);
+
+    if (leftHeld)
     {
         switch (ctx.interactionMode)
         {
@@ -192,21 +195,34 @@ void EditorMouseController::handleDragging(
             moveCamera(ctx);
             break;
 
-        // NOTE: fall-through
+        // Note fall-through
         case EditorInteractionMode::MoveObjects:
+        case EditorInteractionMode::None:
+            moveSelectedGameObjects(ctx, mouseWorldPos);
+            m_isDraggingObjects = true;
+            break;
         default:
-            ctx.performSceneEdit(
-                [&]
-                {
-                    moveSelectedGameObjects(ctx, mouseWorldPos);
-                });
             break;
         }
+    }
+
+    // Take a single snapshot when an object-move drag finishes
+    if (leftReleased)
+    {
+        if ((ctx.interactionMode == EditorInteractionMode::MoveObjects ||
+                ctx.interactionMode == EditorInteractionMode::None) &&
+            m_isDraggingObjects)
+        {
+            ctx.snapshotScene();
+        }
+
+        m_isDraggingObjects = false;
     }
 }
 
 void EditorMouseController::moveSelectedGameObjects(EditorContext &ctx, glm::vec2 mouseWorldPos)
 {
+    std::cout << "Moving object" << std::endl;
     if (ctx.selectedObjects.size() != ctx.selectedGameObjectsDragOffset.size())
     {
         std::cout << "moveSelectedGameObjects invalid state" << std::endl;

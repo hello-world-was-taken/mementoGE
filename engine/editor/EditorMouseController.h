@@ -45,4 +45,5 @@ private:
     void moveCamera(EditorContext &ctx);
 
     MovementMode m_movementMode = MovementMode::Free;
+    bool m_isDraggingObjects = false;
 };

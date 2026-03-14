@@ -95,10 +95,18 @@ bool MouseListener::isMouseButtonHeld(int button) const
 
 bool MouseListener::wasMouseButtonPressed(int button) const
 {
-    return m_buttonPressed.find(button) != m_buttonPressed.end();
+    // true if this button was pressed at least once this frame.
+    // We expect at most one click per frame; multiple clicks in a single frame
+    // are extremely unlikely and are treated the same as a single press.
+    auto it = m_buttonPressed.find(button);
+    return it != m_buttonPressed.end() && it->second;
 }
 
 bool MouseListener::wasMouseButtonReleased(int button) const
 {
-    return m_buttonReleased.find(button) != m_buttonReleased.end();
+    // true if this button was released at least once this frame.
+    // Like presses, we only care that a release occurred during the frame, not
+    // how many times.
+    auto it = m_buttonReleased.find(button);
+    return it != m_buttonReleased.end() && it->second;
 }
