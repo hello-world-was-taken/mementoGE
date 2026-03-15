@@ -4,7 +4,6 @@ Memento is a lightweight 2D game engine built using OpenGL, GLFW, and ImGui, aim
 
 [![alt text](https://github.com/user-attachments/assets/e96fea42-d824-45ef-8feb-418ed4bd11d8)](https://drive.google.com/file/d/1Xxlj8qKeTMeP6VCOT5qz2uikZ4h5nwnv/view?usp=sharing)
 
-
 ---
 
 ## Getting Started
@@ -12,7 +11,7 @@ Memento is a lightweight 2D game engine built using OpenGL, GLFW, and ImGui, aim
 ### Prerequisites
 
 - **OpenGL** core.
-- **GLEW** must be installed **locally** on your system. *(Will be removed as a requirement soon)*
+- **GLEW** must be installed **locally** on your system. _(Will be removed as a requirement soon)_
 - A C++17-compatible compiler (e.g., GCC 9+, Clang 10+, MSVC 2019+)
 
 ---
@@ -25,6 +24,7 @@ This project uses Git submodules. Clone it with:
 git clone --recurse-submodules https://github.com/hello-world-was-taken/mementoGE.git
 cd mementoGE
 ```
+
 If you forgot --recurse-submodules, you can fix it with:
 
 ```bash
@@ -32,27 +32,70 @@ git submodule update --init --recursive
 ```
 
 ### Building
+
 ```bash
 cd mementoGE
 ./build.sh
 ```
+
 You will need CMake 3.26.4+.
 
 ### Running
+
 After compiling, you can run the engine like so:
 
 ```bash
 ./run.sh
 ```
 
+---
+
+## Integrating MementoGE into a Game CMake Project
+
+When you embed MementoGE into a larger game project, the top-level CMakeLists (the _game_ CMake) is expected to provide a small set of configuration variables and options that the engine uses.
+
+### Required: asset directory
+
+Before adding the MementoGE subdirectory, define the game asset root as a CMake variable:
+
+```cmake
+# Path where your game's assets live (textures, audio, scenes, etc.).
+set(GAME_ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/game/assets/" CACHE INTERNAL "")
+```
+
+MementoGE's CMake will read this variable and define a preprocessor macro `GAME_ASSETS_DIR` for the `engine` target so that engine code can locate shared assets (fonts, default shaders, etc.).
+
+### Optional: editor vs. runtime builds
+
+The _game_ controls whether editor-only code (ImGui editor, panels, gizmos, etc.) is compiled by setting a CMake option and defining the `EDITOR_BUILD` macro accordingly:
+
+```cmake
+# At the top level (game CMakeLists.txt)
+option(EDITOR_BUILD "Build with editor tooling enabled" ON)
+
+add_subdirectory(path/to/mementoGE)
+
+add_executable(MyGame
+    # your game sources here
+)
+
+target_link_libraries(MyGame PRIVATE engine)
+
+if(EDITOR_BUILD)
+    target_compile_definitions(MyGame PUBLIC EDITOR_BUILD)
+endif()
+```
+
+Inside MementoGE, the engine's CMake checks the same `EDITOR_BUILD` option and, when it is ON, defines `EDITOR_BUILD` for the `engine` target as well. This keeps the game and engine in sync: turning editor support on or off at the game level automatically enables or disables editor-only code inside the engine.
+
 ## Controls
 
-| Action           | Input                            |
-|------------------|----------------------------------|
-| Pan camera       | Left mouse drag                  |
-| Zoom in/out      | Scroll wheel / Touchpad pinch    |
-| Select object    | Left click on object             |
-| Move object      | Drag selected object (snaps to grid) |
+| Action        | Input                                |
+| ------------- | ------------------------------------ |
+| Pan camera    | Left mouse drag                      |
+| Zoom in/out   | Scroll wheel / Touchpad pinch        |
+| Select object | Left click on object                 |
+| Move object   | Drag selected object (snaps to grid) |
 
 ## Remaining Features / TODO
 
@@ -72,6 +115,7 @@ After compiling, you can run the engine like so:
 - [x] Proper logging system
 
 ## Development Notes
+
 ### Animation Support
 
 The engine now supports basic 2D sprite animations via JSON-defined animation maps. Each animation map JSON file defines the texture, sprite layout, and animations.
@@ -89,7 +133,7 @@ The engine now supports basic 2D sprite animations via JSON-defined animation ma
     "sprite-1-5": { "x": 60, "y": 0, "rotation": 0, "w": 11, "h": 6 },
     "sprite-1-6": { "x": 71, "y": 0, "rotation": 0, "w": 5, "h": 7 },
     "sprite-1-7": { "x": 76, "y": 0, "rotation": 0, "w": 18, "h": 7 },
-    "sprite-1-8": { "x": 94, "y": 0, "rotation": 0, "w": 5, "h": 7 },
+    "sprite-1-8": { "x": 94, "y": 0, "rotation": 0, "w": 5, "h": 7 }
   },
   "animations": {
     "idle": {
@@ -106,7 +150,6 @@ The engine now supports basic 2D sprite animations via JSON-defined animation ma
     }
   }
 }
-
 ```
 
 #### JSON Fields
@@ -126,6 +169,6 @@ The engine now supports basic 2D sprite animations via JSON-defined animation ma
 
 Currently, each sprite’s JSON **must include an animation named `idle`**, as this is used as the default animation when an Animator component is added to a GameObject.
 
-
 ### Contributing
+
 Feel free to fork and contribute via pull requests! Bug fixes, improvements, and new features are all welcome.

@@ -6,7 +6,6 @@
 #include "core/components/CircleCollider2D.h"
 #include "core/components/RigidBody2D.h"
 
-#include "core/Camera.h"
 #include "core/EventHandler.h"
 #include "core/ImGuiWrapper.h"
 #include "core/MovementMode.h"
@@ -28,7 +27,6 @@
 namespace fs = std::filesystem;
 
 EditorLayer::EditorLayer()
-    : m_gridRenderer{static_cast<int>(LOGICAL_WIDTH), static_cast<int>(LOGICAL_HEIGHT), 32, m_ctx.editorCamera}
 {
     m_window.setupCallBack();
     ImGuiWrapper::setupImgui(m_ctx.window);
@@ -215,7 +213,8 @@ void EditorLayer::renderGrid()
         return;
     }
 
-    m_gridRenderer.render(m_ctx.editorCamera);
+    constexpr int GRID_TILE_SIZE = 16;
+    m_gridRenderer.render(m_ctx.editorCamera, GRID_TILE_SIZE);
 }
 
 // TODO: move to separate panel
@@ -239,13 +238,17 @@ void EditorLayer::renderEditorProperties()
         [&]
         {
             ImGui::Text("Viewport Size: %.1f x %.1f", m_ctx.viewportWidth, m_ctx.viewportHeight);
+
             ImGui::Text("Scene Panel Pos: (%.1f, %.1f)", m_ctx.scenePanelTopLeftPos.x, m_ctx.scenePanelTopLeftPos.y);
+
             ImGui::Text("Scene Panel Size: (%.1f, %.1f)", m_ctx.scenePanelSize.x, m_ctx.scenePanelSize.y);
+
             ImGui::Checkbox("Draw Grid", &m_ctx.drawGrid);
-            bool snap = (m_movementMode == MovementMode::SnapToGrid);
+
+            bool snap = (m_ctx.movementMode == MovementMode::SnapToGrid);
             if (ImGui::Checkbox("Snap to Grid", &snap))
             {
-                m_movementMode = snap ? MovementMode::SnapToGrid : MovementMode::Free;
+                m_ctx.movementMode = snap ? MovementMode::SnapToGrid : MovementMode::Free;
                 m_drawGrid = snap;
             }
         });

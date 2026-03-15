@@ -77,6 +77,7 @@ add_library(${PROJECT_NAME} STATIC
     engine/renderer/GridRenderer.cpp
     engine/renderer/PhysicsRenderer.cpp
     engine/renderer/SelectionRenderer.cpp
+    engine/renderer/CameraBoundsRenderer.cpp
 
     # physics
     engine/physics/Physics2D.cpp
@@ -115,8 +116,9 @@ target_link_libraries(${PROJECT_NAME}
     PRIVATE opengl
 )
 
-# comment out for release builds
-target_compile_definitions(${PROJECT_NAME} PRIVATE EDITOR_BUILD)
+if(EDITOR_BUILD)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE EDITOR_BUILD)
+endif()
 
 # memento assets dir contains fonts, default shaders and so on
 set(MEMENTO_ASSET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets/")

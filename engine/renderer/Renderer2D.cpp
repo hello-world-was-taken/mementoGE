@@ -60,10 +60,12 @@ void Renderer2D::renderLayers(const CameraOld &camera, const std::vector<GameObj
         glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // if (hasRendererTypeEnabled(RendererType::Grid))
-        // {
-        //     m_gridRenderer.render(camera);
-        // }
+        if (hasRendererTypeEnabled(RendererType::Grid))
+        {
+            // Keep grid tile size in sync with EditorMouseController.cpp.
+            constexpr int GRID_TILE_SIZE = 16;
+            m_gridRenderer.render(camera, GRID_TILE_SIZE);
+        }
 
         if (hasRendererTypeEnabled(RendererType::Physics))
         {
@@ -72,7 +74,10 @@ void Renderer2D::renderLayers(const CameraOld &camera, const std::vector<GameObj
 
         if (hasRendererTypeEnabled(RendererType::Selection))
         {
+            // Selection outlines and camera view bounds are both
+            // editor-only overlays, grouped under the Selection flag.
             m_selectionRenderer.render(camera, objects);
+            m_cameraBoundsRenderer.render(camera, objects);
         }
 
         if (hasRendererTypeEnabled(RendererType::Sprite))

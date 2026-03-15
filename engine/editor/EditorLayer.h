@@ -1,8 +1,6 @@
 #pragma once
 
-#include "core/Camera.h"
 #include "core/EventHandler.h"
-#include "core/MovementMode.h"
 #include "core/Scene.h"
 #include "core/Window.h"
 
@@ -59,7 +57,6 @@ private:
     AssetsPanel m_assetsPanel{m_ctx};
     SpriteSheetEditorPanel m_spriteSheetEditorPanel{m_ctx};
 
-    MovementMode m_movementMode = MovementMode::Free;
     bool m_drawGrid = false;
 
     GridRenderer m_gridRenderer;

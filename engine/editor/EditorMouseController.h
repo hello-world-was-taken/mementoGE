@@ -17,8 +17,6 @@ class EditorMouseController
 public:
     EditorMouseController();
 
-    void setMovementMode(MovementMode mode);
-
     void update(EditorContext &ctx);
     std::optional<std::reference_wrapper<GameObject>> getGameObjectAt(Scene &scene, glm::vec2 mouseWorldPos);
 
@@ -44,6 +42,5 @@ private:
     void moveSelectedGameObjects(EditorContext &ctx, glm::vec2 mouseWorldPos);
     void moveCamera(EditorContext &ctx);
 
-    MovementMode m_movementMode = MovementMode::Free;
     bool m_isDraggingObjects = false;
 };

@@ -1,27 +1,28 @@
 #pragma once
 
-#include <vector>
 #include <glm/glm.hpp>
 #include <memory>
+#include <vector>
 
 #include "core/Camera.h"
-#include "opengl/Vertex.h"
 #include "opengl/Shader.h"
+#include "opengl/Vertex.h"
 #include "opengl/VertexArray.h"
 #include "opengl/VertexBuffer.h"
 
 class GridRenderer
 {
 public:
-    GridRenderer(int width, int height, int tileSize, const CameraOld &camera);
+    GridRenderer();
     ~GridRenderer();
 
-    void render(const CameraOld &camera);
+    // Render grid lines using the given camera and tile size.
+    // Tile size should be kept in sync with editor snap settings.
+    void render(const CameraOld &camera, int tileSize);
 
 private:
-    void generateGridLines(const CameraOld &camera);
+    void generateGridLines(const CameraOld &camera, int tileSize);
 
-    int m_width, m_height, m_tileSize;
     std::vector<Vertex> m_vertices;
 
     std::unique_ptr<VertexArray> m_vao;

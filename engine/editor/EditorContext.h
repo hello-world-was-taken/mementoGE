@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/Camera.h"
+#include "core/MovementMode.h"
 #include "core/Scene.h"
 #include "core/Window.h"
 
@@ -54,6 +55,8 @@ struct EditorContext
     // but should not change baseInteractionMode.
     EditorInteractionMode interactionMode = EditorInteractionMode::None;
     EditorInteractionMode baseInteractionMode = EditorInteractionMode::None;
+
+    MovementMode movementMode = MovementMode::Free;
     // We clear this when the active scene changes.
     std::vector<GameObject> selectedObjects;
     std::vector<glm::vec2> selectedGameObjectsDragOffset;

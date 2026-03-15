@@ -17,14 +17,7 @@
 #include <imgui.h>
 #include <iostream>
 
-EditorMouseController::EditorMouseController()
-{
-}
-
-void EditorMouseController::setMovementMode(MovementMode mode)
-{
-    m_movementMode = mode;
-}
+EditorMouseController::EditorMouseController() = default;
 
 void EditorMouseController::update(EditorContext &ctx)
 {
@@ -234,20 +227,21 @@ void EditorMouseController::moveSelectedGameObjects(EditorContext &ctx, glm::vec
         GameObject &go = ctx.selectedObjects[i];
         glm::vec2 dragOffset = ctx.selectedGameObjectsDragOffset[i];
 
-        if (m_movementMode == MovementMode::SnapToGrid)
+        if (ctx.movementMode == MovementMode::SnapToGrid)
         {
             // TODO: for now this would work as a way to snap objects for alignment purposes
             // but we can also use it for grid based tiles
-            float gridSize = static_cast<float>(5);
+            float gridSize = static_cast<float>(16);
+            float halfGrid = gridSize * 0.5f;
 
-            // This should be kept in sync with GridRenderer.cpp
-            float snappedX = std::floor(mouseWorldPos.x / gridSize) * gridSize;
-            float snappedY = std::floor(mouseWorldPos.y / gridSize) * gridSize;
+            // Using center-based convention to match what we have for gameobjects GameObject::getQuad()
+            float snappedX = std::floor(mouseWorldPos.x / gridSize) * gridSize + halfGrid;
+            float snappedY = std::floor(mouseWorldPos.y / gridSize) * gridSize + halfGrid;
 
             Transform &transform = go.getComponent<Transform>();
             transform.position = {snappedX, snappedY, transform.position.z};
         }
-        else if (m_movementMode == MovementMode::Free)
+        else if (ctx.movementMode == MovementMode::Free)
         {
             glm::vec2 newPos = mouseWorldPos + dragOffset;
 

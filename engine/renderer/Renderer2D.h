@@ -5,6 +5,7 @@
 
 #include "core/GameObject.h"
 
+#include "renderer/CameraBoundsRenderer.h"
 #include "renderer/GridRenderer.h"
 #include "renderer/PhysicsRenderer.h"
 #include "renderer/RendererType.h"
@@ -41,9 +42,10 @@ private:
     RendererType m_enabledRenderers = RendererType::All;
 
     SpriteRenderer m_spriteRenderer;
-    // GridRenderer m_gridRenderer;
+    GridRenderer m_gridRenderer;
     PhysicsRenderer m_physicsRenderer;
     SelectionRenderer m_selectionRenderer;
+    CameraBoundsRenderer m_cameraBoundsRenderer;
 
     int m_width = 0;
     int m_height = 0;
