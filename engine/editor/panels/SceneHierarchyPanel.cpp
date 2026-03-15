@@ -2,6 +2,7 @@
 #include "core/components/BoxCollider2D.h"
 #include "core/components/EnemyState.h"
 #include "core/components/EntityInfo.h"
+#include "core/components/EntityRef.h"
 #include "core/components/ParticleEmitter.h"
 #include "core/components/Patrol.h"
 #include "core/components/RigidBody2D.h"
@@ -86,6 +87,7 @@ void SceneHierarchyPanel::drawGameObjectNode(GameObject &go)
         drawComponentRemoveRow<Patrol>(go, "Patrol");
         drawComponentRemoveRow<Text>(go, "Text");
         drawComponentRemoveRow<ParticleEmitter>(go, "Particle Emitter");
+        drawComponentRemoveRow<EntityRef>(go, "Entity Ref");
 
         // Let game code provide remove-rows for its own components via
         // the global component registry.

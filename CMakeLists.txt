@@ -20,6 +20,7 @@ add_subdirectory(engine/opengl)
 add_library(${PROJECT_NAME} STATIC
     # core
     engine/core/components/EntityInfo.cpp
+    engine/core/components/EntityRef.cpp
     engine/core/components/Transform.cpp
     engine/core/components/Sprite.cpp
     engine/core/components/RigidBody2D.cpp

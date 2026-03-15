@@ -63,6 +63,13 @@ public:
         return m_entity;
     }
 
+    // FIXME: returning a reference, which itself is passed in as a
+    // reference. Not a good idea.
+    entt::registry &getRegistry()
+    {
+        return *m_registry;
+    }
+
     void updateEntityReference(entt::registry &registry);
 
     bool serialize(YAML::Emitter &out);

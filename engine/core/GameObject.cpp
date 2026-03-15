@@ -3,6 +3,7 @@
 #include "core/components/Camera.h"
 #include "core/components/EnemyState.h"
 #include "core/components/EntityInfo.h"
+#include "core/components/EntityRef.h"
 #include "core/components/ParticleEmitter.h"
 #include "core/components/Patrol.h"
 #include "core/components/PostProcessSettings.h"
@@ -58,6 +59,7 @@ GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGam
     deserializeComponent<ParticleEmitter>(serializedGameObject, "ParticleEmitter");
     deserializeComponent<Camera>(serializedGameObject, "Camera");
     deserializeComponent<PostProcessSettings>(serializedGameObject, "PostProcessSettings");
+    deserializeComponent<EntityRef>(serializedGameObject, "EntityRef");
 
     // Let game code plug in additional component deserialization.
     const auto &extraEntries = ComponentRegistry::instance().getEntries();
@@ -141,6 +143,7 @@ bool GameObject::serialize(YAML::Emitter &out)
     serializeComponent<ParticleEmitter>(out);
     serializeComponent<Camera>(out);
     serializeComponent<PostProcessSettings>(out);
+    serializeComponent<EntityRef>(out);
 
     // Let game code plug in additional component serialization.
     const auto &extraEntries = ComponentRegistry::instance().getEntries();

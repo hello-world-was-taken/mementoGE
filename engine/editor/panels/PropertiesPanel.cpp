@@ -3,6 +3,7 @@
 #include "core/components/CircleCollider2D.h"
 #include "core/components/EnemyState.h"
 #include "core/components/EntityInfo.h"
+#include "core/components/EntityRef.h"
 #include "core/components/ParticleEmitter.h"
 #include "core/components/Patrol.h"
 #include "core/components/PostProcessSettings.h"
@@ -116,6 +117,7 @@ void PropertiesPanel::renderPropertiesPanel()
     drawComponentInspector<Animator>(go);
     drawComponentInspector<AudioSource>(go);
     drawComponentInspector<Camera>(go);
+    drawComponentInspector<EntityRef>(go);
 
     // Let game code draw inspectors for its own components via the
     // global component registry.
@@ -217,6 +219,15 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                 [&]
                 {
                     go.addComponent<Camera>();
+                });
+        }
+
+        if (ImGui::Selectable("Entity Ref"))
+        {
+            m_ctx.performSceneEdit(
+                [&]
+                {
+                    go.addComponent<EntityRef>();
                 });
         }
 
@@ -349,6 +360,7 @@ void PropertiesPanel::drawExportModel(GameObject &go)
         go.serializeComponent<TextAnchor>(out);
         go.serializeComponent<ParticleEmitter>(out);
         go.serializeComponent<PostProcessSettings>(out);
+        go.serializeComponent<EntityRef>(out);
 
         // Let game code extend model export with its own components
         // via the same registry used for scene serialization.

@@ -1,5 +1,4 @@
 #include "core/SceneManager.h"
-#include "core/Camera.h"
 #include "core/GameObject.h"
 #include "core/SpriteSheet.h"
 #include "core/components/Sprite.h"
@@ -117,7 +116,7 @@ void SceneManager::serialize()
         scene.serialize(out);
     }
 
-    std::ofstream file(getGameAssetsPath("scenes/scene.yaml"), std::ios::out | std::ios::trunc);
+    std::ofstream file(getGameAssetsPath("scenes/axe level 1.yaml"), std::ios::out | std::ios::trunc);
     file << out.c_str();
 
     std::cout << "Serialized scene to scene.yaml" << std::endl;
@@ -125,7 +124,8 @@ void SceneManager::serialize()
 
 void SceneManager::deserialize()
 {
-    const std::string sceneFile = getGameAssetsPath("scenes/scene.yaml");
+    // FIXME: hard coding scene
+    const std::string sceneFile = getGameAssetsPath("scenes/axe level 1.yaml");
 
     if (!std::filesystem::exists(sceneFile))
     {

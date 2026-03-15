@@ -39,21 +39,34 @@ struct has_drawInspector<T, std::void_t<decltype(std::declval<T>().drawInspector
 {
 };
 
-// Helper variable template
-template <typename T> inline constexpr bool has_onImguiRender_v = has_drawInspector<T>::value;
+// SFINAE trait for components whose drawInspector takes a GameObject&
+template <typename T, typename = void> struct has_drawInspector_go : std::false_type
+{
+};
+
+template <typename T>
+struct has_drawInspector_go<T, std::void_t<decltype(std::declval<T>().drawInspector(std::declval<GameObject &>()))>>
+    : std::true_type
+{
+};
 
 template <typename T> void PropertiesPanel::drawComponentInspector(const GameObject &gameObject)
 {
     if (gameObject.hasComponent<T>())
     {
         auto &component = gameObject.getComponent<T>();
-        if constexpr (has_onImguiRender_v<T>)
+        if constexpr (has_drawInspector<T>::value)
         {
             component.drawInspector();
         }
+        else if constexpr (has_drawInspector_go<T>::value)
+        {
+            component.drawInspector(const_cast<GameObject &>(gameObject));
+        }
         else
         {
-            static_assert(false, "T must have drawInspector");
+            static_assert(has_drawInspector<T>::value || has_drawInspector_go<T>::value,
+                "T must have drawInspector() or drawInspector(GameObject &)");
         }
     }
 }
