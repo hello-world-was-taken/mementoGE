@@ -1,5 +1,6 @@
 #include "core/components/AudioSource.h"
 #include "core/components/BoxCollider2D.h"
+#include "core/components/Camera.h"
 #include "core/components/EnemyState.h"
 #include "core/components/EntityInfo.h"
 #include "core/components/ParticleEmitter.h"
@@ -55,6 +56,7 @@ GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGam
     deserializeComponent<Text>(serializedGameObject, "Text");
     deserializeComponent<TextAnchor>(serializedGameObject, "TextAnchor");
     deserializeComponent<ParticleEmitter>(serializedGameObject, "ParticleEmitter");
+    deserializeComponent<Camera>(serializedGameObject, "Camera");
     deserializeComponent<PostProcessSettings>(serializedGameObject, "PostProcessSettings");
 
     // Let game code plug in additional component deserialization.
@@ -137,6 +139,7 @@ bool GameObject::serialize(YAML::Emitter &out)
     serializeComponent<Text>(out);
     serializeComponent<TextAnchor>(out);
     serializeComponent<ParticleEmitter>(out);
+    serializeComponent<Camera>(out);
     serializeComponent<PostProcessSettings>(out);
 
     // Let game code plug in additional component serialization.

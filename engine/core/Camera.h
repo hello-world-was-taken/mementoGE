@@ -3,7 +3,6 @@
 
 #include <glm/glm.hpp>
 
-
 class CameraOld
 {
 public:
@@ -27,6 +26,9 @@ public:
 
     glm::vec3 getPosition() const;
     glm::vec3 getRotation() const;
+
+    void setProjectionMatrix(const glm::mat4 &proj);
+    void setViewMatrix(const glm::mat4 &view);
 
 protected:
     glm::mat4 m_projection{1.0f};

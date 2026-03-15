@@ -272,6 +272,7 @@ void EditorContext::copySelectedObjectsToClipboard()
         go.serializeComponent<Text>(out);
         go.serializeComponent<TextAnchor>(out);
         go.serializeComponent<ParticleEmitter>(out);
+        go.serializeComponent<Camera>(out);
         go.serializeComponent<PostProcessSettings>(out);
 
         const auto &extraEntries = ComponentRegistry::instance().getEntries();

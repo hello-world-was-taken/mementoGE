@@ -1,10 +1,14 @@
 #pragma once
 
+#include "core/Camera.h"
 #include "core/SceneManager.h"
 #include "core/Window.h"
+#include "core/components/Camera.h"
+#include "core/components/Transform.h"
 
 #include "renderer/SpriteRenderer.h"
 
+#include <glm/gtc/matrix_transform.hpp>
 #include <string>
 
 class BaseGame
@@ -56,11 +60,61 @@ protected:
         // Engine logic
         m_sceneManager.update();
 
-        // TODO: return const reference not shared_ptr. It is owned by the scene and is not shared.
-        const CameraOld &cam = m_sceneManager.getActiveScene().getCamera();
-        const auto &gameObjects = m_sceneManager.getActiveScene().getGameObjects();
+        // FIXME: the whole rendering specific thing that is happening
+        // here should be moved to a rendering system. It doesn't make
+        // sense to process gameobject's camera and start rendering here.
+        Scene &scene = m_sceneManager.getActiveScene();
+        const auto &gameObjects = scene.getGameObjects();
 
-        m_spriteRenderer.render(cam, gameObjects);
+        // Use the primary Camera component if one exists,
+        GameObject *cameraObj = scene.findPrimaryCamera();
+        if (cameraObj)
+        {
+            Camera &cam = cameraObj->getComponent<Camera>();
+            Transform &transform = cameraObj->getComponent<Transform>();
+
+            float w = cam.logicalWidth * cam.zoom;
+            float h = cam.logicalHeight * cam.zoom;
+
+            // Letterbox/pillarbox: fit the camera's aspect ratio into the window
+            int fbWidth, fbHeight;
+            glfwGetFramebufferSize(m_window.getGlfwWindow(), &fbWidth, &fbHeight);
+
+            float cameraAspect = w / h;
+            float windowAspect = static_cast<float>(fbWidth) / static_cast<float>(fbHeight);
+
+            int vpX = 0, vpY = 0, vpW = fbWidth, vpH = fbHeight;
+            if (cameraAspect > windowAspect)
+            {
+                // Camera wider than window: pillarbox (bars top/bottom)
+                vpW = fbWidth;
+                vpH = static_cast<int>(fbWidth / cameraAspect);
+                vpY = (fbHeight - vpH) / 2;
+            }
+            else
+            {
+                // Camera taller than window: letterbox (bars left/right)
+                vpH = fbHeight;
+                vpW = static_cast<int>(fbHeight * cameraAspect);
+                vpX = (fbWidth - vpW) / 2;
+            }
+
+            glViewport(vpX, vpY, vpW, vpH);
+
+            glm::mat4 proj = glm::ortho(0.0f, w, 0.0f, h, cam.nearClip, cam.farClip);
+            glm::mat4 view = glm::translate(glm::mat4(1.0f), -transform.position);
+
+            m_gameCamera.setProjectionMatrix(proj);
+            m_gameCamera.setViewMatrix(view);
+
+            // FIXME: the only reason we have m_gameCamera is because render
+            // accepts CameraOld and not the Camera gameobject component.
+            m_spriteRenderer.render(m_gameCamera, gameObjects);
+        }
+        else
+        {
+            throw std::runtime_error("No primary camera found!");
+        }
     }
 
 public:
@@ -68,6 +122,7 @@ public:
     Window m_window;
     SceneManager m_sceneManager;
     SpriteRenderer m_spriteRenderer;
+    CameraOld m_gameCamera;
 
     bool m_running = true;
 };

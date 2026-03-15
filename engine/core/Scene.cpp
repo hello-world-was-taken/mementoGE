@@ -24,9 +24,9 @@ Scene::Scene(const YAML::Node &&serializedScene) : m_registry{}
 }
 
 Scene::Scene(Scene &&other) noexcept
-    : m_registry(std::move(other.m_registry)), m_sceneCamera(std::move(other.m_sceneCamera)),
-      m_physicsWorld(std::move(other.m_physicsWorld)), m_textures(std::move(other.m_textures)),
-      m_systemNames(std::move(other.m_systemNames)), m_systems(std::move(other.m_systems)), mTag(std::move(other.mTag))
+    : m_registry(std::move(other.m_registry)), m_physicsWorld(std::move(other.m_physicsWorld)),
+      m_textures(std::move(other.m_textures)), m_systemNames(std::move(other.m_systemNames)),
+      m_systems(std::move(other.m_systems)), mTag(std::move(other.mTag))
 {
     // Move game objects while rebinding registry
     m_gameObjects.reserve(other.m_gameObjects.size());
@@ -43,7 +43,6 @@ Scene &Scene::operator=(Scene &&other)
     if (this != &other)
     {
         m_registry = std::move(other.m_registry);
-        m_sceneCamera = std::move(other.m_sceneCamera);
         m_physicsWorld = std::move(other.m_physicsWorld);
         m_textures = std::move(other.m_textures);
         m_systemNames = std::move(other.m_systemNames);
@@ -252,9 +251,18 @@ std::vector<GameObject> &Scene::getGameObjects()
     return m_gameObjects;
 }
 
-SceneCamera &Scene::getCamera()
+// FIXME: should be removed once we move rendering logic
+// out from BaseGame.h to a rendering system
+GameObject *Scene::findPrimaryCamera()
 {
-    return m_sceneCamera;
+    for (auto &go : m_gameObjects)
+    {
+        if (go.hasComponent<Camera>() && go.getComponent<Camera>().primary)
+        {
+            return &go;
+        }
+    }
+    return nullptr;
 }
 
 GameObject &Scene::getPlayer()

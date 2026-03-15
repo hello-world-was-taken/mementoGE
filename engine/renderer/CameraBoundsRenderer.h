@@ -24,7 +24,7 @@ public:
     void render(const CameraOld &editorCamera, const std::vector<GameObject> &gameObjects);
 
 private:
-    void updateVertices();
+    void updateVertices(const std::vector<GameObject> &gameObjects);
 
 private:
     std::unique_ptr<RenderBatch> m_batch;

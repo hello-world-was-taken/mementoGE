@@ -1,4 +1,5 @@
 #include "core/components/AudioSource.h"
+#include "core/components/Camera.h"
 #include "core/components/CircleCollider2D.h"
 #include "core/components/EnemyState.h"
 #include "core/components/EntityInfo.h"
@@ -114,6 +115,7 @@ void PropertiesPanel::renderPropertiesPanel()
     drawComponentInspector<PostProcessSettings>(go);
     drawComponentInspector<Animator>(go);
     drawComponentInspector<AudioSource>(go);
+    drawComponentInspector<Camera>(go);
 
     // Let game code draw inspectors for its own components via the
     // global component registry.
@@ -206,6 +208,15 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                 [&]
                 {
                     go.addComponent<AudioSource>();
+                });
+        }
+
+        if (ImGui::Selectable("Camera"))
+        {
+            m_ctx.performSceneEdit(
+                [&]
+                {
+                    go.addComponent<Camera>();
                 });
         }
 

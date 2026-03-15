@@ -1,5 +1,7 @@
 #include "renderer/CameraBoundsRenderer.h"
 
+#include "core/components/Camera.h"
+#include "core/components/Transform.h"
 #include "editor/Constants.h"
 #include "renderer/util.h"
 
@@ -13,14 +15,14 @@ CameraBoundsRenderer::CameraBoundsRenderer()
 
 CameraBoundsRenderer::~CameraBoundsRenderer() = default;
 
-void CameraBoundsRenderer::render(const CameraOld &editorCamera, const std::vector<GameObject> & /*gameObjects*/)
+void CameraBoundsRenderer::render(const CameraOld &editorCamera, const std::vector<GameObject> &gameObjects)
 {
     if (!m_batch)
     {
         m_batch = std::make_unique<RenderBatch>(m_indices, GL_TRIANGLES);
     }
 
-    updateVertices();
+    updateVertices(gameObjects);
 
     if (m_vertices.empty())
     {
@@ -36,18 +38,38 @@ void CameraBoundsRenderer::render(const CameraOld &editorCamera, const std::vect
     m_batch->render(editorCamera, static_cast<int>(indexCount));
 }
 
-void CameraBoundsRenderer::updateVertices()
+void CameraBoundsRenderer::updateVertices(const std::vector<GameObject> &gameObjects)
 {
     m_vertices.clear();
 
-    // NOTE: For now we don't look up a primary Camera component or use
-    // its Transform. Instead we draw a fixed camera box from the origin
-    // using the logical resolution. This approximates the gameplay view
-    // without depending on GameObject placement.
-    float left = 0.0f;
-    float bottom = 0.0f;
-    float right = LOGICAL_WIDTH;
-    float top = LOGICAL_HEIGHT;
+    // Look for the first primary Camera component among the game objects.
+    // Use its logical dimensions and Transform position to draw the bounds.
+    float camWidth = -1;
+    float camHeight = -1;
+    glm::vec3 camPos{0.0f};
+
+    for (const auto &go : gameObjects)
+    {
+        if (go.hasComponent<Camera>() && go.getComponent<Camera>().primary)
+        {
+            const Camera &cam = go.getComponent<Camera>();
+            camWidth = cam.logicalWidth;
+            camHeight = cam.logicalHeight;
+            camPos = go.getComponent<Transform>().position;
+            break;
+        }
+    }
+
+    // No primary camera found.
+    if (camWidth == -1)
+    {
+        return;
+    }
+
+    float left = camPos.x;
+    float bottom = camPos.y;
+    float right = camPos.x + camWidth;
+    float top = camPos.y + camHeight;
 
     // We draw 4 thin quads (top, bottom, left, right) instead of
     // GL_LINES so the "lines" have a controllable thickness.

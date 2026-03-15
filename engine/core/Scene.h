@@ -4,6 +4,7 @@
 #include "core/GameObject.h"
 #include "core/ISystem.h"
 #include "core/SceneCamera.h"
+#include "core/components/Camera.h"
 
 #include "util/log_error.h"
 
@@ -54,7 +55,7 @@ public:
     void setGravity(glm::vec2 gravity);
 
     std::vector<GameObject> &getGameObjects();
-    SceneCamera &getCamera();
+    GameObject *findPrimaryCamera();
 
     const std::string &getTag() const;
     bool serialize(YAML::Emitter &out);
@@ -75,7 +76,6 @@ private:
     Physics2D m_physicsWorld{{0.0f, -9.8f}};
     std::vector<std::shared_ptr<Texture>> m_textures;
 
-    SceneCamera m_sceneCamera;
     std::vector<GameObject> m_gameObjects;
 
     std::vector<std::shared_ptr<ISystem>> m_systems;

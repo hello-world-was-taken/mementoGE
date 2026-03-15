@@ -1,9 +1,9 @@
 #include "core/Camera.h"
 #include "editor/Constants.h"
 
-#include <iostream>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
+#include <iostream>
 
 CameraOld::CameraOld()
 {
@@ -52,4 +52,14 @@ void CameraOld::setZoom(float zoom)
 float CameraOld::getZoom() const
 {
     return m_zoom;
+}
+
+void CameraOld::setProjectionMatrix(const glm::mat4 &proj)
+{
+    m_projection = proj;
+}
+
+void CameraOld::setViewMatrix(const glm::mat4 &view)
+{
+    m_view = view;
 }
