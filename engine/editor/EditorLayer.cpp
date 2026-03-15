@@ -14,7 +14,7 @@
 #include "editor/Constants.h"
 #include "editor/EditorLayer.h"
 #include "editor/EditorMouseController.h"
-#include "editor/PropertiesPanel.h"
+#include "editor/panels/PropertiesPanel.h"
 
 #include "util/PathUtils.h"
 

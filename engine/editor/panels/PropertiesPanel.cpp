@@ -20,7 +20,7 @@
 #include "editor/DragNDropPayloads.h"
 #include "editor/EditorContext.h"
 #include "editor/EditorPanel.h"
-#include "editor/PropertiesPanel.h"
+#include "editor/panels/PropertiesPanel.h"
 
 #include "util/PathUtils.h"
 

@@ -4,12 +4,12 @@
 #include "core/Scene.h"
 #include "core/Window.h"
 
-#include "editor/AssetsPanel.h"
 #include "editor/EditorContext.h"
-#include "editor/PropertiesPanel.h"
-#include "editor/SceneHierarchyPanel.h"
-#include "editor/ScenePanel.h"
-#include "editor/SpriteSheetEditorPanel.h"
+#include "editor/panels/AssetsPanel.h"
+#include "editor/panels/PropertiesPanel.h"
+#include "editor/panels/SceneHierarchyPanel.h"
+#include "editor/panels/ScenePanel.h"
+#include "editor/panels/SpriteSheetEditorPanel.h"
 
 #include "renderer/GridRenderer.h"
 #include "renderer/PhysicsRenderer.h"

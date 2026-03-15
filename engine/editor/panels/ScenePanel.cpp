@@ -10,7 +10,7 @@
 #include "editor/DragNDropPayloads.h"
 #include "editor/EditorContext.h"
 #include "editor/EditorPanel.h"
-#include "editor/ScenePanel.h"
+#include "editor/panels/ScenePanel.h"
 
 #include "util/PathUtils.h"
 

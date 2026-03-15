@@ -60,15 +60,15 @@ add_library(${PROJECT_NAME} STATIC
     # editor
     engine/editor/EditorLayer.cpp
     engine/editor/EditorContext.cpp
-    engine/editor/ScenePanel.cpp
-    engine/editor/SceneHierarchyPanel.cpp
-    engine/editor/PropertiesPanel.cpp
-    engine/editor/TexturePanel.cpp
     engine/editor/EditorMouseController.cpp
     engine/editor/EditorCamera.cpp
     engine/editor/SceneHistory.cpp
-        engine/editor/AssetsPanel.cpp
-        engine/editor/SpriteSheetEditorPanel.cpp
+    engine/editor/panels/ScenePanel.cpp
+    engine/editor/panels/SceneHierarchyPanel.cpp
+    engine/editor/panels/PropertiesPanel.cpp
+    engine/editor/panels/TexturePanel.cpp
+	engine/editor/panels/AssetsPanel.cpp
+	engine/editor/panels/SpriteSheetEditorPanel.cpp
 
     # renderer
     engine/renderer/Renderer2D.cpp

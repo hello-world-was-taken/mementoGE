@@ -17,7 +17,7 @@
 #include "core/Scene.h"
 
 #include "editor/EditorContext.h"
-#include "editor/SceneHierarchyPanel.h"
+#include "editor/panels/SceneHierarchyPanel.h"
 
 #include <imgui.h>
 

@@ -6,7 +6,7 @@
 #include "core/SpriteSheet.h"
 
 #include "editor/DragNDropPayloads.h"
-#include "editor/TexturePanel.h"
+#include "editor/panels/TexturePanel.h"
 
 #include "util/PathUtils.h"
 #include "util/Time.h"

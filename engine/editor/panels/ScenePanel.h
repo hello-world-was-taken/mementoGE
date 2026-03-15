@@ -1,3 +1,5 @@
+#pragma once
+
 #include "editor/EditorContext.h"
 #include "editor/EditorPanel.h"
 

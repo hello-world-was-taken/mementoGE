@@ -2,8 +2,8 @@
 
 #include "core/components/Sprite.h"
 
-#include "editor/EditorPanel.h"
 #include "editor/EditorContext.h"
+#include "editor/EditorPanel.h"
 
 #include <functional>
 

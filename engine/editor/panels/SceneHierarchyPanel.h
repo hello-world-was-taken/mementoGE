@@ -26,7 +26,9 @@ private:
 template <typename T> void SceneHierarchyPanel::drawComponentRemoveRow(GameObject &go, const std::string &label)
 {
     if (!go.hasComponent<T>())
+    {
         return;
+    }
 
     bool removeComponent = false;
 
@@ -39,7 +41,6 @@ template <typename T> void SceneHierarchyPanel::drawComponentRemoveRow(GameObjec
         ImGui::PopID();
         return;
     }
-
 
     ImGui::SameLine(ImGui::GetContentRegionAvail().x - 20);
 

@@ -8,9 +8,9 @@
 #include "core/ImGuiWrapper.h"
 #include "core/SpriteSheet.h"
 
-#include "editor/AssetsPanel.h"
 #include "editor/Constants.h"
 #include "editor/DragNDropPayloads.h"
+#include "editor/panels/AssetsPanel.h"
 
 #include "util/PathUtils.h"
 

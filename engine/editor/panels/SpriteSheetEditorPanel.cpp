@@ -1,4 +1,4 @@
-#include "editor/SpriteSheetEditorPanel.h"
+#include "editor/panels/SpriteSheetEditorPanel.h"
 
 #include "core/GlResourceManager.h"
 
