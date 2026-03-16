@@ -11,6 +11,8 @@ enum class EventType
     MouseMove,
     MouseRightClick,
     MouseLeftClick,
+    MouseButtonPress,
+    MouseButtonRelease,
     MouseScroll,
     WindowResize,
     WindowMove
@@ -50,4 +52,10 @@ struct Event
     bool ctrl = false;
     bool shift = false;
     bool alt = false;
+
+    float mouseX = 0.0f;
+    float mouseY = 0.0f;
+    float scrollX = 0.0f;
+    float scrollY = 0.0f;
+    int mouseButton = -1;
 };

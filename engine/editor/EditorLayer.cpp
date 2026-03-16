@@ -89,7 +89,7 @@ void EditorLayer::updateFrame()
             drawEditorUI();
         });
 
-    MouseListener::instance()->beginFrame();
+    EventHandler::instance()->beginFrame();
 }
 
 void EditorLayer::drawEditorUI()
@@ -452,13 +452,13 @@ void EditorLayer::drawMouseDebugPanel()
     ImGui::Separator();
     ImGui::Text("Mouse Debug");
 
-    MouseListener *mouse = MouseListener::instance();
+    EventHandler *handler = EventHandler::instance();
 
     // Current position
-    glm::vec2 pos = mouse->getMouseScreenPosition();
-    glm::vec2 prev = mouse->getPrevMouseScreenPosition();
-    glm::vec2 delta = mouse->getMouseDelta();
-    glm::vec2 scroll = mouse->getScrollDelta();
+    glm::vec2 pos = handler->getMousePos();
+    glm::vec2 delta = handler->getMouseDelta();
+    glm::vec2 prev = pos - delta;
+    glm::vec2 scroll = handler->getScrollDelta();
 
     ImGui::Text("Mouse Position: (%.1f, %.1f)", pos.x, pos.y);
     ImGui::Text("Previous Position: (%.1f, %.1f)", prev.x, prev.y);
@@ -478,9 +478,9 @@ void EditorLayer::drawMouseDebugPanel()
 
     for (const auto &btn : buttons)
     {
-        bool held = mouse->isMouseButtonHeld(btn.id);
-        bool pressed = mouse->wasMouseButtonPressed(btn.id);
-        bool released = mouse->wasMouseButtonReleased(btn.id);
+        bool held = handler->isMouseButtonHeld(btn.id);
+        bool pressed = handler->wasMouseButtonPressed(btn.id);
+        bool released = handler->wasMouseButtonReleased(btn.id);
 
         ImGui::Text("%s Button: Held=%s, Pressed=%s, Released=%s",
             btn.name,

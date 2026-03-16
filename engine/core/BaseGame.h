@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/Camera.h"
+#include "core/EventHandler.h"
 #include "core/SceneManager.h"
 #include "core/Window.h"
 #include "core/components/Camera.h"
@@ -39,6 +40,12 @@ protected:
             glfwPollEvents();
 
             updateFrame();
+
+            // We reset per-frame input state here because glfwPollEvents() (called at the
+            // start of the loop) populates the state. If we called
+            // beginFrame() immediately after polling but before updateFrame(), we would
+            // wipe out the input data before the game logic could read it.
+            EventHandler::instance()->beginFrame();
 
             glfwSwapBuffers(m_window.getGlfwWindow());
         }

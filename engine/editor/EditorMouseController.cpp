@@ -10,6 +10,8 @@
 #include "editor/EditorInteractionMode.h"
 #include "editor/EditorMouseController.h"
 
+#include "core/EventHandler.h"
+
 #include "util/Time.h"
 
 #include <algorithm>
@@ -29,9 +31,9 @@ void EditorMouseController::update(EditorContext &ctx)
     Scene &scene = ctx.getActiveScene();
     EditorCamera &editorCamera = ctx.editorCamera;
 
-    MouseListener *mouse = MouseListener::instance();
-    glm::vec2 mouseWorldPos = ctx.getWorldCoordinate(mouse->getMouseScreenPosition());
-    glm::vec2 dragStartPos = ctx.getWorldCoordinate(mouse->getDragStart());
+    EventHandler *handler = EventHandler::instance();
+    glm::vec2 mouseWorldPos = ctx.getWorldCoordinate(handler->getMousePos());
+    glm::vec2 dragStartPos = ctx.getWorldCoordinate(handler->getDragStart());
 
     handleSingleLeftClick(ctx, scene, mouseWorldPos);
     handleRightClick(ctx, scene, mouseWorldPos);
@@ -41,9 +43,9 @@ void EditorMouseController::update(EditorContext &ctx)
 
 void EditorMouseController::handleSingleLeftClick(EditorContext &ctx, Scene &scene, glm::vec2 mouseWorldPos)
 {
-    MouseListener *mouse = MouseListener::instance();
+    EventHandler *handler = EventHandler::instance();
 
-    if (!mouse->wasMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT))
+    if (!handler->wasMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT))
     {
         return;
     }
@@ -111,8 +113,8 @@ void EditorMouseController::selectClickedObject(EditorContext &ctx, Scene &scene
 
 void EditorMouseController::handleRightClick(EditorContext &ctx, Scene &scene, glm::vec2 mouseWorldPos)
 {
-    MouseListener *mouse = MouseListener::instance();
-    if (!mouse->wasMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
+    EventHandler *handler = EventHandler::instance();
+    if (!handler->wasMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
     {
         return;
     }
@@ -161,20 +163,20 @@ void EditorMouseController::handleRightClickOnEmpty(
 
 void EditorMouseController::handleZoom(EditorContext &ctx)
 {
-    MouseListener *mouse = MouseListener::instance();
+    EventHandler *handler = EventHandler::instance();
 
     // Adjust zoom level
-    ctx.editorCamera.adjustZoom(mouse->getScrollDelta().x);
+    ctx.editorCamera.adjustZoom(handler->getScrollDelta().x);
     ctx.editorCamera.onViewportResize(ctx.renderer2D.m_finalFBO.getWidth(), ctx.renderer2D.m_finalFBO.getHeight());
 }
 
 void EditorMouseController::handleDragging(
     EditorContext &ctx, Scene &scene, glm::vec2 dragStartPos, glm::vec2 mouseWorldPos)
 {
-    MouseListener *mouse = MouseListener::instance();
+    EventHandler *handler = EventHandler::instance();
 
-    bool leftHeld = mouse->isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT);
-    bool leftReleased = mouse->wasMouseButtonReleased(GLFW_MOUSE_BUTTON_LEFT);
+    bool leftHeld = handler->isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT);
+    bool leftReleased = handler->wasMouseButtonReleased(GLFW_MOUSE_BUTTON_LEFT);
 
     if (leftHeld)
     {
@@ -262,7 +264,7 @@ void EditorMouseController::moveCamera(EditorContext &ctx)
     float scaleX = ctx.renderer2D.m_finalFBO.getWidth() / winWidth;
     float scaleY = ctx.renderer2D.m_finalFBO.getHeight() / winHeight;
 
-    glm::vec2 dragDelta = MouseListener::instance()->getMouseDelta();
+    glm::vec2 dragDelta = EventHandler::instance()->getMouseDelta();
 
     editorCamera.setPosition(editorCamera.getPosition() - glm::vec3(dragDelta.x * scaleX, dragDelta.y * scaleY, 0.0f));
 }

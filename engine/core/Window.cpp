@@ -1,9 +1,8 @@
 #include "core/Window.h"
-#include "core/MouseListener.h"
 #include "core/EventHandler.h"
 
-#include "editor/EditorCamera.h"
 #include "editor/Constants.h"
+#include "editor/EditorCamera.h"
 
 #include "util/Time.h"
 
@@ -11,7 +10,9 @@ Window::Window()
 {
     /* Init GLFW */
     if (!glfwInit())
+    {
         exit(EXIT_FAILURE);
+    }
 
     setupWindowHints();
 
@@ -75,9 +76,9 @@ void Window::setupWindowHints() const
 
 void Window::setupCallBack() const
 {
-    glfwSetCursorPosCallback(m_glfw_window, MouseListener::cursorPositionCallback);
-    glfwSetMouseButtonCallback(m_glfw_window, MouseListener::mouseButtonCallback);
-    glfwSetScrollCallback(m_glfw_window, MouseListener::scrollCallback);
+    glfwSetCursorPosCallback(m_glfw_window, EventHandler::glfwCursorPosCallback);
+    glfwSetMouseButtonCallback(m_glfw_window, EventHandler::glfwMouseButtonCallback);
+    glfwSetScrollCallback(m_glfw_window, EventHandler::glfwScrollCallback);
     glfwSetKeyCallback(m_glfw_window, EventHandler::glfwKeyCallBack);
 }
 

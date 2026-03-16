@@ -4,7 +4,7 @@
 #include "core/IconsFontAwesome4.h"
 
 #include "core/AssetManager.h"
-#include "core/MouseListener.h"
+#include "core/EventHandler.h"
 #include "core/SpriteSheet.h"
 
 #include "editor/DragNDropPayloads.h"
@@ -214,8 +214,8 @@ void ScenePanel::createSpriteFromPayload(const ImGuiPayload *payload)
 {
     IM_ASSERT(payload->DataSize == sizeof(SpritePayload));
     SpritePayload spritePayload = *(SpritePayload *)payload->Data;
-    MouseListener *mouse = MouseListener::instance();
-    glm::vec2 worldPos = m_ctx.getWorldCoordinate(mouse->getMouseScreenPosition());
+    EventHandler *handler = EventHandler::instance();
+    glm::vec2 worldPos = m_ctx.getWorldCoordinate(handler->getMousePos());
 
     const float aspectRatio = spritePayload.width / spritePayload.height;
 
@@ -230,8 +230,8 @@ void ScenePanel::createModelFromPayload(const ImGuiPayload *payload)
     IM_ASSERT(payload->DataSize == sizeof(ModelPayload));
     ModelPayload modelPayload = *(ModelPayload *)payload->Data;
 
-    MouseListener *mouse = MouseListener::instance();
-    glm::vec2 worldPos = m_ctx.getWorldCoordinate(mouse->getMouseScreenPosition());
+    EventHandler *handler = EventHandler::instance();
+    glm::vec2 worldPos = m_ctx.getWorldCoordinate(handler->getMousePos());
 
     Scene &scene = m_ctx.getActiveScene();
     GameObject &newObj = scene.addGameObjectFromModel(modelPayload.filePath);
