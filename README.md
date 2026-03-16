@@ -11,7 +11,6 @@ Memento is a lightweight 2D game engine built using OpenGL, GLFW, and ImGui, aim
 ### Prerequisites
 
 - **OpenGL** core.
-- **GLEW** must be installed **locally** on your system. _(Will be removed as a requirement soon)_
 - A C++17-compatible compiler (e.g., GCC 9+, Clang 10+, MSVC 2019+)
 
 ---
@@ -104,7 +103,7 @@ Inside MementoGE, the engine's CMake checks the same `EDITOR_BUILD` option and, 
 - [x] Dedicated event system (abstract input handling from ImGui + GLFW)
 - [x] Scene serialization (saving/loading scenes)
 - [x] Prefab system for reusable GameObjects
-- [ ] Remove GLEW requirement by bundling or replacing
+- [x] Remove GLEW requirement by bundling or replacing
 - [ ] (`inprogress`) Gizmo tools - (translate/rotate/scale handles)
 - [ ] Custom shader and material editing support
 - [x] Physics integration (Box2D)
@@ -113,6 +112,30 @@ Inside MementoGE, the engine's CMake checks the same `EDITOR_BUILD` option and, 
 - [x] Cross-platform support (Window/MacOS)
 - [x] Sprite based animation
 - [x] Proper logging system
+
+## Forked Dependencies
+
+- **[glew-cmake](https://github.com/hello-world-was-taken/glew-cmake)** — Fork of `Perlmint/glew-cmake`. The upstream version gates macOS AGL linking behind `CMAKE_SYSTEM_VERSION < 25.0.0`; on macOS 16+ (Darwin ≥ 25) where AGL was removed, this incorrectly falls through to the Linux/X11 code path. The fork restructures the condition so macOS always takes the Apple path, simply skipping AGL on newer versions.
+
+  Upstream:
+
+  ```cmake
+  if(APPLE AND CMAKE_SYSTEM_VERSION VERSION_LESS "25.0.0")
+      find_library(AGL_LIBRARY AGL REQUIRED)
+      list(APPEND LIBRARIES ${AGL_LIBRARY})
+  elseif(NOT WIN32)
+  ```
+
+  Fork:
+
+  ```cmake
+  if(APPLE)
+      if(CMAKE_SYSTEM_VERSION VERSION_LESS "25.0.0")
+          find_library(AGL_LIBRARY AGL REQUIRED)
+          list(APPEND LIBRARIES ${AGL_LIBRARY})
+      endif()
+  elseif(NOT WIN32)
+  ```
 
 ## Development Notes
 

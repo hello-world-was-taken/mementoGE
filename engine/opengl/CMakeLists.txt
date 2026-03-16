@@ -20,7 +20,7 @@ target_link_directories(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
     yaml-cpp
-    GLEW::glew
+    libglew_static
 )
 
 target_include_directories(${PROJECT_NAME}

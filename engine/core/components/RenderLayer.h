@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 #ifdef EDITOR_BUILD
 #include <yaml-cpp/yaml.h>

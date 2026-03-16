@@ -8,8 +8,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(OpenGL REQUIRED)
-find_package(GLEW REQUIRED)
 
+# turn on glew static options
+set(glew-cmake_BUILD_SHARED OFF CACHE BOOL "" FORCE)
+set(glew-cmake_BUILD_STATIC ON CACHE BOOL "" FORCE)
+
+add_subdirectory(engine/lib/glew-cmake)
 add_subdirectory(engine/lib/glfw)
 add_subdirectory(engine/lib/yaml-cpp)
 add_subdirectory(engine/lib/box2d)
@@ -113,7 +117,7 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     PUBLIC glfw yaml-cpp box2d OpenAL
     PUBLIC OpenGL::GL
-    PUBLIC GLEW::GLEW
+    PUBLIC libglew_static
     PRIVATE opengl
 )
 
