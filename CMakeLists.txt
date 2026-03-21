@@ -43,6 +43,7 @@ add_library(${PROJECT_NAME} STATIC
 
     engine/core/Window.cpp
     engine/core/Camera.cpp  # TODO: remove. we have it as a component now
+    engine/core/CameraUtils.cpp
     engine/core/SceneCamera.cpp
     engine/core/GameObject.cpp
     engine/core/SceneManager.cpp

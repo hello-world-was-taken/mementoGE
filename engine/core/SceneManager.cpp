@@ -109,15 +109,22 @@ void SceneManager::serialize()
         return;
     }
 
-    YAML::Emitter out;
 
     for (auto &[sceneName, scene] : m_scenes)
     {
-        scene.serialize(out);
-    }
+        YAML::Emitter out;
 
-    std::ofstream file(getGameAssetsPath("scenes/axe level 1.yaml"), std::ios::out | std::ios::trunc);
-    file << out.c_str();
+        auto scenePath = getGameAssetsPath("scenes/" + sceneName + ".yaml");
+        std::ofstream file(scenePath, std::ios::out | std::ios::trunc);
+        if (!file.is_open())        {
+            std::cerr << "Failed to open file for writing: " << scenePath << std::endl;
+            continue;
+        }
+
+        scene.serialize(out);
+        file << out.c_str();
+        std::cout << "Serialized scene '" << sceneName << "' to " << scenePath << std::endl;
+    }
 
     std::cout << "Serialized scene to scene.yaml" << std::endl;
 }

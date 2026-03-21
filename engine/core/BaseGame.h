@@ -78,38 +78,21 @@ protected:
         if (cameraObj)
         {
             Camera &cam = cameraObj->getComponent<Camera>();
-            Transform &transform = cameraObj->getComponent<Transform>();
+            Transform &camTransform = cameraObj->getComponent<Transform>();
 
             float w = cam.logicalWidth * cam.zoom;
             float h = cam.logicalHeight * cam.zoom;
+            float cameraAspect = w / h;
 
             // Letterbox/pillarbox: fit the camera's aspect ratio into the window
-            int fbWidth, fbHeight;
-            glfwGetFramebufferSize(m_window.getGlfwWindow(), &fbWidth, &fbHeight);
+            auto [vpX, vpY, vpW, vpH] = m_window.getViewportForAspect(cameraAspect);
 
-            float cameraAspect = w / h;
-            float windowAspect = static_cast<float>(fbWidth) / static_cast<float>(fbHeight);
-
-            int vpX = 0, vpY = 0, vpW = fbWidth, vpH = fbHeight;
-            if (cameraAspect > windowAspect)
-            {
-                // Camera wider than window: pillarbox (bars top/bottom)
-                vpW = fbWidth;
-                vpH = static_cast<int>(fbWidth / cameraAspect);
-                vpY = (fbHeight - vpH) / 2;
-            }
-            else
-            {
-                // Camera taller than window: letterbox (bars left/right)
-                vpH = fbHeight;
-                vpW = static_cast<int>(fbHeight * cameraAspect);
-                vpX = (fbWidth - vpW) / 2;
-            }
-
+            // FIXME: anything specific to glfw shouldn't be called here
+            // Window.h should handle this as well
             glViewport(vpX, vpY, vpW, vpH);
 
             glm::mat4 proj = glm::ortho(0.0f, w, 0.0f, h, cam.nearClip, cam.farClip);
-            glm::mat4 view = glm::translate(glm::mat4(1.0f), -transform.position);
+            glm::mat4 view = glm::translate(glm::mat4(1.0f), -camTransform.position);
 
             m_gameCamera.setProjectionMatrix(proj);
             m_gameCamera.setViewMatrix(view);

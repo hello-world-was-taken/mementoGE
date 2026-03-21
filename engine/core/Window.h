@@ -6,10 +6,15 @@
 
 #include "util/Time.h"
 
-#include <iostream>
-#include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
+#include <imgui.h>
+#include <iostream>
+
+struct Viewport
+{
+    int x, y, width, height;
+};
 
 // TODO: Window should not have an api that exposes internal
 // libraries it uses like GLFW. The user should be able to
@@ -21,6 +26,8 @@ public:
     Window();
     ~Window();
 
+    static Window *instance();
+
     static void frameBufferSizeResizeCallback(GLFWwindow *window, int width, int height);
     static float getWindowTime();
 
@@ -30,12 +37,15 @@ public:
     void setUserData(EditorCamera *c);
     GLFWwindow *getGlfwWindow();
 
-    float getWidth() const;
-    float getHeight() const;
+    std::pair<int, int> getFrameBufferSize() const;
+    std::pair<int, int> getWindowSize() const;
+
+    Viewport getViewportForAspect(float targetAspect) const;
 
     void closeWindow();
 
 private:
+    static Window *s_instance;
     GLFWwindow *m_glfw_window;
     void setupWindowHints() const;
 };
