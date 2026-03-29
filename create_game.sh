@@ -42,6 +42,15 @@ git submodule add https://github.com/hello-world-was-taken/mementoGE.git "game/l
   echo "Warning: git submodule add failed. Ensure this directory is a git repo and that 'game/lib/memento' is unique." >&2
 }
 
+# Ensure mementoGE's own submodules are initialized (engine dependencies)
+if [ -d "${GAME_ROOT}/game/lib/memento" ]; then
+  cd "${GAME_ROOT}/game/lib/memento"
+  git submodule update --init --recursive >/dev/null 2>&1 || {
+    echo "Warning: failed to recursively initialize mementoGE submodules. You may need to run 'git submodule update --init --recursive' manually inside game/lib/memento." >&2
+  }
+  cd "${GAME_ROOT}"
+fi
+
 # Create minimal starter files directly (no dependency on an existing project layout)
 cat > "${GAME_ROOT}/main.cpp" << 'EOF'
 #include <iostream>
