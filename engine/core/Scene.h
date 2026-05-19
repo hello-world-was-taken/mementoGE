@@ -8,7 +8,6 @@
 
 #include "util/log_error.h"
 
-#include "opengl/Shader.h"
 #include "opengl/Texture.h"
 
 #include "physics/Physics2D.h"

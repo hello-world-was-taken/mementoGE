@@ -6,6 +6,7 @@
 #include "core/GameObject.h"
 
 #include "opengl/Vertex.h"
+#include "opengl/Shader.h"
 
 #include "renderer/RenderBatch.h"
 
@@ -27,4 +28,5 @@ private:
     std::unique_ptr<RenderBatch> m_batch;
     std::vector<Vertex> m_vertices;
     std::vector<unsigned int> m_indices;
+    std::shared_ptr<Shader> m_currentShader = nullptr;
 };

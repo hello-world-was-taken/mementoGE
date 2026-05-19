@@ -1,6 +1,9 @@
 #include "core/components/ParticleEmitter.h"
+#include "core/components/ShaderEffectRequest.h"
 #include "core/components/Sprite.h"
 #include "core/components/Text.h"
+
+#include "core/GlResourceManager.h"
 
 #include "renderer/SpriteRenderer.h"
 #include "renderer/util.h"
@@ -10,6 +13,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <iostream>
+#include <memory>
 
 static std::array<glm::vec3, 4> makeQuadFromCenter(const glm::vec3 &center, float size)
 {
@@ -51,7 +55,8 @@ void SpriteRenderer::render(const CameraOld &camera, const std::vector<GameObjec
     size_t quadCount = m_vertices.size() / 4;
     size_t indexCount = quadCount * 6;
 
-    m_batch->render(camera, indexCount);
+    m_batch->render(camera, indexCount, m_currentShader);
+    m_currentShader = nullptr; // reset to default shader after rendering
 }
 
 void SpriteRenderer::updateVertices(const std::vector<GameObject> &gameObjects)
@@ -118,6 +123,21 @@ void SpriteRenderer::updateVertices(const std::vector<GameObject> &gameObjects)
                 m_vertices.push_back(makeVertex(quad[2], p.color, {0.0f, 0.0f}, texSlot));
                 m_vertices.push_back(makeVertex(quad[3], p.color, {0.0f, 0.0f}, texSlot));
             }
+        }
+
+        // TODO: test ShaderEffectRequest rendering
+        if (gameObject.hasComponent<ShaderEffectRequest>())
+        {
+            ShaderEffectRequest &effectRequest = gameObject.getComponent<ShaderEffectRequest>();
+
+            GlResourceManager &resourceManager = GlResourceManager::instance();
+            std::shared_ptr<Shader> shader =
+                resourceManager.getShaderProgram(effectRequest.vertexShaderPath, effectRequest.fragmentShaderPath);
+            m_currentShader = shader;
+
+            std::cout << "ShaderEffectRequest found for GameObject with vertex shader: "
+                      << effectRequest.vertexShaderPath << " and fragment shader: " << effectRequest.fragmentShaderPath
+                      << std::endl;
         }
     }
 }
