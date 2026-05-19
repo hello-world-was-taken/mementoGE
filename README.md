@@ -49,6 +49,39 @@ After compiling, you can run the engine like so:
 
 ---
 
+## Creating a New Game with the Template Script
+
+Helper script that bootstraps a minimal game project wired up to the engine.
+
+Download just the script via `curl` and run it:
+
+```bash
+# Download and run the script directly in an empty folder
+curl -o create_game.sh https://raw.githubusercontent.com/hello-world-was-taken/mementoGE/main/create_game.sh
+chmod +x create_game.sh
+./create_game.sh MyNewGame
+```
+
+The script will:
+
+- Create a new folder `MyNewGame/`.
+- Initialize a git repository inside it (if one does not already exist).
+- Create a `game/` subfolder with `assets/`, `components/`, `lib/`, and `systems/` directories.
+- Add MementoGE as a git submodule under `game/lib/memento`.
+- Generate `main.cpp`, `CMakeLists.txt`, `build.sh`, `run.sh`, a basic `.clang-format`, and VS Code launch/tasks configs.
+
+To build and run the new game:
+
+```bash
+cd MyNewGame
+./build.sh
+./run.sh
+```
+
+You can then start adding your own game code under `game/` (e.g. new systems, components, and assets) and wire it into `main.cpp` and the generated CMakeLists.
+
+---
+
 ## Integrating MementoGE into a Game CMake Project
 
 When you embed MementoGE into a larger game project, the top-level CMakeLists (the _game_ CMake) is expected to provide a small set of configuration variables and options that the engine uses.

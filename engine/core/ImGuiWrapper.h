@@ -11,6 +11,7 @@ namespace ImGuiWrapper
 {
 void setupImgui(Window &window);
 void beginDockspace();
+void buildInitialLayout();
 void ImGuiFrame(const std::function<void()> &func);
 void SetupStyle();
 

@@ -12,6 +12,7 @@
 #include <filesystem>
 #include <functional>
 #include <imgui.h>
+#include <imgui/imgui_internal.h>
 #include <memory>
 
 void ImGuiWrapper::setupImgui(Window &window)
@@ -78,13 +79,84 @@ void ImGuiWrapper::beginDockspace()
     }
 
     ImGuiIO &io = ImGui::GetIO();
-    if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+    if (!(io.ConfigFlags & ImGuiConfigFlags_DockingEnable))
     {
-        ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-        ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+        return;
     }
 
+    ImGuiID dockspace_id = ImGui::GetID("MementoDockspace");
+    buildInitialLayout();
+    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+
     ImGui::End();
+}
+
+void ImGuiWrapper::buildInitialLayout()
+{
+    ImGuiIO &io = ImGui::GetIO();
+    if (!(io.ConfigFlags & ImGuiConfigFlags_DockingEnable))
+    {
+        return;
+    }
+
+    // If an ini file already exists, let ImGui load and manage layout
+    // rather than overriding it with a hard-coded default.
+    if (std::filesystem::exists("imgui.ini"))
+    {
+        return;
+    }
+
+    static bool initialized = false;
+    if (initialized)
+    {
+        return;
+    }
+    initialized = true;
+
+    ImGuiID dockspace_id = ImGui::GetID("MementoDockspace");
+    ImGui::DockBuilderRemoveNode(dockspace_id);
+    ImGui::DockBuilderAddNode(dockspace_id, ImGuiDockNodeFlags_DockSpace);
+    std::cout << "Size of main viewport: " << ImGui::GetMainViewport()->Size.x << "x"
+              << ImGui::GetMainViewport()->Size.y << std::endl;
+    ImGui::DockBuilderSetNodeSize(dockspace_id, ImGui::GetMainViewport()->Size);
+
+    ImGuiID dock_main_id = dockspace_id;
+    ImGuiID dock_right_id;
+    ImGuiID dock_left_id;
+    ImGuiID dock_bottom_id;
+    ImGuiID dock_top_id;
+    ImGuiID dock_top_left_id;
+    ImGuiID dock_top_center_id;
+    ImGuiID dock_right_top_id;
+    ImGuiID dock_right_bottom_id;
+
+    ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Right, 0.24f, &dock_right_id, &dock_main_id);
+    dock_left_id = dock_main_id;
+
+    ImGui::DockBuilderSplitNode(dock_left_id, ImGuiDir_Down, 0.27f, &dock_bottom_id, &dock_left_id);
+    dock_top_id = dock_left_id;
+
+    ImGui::DockBuilderSplitNode(dock_top_id, ImGuiDir_Left, 0.19f, &dock_top_left_id, &dock_top_center_id);
+
+    ImGui::DockBuilderSplitNode(dock_right_id, ImGuiDir_Down, 0.37f, &dock_right_bottom_id, &dock_right_top_id);
+
+    ImGui::DockBuilderDockWindow("Hierarchy", dock_top_left_id);
+    ImGui::DockBuilderDockWindow("###ScenePanel", dock_top_center_id);
+
+    ImGui::DockBuilderDockWindow("Assets", dock_bottom_id);
+    ImGui::DockBuilderDockWindow("Texture Resources", dock_bottom_id);
+    ImGui::DockBuilderDockWindow("Sprites", dock_bottom_id);
+    ImGui::DockBuilderDockWindow("Animations", dock_bottom_id);
+    ImGui::DockBuilderDockWindow("Scenes", dock_bottom_id);
+    ImGui::DockBuilderDockWindow("Performance Stats", dock_bottom_id);
+    ImGui::DockBuilderDockWindow("Dear ImGui Metrics/Debugger", dock_bottom_id);
+    ImGui::DockBuilderDockWindow("Sprite Sheet Editor", dock_bottom_id);
+
+    ImGui::DockBuilderDockWindow("Properties", dock_right_top_id);
+    ImGui::DockBuilderDockWindow("Context", dock_right_top_id);
+    ImGui::DockBuilderDockWindow("Bound Textures##AssetsPanel", dock_right_bottom_id);
+
+    ImGui::DockBuilderFinish(dockspace_id);
 }
 
 void ImGuiWrapper::ImGuiFrame(const std::function<void()> &func)
@@ -223,8 +295,13 @@ bool ImGuiWrapper::ImageButtonFixedHeight(Sprite &sprite)
     if (texW <= 0.0f || texH <= 0.0f)
     {
         // fallback: draw a small square placeholder button
-        bool clicked = ImGui::ImageButton("invalidsize", texId, ImVec2(fixed_height, fixed_height),
-            ImVec2(uv0[0], uv0[1]), ImVec2(uv1[0], uv1[1]), ImVec4(0, 0, 0, 0), tintColor);
+        bool clicked = ImGui::ImageButton("invalidsize",
+            texId,
+            ImVec2(fixed_height, fixed_height),
+            ImVec2(uv0[0], uv0[1]),
+            ImVec2(uv1[0], uv1[1]),
+            ImVec4(0, 0, 0, 0),
+            tintColor);
 
         ImGui::PopID();
         return clicked;
