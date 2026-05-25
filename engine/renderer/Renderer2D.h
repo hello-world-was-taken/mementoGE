@@ -8,12 +8,14 @@
 #include "renderer/CameraBoundsRenderer.h"
 #include "renderer/GridRenderer.h"
 #include "renderer/PhysicsRenderer.h"
+#include "renderer/RenderBatch.h"
 #include "renderer/RendererType.h"
 #include "renderer/SelectionRenderer.h"
 #include "renderer/SpriteRenderer.h"
 
 #include "opengl/FrameBuffer.h"
 
+#include <memory>
 #include <vector>
 
 class Renderer2D
@@ -30,9 +32,15 @@ public:
     unsigned int getColorTexture();
 
 private:
-    void renderLayers(const CameraOld &camera, const std::vector<GameObject> &objects);
-
+    void renderLayers(const CameraOld &camera, const std::vector<GameObject> &gameObjects);
     bool hasRendererTypeEnabled(RendererType flag);
+    void renderSprites(const CameraOld &camera, const std::vector<GameObject> &gameObjects);
+    void renderSelection(const CameraOld &camera, const std::vector<GameObject> &selectedObjects);
+
+    // TODOs
+    void renderGrid(const CameraOld &camera);
+    void renderPhysics(const CameraOld &camera, const std::vector<GameObject> &gameObjects);
+    void renderCameraBounds(const CameraOld &camera);
 
 public:
     // FIXME: making it public for testing purposes.
@@ -51,4 +59,9 @@ private:
     int m_height = 0;
 
     glm::vec4 clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
+
+    std::unique_ptr<RenderBatch> m_batch;
+    std::vector<Vertex> m_vertices;
+    std::vector<unsigned int> m_indices;
+    std::shared_ptr<Shader> m_activeShader = nullptr;
 };

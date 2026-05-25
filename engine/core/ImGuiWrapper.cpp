@@ -1,5 +1,6 @@
 #include "core/components/Sprite.h"
 
+#include "core/EventHandler.h"
 #include "core/GLIncludes.h"
 #include "core/IconsFontAwesome4.h"
 #include "core/ImGuiWrapper.h"
@@ -159,8 +160,61 @@ void ImGuiWrapper::buildInitialLayout()
     ImGui::DockBuilderFinish(dockspace_id);
 }
 
+void ImGuiWrapper::applySmoothScrolling()
+{
+    ImGuiIO &io = ImGui::GetIO();
+    EventHandler *eventHandler = EventHandler::instance();
+
+    const float scrollMultiplier = 0.5f;
+    const float scrollSmoothing = 8.0f;
+    static ImVec2 scrollEnergy = ImVec2(0.0f, 0.0f);
+
+    glm::vec2 scrollDelta = eventHandler->getScrollDelta();
+
+    scrollDelta.x *= scrollMultiplier;
+    scrollDelta.y *= scrollMultiplier;
+    // Immediately stop if direction changes
+    if (scrollEnergy.x * scrollDelta.x < 0.0f)
+    {
+        scrollEnergy.x = 0.0f;
+    }
+    if (scrollEnergy.y * scrollDelta.y < 0.0f)
+    {
+        scrollEnergy.y = 0.0f;
+    }
+    scrollEnergy.x += scrollDelta.x;
+    scrollEnergy.y += scrollDelta.y;
+
+    // Apply smooth scrolling (MUST be before ImGui::NewFrame())
+    ImVec2 scroll_now = ImVec2(0.0f, 0.0f);
+    if (std::abs(scrollEnergy.x) > 0.01f)
+    {
+        scroll_now.x = scrollEnergy.x * io.DeltaTime * scrollSmoothing;
+        scrollEnergy.x -= scroll_now.x;
+    }
+    else
+    {
+        // Cutoff smoothing when it's basically stopped
+        scrollEnergy.x = 0.0f;
+    }
+    if (std::abs(scrollEnergy.y) > 0.01f)
+    {
+        scroll_now.y = scrollEnergy.y * io.DeltaTime * scrollSmoothing;
+        scrollEnergy.y -= scroll_now.y;
+    }
+    else
+    {
+        // Cutoff smoothing when it's basically stopped
+        scrollEnergy.y = 0.0f;
+    }
+
+    io.AddMouseWheelEvent(-scroll_now.x, scroll_now.y);
+}
+
 void ImGuiWrapper::ImGuiFrame(const std::function<void()> &func)
 {
+    applySmoothScrolling();
+
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
@@ -248,7 +302,10 @@ void ImGuiWrapper::SetupStyle()
 
     // Setup fonts
     ImGuiIO &io = ImGui::GetIO();
-    io.Fonts->AddFontDefault();
+
+    ImFontConfig baseConfig;
+    baseConfig.SizePixels = 13.0f;
+    io.Fonts->AddFontDefault(&baseConfig);
 
     ImFontConfig config;
     config.MergeMode = true;
@@ -256,6 +313,7 @@ void ImGuiWrapper::SetupStyle()
     static const ImWchar icon_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
     std::filesystem::path fontPath = getFilePath("fonts/fontawesome-webfont.ttf");
     io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 13.0f, &config, icon_ranges);
+    io.Fonts->Flags |= ImFontFlags_ImplicitRefSize;
 }
 
 bool ImGuiWrapper::InputTextSimple(const char *label, std::string &value)
@@ -314,4 +372,75 @@ bool ImGuiWrapper::ImageButtonFixedHeight(Sprite &sprite)
 
     ImGui::PopID();
     return isClicked;
+}
+
+std::pair<bool, glm::vec3> ImGuiWrapper::PixelAwareImageButton(Sprite &sprite, float fixed_height)
+{
+    const ImVec4 tintColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+    const ImVec4 bgColor = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+
+    std::shared_ptr<Texture> &texture = sprite.texture;
+    float texW = texture->getWidth();
+    float texH = texture->getHeight();
+    unsigned int texId = texture->getTextureId();
+
+    std::array<glm::vec2, 4> textureCoordinates = sprite.getNormalizedTextureCoordinates();
+    glm::vec2 uv0 = textureCoordinates[0]; // topLeft
+    glm::vec2 uv1 = textureCoordinates[2]; // bottomRight
+
+    glm::vec3 colorAtPixel(0, 0, 0); // default to black if not hovered or invalid size
+
+    ImGui::PushID(sprite.getId());
+    // Protect against invalid texture size
+    if (texW <= 0.0f || texH <= 0.0f)
+    {
+        // fallback: draw a small square placeholder button
+        bool clicked = ImGui::ImageButton("invalidsize",
+            texId,
+            ImVec2(fixed_height, fixed_height),
+            ImVec2(uv0[0], uv0[1]),
+            ImVec2(uv1[0], uv1[1]),
+            ImVec4(0, 0, 0, 0),
+            tintColor);
+
+        ImGui::PopID();
+        return {clicked, colorAtPixel};
+    }
+
+    const float aspect = texW / texH;
+    const float width = fixed_height * aspect;
+
+    // Remove the default style padding and color to make it easier to get accurate pixel coordinates and not have to
+    // worry about padding
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0, 0, 0, 0));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0, 0, 0));
+
+    bool isClicked = ImGui::ImageButton(
+        "", texId, ImVec2(width, fixed_height), ImVec2(uv0[0], uv0[1]), ImVec2(uv1[0], uv1[1]), bgColor, tintColor);
+
+    // remove the style changes after the button so they don't affect other UI elements
+    ImGui::PopStyleColor(3);
+    ImGui::PopStyleVar(2);
+
+    // ImGui::Image(texId, {width, fixed_height}, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f));
+    if (ImGui::IsItemHovered())
+    {
+        // Get mouse position relative to the top-left corner of the image button
+        ImVec2 mousePos = ImGui::GetMousePos();
+        ImVec2 buttonPos = ImGui::GetItemRectMin();
+
+        ImVec2 relativePos = ImVec2(mousePos.x - buttonPos.x, mousePos.y - buttonPos.y);
+
+        // Convert relative position to pixel coordinates in the texture
+        int pixelX = static_cast<int>((relativePos.x / width) * texW);
+        int pixelY = static_cast<int>((relativePos.y / fixed_height) * texH);
+
+        colorAtPixel = texture->getColorAtPixel(pixelX, pixelY);
+    }
+
+    ImGui::PopID();
+    return {false, colorAtPixel};
 }

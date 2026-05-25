@@ -170,6 +170,21 @@ Inside MementoGE, the engine's CMake checks the same `EDITOR_BUILD` option and, 
   elseif(NOT WIN32)
   ```
 
+- **[Dear ImGui](https://github.com/hello-world-was-taken/imgui)** — Fork of `ocornut/imgui`. The fork keeps the GLFW backend from submitting raw mouse wheel input directly to ImGui, so MementoGE can route scroll events through its own event system and apply frame-based smoothing in `ImGuiWrapper::applySmoothScrolling()` before `ImGui::NewFrame()`. This avoids duplicate wheel input while making touchpad and mouse-wheel scrolling feel less abrupt in editor panels.
+
+  Upstream:
+
+  ```cpp
+  io.AddMouseWheelEvent((float)xoffset, (float)yoffset);
+  ```
+
+  Fork:
+
+  ```cpp
+  // MementoGE handles wheel smoothing before ImGui::NewFrame().
+  // io.AddMouseWheelEvent((float)xoffset, (float)yoffset);
+  ```
+
 ## Development Notes
 
 ### Animation Support

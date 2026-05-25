@@ -1,6 +1,7 @@
 #pragma once
 
 #include <GL/glew.h>
+#include <glm/glm.hpp>
 #include <yaml-cpp/yaml.h>
 
 class Texture
@@ -20,6 +21,8 @@ public:
     int getWidth() const;
     int getHeight() const;
     std::string getFilePath() const;
+
+    glm::vec3 getColorAtPixel(int x, int y) const;
 
     // TODO: Should I even have this here? Since it is an abstraction of OpenGL.
     void serialize(YAML::Emitter &out);

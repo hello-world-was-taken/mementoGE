@@ -1,6 +1,7 @@
 #include "editor/panels/SpriteSheetEditorPanel.h"
 
 #include "core/GlResourceManager.h"
+#include "core/ImGuiWrapper.h"
 
 #include "opengl/Texture.h"
 
@@ -388,6 +389,7 @@ void SpriteSheetEditorPanel::draw()
     ImVec2 imageSize{texWidth * scale, texHeight * scale};
 
     ImTextureID texId = (ImTextureID)(uintptr_t)m_texture->getTextureId();
+    Sprite sprite{{0, 0}, static_cast<float>(texWidth), static_cast<float>(texHeight), m_texture};
 
     ImGui::TextUnformatted(currentName.c_str());
     ImGui::Image(texId, imageSize, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f));
@@ -529,6 +531,15 @@ void SpriteSheetEditorPanel::draw()
     {
         ImGui::Text("Last Output: %s", m_lastOutputPath.c_str());
     }
+
+    auto [clicked, pixelColor] = ImGuiWrapper::PixelAwareImageButton(sprite, 400);
+
+    // add color preview
+    ImVec4 colorPreview = ImVec4(pixelColor.r / 255.0f, pixelColor.g / 255.0f, pixelColor.b / 255.0f, 1.0f);
+    ImGui::SameLine();
+    ImGui::ColorButton("Pixel Color", colorPreview, ImGuiColorEditFlags_None);
+    ImGui::SameLine();
+    ImGui::Text("Pixel Color: (%.2f, %.2f, %.2f)", colorPreview.x, colorPreview.y, colorPreview.z);
 
     ImGui::End();
 }

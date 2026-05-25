@@ -21,10 +21,11 @@ Texture::Texture(const char *texturePath, unsigned int textureUnit, bool isTextu
 
     generateTexture();
 
-    if (m_textureBuffer)
-    {
-        stbi_image_free(m_textureBuffer);
-    }
+    // FIXME: Not clearing the texture buffer since we use it to access the pixel data in PixelAwareImGuiImage. We
+    // should have a better way to manage this since we don't need it in game mode. if (m_textureBuffer)
+    // {
+    //     stbi_image_free(m_textureBuffer);
+    // }
 }
 
 Texture::Texture(unsigned char *textureBuffer, unsigned int textureUnit, unsigned int width, unsigned int height)
@@ -122,6 +123,25 @@ int Texture::getHeight() const
 std::string Texture::getFilePath() const
 {
     return m_texturePath;
+}
+
+glm::vec3 Texture::getColorAtPixel(int x, int y) const
+{
+    if (x < 0 || x >= m_width || y < 0 || y >= m_height)
+    {
+        std::cerr << "Pixel coordinates (" << x << ", " << y << ") are out of bounds for texture of size (" << m_width
+                  << ", " << m_height << ")" << std::endl;
+        // throw std::out_of_range("Pixel coordinates are out of bounds")
+        return glm::vec3(0, 0, 0);
+    }
+
+    int index = (y * m_width + x) * m_nrChannels;
+    unsigned char r = m_textureBuffer[index];
+    unsigned char g = (m_nrChannels > 1) ? m_textureBuffer[index + 1] : 0;
+    unsigned char b = (m_nrChannels > 2) ? m_textureBuffer[index + 2] : 0;
+
+    // TODO: should we return glm::vec4 and include alpha?
+    return glm::vec3(r, g, b);
 }
 
 // TODO: Add other properties to serialize

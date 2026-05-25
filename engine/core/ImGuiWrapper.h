@@ -12,12 +12,14 @@ namespace ImGuiWrapper
 void setupImgui(Window &window);
 void beginDockspace();
 void buildInitialLayout();
+void applySmoothScrolling();
 void ImGuiFrame(const std::function<void()> &func);
 void SetupStyle();
 
 // resuable components
 bool InputTextSimple(const char *label, std::string &value);
 bool ImageButtonFixedHeight(Sprite &sprite);
+std::pair<bool, glm::vec3> PixelAwareImageButton(Sprite &sprite, float fixed_height = 32.0f);
 
 template <typename Func> void Collapsable(const std::string &headerName, Func content);
 }; // namespace ImGuiWrapper

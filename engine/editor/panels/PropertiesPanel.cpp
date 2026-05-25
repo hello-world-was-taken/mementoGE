@@ -72,7 +72,7 @@ void PropertiesPanel::renderPropertiesInPopup()
     ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_Appearing);
     if (ImGui::BeginPopup("PropertiesPopup"))
     {
-        ImGui::BeginChild("PropertiesScrollRegion", ImVec2(0, 0), false, ImGuiWindowFlags_AlwaysUseWindowPadding);
+        ImGui::BeginChild("PropertiesScrollRegion", ImVec2(0, 0), false, ImGuiChildFlags_AlwaysUseWindowPadding);
 
         renderPropertiesPanel();
 
