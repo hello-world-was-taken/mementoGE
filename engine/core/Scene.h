@@ -30,7 +30,6 @@ public:
     {
         std::string name;
         bool enabled = true;
-        bool runsInEditMode = false;
         double lastUpdateMilliseconds = 0.0;
     };
 
@@ -43,12 +42,10 @@ public:
     Scene(Scene &&other) noexcept;      // move constructor
     Scene &operator=(Scene &&other);    // move assignment operator
 
-    void update();
+    void update(bool editMode = false);
 
     void play();
     void pause();
-    void animate();
-
     GameObject &getPlayer();
     Scene clone(std::string tag);
 
@@ -61,12 +58,6 @@ public:
     std::vector<SystemInfo> getSystemInfo() const;
     bool setSystemEnabled(const std::string &systemName, bool enabled);
     void setAllSystemsEnabled(bool enabled);
-    bool isPhysicsEnabled() const;
-    void setPhysicsEnabled(bool enabled);
-    double getLastPhysicsUpdateMilliseconds() const;
-    bool isAnimationEnabled() const;
-    void setAnimationEnabled(bool enabled);
-    double getLastAnimationUpdateMilliseconds() const;
     void addRigidBody2DToWorld();
     void setGravity(glm::vec2 gravity);
 
@@ -83,11 +74,12 @@ private:
     struct SystemEntry
     {
         std::string name;
-        std::shared_ptr<ISystem> system;
-        bool enabled = true;
+        std::unique_ptr<ISystem> system;
+        bool enabled = false;
         double lastUpdateMilliseconds = 0.0;
     };
 
+    void addSystemEntry(std::string name, std::unique_ptr<ISystem> system);
     // Remove any GameObject wrappers whose underlying entt entity was destroyed.
     void cleanupDestroyedGameObjects();
     void bindRigidBodyDestroyCallback();
@@ -104,8 +96,4 @@ private:
     std::vector<GameObject> m_gameObjects;
 
     std::vector<SystemEntry> m_systems;
-    bool m_physicsEnabled = true;
-    bool m_animationEnabled = true;
-    double m_lastPhysicsUpdateMilliseconds = 0.0;
-    double m_lastAnimationUpdateMilliseconds = 0.0;
 };

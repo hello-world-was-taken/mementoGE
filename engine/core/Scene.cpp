@@ -1,11 +1,7 @@
-#include "core/components/BoxCollider2D.h"
 #include "core/components/EntityInfo.h"
-#include "core/components/Sprite.h"
 
 #include "core/Scene.h"
 #include "core/SystemRegistry.h"
-#include "core/components/Animator.h"
-#include "core/components/Sensor2D.h"
 
 #include "util/LogChannels.h"
 #include "util/Time.h"
@@ -32,10 +28,7 @@ Scene::Scene(const YAML::Node &&serializedScene) : m_registry{}
 
 Scene::Scene(Scene &&other) noexcept
     : m_registry(std::move(other.m_registry)), m_physicsWorld(std::move(other.m_physicsWorld)),
-      m_textures(std::move(other.m_textures)), m_systems(std::move(other.m_systems)), mTag(std::move(other.mTag)),
-      m_physicsEnabled(other.m_physicsEnabled), m_animationEnabled(other.m_animationEnabled),
-      m_lastPhysicsUpdateMilliseconds(other.m_lastPhysicsUpdateMilliseconds),
-      m_lastAnimationUpdateMilliseconds(other.m_lastAnimationUpdateMilliseconds)
+      m_textures(std::move(other.m_textures)), m_systems(std::move(other.m_systems)), mTag(std::move(other.mTag))
 {
     bindRigidBodyDestroyCallback();
     // Move game objects while rebinding registry
@@ -58,10 +51,6 @@ Scene &Scene::operator=(Scene &&other)
         m_textures = std::move(other.m_textures);
         m_systems = std::move(other.m_systems);
         mTag = std::move(other.mTag);
-        m_physicsEnabled = other.m_physicsEnabled;
-        m_animationEnabled = other.m_animationEnabled;
-        m_lastPhysicsUpdateMilliseconds = other.m_lastPhysicsUpdateMilliseconds;
-        m_lastAnimationUpdateMilliseconds = other.m_lastAnimationUpdateMilliseconds;
 
         // Move game objects while rebinding registry
         m_gameObjects.clear();
@@ -105,60 +94,27 @@ Scene Scene::clone(std::string tag)
     return Scene{std::move(serializedScene)};
 }
 
-void Scene::update()
+void Scene::update(bool editMode)
 {
-    if (m_play)
+    if (!m_play && !editMode)
     {
-        // In play mode, run all systems.
-        for (auto &entry : m_systems)
-        {
-            if (!entry.enabled)
-            {
-                continue;
-            }
-            const auto start = std::chrono::steady_clock::now();
-            entry.system->update(m_registry);
-            entry.lastUpdateMilliseconds =
-                std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
-        }
-
-        // Keep the GameObject list in sync with the registry in runtime.
-        cleanupDestroyedGameObjects();
-
-        // Advance animation before physics so frame-bound sensors match the displayed frame.
-        if (m_animationEnabled)
-        {
-            const auto start = std::chrono::steady_clock::now();
-            animate();
-            m_lastAnimationUpdateMilliseconds =
-                std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
-        }
-
-        // physics should be updated last as other systems make updates to it
-        if (m_physicsEnabled)
-        {
-            const auto start = std::chrono::steady_clock::now();
-            m_physicsWorld.simulate(Time::deltaTime(), m_registry);
-            m_lastPhysicsUpdateMilliseconds =
-                std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
-        }
+        return;
     }
-    else
+
+    SystemContext context{m_registry, m_physicsWorld, Time::deltaTime(), editMode};
+    for (auto &entry : m_systems)
     {
-        // When not playing (editor mode), run only systems that should
-        // affect the editor view. For now, always run TextLayoutSystem
-        // so text anchoring updates while editing.
-        for (auto &entry : m_systems)
+        if (!entry.enabled)
         {
-            if (entry.enabled && entry.name == "TextLayoutSystem")
-            {
-                const auto start = std::chrono::steady_clock::now();
-                entry.system->update(m_registry);
-                entry.lastUpdateMilliseconds =
-                    std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
-            }
+            continue;
         }
+        const auto start = std::chrono::steady_clock::now();
+        entry.system->update(context);
+        entry.lastUpdateMilliseconds =
+            std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
     }
+
+    cleanupDestroyedGameObjects();
 }
 
 void Scene::cleanupDestroyedGameObjects()
@@ -190,97 +146,6 @@ void Scene::play()
 void Scene::pause()
 {
     m_play = false;
-}
-
-void Scene::animate()
-{
-    auto view = m_registry.view<Animator>();
-    for (auto entity : view)
-    {
-        auto &animator = view.get<Animator>(entity);
-
-        // No animation selected or empty animator component
-        if (animator.currentAnimation.empty())
-        {
-            continue;
-        }
-
-        // Check if the entity has a Sprite. Create one if not present
-        // TODO: should we remove this check for the actual game? Perf improvement
-        if (!m_registry.any_of<Sprite>(entity))
-        {
-            m_registry.emplace<Sprite>(entity);
-        }
-        animator.update();
-
-        auto &sprite = m_registry.get<Sprite>(entity);
-        bool flipX = sprite.flipX;
-        bool flipY = sprite.flipY;
-
-        sprite = animator.getCurrentSprite();
-
-        // Restore flip values
-        sprite.flipX = flipX;
-        sprite.flipY = flipY;
-
-        if (m_registry.any_of<BoxCollider2D>(entity))
-        {
-            auto &collider = m_registry.get<BoxCollider2D>(entity);
-            collider.resetAnimationState();
-
-            for (const auto &pose : animator.getCurrentFrame().colliderShapes)
-            {
-                BoxColliderShape2D *shape = collider.findShape(pose.name);
-                if (!shape)
-                {
-                    continue;
-                }
-                if (pose.size)
-                {
-                    shape->animatedSize = *pose.size;
-                }
-                if (pose.offset)
-                {
-                    shape->animatedOffset = *pose.offset;
-                }
-                if (pose.rotation)
-                {
-                    shape->animatedRotation = *pose.rotation;
-                }
-                if (pose.active)
-                {
-                    shape->animatedActive = *pose.active;
-                }
-            }
-        }
-
-        if (m_registry.any_of<Sensor2D>(entity))
-        {
-            auto &sensor = m_registry.get<Sensor2D>(entity);
-            sensor.resetAnimationState();
-
-            for (const auto &pose : animator.getCurrentFrame().sensorShapes)
-            {
-                SensorShape2D *shape = sensor.findShape(pose.name);
-                if (!shape)
-                {
-                    continue;
-                }
-                if (pose.size)
-                {
-                    shape->animatedSize = *pose.size;
-                }
-                if (pose.offset)
-                {
-                    shape->animatedOffset = *pose.offset;
-                }
-                if (pose.active)
-                {
-                    shape->animatedActive = *pose.active;
-                }
-            }
-        }
-    }
 }
 
 GameObject &Scene::addGameObject(unsigned int width, unsigned int height, std::string &&tag)
@@ -399,6 +264,25 @@ const std::string &Scene::getTag() const
     return mTag;
 }
 
+void Scene::addSystemEntry(std::string name, std::unique_ptr<ISystem> system)
+{
+    const auto duplicate = std::find_if(m_systems.begin(),
+        m_systems.end(),
+        [&](const SystemEntry &entry) { return entry.name == name; });
+    if (duplicate != m_systems.end())
+    {
+        return;
+    }
+
+    m_systems.push_back({std::move(name), std::move(system), false, 0.0});
+    std::stable_sort(m_systems.begin(),
+        m_systems.end(),
+        [](const SystemEntry &left, const SystemEntry &right)
+        {
+            return left.system->executionOrder() < right.system->executionOrder();
+        });
+}
+
 void Scene::addSystem(const std::string &systemName)
 {
     const auto it = std::find_if(m_systems.begin(),
@@ -412,8 +296,12 @@ void Scene::addSystem(const std::string &systemName)
         return;
     }
 
-    std::shared_ptr<ISystem> system = SystemRegistry::instance().get(systemName);
-    m_systems.push_back({systemName, std::move(system)});
+    auto created = SystemRegistry::instance().create(systemName);
+    if (!created)
+    {
+        return;
+    }
+    addSystemEntry(systemName, std::move(created));
 }
 
 std::vector<Scene::SystemInfo> Scene::getSystemInfo() const
@@ -422,7 +310,7 @@ std::vector<Scene::SystemInfo> Scene::getSystemInfo() const
     result.reserve(m_systems.size());
     for (const auto &entry : m_systems)
     {
-        result.push_back({entry.name, entry.enabled, entry.name == "TextLayoutSystem", entry.lastUpdateMilliseconds});
+        result.push_back({entry.name, entry.enabled, entry.lastUpdateMilliseconds});
     }
     return result;
 }
@@ -439,58 +327,16 @@ bool Scene::setSystemEnabled(const std::string &systemName, bool enabled)
     {
         return false;
     }
-    if (it->enabled == enabled)
-    {
-        return true;
-    }
     it->enabled = enabled;
-    if (enabled)
-    {
-        it->system->onEnabled(m_registry);
-    }
-    else
-    {
-        it->system->onDisabled(m_registry);
-    }
     return true;
 }
 
 void Scene::setAllSystemsEnabled(bool enabled)
 {
-    for (const auto &entry : m_systems)
+    for (auto &entry : m_systems)
     {
-        setSystemEnabled(entry.name, enabled);
+        entry.enabled = enabled;
     }
-}
-
-bool Scene::isPhysicsEnabled() const
-{
-    return m_physicsEnabled;
-}
-
-void Scene::setPhysicsEnabled(bool enabled)
-{
-    m_physicsEnabled = enabled;
-}
-
-double Scene::getLastPhysicsUpdateMilliseconds() const
-{
-    return m_lastPhysicsUpdateMilliseconds;
-}
-
-bool Scene::isAnimationEnabled() const
-{
-    return m_animationEnabled;
-}
-
-void Scene::setAnimationEnabled(bool enabled)
-{
-    m_animationEnabled = enabled;
-}
-
-double Scene::getLastAnimationUpdateMilliseconds() const
-{
-    return m_lastAnimationUpdateMilliseconds;
 }
 
 bool Scene::serialize(YAML::Emitter &out)

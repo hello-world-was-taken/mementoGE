@@ -40,7 +40,7 @@ public:
     AudioSystem(); // init device + context
     ~AudioSystem() = default;
 
-    void update(entt::registry &registry) override;
+    void update(SystemContext &context) override;
 
 private:
     UniqueDevicePtr m_device = nullptr;

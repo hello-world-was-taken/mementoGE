@@ -17,25 +17,36 @@
 #include <yaml-cpp/yaml.h>
 #endif
 
-void Animator::play(std::string name, bool loop)
+bool Animator::play(std::string name, bool loop)
 {
     auto it = animationSourceMap.find(name);
     if (it == animationSourceMap.end())
     {
-        LOG_WARN(LogChannel::Animator, "Animation '{}' not found", name);
-        name = "android";
-        animationSourceMap[name] = getGameAssetsPath("texture/android.json");
+        LOG_INFO(LogChannel::Animator, "Animation '{}' has no configured source", name);
+        return false;
     }
 
-    std::filesystem::path jsonPath = animationSourceMap[name];
+    std::filesystem::path jsonPath = it->second;
     if (jsonPath.is_relative())
     {
         jsonPath = getGameAssetsPath(jsonPath.string());
     }
     auto animMap = AssetManager::instance().getAnimationMap(jsonPath.string());
+    if (!animMap)
+    {
+        LOG_ERROR(LogChannel::Animator, "Could not load animation source '{}'", jsonPath.string());
+        return false;
+    }
+    auto animationIt = animMap->getAnimations().find(name);
+    if (animationIt == animMap->getAnimations().end())
+    {
+        LOG_INFO(LogChannel::Animator, "Animation '{}' not found in '{}'", name, jsonPath.string());
+        return false;
+    }
 
     currentAnimation = name;
-    animationPlayer.play(animMap->getAnimation(name), loop);
+    animationPlayer.play(animationIt->second, loop);
+    return true;
 }
 
 void Animator::update()

@@ -1,4 +1,5 @@
 #include "core/AudioSystem.h"
+#include "core/components/Transform.h"
 
 #include "core/components/AudioSource.h"
 
@@ -22,8 +23,9 @@ AudioSystem::AudioSystem()
     alcMakeContextCurrent(m_context.get());
 }
 
-void AudioSystem::update(entt::registry &registry)
+void AudioSystem::update(SystemContext &context)
 {
+    entt::registry &registry = context.registry;
     // Update listener (camera)
     updateListener(registry);
 

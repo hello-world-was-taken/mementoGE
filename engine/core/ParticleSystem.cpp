@@ -26,8 +26,9 @@ template <typename T> T random(T min, T max)
     }
 }
 
-void ParticleSystem::update(entt::registry &registry)
+void ParticleSystem::update(SystemContext &context)
 {
+    entt::registry &registry = context.registry;
     float dt = Time::deltaTime();
     auto view = registry.view<Transform, ParticleEmitter>();
 

@@ -12,5 +12,5 @@ public:
     TextLayoutSystem() = default;
     ~TextLayoutSystem() override = default;
 
-    void update(entt::registry &registry) override;
+    void update(SystemContext &context) override;
 };

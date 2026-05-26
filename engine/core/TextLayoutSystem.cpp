@@ -91,8 +91,9 @@ glm::vec2 computeAnchorPosition(
 }
 } // namespace
 
-void TextLayoutSystem::update(entt::registry &registry)
+void TextLayoutSystem::update(SystemContext &context)
 {
+    entt::registry &registry = context.registry;
     // For every entity that has Text + TextAnchor + Transform, compute
     // where the text should appear within the game object's own bounds
     // and store that as a local offset on the Text component. This way

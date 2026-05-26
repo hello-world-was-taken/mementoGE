@@ -7,5 +7,5 @@
 class ParticleSystem : public ISystem
 {
 public:
-    void update(entt::registry &registry) override;
+    void update(SystemContext &context) override;
 };

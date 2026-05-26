@@ -2,8 +2,10 @@
 #include "core/AnimationMap.h"
 #include "core/GlResourceManager.h"
 #include "core/SpriteSheet.h"
+#include "util/LogChannels.h"
 
 #include <memory>
+#include <sawyer/Logger.h>
 #include <string>
 
 AssetManager &AssetManager::instance()
@@ -20,7 +22,15 @@ std::shared_ptr<SpriteSheet> AssetManager::getSpriteSheet(const std::string &jso
         return it->second;
     }
 
-    std::shared_ptr<SpriteSheet> spriteSheet = SpriteSheet::fromJson(jsonPath);
+    std::shared_ptr<SpriteSheet> spriteSheet;
+    try
+    {
+        spriteSheet = SpriteSheet::fromJson(jsonPath);
+    }
+    catch (const std::exception &e)
+    {
+        LOG_ERROR(LogChannel::Asset, "Failed to load sprite sheet '{}': {}", jsonPath, e.what());
+    }
 
     spriteSheetByPath[jsonPath] = spriteSheet;
     return spriteSheet;
@@ -34,7 +44,15 @@ std::shared_ptr<AnimationMap> AssetManager::getAnimationMap(const std::string &j
         return it->second;
     }
 
-    std::shared_ptr<AnimationMap> animMap = AnimationMap::fromJson(jsonPath);
+    std::shared_ptr<AnimationMap> animMap;
+    try
+    {
+        animMap = AnimationMap::fromJson(jsonPath);
+    }
+    catch (const std::exception &e)
+    {
+        LOG_ERROR(LogChannel::Asset, "Failed to load animation map '{}': {}", jsonPath, e.what());
+    }
 
     animationMaps[jsonPath] = animMap;
     return animationMaps[jsonPath];
