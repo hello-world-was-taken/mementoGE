@@ -17,11 +17,15 @@
 #include "editor/panels/PropertiesPanel.h"
 
 #include "util/PathUtils.h"
+#include "util/LogChannels.h"
 
 #include <filesystem>
 #include <fstream>
+#include <glm/gtc/matrix_transform.hpp>
 #include <imgui.h>
 #include <memory>
+#include <sawyer/Logger.h>
+#include <stdexcept>
 #include <yaml-cpp/yaml.h>
 
 namespace fs = std::filesystem;
@@ -30,13 +34,15 @@ EditorLayer::EditorLayer()
 {
     m_window.setupCallBack();
     ImGuiWrapper::setupImgui(m_ctx.window);
+    m_ctx.loadEditorWorkspaceState();
 
     m_ctx.getSelectedSceneHistory().pushInitialScene(m_ctx.getActiveScene());
 }
 
 EditorLayer::~EditorLayer()
 {
-    // m_ctx.sceneManager.serialize();
+    m_ctx.saveEditorWorkspaceState();
+    ImGuiWrapper::shutdownImgui();
 }
 
 EditorContext &EditorLayer::getEditorContext()
@@ -68,23 +74,34 @@ void EditorLayer::updateFrame()
         {
             handleEditorShortcuts();
 
-            if (m_ctx.isPlaying)
+            if (m_ctx.isRuntimeActive())
             {
                 m_ctx.renderer2D.setClearColor(playModeClearColor);
-                m_ctx.renderer2D.setRendererEnablement(RendererType::Sprite);
+                m_ctx.renderer2D.setRendererEnablement(static_cast<RendererType>(m_ctx.runtimeRendererMask));
             }
             else
             {
                 m_ctx.renderer2D.setClearColor(editorModeClearColor);
-                m_ctx.renderer2D.setRendererEnablement(RendererType::All);
+                m_ctx.renderer2D.setRendererEnablement(static_cast<RendererType>(m_ctx.editorRendererMask));
             }
 
-            m_ctx.getActiveScene().update();
+            Scene &activeScene = m_ctx.getActiveScene();
+
+            // Continue rendering while paused, but do not advance scene systems.
+            if (!m_ctx.isRuntimeActive() || m_ctx.isRuntimePlaying())
+            {
+                activeScene.update();
+            }
 
             // render grid
-            renderGrid();
+            if (!m_ctx.isRuntimeActive())
+            {
+                renderGrid();
+            }
 
-            m_ctx.renderer2D.renderScene(m_ctx.editorCamera, m_ctx.getActiveScene().getGameObjects());
+            CameraOld &camera =
+                m_ctx.isRuntimeActive() ? getPlayCamera(activeScene) : static_cast<CameraOld &>(m_ctx.editorCamera);
+            m_ctx.renderer2D.renderScene(camera, activeScene.getGameObjects(), m_ctx.selectedObjects);
 
             drawEditorUI();
         });
@@ -94,68 +111,87 @@ void EditorLayer::updateFrame()
 
 void EditorLayer::drawEditorUI()
 {
+    renderMainMenuBar();
     ImGuiWrapper::beginDockspace();
 
     m_scenePanel.draw();
     m_sceneHierarchyPanel.draw();
     m_propertiesPanel.draw();
     m_assetsPanel.draw();
+    m_logPanel.draw();
+    m_systemsPanel.draw();
     m_spriteSheetEditorPanel.draw();
 
     renderPerformancePanel();
     renderEditorProperties();
-    renderAddNewObjectPopup();
 
-    ImGui::ShowMetricsWindow();
+    if (m_ctx.workspaceState.showMetricsWindow)
+    {
+        const bool wasOpen = m_ctx.workspaceState.showMetricsWindow;
+        ImGui::ShowMetricsWindow(&m_ctx.workspaceState.showMetricsWindow);
+        if (wasOpen != m_ctx.workspaceState.showMetricsWindow)
+        {
+            m_ctx.markEditorWorkspaceDirty();
+        }
+    }
+
+    m_ctx.saveEditorWorkspaceStateIfDirty();
 }
 
-void EditorLayer::renderAddNewObjectPopup()
+void EditorLayer::renderMainMenuBar()
 {
-    if (!m_ctx.showCreateObjectPopup)
+    if (!ImGui::BeginMainMenuBar())
     {
         return;
     }
 
-    ImGui::SetNextWindowPos(m_ctx.createObjectPopupPos, ImGuiCond_Always);
-    if (ImGui::BeginPopup("CreateObjectPopup"))
+    bool workspaceChanged = false;
+
+    if (ImGui::BeginMenu("Window"))
     {
-        static char tagBuffer[64] = "";
-
-        ImGui::Text("Create New Object");
-        ImGui::Separator();
-        ImGui::InputText("Tag", tagBuffer, IM_ARRAYSIZE(tagBuffer));
-
-        if (ImGui::Button("Create"))
-        {
-            m_ctx.performSceneEdit(
-                [&]
-                {
-                    // TODO: might be worth extracting this out to a function
-                    Scene &scene = m_ctx.getActiveScene();
-
-                    auto &newObj = scene.addGameObject(32, 32, tagBuffer);
-                    newObj.getComponent<Transform>().position = {
-                        m_ctx.createObjectWorldPos.x, m_ctx.createObjectWorldPos.y, 0.0f};
-
-                    tagBuffer[0] = '\0'; // clear input for next time
-                    m_ctx.showCreateObjectPopup = false;
-                    ImGui::CloseCurrentPopup();
-                });
-        }
-
-        ImGui::SameLine();
-        if (ImGui::Button("Cancel"))
-        {
-            m_ctx.showCreateObjectPopup = false;
-            ImGui::CloseCurrentPopup();
-        }
-
-        ImGui::EndPopup();
+        workspaceChanged |= ImGui::MenuItem("Scene", nullptr, &m_ctx.workspaceState.showScenePanel);
+        workspaceChanged |= ImGui::MenuItem("Hierarchy", nullptr, &m_ctx.workspaceState.showHierarchyPanel);
+        workspaceChanged |= ImGui::MenuItem("Properties", nullptr, &m_ctx.workspaceState.showPropertiesPanel);
+        workspaceChanged |= ImGui::MenuItem("Assets", nullptr, &m_ctx.workspaceState.showAssetsPanel);
+        workspaceChanged |=
+            ImGui::MenuItem("Sprite Sheet Editor", nullptr, &m_ctx.workspaceState.showSpriteSheetEditorPanel);
+        workspaceChanged |= ImGui::MenuItem("Performance", nullptr, &m_ctx.workspaceState.showPerformancePanel);
+        workspaceChanged |= ImGui::MenuItem("Systems", nullptr, &m_ctx.workspaceState.showSystemsPanel);
+        workspaceChanged |= ImGui::MenuItem("Log", nullptr, &m_ctx.workspaceState.showLogPanel);
+        workspaceChanged |= ImGui::MenuItem("Context", nullptr, &m_ctx.workspaceState.showContextPanel);
+        workspaceChanged |= ImGui::MenuItem("Metrics", nullptr, &m_ctx.workspaceState.showMetricsWindow);
+        ImGui::EndMenu();
     }
+
+    if (ImGui::BeginMenu("View"))
+    {
+        workspaceChanged |= ImGui::MenuItem("Draw Grid", nullptr, &m_ctx.drawGrid);
+
+        bool snapToGrid = (m_ctx.movementMode == MovementMode::SnapToGrid);
+        if (ImGui::MenuItem("Snap To Grid", nullptr, &snapToGrid))
+        {
+            m_ctx.movementMode = snapToGrid ? MovementMode::SnapToGrid : MovementMode::Free;
+            workspaceChanged = true;
+        }
+
+        ImGui::EndMenu();
+    }
+
+    if (workspaceChanged)
+    {
+        m_ctx.markEditorWorkspaceDirty();
+    }
+
+    ImGui::EndMainMenuBar();
 }
 
 void EditorLayer::renderPerformancePanel()
 {
+    if (!m_ctx.workspaceState.showPerformancePanel)
+    {
+        return;
+    }
+
     ImGuiIO &io = ImGui::GetIO();
     static float frameTimes[100] = {};
     static int frameIndex = 0;
@@ -166,7 +202,16 @@ void EditorLayer::renderPerformancePanel()
     frameTimes[frameIndex] = 1000.0f / io.Framerate; // ms
     frameIndex = (frameIndex + 1) % IM_ARRAYSIZE(frameTimes);
 
-    ImGui::Begin("Performance Stats");
+    const bool wasOpen = m_ctx.workspaceState.showPerformancePanel;
+    if (!ImGuiWrapper::BeginPanel("Performance Stats", &m_ctx.workspaceState.showPerformancePanel))
+    {
+        ImGuiWrapper::EndPanel();
+        if (wasOpen != m_ctx.workspaceState.showPerformancePanel)
+        {
+            m_ctx.markEditorWorkspaceDirty();
+        }
+        return;
+    }
 
     ImGui::Text("FPS: %.1f", io.Framerate);
     ImGui::Text("Frame Time: %.3f ms", 1000.0f / io.Framerate);
@@ -201,14 +246,16 @@ void EditorLayer::renderPerformancePanel()
     ImGui::ColorEdit3("Editor Clear Color", (float *)&clear_color);
     ImGui::SameLine();
 
-    ImGui::End();
+    ImGuiWrapper::EndPanel();
+    if (wasOpen != m_ctx.workspaceState.showPerformancePanel)
+    {
+        m_ctx.markEditorWorkspaceDirty();
+    }
 }
 
 void EditorLayer::renderGrid()
 {
-    const CameraOld &cam = m_ctx.editorCamera;
-
-    if (!m_drawGrid)
+    if (!m_ctx.drawGrid)
     {
         return;
     }
@@ -217,10 +264,45 @@ void EditorLayer::renderGrid()
     m_gridRenderer.render(m_ctx.editorCamera, GRID_TILE_SIZE);
 }
 
+CameraOld &EditorLayer::getPlayCamera(Scene &scene)
+{
+    GameObject *cameraObj = scene.findPrimaryCamera();
+    if (!cameraObj)
+    {
+        throw std::runtime_error("No primary camera found!");
+    }
+
+    Camera &camera = cameraObj->getComponent<Camera>();
+    Transform &cameraTransform = cameraObj->getComponent<Transform>();
+
+    const float width = camera.logicalWidth * camera.zoom;
+    const float height = camera.logicalHeight * camera.zoom;
+
+    m_playCamera.setProjectionMatrix(glm::ortho(0.0f, width, 0.0f, height, camera.nearClip, camera.farClip));
+    m_playCamera.setViewMatrix(glm::translate(glm::mat4(1.0f), -cameraTransform.position));
+
+    return m_playCamera;
+}
+
 // TODO: move to separate panel
 void EditorLayer::renderEditorProperties()
 {
-    ImGui::Begin("Context");
+    if (!m_ctx.workspaceState.showContextPanel)
+    {
+        return;
+    }
+
+    const bool wasOpen = m_ctx.workspaceState.showContextPanel;
+    if (!ImGuiWrapper::BeginPanel("Context", &m_ctx.workspaceState.showContextPanel))
+    {
+        ImGuiWrapper::EndPanel();
+        if (wasOpen != m_ctx.workspaceState.showContextPanel)
+        {
+            m_ctx.markEditorWorkspaceDirty();
+        }
+        return;
+    }
+
     ImGuiWrapper::Collapsable("Render Layers",
         [&]
         {
@@ -243,13 +325,16 @@ void EditorLayer::renderEditorProperties()
 
             ImGui::Text("Scene Panel Size: (%.1f, %.1f)", m_ctx.scenePanelSize.x, m_ctx.scenePanelSize.y);
 
-            ImGui::Checkbox("Draw Grid", &m_ctx.drawGrid);
+            if (ImGui::Checkbox("Draw Grid", &m_ctx.drawGrid))
+            {
+                m_ctx.markEditorWorkspaceDirty();
+            }
 
             bool snap = (m_ctx.movementMode == MovementMode::SnapToGrid);
             if (ImGui::Checkbox("Snap to Grid", &snap))
             {
                 m_ctx.movementMode = snap ? MovementMode::SnapToGrid : MovementMode::Free;
-                m_drawGrid = snap;
+                m_ctx.markEditorWorkspaceDirty();
             }
         });
 
@@ -353,7 +438,11 @@ void EditorLayer::renderEditorProperties()
     //         ImGui::Text("FB Size: %dx%d", (int)m_ctx.frameBuffer.getWidth(), (int)m_ctx.frameBuffer.getHeight());
     //     });
 
-    ImGui::End();
+    ImGuiWrapper::EndPanel();
+    if (wasOpen != m_ctx.workspaceState.showContextPanel)
+    {
+        m_ctx.markEditorWorkspaceDirty();
+    }
 }
 
 // TODO, might be a good idea to move this to a separate thread
@@ -362,7 +451,7 @@ void EditorLayer::handleEditorShortcuts()
     // if it is play mode, the player controller should process events.
     // as a side note, we may need to make the events last for the current frame
     // and reset them on next render. Doing that will help us have multiple processors
-    if (m_ctx.isPlaying)
+    if (m_ctx.isRuntimeActive())
     {
         return;
     }
@@ -372,7 +461,7 @@ void EditorLayer::handleEditorShortcuts()
     while (eventHandler->hasPendingEvents())
     {
         Event e = eventHandler->nextEvent();
-        std::cout << e.name << ": " << e.cmd << std::endl;
+        LOG_DEBUG(LogChannel::Editor, "Event '{}': cmd={}", e.name, e.cmd);
         if (e.type == EventType::Key || e.type == EventType::KeyRepeat)
         {
             // Undo
@@ -396,7 +485,7 @@ void EditorLayer::handleEditorShortcuts()
             {
                 m_ctx.serializaActiveScene();                // write to disk
                 m_ctx.getSelectedSceneHistory().markSaved(); // clear the "*" dirty flag
-                std::cout << "Scene saved.\n";
+                LOG_INFO(LogChannel::Editor, "Scene saved");
             }
 
             // Copy selected game objects (Cmd + C)

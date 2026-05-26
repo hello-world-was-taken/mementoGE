@@ -15,6 +15,7 @@
 
 #include "core/ComponentRegistry.h"
 #include "core/GameObject.h"
+#include "core/ImGuiWrapper.h"
 #include "core/Scene.h"
 
 #include "editor/EditorContext.h"
@@ -28,9 +29,28 @@ SceneHierarchyPanel::SceneHierarchyPanel(EditorContext &ctx) : EditorPanel(ctx)
 
 void SceneHierarchyPanel::draw()
 {
-    ImGui::Begin("Hierarchy");
+    if (!m_ctx.workspaceState.showHierarchyPanel)
+    {
+        return;
+    }
+
+    const bool wasOpen = m_ctx.workspaceState.showHierarchyPanel;
+    if (!ImGuiWrapper::BeginPanel("Hierarchy", &m_ctx.workspaceState.showHierarchyPanel))
+    {
+        ImGuiWrapper::EndPanel();
+        if (wasOpen != m_ctx.workspaceState.showHierarchyPanel)
+        {
+            m_ctx.markEditorWorkspaceDirty();
+        }
+        return;
+    }
+
     drawSceneHierarchy();
-    ImGui::End();
+    ImGuiWrapper::EndPanel();
+    if (wasOpen != m_ctx.workspaceState.showHierarchyPanel)
+    {
+        m_ctx.markEditorWorkspaceDirty();
+    }
 }
 
 void SceneHierarchyPanel::drawSceneHierarchy()
@@ -62,7 +82,8 @@ void SceneHierarchyPanel::drawGameObjectNode(GameObject &go)
     ImGuiTreeNodeFlags flags = (isSelectedGameObject ? ImGuiTreeNodeFlags_Selected : 0) |
                                ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
 
-    bool opened = ImGui::TreeNodeEx((void *)&go, flags, "%s", entityInfo.tag.c_str());
+    ImGuiWrapper::Padding padding{2.0f, 2.0f, 4.0f, 4.0f};
+    bool opened = ImGuiWrapper::TreeNodeEx((void *)&go, entityInfo.tag.c_str(), flags, padding);
 
     // Selection handling
     if (ImGui::IsItemClicked())
@@ -73,8 +94,6 @@ void SceneHierarchyPanel::drawGameObjectNode(GameObject &go)
 
     if (opened)
     {
-        ImGui::Indent();
-
         drawComponentRemoveRow<EntityInfo>(go, "Entity Info");
         drawComponentRemoveRow<Transform>(go, "Transform");
         drawComponentRemoveRow<Sprite>(go, "Sprite");
@@ -99,18 +118,9 @@ void SceneHierarchyPanel::drawGameObjectNode(GameObject &go)
                 continue;
             }
 
-            bool removeComponent = false;
-
             ImGui::PushID(entry.name.c_str());
-            ImGui::Text(ICON_FA_SUPERPOWERS "%s", entry.name.c_str());
 
-            ImGui::SameLine(ImGui::GetContentRegionAvail().x - 20);
-            if (ImGui::SmallButton("X"))
-            {
-                removeComponent = true;
-            }
-
-            if (removeComponent)
+            if (ImGuiWrapper::Row(entry.name.c_str(), ICON_FA_CUBE, ICON_FA_TIMES))
             {
                 entry.removeComponent(go);
             }
@@ -118,8 +128,6 @@ void SceneHierarchyPanel::drawGameObjectNode(GameObject &go)
             ImGui::PopID();
         }
 
-        ImGui::Unindent();
-
-        ImGui::TreePop();
+        ImGuiWrapper::TreePop();
     }
 }

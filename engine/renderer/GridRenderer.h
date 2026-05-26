@@ -7,8 +7,7 @@
 #include "core/Camera.h"
 #include "opengl/Shader.h"
 #include "opengl/Vertex.h"
-#include "opengl/VertexArray.h"
-#include "opengl/VertexBuffer.h"
+#include "renderer/RenderBatch.h"
 
 class GridRenderer
 {
@@ -24,8 +23,8 @@ private:
     void generateGridLines(const CameraOld &camera, int tileSize);
 
     std::vector<Vertex> m_vertices;
+    std::vector<unsigned int> m_indices;
 
-    std::unique_ptr<VertexArray> m_vao;
-    std::unique_ptr<VertexBuffer> m_vbo;
+    std::unique_ptr<RenderBatch> m_batch;
     std::shared_ptr<Shader> m_shader;
 };

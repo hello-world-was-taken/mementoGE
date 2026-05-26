@@ -46,6 +46,7 @@ inline std::filesystem::path getExecutableDir()
 #endif
 }
 
+// TODO: memento specific path. Should this be deprecated?
 inline std::filesystem::path getFilePath(const std::string &relative)
 {
     // auto base = getExecutableDir();
@@ -65,6 +66,22 @@ inline std::filesystem::path getGameAssetsPath(const std::string &relative)
     }
     auto temp = base / relative;
     return base / relative;
+}
+
+inline std::filesystem::path getProjectRootPath()
+{
+    auto gameAssetsPath = std::filesystem::path(std::string(GAME_ASSETS_DIR)).lexically_normal();
+    return gameAssetsPath.parent_path().parent_path();
+}
+
+inline std::filesystem::path getMementoEditorStateDir()
+{
+    return getProjectRootPath() / ".memento" / "editor";
+}
+
+inline std::filesystem::path getEditorWorkspaceStatePath()
+{
+    return getMementoEditorStateDir() / "editor-state.yaml";
 }
 
 inline std::filesystem::path getTexturePathFromJson(const std::string &jsonTexturePath)

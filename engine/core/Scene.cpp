@@ -1,33 +1,43 @@
+#include "core/components/BoxCollider2D.h"
 #include "core/components/EntityInfo.h"
 #include "core/components/Sprite.h"
 
 #include "core/Scene.h"
 #include "core/SystemRegistry.h"
 #include "core/components/Animator.h"
+#include "core/components/Sensor2D.h"
 
+#include "util/LogChannels.h"
 #include "util/Time.h"
 
 #include <algorithm>
+#include <chrono>
 #include <entt/entt.hpp>
 #include <iostream>
+#include <sawyer/Logger.h>
 #include <stdexcept>
 #include <string>
 #include <yaml-cpp/yaml.h>
 
 Scene::Scene(std::string &&tag) : mTag{tag}, m_play{false}
 {
+    bindRigidBodyDestroyCallback();
 }
 
 Scene::Scene(const YAML::Node &&serializedScene) : m_registry{}
 {
+    bindRigidBodyDestroyCallback();
     deserialize(serializedScene);
 }
 
 Scene::Scene(Scene &&other) noexcept
     : m_registry(std::move(other.m_registry)), m_physicsWorld(std::move(other.m_physicsWorld)),
-      m_textures(std::move(other.m_textures)), m_systemNames(std::move(other.m_systemNames)),
-      m_systems(std::move(other.m_systems)), mTag(std::move(other.mTag))
+      m_textures(std::move(other.m_textures)), m_systems(std::move(other.m_systems)), mTag(std::move(other.mTag)),
+      m_physicsEnabled(other.m_physicsEnabled), m_animationEnabled(other.m_animationEnabled),
+      m_lastPhysicsUpdateMilliseconds(other.m_lastPhysicsUpdateMilliseconds),
+      m_lastAnimationUpdateMilliseconds(other.m_lastAnimationUpdateMilliseconds)
 {
+    bindRigidBodyDestroyCallback();
     // Move game objects while rebinding registry
     m_gameObjects.reserve(other.m_gameObjects.size());
     for (auto &g : other.m_gameObjects)
@@ -43,11 +53,15 @@ Scene &Scene::operator=(Scene &&other)
     if (this != &other)
     {
         m_registry = std::move(other.m_registry);
+        bindRigidBodyDestroyCallback();
         m_physicsWorld = std::move(other.m_physicsWorld);
         m_textures = std::move(other.m_textures);
-        m_systemNames = std::move(other.m_systemNames);
         m_systems = std::move(other.m_systems);
         mTag = std::move(other.mTag);
+        m_physicsEnabled = other.m_physicsEnabled;
+        m_animationEnabled = other.m_animationEnabled;
+        m_lastPhysicsUpdateMilliseconds = other.m_lastPhysicsUpdateMilliseconds;
+        m_lastAnimationUpdateMilliseconds = other.m_lastAnimationUpdateMilliseconds;
 
         // Move game objects while rebinding registry
         m_gameObjects.clear();
@@ -69,7 +83,7 @@ Scene::~Scene()
         m_registry.destroy(go.getEntityId());
     }
     m_registry.clear();
-    std::cout << "Scene destructor called: " << mTag << std::endl;
+    LOG_DEBUG(LogChannel::Scene, "Scene destructor called: {}", mTag);
 }
 
 Scene Scene::clone(std::string tag)
@@ -96,29 +110,52 @@ void Scene::update()
     if (m_play)
     {
         // In play mode, run all systems.
-        for (auto &system : m_systems)
+        for (auto &entry : m_systems)
         {
-            system->update(m_registry);
+            if (!entry.enabled)
+            {
+                continue;
+            }
+            const auto start = std::chrono::steady_clock::now();
+            entry.system->update(m_registry);
+            entry.lastUpdateMilliseconds =
+                std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
         }
-
-        // physics should be updated last as other systems make updates to it
-        m_physicsWorld.simulate(Time::deltaTime(), m_registry);
-
-        animate();
 
         // Keep the GameObject list in sync with the registry in runtime.
         cleanupDestroyedGameObjects();
+
+        // Advance animation before physics so frame-bound sensors match the displayed frame.
+        if (m_animationEnabled)
+        {
+            const auto start = std::chrono::steady_clock::now();
+            animate();
+            m_lastAnimationUpdateMilliseconds =
+                std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
+        }
+
+        // physics should be updated last as other systems make updates to it
+        if (m_physicsEnabled)
+        {
+            const auto start = std::chrono::steady_clock::now();
+            m_physicsWorld.simulate(Time::deltaTime(), m_registry);
+            m_lastPhysicsUpdateMilliseconds =
+                std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
+        }
     }
     else
     {
         // When not playing (editor mode), run only systems that should
         // affect the editor view. For now, always run TextLayoutSystem
         // so text anchoring updates while editing.
-        for (std::size_t i = 0; i < m_systems.size(); ++i)
+        for (auto &entry : m_systems)
         {
-            if (m_systemNames[i] == "TextLayoutSystem")
+            if (entry.enabled && entry.name == "TextLayoutSystem")
             {
-                m_systems[i]->update(m_registry);
+                const auto start = std::chrono::steady_clock::now();
+                entry.system->update(m_registry);
+                entry.lastUpdateMilliseconds =
+                    std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
             }
         }
     }
@@ -133,6 +170,16 @@ void Scene::cleanupDestroyedGameObjects()
                                 return !m_registry.valid(go.getEntityId());
                             }),
         m_gameObjects.end());
+}
+
+void Scene::bindRigidBodyDestroyCallback()
+{
+    m_registry.on_destroy<RigidBody2D>().connect<&Scene::onRigidBodyDestroyed>(this);
+}
+
+void Scene::onRigidBodyDestroyed(entt::registry &registry, entt::entity entity)
+{
+    m_physicsWorld.removeRigidbody(entity, registry);
 }
 
 void Scene::play()
@@ -155,7 +202,7 @@ void Scene::animate()
         // No animation selected or empty animator component
         if (animator.currentAnimation.empty())
         {
-            return;
+            continue;
         }
 
         // Check if the entity has a Sprite. Create one if not present
@@ -167,8 +214,6 @@ void Scene::animate()
         animator.update();
 
         auto &sprite = m_registry.get<Sprite>(entity);
-        const Sprite &animatedSprite = animator.getCurrentSprite();
-
         bool flipX = sprite.flipX;
         bool flipY = sprite.flipY;
 
@@ -177,6 +222,64 @@ void Scene::animate()
         // Restore flip values
         sprite.flipX = flipX;
         sprite.flipY = flipY;
+
+        if (m_registry.any_of<BoxCollider2D>(entity))
+        {
+            auto &collider = m_registry.get<BoxCollider2D>(entity);
+            collider.resetAnimationState();
+
+            for (const auto &pose : animator.getCurrentFrame().colliderShapes)
+            {
+                BoxColliderShape2D *shape = collider.findShape(pose.name);
+                if (!shape)
+                {
+                    continue;
+                }
+                if (pose.size)
+                {
+                    shape->animatedSize = *pose.size;
+                }
+                if (pose.offset)
+                {
+                    shape->animatedOffset = *pose.offset;
+                }
+                if (pose.rotation)
+                {
+                    shape->animatedRotation = *pose.rotation;
+                }
+                if (pose.active)
+                {
+                    shape->animatedActive = *pose.active;
+                }
+            }
+        }
+
+        if (m_registry.any_of<Sensor2D>(entity))
+        {
+            auto &sensor = m_registry.get<Sensor2D>(entity);
+            sensor.resetAnimationState();
+
+            for (const auto &pose : animator.getCurrentFrame().sensorShapes)
+            {
+                SensorShape2D *shape = sensor.findShape(pose.name);
+                if (!shape)
+                {
+                    continue;
+                }
+                if (pose.size)
+                {
+                    shape->animatedSize = *pose.size;
+                }
+                if (pose.offset)
+                {
+                    shape->animatedOffset = *pose.offset;
+                }
+                if (pose.active)
+                {
+                    shape->animatedActive = *pose.active;
+                }
+            }
+        }
     }
 }
 
@@ -236,12 +339,14 @@ void Scene::removeGameObject(entt::entity gameObject)
 
     if (it != m_gameObjects.end())
     {
-        std::cout << "game object deleted" << std::endl;
+        LOG_DEBUG(LogChannel::Scene, "Game object deleted");
         m_gameObjects.erase(it);
     }
 
     // Ensure any physics body associated with this entity is also removed
     // from the Box2D world before destroying the ECS entity.
+    // TODO: Do we need this with the on_destroy<RigidBody2D> callback? It should be safe to remove this, but leaving it
+    // for now as a safeguard.
     m_physicsWorld.removeRigidbody(gameObject, m_registry);
     m_registry.destroy(gameObject);
 }
@@ -296,15 +401,96 @@ const std::string &Scene::getTag() const
 
 void Scene::addSystem(const std::string &systemName)
 {
-    auto it = std::find(m_systemNames.begin(), m_systemNames.end(), systemName);
-    if (it != m_systemNames.end())
+    const auto it = std::find_if(m_systems.begin(),
+        m_systems.end(),
+        [&](const SystemEntry &entry)
+        {
+            return entry.name == systemName;
+        });
+    if (it != m_systems.end())
     {
         return;
     }
 
     std::shared_ptr<ISystem> system = SystemRegistry::instance().get(systemName);
-    m_systems.push_back(system);
-    m_systemNames.push_back(systemName);
+    m_systems.push_back({systemName, std::move(system)});
+}
+
+std::vector<Scene::SystemInfo> Scene::getSystemInfo() const
+{
+    std::vector<SystemInfo> result;
+    result.reserve(m_systems.size());
+    for (const auto &entry : m_systems)
+    {
+        result.push_back({entry.name, entry.enabled, entry.name == "TextLayoutSystem", entry.lastUpdateMilliseconds});
+    }
+    return result;
+}
+
+bool Scene::setSystemEnabled(const std::string &systemName, bool enabled)
+{
+    const auto it = std::find_if(m_systems.begin(),
+        m_systems.end(),
+        [&](const SystemEntry &entry)
+        {
+            return entry.name == systemName;
+        });
+    if (it == m_systems.end())
+    {
+        return false;
+    }
+    if (it->enabled == enabled)
+    {
+        return true;
+    }
+    it->enabled = enabled;
+    if (enabled)
+    {
+        it->system->onEnabled(m_registry);
+    }
+    else
+    {
+        it->system->onDisabled(m_registry);
+    }
+    return true;
+}
+
+void Scene::setAllSystemsEnabled(bool enabled)
+{
+    for (const auto &entry : m_systems)
+    {
+        setSystemEnabled(entry.name, enabled);
+    }
+}
+
+bool Scene::isPhysicsEnabled() const
+{
+    return m_physicsEnabled;
+}
+
+void Scene::setPhysicsEnabled(bool enabled)
+{
+    m_physicsEnabled = enabled;
+}
+
+double Scene::getLastPhysicsUpdateMilliseconds() const
+{
+    return m_lastPhysicsUpdateMilliseconds;
+}
+
+bool Scene::isAnimationEnabled() const
+{
+    return m_animationEnabled;
+}
+
+void Scene::setAnimationEnabled(bool enabled)
+{
+    m_animationEnabled = enabled;
+}
+
+double Scene::getLastAnimationUpdateMilliseconds() const
+{
+    return m_lastAnimationUpdateMilliseconds;
 }
 
 bool Scene::serialize(YAML::Emitter &out)
@@ -314,19 +500,19 @@ bool Scene::serialize(YAML::Emitter &out)
     out << YAML::Value << YAML::BeginMap;
 
     out << YAML::Key << "GameObjects";
-    out << YAML::Value << YAML::BeginMap;
+    out << YAML::Value << YAML::BeginSeq;
 
     for (GameObject &gameObject : m_gameObjects)
     {
         gameObject.serialize(out);
     }
 
-    out << YAML::EndMap;
+    out << YAML::EndSeq;
 
     out << YAML::Key << "Systems" << YAML::Value << YAML::Flow << YAML::BeginSeq;
-    for (const auto &systemName : m_systemNames)
+    for (const auto &entry : m_systems)
     {
-        out << systemName;
+        out << entry.name;
     }
     out << YAML::EndSeq;
 
@@ -341,7 +527,7 @@ void Scene::deserialize(const YAML::Node &in)
 {
     for (YAML::const_iterator it = in.begin(); it != in.end(); ++it)
     {
-        std::cout << "Deserializing Scene: " << it->first.as<std::string>() << std::endl;
+        LOG_INFO(LogChannel::Scene, "Deserializing scene: {}", it->first.as<std::string>());
         mTag = it->first.as<std::string>();
 
         // Deserializing Systems
@@ -361,9 +547,9 @@ void Scene::deserialize(const YAML::Node &in)
 
         // Deserializing Game Objects
         YAML::Node gameObjects = it->second["GameObjects"];
-        for (const auto &it : gameObjects)
+        for (const auto &serializedGameObject : gameObjects)
         {
-            GameObject gameObj{m_registry, it.second, m_physicsWorld};
+            GameObject gameObj{m_registry, serializedGameObject, m_physicsWorld};
             m_gameObjects.push_back(std::move(gameObj));
         }
     }

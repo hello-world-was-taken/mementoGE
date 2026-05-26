@@ -21,9 +21,11 @@ target_link_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     yaml-cpp
     libglew_static
+    sawyer
 )
 
 target_include_directories(${PROJECT_NAME}
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../lib
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../lib/glm
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../lib/yaml-cpp/include

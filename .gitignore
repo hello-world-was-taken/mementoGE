@@ -56,3 +56,6 @@ lib/.DS_Store
 # exclude test game textures
 assets/texture
 game/scene.yaml
+
+# local MementoGE documentation
+/docs/*.md

@@ -19,6 +19,7 @@ private:
 private:
     void renderPropertiesPanel();
     void renderPropertiesInWindow();
+    void renderPropertiesPopupHost();
     void renderPropertiesInPopup();
 
     template <typename T> void drawComponentInspector(const GameObject &gameObject);

@@ -28,6 +28,7 @@ public:
     glm::vec2 getMouseDelta() const;
     glm::vec2 getScrollDelta() const;
     glm::vec2 getDragStart() const;
+    void setSceneViewportBounds(glm::vec2 min, glm::vec2 max);
 
     // Event Queue
     bool hasPendingEvents() const;
@@ -44,6 +45,8 @@ public:
 private:
     EventHandler() = default;
 
+    bool isMouseInsideSceneViewport() const;
+
     std::queue<Event> m_eventQueue;
     std::unordered_map<KeyType, bool> m_keyStates;
 
@@ -56,4 +59,7 @@ private:
     glm::vec2 m_prevMousePos{0.0f, 0.0f};
     glm::vec2 m_scrollDelta{0.0f, 0.0f};
     glm::vec2 m_dragStart{0.0f, 0.0f};
+    glm::vec2 m_sceneViewportMin{0.0f, 0.0f};
+    glm::vec2 m_sceneViewportMax{0.0f, 0.0f};
+    bool m_hasSceneViewportBounds = false;
 };

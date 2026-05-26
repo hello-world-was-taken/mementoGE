@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.26.4)
 
 project(engine)
+include(CTest)
 
 # Set C++ standard to C++17
 set(CMAKE_CXX_STANDARD 17)
@@ -18,6 +19,7 @@ add_subdirectory(engine/lib/glfw)
 add_subdirectory(engine/lib/yaml-cpp)
 add_subdirectory(engine/lib/box2d)
 add_subdirectory(engine/lib/openal-soft)
+add_subdirectory(engine/lib/sawyer)
 add_subdirectory(engine/opengl)
 
 
@@ -56,6 +58,7 @@ add_library(${PROJECT_NAME} STATIC
     engine/core/AssetManager.cpp
     engine/core/AnimationPlayer.cpp
     engine/core/SystemRegistry.cpp
+    engine/core/FollowSystem.cpp
     engine/core/ParticleSystem.cpp
     engine/core/TextLayoutSystem.cpp
     engine/core/AudioSystem.cpp
@@ -72,6 +75,8 @@ add_library(${PROJECT_NAME} STATIC
     engine/editor/panels/SceneHierarchyPanel.cpp
     engine/editor/panels/PropertiesPanel.cpp
     engine/editor/panels/TexturePanel.cpp
+	engine/editor/panels/LogPanel.cpp
+	engine/editor/panels/SystemsPanel.cpp
 	engine/editor/panels/AssetsPanel.cpp
 	engine/editor/panels/SpriteSheetEditorPanel.cpp
 
@@ -115,7 +120,7 @@ target_include_directories(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME}
-    PUBLIC glfw yaml-cpp box2d OpenAL
+    PUBLIC glfw yaml-cpp box2d OpenAL sawyer
     PUBLIC OpenGL::GL
     PUBLIC libglew_static
     PRIVATE opengl
@@ -131,3 +136,36 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC MEMENTO_ASSET_DIR="${MEMENTO_A
 
 # should be passed from the game
 target_compile_definitions(${PROJECT_NAME} PUBLIC GAME_ASSETS_DIR="${GAME_ASSETS_DIR}")
+
+if(BUILD_TESTING)
+    if(NOT TARGET GTest::gtest_main)
+        set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
+        set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
+        add_subdirectory(
+            engine/lib/yaml-cpp/test/googletest-1.13.0
+            googletest
+            EXCLUDE_FROM_ALL
+        )
+    endif()
+
+    add_executable(memento_unit_tests
+        tests/unit/GameObjectTests.cpp
+        tests/unit/SceneTests.cpp
+        tests/unit/PhysicsTests.cpp
+    )
+
+    target_include_directories(memento_unit_tests
+        PRIVATE .
+    )
+    target_link_libraries(memento_unit_tests
+        PRIVATE engine
+        PRIVATE GTest::gtest_main
+    )
+
+    if(EDITOR_BUILD)
+        target_compile_definitions(memento_unit_tests PRIVATE EDITOR_BUILD)
+    endif()
+
+    include(GoogleTest)
+    gtest_discover_tests(memento_unit_tests)
+endif()

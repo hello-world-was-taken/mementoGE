@@ -1,16 +1,17 @@
-#include "core/components/Animation.h"
 #include "core/AnimationMap.h"
+#include "core/components/Animation.h"
 
 #include "opengl/Texture.h"
 
 #include "util/PathUtils.h"
 
-#include <memory>
 #include <fstream>
+#include <memory>
 #include <nlohmann/json.h>
 
-AnimationMap::AnimationMap(std::shared_ptr<Texture> texture)
-    : m_texture(texture) {}
+AnimationMap::AnimationMap(std::shared_ptr<Texture> texture) : m_texture(texture)
+{
+}
 
 std::shared_ptr<AnimationMap> AnimationMap::fromJson(const std::filesystem::path &jsonPath)
 {
@@ -28,13 +29,60 @@ std::shared_ptr<AnimationMap> AnimationMap::fromJson(const std::filesystem::path
     for (auto &[frameName, frameInfo] : data["frames"].items())
     {
         Frame f;
-        f.sprite = Sprite{
-            {frameInfo["x"].get<float>(), frameInfo["y"].get<float>()},
+        f.sprite = Sprite{{frameInfo["x"].get<float>(), frameInfo["y"].get<float>()},
             frameInfo["w"].get<float>(),
             frameInfo["h"].get<float>(),
             tex};
 
-        f.duration = 0.1; // todo: should we make this part of the frame in our metadata?
+        f.duration = frameInfo.value("duration", 0.1f);
+
+        if (frameInfo.contains("sensors"))
+        {
+            for (auto &[shapeName, shapeInfo] : frameInfo["sensors"].items())
+            {
+                SensorShapePose pose;
+                pose.name = shapeName;
+                if (shapeInfo.contains("size"))
+                {
+                    pose.size = glm::vec2{shapeInfo["size"][0].get<float>(), shapeInfo["size"][1].get<float>()};
+                }
+                if (shapeInfo.contains("offset"))
+                {
+                    pose.offset = glm::vec2{shapeInfo["offset"][0].get<float>(), shapeInfo["offset"][1].get<float>()};
+                }
+                if (shapeInfo.contains("active"))
+                {
+                    pose.active = shapeInfo["active"].get<bool>();
+                }
+                f.sensorShapes.push_back(std::move(pose));
+            }
+        }
+
+        if (frameInfo.contains("colliders"))
+        {
+            for (auto &[shapeName, shapeInfo] : frameInfo["colliders"].items())
+            {
+                BoxColliderShapePose pose;
+                pose.name = shapeName;
+                if (shapeInfo.contains("size"))
+                {
+                    pose.size = glm::vec2{shapeInfo["size"][0].get<float>(), shapeInfo["size"][1].get<float>()};
+                }
+                if (shapeInfo.contains("offset"))
+                {
+                    pose.offset = glm::vec2{shapeInfo["offset"][0].get<float>(), shapeInfo["offset"][1].get<float>()};
+                }
+                if (shapeInfo.contains("rotation"))
+                {
+                    pose.rotation = shapeInfo["rotation"].get<float>();
+                }
+                if (shapeInfo.contains("active"))
+                {
+                    pose.active = shapeInfo["active"].get<bool>();
+                }
+                f.colliderShapes.push_back(std::move(pose));
+            }
+        }
         frameLookup[frameName] = f;
     }
 
@@ -52,7 +100,9 @@ std::shared_ptr<AnimationMap> AnimationMap::fromJson(const std::filesystem::path
 
             auto it = frameLookup.find(frameKey);
             if (it == frameLookup.end())
+            {
                 continue;
+            }
 
             const Frame &frame = it->second;
             anim.frames.push_back(frame);

@@ -37,6 +37,8 @@ enum class KeyType
     Z,
     Y,
     Cmd,
+    LeftShift,
+    RightShift,
     Space,
 };
 

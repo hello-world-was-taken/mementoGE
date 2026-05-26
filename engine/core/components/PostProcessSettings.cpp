@@ -1,6 +1,10 @@
 #include "core/components/PostProcessSettings.h"
 #include "core/components/RenderLayer.h"
 
+#include "util/LogChannels.h"
+
+#include <sawyer/Logger.h>
+
 #ifdef EDITOR_BUILD
 #include "core/ImGuiWrapper.h"
 #include <imgui.h>
@@ -114,7 +118,7 @@ static void drawLayerSelector(const char *postProcessingType, std::vector<Render
         for (int i = 0; i < 5; i++)
         {
             std::string selectableName = std::string(layerNames[i]) + "##" + postProcessingType;
-            std::cout << selectableName << std::endl;
+            LOG_DEBUG(LogChannel::PostProcess, "Layer option '{}'", selectableName);
             bool selected = (std::find(layers.begin(), layers.end(), layerValues[i]) != layers.end());
             if (ImGui::Selectable(selectableName.c_str(), selected))
             {

@@ -13,11 +13,12 @@
 #include "core/EventHandler.h"
 
 #include "util/Time.h"
+#include "util/LogChannels.h"
 
 #include <algorithm>
 #include <cmath>
 #include <imgui.h>
-#include <iostream>
+#include <sawyer/Logger.h>
 
 EditorMouseController::EditorMouseController() = default;
 
@@ -147,7 +148,6 @@ void EditorMouseController::handleRightClickOnObject(EditorContext &ctx, GameObj
     ctx.showPropertiesPopup = true;
 
     ctx.propertiesPopupPos = ImVec2(mouseScreenPos.x + 15, mouseScreenPos.y);
-    ImGui::OpenPopup("PropertiesPopup");
 }
 
 void EditorMouseController::handleRightClickOnEmpty(
@@ -157,17 +157,19 @@ void EditorMouseController::handleRightClickOnEmpty(
 
     ctx.createObjectPopupPos = mouseScreenPos;
     ctx.createObjectWorldPos = mouseWorldPos;
-
-    ImGui::OpenPopup("CreateObjectPopup");
 }
 
 void EditorMouseController::handleZoom(EditorContext &ctx)
 {
     EventHandler *handler = EventHandler::instance();
+    const float scrollDelta = handler->getScrollDelta().y;
 
-    // Adjust zoom level
-    ctx.editorCamera.adjustZoom(handler->getScrollDelta().x);
-    ctx.editorCamera.onViewportResize(ctx.renderer2D.m_finalFBO.getWidth(), ctx.renderer2D.m_finalFBO.getHeight());
+    if (scrollDelta == 0.0f)
+    {
+        return;
+    }
+
+    ctx.editorCamera.adjustZoom(scrollDelta);
 }
 
 void EditorMouseController::handleDragging(
@@ -219,8 +221,10 @@ void EditorMouseController::moveSelectedGameObjects(EditorContext &ctx, glm::vec
 {
     if (ctx.selectedObjects.size() != ctx.selectedGameObjectsDragOffset.size())
     {
-        std::cout << "moveSelectedGameObjects invalid state" << std::endl;
-        std::cout << ctx.selectedObjects.size() << " : " << ctx.selectedGameObjectsDragOffset.size() << std::endl;
+        LOG_WARN(LogChannel::Editor,
+            "moveSelectedGameObjects invalid state: {} selected objects, {} drag offsets",
+            ctx.selectedObjects.size(),
+            ctx.selectedGameObjectsDragOffset.size());
         return;
     }
 

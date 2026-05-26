@@ -16,6 +16,7 @@ public:
     void play(std::string name, bool loop = true);
     void update();
     const Sprite &getCurrentSprite() const;
+    const Frame &getCurrentFrame() const;
 
 #ifdef EDITOR_BUILD
     void serialize(YAML::Emitter &out);

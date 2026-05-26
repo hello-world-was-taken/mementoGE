@@ -1,6 +1,9 @@
 #include "VertexBuffer.h"
 #include "Vertex.h"
 #include "VertexAttribute.h"
+#include "util/LogChannels.h"
+
+#include <sawyer/Logger.h>
 
 VertexBuffer::VertexBuffer(
     unsigned int buffer_size,
@@ -14,7 +17,7 @@ VertexBuffer::VertexBuffer(
 
 VertexBuffer::~VertexBuffer()
 {
-    std::cout << "calling VertexBuffer destructor" << std::endl;
+    LOG_DEBUG(LogChannel::OpenGL, "Calling VertexBuffer destructor");
     glDeleteBuffers(1, &this->m_id);
 }
 

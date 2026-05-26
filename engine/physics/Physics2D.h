@@ -37,7 +37,8 @@ public:
     void setGravity(glm::vec2 gravity);
 
 private:
-    void processContactEvents(entt::registry &registry);
+    void syncCollisionShapes(entt::registry &registry);
+    void refreshSensorOverlaps(entt::registry &registry);
     void syncTransforms(entt::registry &registry);
 
     void createBody(GameObject &obj);

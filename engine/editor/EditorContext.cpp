@@ -16,8 +16,13 @@
 #include "core/components/Transform.h"
 
 #include "util/PathUtils.h"
+#include "util/LogChannels.h"
 
+#include <filesystem>
 #include <fstream>
+#include <iostream>
+#include <sawyer/Logger.h>
+#include <yaml-cpp/yaml.h>
 
 glm::vec2 EditorContext::getWorldCoordinate(glm::vec2 mouseScreenCoords)
 {
@@ -88,7 +93,7 @@ glm::vec2 EditorContext::worldToFrameBuffer(glm::vec2 worldPos)
     // check if w is zero (could be for certain cases like points at infinity)
     if (clipSpaceCoords.w == 0.0f)
     {
-        std::cout << "Warning: Invalid transformation, w = 0!" << std::endl;
+        LOG_WARN(LogChannel::Editor, "Invalid world-to-framebuffer transformation: w is zero");
         return glm::vec2(0.0f, 0.0f);
     }
 
@@ -101,8 +106,8 @@ glm::vec2 EditorContext::worldToFrameBuffer(glm::vec2 worldPos)
         (ndcCoords.x + 1.0f) * 0.5f * viewportWidth; // TODO: shouldn't we use framebuffer width/height here?
     framebufferCoords.y = (1.0f - ndcCoords.y) * 0.5f * viewportHeight; // flip Y-axis for imgui
 
-    // std::cout << "World Pos: (" << worldPos.x << ", " << worldPos.y << std::endl;
-    // std::cout << "Framebuffer Coords: (" << framebufferCoords.x << ", " << framebufferCoords.y << std::endl;
+    // LOG_DEBUG(LogChannel::Editor, "World position: ({}, {})", worldPos.x, worldPos.y);
+    // LOG_DEBUG(LogChannel::Editor, "Framebuffer coordinates: ({}, {})", framebufferCoords.x, framebufferCoords.y);
 
     return framebufferCoords;
 }
@@ -129,7 +134,7 @@ SceneHistory &EditorContext::getSelectedSceneHistory()
 
 Scene &EditorContext::getActiveScene()
 {
-    if (isPlaying)
+    if (isRuntimeActive())
     {
         auto it = sceneByScenePathMap.find("runtime_scene");
         if (it != sceneByScenePathMap.end())
@@ -138,7 +143,8 @@ Scene &EditorContext::getActiveScene()
         }
         else
         {
-            std::cerr << "inPlaying but runtime_scene not found" << std::endl;
+            std::cerr << "Runtime is active but runtime_scene was not found" << std::endl;
+            runtimeState = RuntimeState::Stopped;
         }
     }
 
@@ -157,11 +163,21 @@ Scene &EditorContext::getActiveScene()
     auto it = sceneByScenePathMap.find("newScene");
     if (it == sceneByScenePathMap.end())
     {
-        std::cout << "getActiveScene called, but no scene is selected. Creating new scene" << std::endl;
+        LOG_INFO(LogChannel::Editor, "No scene selected; creating a new scene");
         sceneByScenePathMap.insert({"newScene", Scene{std::move("newScene")}});
     }
 
     return sceneByScenePathMap.find("newScene")->second;
+}
+
+bool EditorContext::isRuntimePlaying() const
+{
+    return runtimeState == RuntimeState::Playing;
+}
+
+bool EditorContext::isRuntimeActive() const
+{
+    return runtimeState != RuntimeState::Stopped;
 }
 
 void EditorContext::snapshotScene()
@@ -184,24 +200,66 @@ void EditorContext::endEdit()
 
 void EditorContext::startRuntimeScene()
 {
+    if (runtimeState != RuntimeState::Stopped)
+    {
+        return;
+    }
+
     // always insert/assign in playmode
     sceneByScenePathMap.insert_or_assign("runtime_scene", getActiveScene().clone("runtime_scene"));
-    isPlaying = true;
+    runtimeState = RuntimeState::Playing;
     selectedObjects.clear();
     selectedGameObjectsDragOffset.clear();
     getActiveScene().play();
 }
 
+void EditorContext::resumeRuntimeScene()
+{
+    if (runtimeState != RuntimeState::Paused)
+    {
+        return;
+    }
+
+    auto runtimeScene = sceneByScenePathMap.find("runtime_scene");
+    if (runtimeScene == sceneByScenePathMap.end())
+    {
+        std::cerr << "Cannot resume: runtime_scene was not found" << std::endl;
+        runtimeState = RuntimeState::Stopped;
+        return;
+    }
+
+    runtimeScene->second.play();
+    runtimeState = RuntimeState::Playing;
+}
+
 void EditorContext::pauseRuntimeScene()
 {
-    getActiveScene().pause();
-    isPlaying = false;
+    if (runtimeState != RuntimeState::Playing)
+    {
+        return;
+    }
+
+    auto runtimeScene = sceneByScenePathMap.find("runtime_scene");
+    if (runtimeScene == sceneByScenePathMap.end())
+    {
+        std::cerr << "Cannot pause: runtime_scene was not found" << std::endl;
+        runtimeState = RuntimeState::Stopped;
+        return;
+    }
+
+    runtimeScene->second.pause();
+    runtimeState = RuntimeState::Paused;
 }
 
 void EditorContext::stopRuntimeScene()
 {
+    if (runtimeState == RuntimeState::Stopped)
+    {
+        return;
+    }
+
     sceneByScenePathMap.erase("runtime_scene");
-    isPlaying = false;
+    runtimeState = RuntimeState::Stopped;
     selectedObjects.clear();
     selectedGameObjectsDragOffset.clear();
 }
@@ -224,7 +282,7 @@ void EditorContext::deserializeSelectedScene()
     sceneByScenePathMap.insert({selectedScenePath, std::move(scene)});
     selectedObjects.clear();
     selectedGameObjectsDragOffset.clear();
-    std::cout << "Deserialized scene from scene.yaml" << std::endl;
+    LOG_INFO(LogChannel::Editor, "Deserialized scene from scene.yaml");
 }
 
 void EditorContext::serializaActiveScene()
@@ -236,7 +294,134 @@ void EditorContext::serializaActiveScene()
     std::ofstream file(filePath, std::ios::out | std::ios::trunc);
     file << out.c_str();
 
-    std::cout << "Serialized scene to: " << sceneName << ".yaml" << std::endl;
+    LOG_INFO(LogChannel::Editor, "Serialized scene to '{}.yaml'", sceneName);
+}
+
+// TODO: Is there a better place to put this?
+void EditorContext::loadEditorWorkspaceState()
+{
+    const std::filesystem::path statePath = getEditorWorkspaceStatePath();
+    if (!std::filesystem::exists(statePath))
+    {
+        return;
+    }
+
+    YAML::Node root;
+    try
+    {
+        root = YAML::LoadFile(statePath.string());
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Failed to load editor workspace state: " << e.what() << std::endl;
+        return;
+    }
+
+    const YAML::Node panels = root["Panels"];
+    if (panels)
+    {
+        if (panels["Scene"])
+            workspaceState.showScenePanel = panels["Scene"].as<bool>();
+        if (panels["Hierarchy"])
+            workspaceState.showHierarchyPanel = panels["Hierarchy"].as<bool>();
+        if (panels["Properties"])
+            workspaceState.showPropertiesPanel = panels["Properties"].as<bool>();
+        if (panels["Assets"])
+            workspaceState.showAssetsPanel = panels["Assets"].as<bool>();
+        if (panels["SpriteSheetEditor"])
+            workspaceState.showSpriteSheetEditorPanel = panels["SpriteSheetEditor"].as<bool>();
+        if (panels["Performance"])
+            workspaceState.showPerformancePanel = panels["Performance"].as<bool>();
+        if (panels["Systems"])
+            workspaceState.showSystemsPanel = panels["Systems"].as<bool>();
+        if (panels["Log"])
+            workspaceState.showLogPanel = panels["Log"].as<bool>();
+        if (panels["Context"])
+            workspaceState.showContextPanel = panels["Context"].as<bool>();
+        if (panels["Metrics"])
+            workspaceState.showMetricsWindow = panels["Metrics"].as<bool>();
+    }
+
+    const YAML::Node editor = root["Editor"];
+    if (editor)
+    {
+        if (editor["DrawGrid"])
+        {
+            drawGrid = editor["DrawGrid"].as<bool>();
+        }
+
+        if (editor["SnapToGrid"] && editor["SnapToGrid"].as<bool>())
+        {
+            movementMode = MovementMode::SnapToGrid;
+        }
+        else
+        {
+            movementMode = MovementMode::Free;
+        }
+
+        if (editor["SelectedScenePath"])
+        {
+            const std::string savedScenePath = editor["SelectedScenePath"].as<std::string>();
+            if (!savedScenePath.empty() && std::filesystem::exists(savedScenePath))
+            {
+                selectedScenePath = savedScenePath;
+                selectedAssetChildFolderPath = "scenes";
+            }
+        }
+        if (editor["EditorRendererMask"])
+            editorRendererMask = editor["EditorRendererMask"].as<uint32_t>();
+        if (editor["RuntimeRendererMask"])
+            runtimeRendererMask = editor["RuntimeRendererMask"].as<uint32_t>();
+    }
+}
+
+void EditorContext::saveEditorWorkspaceState()
+{
+    const std::filesystem::path statePath = getEditorWorkspaceStatePath();
+    std::filesystem::create_directories(statePath.parent_path());
+
+    YAML::Emitter out;
+    out << YAML::BeginMap;
+    out << YAML::Key << "Panels" << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << "Scene" << YAML::Value << workspaceState.showScenePanel;
+    out << YAML::Key << "Hierarchy" << YAML::Value << workspaceState.showHierarchyPanel;
+    out << YAML::Key << "Properties" << YAML::Value << workspaceState.showPropertiesPanel;
+    out << YAML::Key << "Assets" << YAML::Value << workspaceState.showAssetsPanel;
+    out << YAML::Key << "SpriteSheetEditor" << YAML::Value << workspaceState.showSpriteSheetEditorPanel;
+    out << YAML::Key << "Performance" << YAML::Value << workspaceState.showPerformancePanel;
+    out << YAML::Key << "Systems" << YAML::Value << workspaceState.showSystemsPanel;
+    out << YAML::Key << "Log" << YAML::Value << workspaceState.showLogPanel;
+    out << YAML::Key << "Context" << YAML::Value << workspaceState.showContextPanel;
+    out << YAML::Key << "Metrics" << YAML::Value << workspaceState.showMetricsWindow;
+    out << YAML::EndMap;
+
+    out << YAML::Key << "Editor" << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << "DrawGrid" << YAML::Value << drawGrid;
+    out << YAML::Key << "SnapToGrid" << YAML::Value << (movementMode == MovementMode::SnapToGrid);
+    out << YAML::Key << "SelectedScenePath" << YAML::Value << selectedScenePath;
+    out << YAML::Key << "EditorRendererMask" << YAML::Value << editorRendererMask;
+    out << YAML::Key << "RuntimeRendererMask" << YAML::Value << runtimeRendererMask;
+    out << YAML::EndMap;
+    out << YAML::EndMap;
+
+    std::ofstream file(statePath, std::ios::out | std::ios::trunc);
+    file << out.c_str();
+    editorWorkspaceDirty = false;
+}
+
+void EditorContext::saveEditorWorkspaceStateIfDirty()
+{
+    if (!editorWorkspaceDirty)
+    {
+        return;
+    }
+
+    saveEditorWorkspaceState();
+}
+
+void EditorContext::markEditorWorkspaceDirty()
+{
+    editorWorkspaceDirty = true;
 }
 
 void EditorContext::copySelectedObjectsToClipboard()
@@ -252,38 +437,8 @@ void EditorContext::copySelectedObjectsToClipboard()
     {
         YAML::Emitter out;
         auto e = go.getComponent<EntityInfo>();
-        std::cout << "Tag: " << e.tag << std::endl;
-        // Serialize just the component map (no top-level tag), using the
-        // same pattern as PropertiesPanel::drawExportModel so that copy /
-        // paste and model export stay in sync. If this format changes,
-        // FIXME: update both places or extract a shared helper.
-        out << YAML::BeginMap;
-        go.serializeComponent<EntityInfo>(out);
-        go.serializeComponent<Transform>(out);
-        go.serializeComponent<RenderLayer>(out);
-        go.serializeComponent<Sprite>(out);
-        go.serializeComponent<RigidBody2D>(out);
-        go.serializeComponent<BoxCollider2D>(out);
-        go.serializeComponent<Sensor2D>(out);
-        go.serializeComponent<Animator>(out);
-        go.serializeComponent<AudioSource>(out);
-        go.serializeComponent<EnemyState>(out);
-        go.serializeComponent<Patrol>(out);
-        go.serializeComponent<Text>(out);
-        go.serializeComponent<TextAnchor>(out);
-        go.serializeComponent<ParticleEmitter>(out);
-        go.serializeComponent<Camera>(out);
-        go.serializeComponent<PostProcessSettings>(out);
-
-        const auto &extraEntries = ComponentRegistry::instance().getEntries();
-        for (const auto &entry : extraEntries)
-        {
-            if (entry.serialize)
-            {
-                entry.serialize(go, out);
-            }
-        }
-        out << YAML::EndMap;
+        LOG_DEBUG(LogChannel::Editor, "Copying object with tag '{}'", e.tag);
+        go.serialize(out);
         clipboardSerializedObjects.push_back(out.c_str());
     }
 }

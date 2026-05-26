@@ -1,7 +1,9 @@
 #include <GL/glew.h>
 #include <iostream>
+#include <sawyer/Logger.h>
 
 #include "FrameBuffer.h"
+#include "util/LogChannels.h"
 
 FrameBuffer::FrameBuffer(float width, float height) : m_width{width}, m_height{height}
 {
@@ -51,8 +53,13 @@ void FrameBuffer::init()
     }
     else
     {
-        std::cout << "FrameBuffer init OK: " << m_width << "x" << m_height << " FBO:" << m_fbo
-                  << " TEX:" << m_textureColorBuffer << " RBO:" << m_rbo << std::endl;
+        LOG_DEBUG(LogChannel::OpenGL,
+            "FrameBuffer init OK: {}x{} FBO:{} TEX:{} RBO:{}",
+            m_width,
+            m_height,
+            m_fbo,
+            m_textureColorBuffer,
+            m_rbo);
     }
 
     // unbind

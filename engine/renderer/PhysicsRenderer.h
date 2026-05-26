@@ -26,8 +26,8 @@ public:
     void render(const CameraOld &camera, const std::vector<GameObject> &gameObjects);
 
 private:
-    void updateBoxCollider2DVertices(const GameObject &gameObject);
-    void updateSensor2DVertices(const GameObject &gameObject);
+    void updateBoxCollider2DVertices(const GameObject &gameObject, float lineThickness);
+    void updateSensor2DVertices(const GameObject &gameObject, float lineThickness);
     void updateVertices(const CameraOld &camera, const std::vector<GameObject> &gameObjects);
 
 private:

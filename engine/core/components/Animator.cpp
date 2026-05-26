@@ -3,10 +3,11 @@
 
 #include "core/AssetManager.h"
 
+#include "util/LogChannels.h"
 #include "util/PathUtils.h"
 
-#include <iostream>
 #include <memory>
+#include <sawyer/Logger.h>
 #include <string>
 
 #ifdef EDITOR_BUILD
@@ -21,13 +22,17 @@ void Animator::play(std::string name, bool loop)
     auto it = animationSourceMap.find(name);
     if (it == animationSourceMap.end())
     {
-        std::cout << "Animation " << name << " not found" << std::endl;
+        LOG_WARN(LogChannel::Animator, "Animation '{}' not found", name);
         name = "android";
         animationSourceMap[name] = getGameAssetsPath("texture/android.json");
     }
 
-    std::string jsonPath = animationSourceMap[name];
-    auto animMap = AssetManager::instance().getAnimationMap(jsonPath);
+    std::filesystem::path jsonPath = animationSourceMap[name];
+    if (jsonPath.is_relative())
+    {
+        jsonPath = getGameAssetsPath(jsonPath.string());
+    }
+    auto animMap = AssetManager::instance().getAnimationMap(jsonPath.string());
 
     currentAnimation = name;
     animationPlayer.play(animMap->getAnimation(name), loop);
@@ -41,6 +46,11 @@ void Animator::update()
 const Sprite &Animator::getCurrentSprite() const
 {
     return animationPlayer.getCurrentFrame().sprite;
+}
+
+const Frame &Animator::getCurrentFrame() const
+{
+    return animationPlayer.getCurrentFrame();
 }
 
 #ifdef EDITOR_BUILD
@@ -123,7 +133,7 @@ void Animator::drawInspector()
                 ImGui::EndCombo();
             }
 
-            if (ImGui::Button(animationPlayer.isPlaying() ? "Pause" : "Play"))
+            if (ImGuiWrapper::Button(animationPlayer.isPlaying() ? "Pause" : "Play"))
             {
                 if (animationPlayer.isPlaying())
                 {
@@ -139,7 +149,7 @@ void Animator::drawInspector()
             }
 
             ImGui::SameLine();
-            if (ImGui::Button("Stop"))
+            if (ImGuiWrapper::Button("Stop"))
             {
                 animationPlayer.stop();
             }

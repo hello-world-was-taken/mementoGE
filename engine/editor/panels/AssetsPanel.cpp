@@ -116,26 +116,38 @@ AssetsPanel::~AssetsPanel()
 
 void AssetsPanel::draw()
 {
-    buildAssetsDockspace();
-
-    drawFoldersPanel();
-
-    if (!m_ctx.selectedAssetChildFolderPath.empty())
+    const bool shouldRenderAssetsPanels = m_ctx.workspaceState.showAssetsPanel && buildAssetsDockspace();
+    if (shouldRenderAssetsPanels)
     {
-        drawContentPanel();
+        drawFoldersPanel();
+
+        if (!m_ctx.selectedAssetChildFolderPath.empty())
+        {
+            drawContentPanel();
+        }
+
+        if (!m_ctx.selectedTextureJsonPath.empty())
+        {
+            drawSpritePanel();
+            drawAnimationPanel();
+        }
     }
 
-    if (!m_ctx.selectedTextureJsonPath.empty())
-    {
-        drawSpritePanel();
-        drawAnimationPanel();
-    }
     drawBoundTextures();
 }
 
-void AssetsPanel::buildAssetsDockspace()
+bool AssetsPanel::buildAssetsDockspace()
 {
-    ImGui::Begin("Assets");
+    const bool wasOpen = m_ctx.workspaceState.showAssetsPanel;
+    if (!ImGuiWrapper::BeginPanel("Assets", &m_ctx.workspaceState.showAssetsPanel))
+    {
+        ImGuiWrapper::EndPanel();
+        if (wasOpen != m_ctx.workspaceState.showAssetsPanel)
+        {
+            m_ctx.markEditorWorkspaceDirty();
+        }
+        return false;
+    }
 
     ImGuiID dockspaceId = ImGui::GetID("AssetsDockspace");
 
@@ -170,21 +182,26 @@ void AssetsPanel::buildAssetsDockspace()
 
                 ImGui::DockBuilderDockWindow("AssetsFolders", left);
                 ImGui::DockBuilderDockWindow("AssetsContent", center);
-                ImGui::DockBuilderDockWindow("Sprites##AssetsPanel", right);
-                ImGui::DockBuilderDockWindow("Animations##AssetsPanel", right);
+                ImGui::DockBuilderDockWindow("Sprites", right);
+                ImGui::DockBuilderDockWindow("Animations", right);
             }
         }
 
         ImGui::DockBuilderFinish(dockspaceId);
     }
 
-    ImGui::DockSpace(dockspaceId, ImVec2(0, 0));
-    ImGui::End();
+    ImGui::DockSpace(dockspaceId, ImVec2(0, 0), ImGuiDockNodeFlags_None);
+    ImGuiWrapper::EndPanel();
+    if (wasOpen != m_ctx.workspaceState.showAssetsPanel)
+    {
+        m_ctx.markEditorWorkspaceDirty();
+    }
+    return true;
 }
 
 void AssetsPanel::drawFoldersPanel()
 {
-    ImGui::Begin("AssetsFolders");
+    ImGuiWrapper::BeginPanel("AssetsFolders");
 
     auto folders = getFoldersInDirectory(GAME_ASSETS_DIR);
     for (const auto &folder : folders)
@@ -200,13 +217,13 @@ void AssetsPanel::drawFoldersPanel()
         }
     }
 
-    ImGui::End();
+    ImGuiWrapper::EndPanel();
 }
 
 // FIXME: this function is doing a lot of things.
 void AssetsPanel::drawContentPanel()
 {
-    ImGui::Begin("AssetsContent");
+    ImGuiWrapper::BeginPanel("AssetsContent");
 
     std::string selectedFolderPath = std::string(GAME_ASSETS_DIR) + m_ctx.selectedAssetChildFolderPath;
 
@@ -217,7 +234,7 @@ void AssetsPanel::drawContentPanel()
 
         ImGui::InputText("Scene Name", newSceneName, IM_ARRAYSIZE(newSceneName));
         ImGui::SameLine();
-        if (ImGui::Button("Create Scene") && newSceneName[0] != '\0')
+        if (ImGuiWrapper::Button("Create Scene") && newSceneName[0] != '\0')
         {
             std::string sceneName = newSceneName;
 
@@ -229,6 +246,7 @@ void AssetsPanel::drawContentPanel()
                 // Insert a fresh Scene into the editor context and select it.
                 m_ctx.sceneByScenePathMap.insert_or_assign(scenePath, Scene{std::move(sceneName)});
                 m_ctx.selectedScenePath = scenePath;
+                m_ctx.markEditorWorkspaceDirty();
 
                 // Persist the new scene to disk using the existing helper.
                 m_ctx.serializaActiveScene();
@@ -242,7 +260,7 @@ void AssetsPanel::drawContentPanel()
     }
     else if (m_ctx.selectedAssetChildFolderPath == "audio")
     {
-        if (ImGui::Button("Import Audio"))
+        if (ImGuiWrapper::Button("Import Audio"))
         {
             ImGuiFileDialog::Instance()->OpenDialog("ImportAudioFile", "Select Audio", ".wav,.ogg");
         }
@@ -273,7 +291,7 @@ void AssetsPanel::drawContentPanel()
     }
     else if (m_ctx.selectedAssetChildFolderPath == "fonts")
     {
-        if (ImGui::Button("Import Font"))
+        if (ImGuiWrapper::Button("Import Font"))
         {
             ImGuiFileDialog::Instance()->OpenDialog("ImportFontFile", "Select Font", ".ttf");
         }
@@ -304,7 +322,7 @@ void AssetsPanel::drawContentPanel()
     }
     else if (m_ctx.selectedAssetChildFolderPath == "texture")
     {
-        if (ImGui::Button("Import Texture"))
+        if (ImGuiWrapper::Button("Import Texture"))
         {
             ImGuiFileDialog::Instance()->OpenDialog("ImportTextureFile", "Select Texture", ".png,.jpg,.jpeg");
         }
@@ -376,6 +394,7 @@ void AssetsPanel::drawContentPanel()
                 if (ImGui::Selectable(label.c_str(), m_ctx.selectedScenePath == currentContentFullPath))
                 {
                     m_ctx.selectedScenePath = currentContentFullPath;
+                    m_ctx.markEditorWorkspaceDirty();
                 }
             }
             // Model assets live under assets/models; they are serialized GameObjects
@@ -457,12 +476,12 @@ void AssetsPanel::drawContentPanel()
         }
     }
 
-    ImGui::End();
+    ImGuiWrapper::EndPanel();
 }
 
 void AssetsPanel::drawSpritePanel()
 {
-    ImGui::Begin("Sprites##AssetsPanel");
+    ImGuiWrapper::BeginPanel("Sprites");
 
     std::shared_ptr<SpriteSheet> spriteSheet = AssetManager::instance().getSpriteSheet(m_ctx.selectedTextureJsonPath);
     std::shared_ptr<Texture> texture = spriteSheet->getTexture();
@@ -513,17 +532,17 @@ void AssetsPanel::drawSpritePanel()
         }
     }
 
-    ImGui::End();
+    ImGuiWrapper::EndPanel();
 }
 
 void AssetsPanel::drawAnimationPanel()
 {
-    ImGui::Begin("Animations##AssetsPanel");
+    ImGuiWrapper::BeginPanel("Animations");
 
     if (m_ctx.selectedTextureJsonPath.empty())
     {
         ImGui::Text("First select a texture");
-        ImGui::End();
+        ImGuiWrapper::EndPanel();
         return;
     }
 
@@ -592,12 +611,12 @@ void AssetsPanel::drawAnimationPanel()
         }
     }
 
-    ImGui::End();
+    ImGuiWrapper::EndPanel();
 }
 
 void AssetsPanel::drawBoundTextures()
 {
-    ImGui::Begin("Bound Textures##AssetsPanel");
+    ImGuiWrapper::BeginPanel("Bound Textures");
 
     constexpr float PREVIEW_SIZE = 256.0f;
 
@@ -678,5 +697,5 @@ void AssetsPanel::drawBoundTextures()
         ImGui::TextDisabled("No textures bound");
     }
 
-    ImGui::End();
+    ImGuiWrapper::EndPanel();
 }

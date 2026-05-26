@@ -27,12 +27,16 @@ public:
     void setRendererEnablement(RendererType enablements);
     void setClearColor(glm::vec4 color);
 
-    void renderScene(const CameraOld &camera, const std::vector<GameObject> &objects);
+    void renderScene(const CameraOld &camera,
+        const std::vector<GameObject> &objects,
+        const std::vector<GameObject> &selectedObjects);
 
     unsigned int getColorTexture();
 
 private:
-    void renderLayers(const CameraOld &camera, const std::vector<GameObject> &gameObjects);
+    void renderLayers(const CameraOld &camera,
+        const std::vector<GameObject> &gameObjects,
+        const std::vector<GameObject> &selectedObjects);
     bool hasRendererTypeEnabled(RendererType flag);
     void renderSprites(const CameraOld &camera, const std::vector<GameObject> &gameObjects);
     void renderSelection(const CameraOld &camera, const std::vector<GameObject> &selectedObjects);

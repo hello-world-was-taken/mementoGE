@@ -4,6 +4,7 @@
 #include "core/components/Transform.h"
 
 #include "core/IconsFontAwesome4.h"
+#include "core/ImGuiWrapper.h"
 
 #include "editor/EditorPanel.h"
 
@@ -30,26 +31,16 @@ template <typename T> void SceneHierarchyPanel::drawComponentRemoveRow(GameObjec
         return;
     }
 
-    bool removeComponent = false;
-
     ImGui::PushID(label.c_str());
-
-    ImGui::Text(ICON_FA_SUPERPOWERS "%s", label.c_str());
 
     if constexpr (std::is_same_v<T, EntityInfo> || std::is_same_v<T, Transform>)
     {
+        ImGuiWrapper::Row(label.c_str(), ICON_FA_CUBE, ICON_FA_LOCK, false);
         ImGui::PopID();
         return;
     }
 
-    ImGui::SameLine(ImGui::GetContentRegionAvail().x - 20);
-
-    if (ImGui::SmallButton("X"))
-    {
-        removeComponent = true;
-    }
-
-    if (removeComponent)
+    if (ImGuiWrapper::Row(label.c_str(), ICON_FA_CUBE, ICON_FA_TIMES))
     {
         go.removeComponent<T>();
     }

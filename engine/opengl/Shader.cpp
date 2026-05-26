@@ -1,9 +1,10 @@
 #include <cstring>
 #include <GL/glew.h>
 #include <fstream>
-#include <iostream>
+#include <sawyer/Logger.h>
 
 #include "Shader.h"
+#include "util/LogChannels.h"
 
 Shader::Shader(const char *vertex_path, const char *fragment_path)
 {
@@ -54,7 +55,7 @@ std::string Shader::parseShader(const std::string &filePath)
 
     if (!stream.is_open())
     {
-        std::cout << "Could not open the file " << filePath << std::endl;
+        LOG_ERROR(LogChannel::Shader, "Could not open file {}", filePath);
         return NULL;
     }
 
@@ -84,8 +85,7 @@ void Shader::checkShaderCompileErrors(unsigned int shader_id, const char *shader
     {
         char *shader_error_message = new char[info_log_length + 1];
         glGetShaderInfoLog(shader_id, info_log_length, NULL, shader_error_message);
-        std::cout << "ERROR::SHADER_COMPILATION_ERROR of type: " << shader_type << std::endl;
-        std::cout << shader_error_message << std::endl;
+        LOG_ERROR(LogChannel::Shader, "Compilation error for type {}: {}", shader_type, shader_error_message);
         delete[] shader_error_message;
     }
 };

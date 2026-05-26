@@ -16,6 +16,7 @@
 
 #include "core/AssetManager.h"
 #include "core/ComponentRegistry.h"
+#include "core/ImGuiWrapper.h"
 #include "core/SpriteSheet.h"
 #include "core/components/Animator.h"
 
@@ -25,10 +26,12 @@
 #include "editor/panels/PropertiesPanel.h"
 
 #include "util/PathUtils.h"
+#include "util/LogChannels.h"
 
 #include <ImGuiFileDialog/ImGuiFileDialog.h>
 #include <filesystem>
 #include <fstream>
+#include <sawyer/Logger.h>
 #include <imgui.h>
 #include <memory>
 
@@ -50,26 +53,61 @@ PropertiesPanel::~PropertiesPanel()
 void PropertiesPanel::draw()
 {
     renderPropertiesInWindow();
-    renderPropertiesInPopup();
+    renderPropertiesPopupHost();
 }
 
 void PropertiesPanel::renderPropertiesInWindow()
 {
-    ImGui::Begin("Properties");
+    if (!m_ctx.workspaceState.showPropertiesPanel)
+    {
+        return;
+    }
+
+    const bool wasOpen = m_ctx.workspaceState.showPropertiesPanel;
+    if (!ImGuiWrapper::BeginPanel("Properties", &m_ctx.workspaceState.showPropertiesPanel))
+    {
+        ImGuiWrapper::EndPanel();
+        if (wasOpen != m_ctx.workspaceState.showPropertiesPanel)
+        {
+            m_ctx.markEditorWorkspaceDirty();
+        }
+        return;
+    }
+
     renderPropertiesPanel();
+    ImGuiWrapper::EndPanel();
+    if (wasOpen != m_ctx.workspaceState.showPropertiesPanel)
+    {
+        m_ctx.markEditorWorkspaceDirty();
+    }
+}
+
+void PropertiesPanel::renderPropertiesPopupHost()
+{
+    ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(1.0f, 1.0f), ImGuiCond_Always);
+
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings |
+                             ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs |
+                             ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDocking;
+
+    if (ImGui::Begin("PropertiesPopupHost", nullptr, flags))
+    {
+        renderPropertiesInPopup();
+    }
     ImGui::End();
 }
 
 void PropertiesPanel::renderPropertiesInPopup()
 {
-    if (!m_ctx.showPropertiesPopup)
+    if (m_ctx.showPropertiesPopup)
     {
-        return;
+        ImGui::SetNextWindowPos(m_ctx.propertiesPopupPos);
+        ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_Appearing);
+        ImGui::OpenPopup("PropertiesPopup");
+        m_ctx.showPropertiesPopup = false;
     }
 
-    // Place popup a little to the right of mouse click
-    ImGui::SetNextWindowPos(m_ctx.propertiesPopupPos);
-    ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_Appearing);
     if (ImGui::BeginPopup("PropertiesPopup"))
     {
         ImGui::BeginChild("PropertiesScrollRegion", ImVec2(0, 0), false, ImGuiChildFlags_AlwaysUseWindowPadding);
@@ -78,10 +116,6 @@ void PropertiesPanel::renderPropertiesInPopup()
 
         ImGui::EndChild();
         ImGui::EndPopup();
-    }
-    else
-    {
-        m_ctx.showPropertiesPopup = false;
     }
 }
 
@@ -133,7 +167,7 @@ void PropertiesPanel::renderPropertiesPanel()
     drawExportModel(go);
 
     ImGui::Separator();
-    if (ImGui::Button("Delete Object"))
+    if (ImGuiWrapper::Button("Delete Object"))
     {
         m_ctx.getActiveScene().removeGameObject(go.getEntityId());
         m_ctx.selectedGameObjectsDragOffset.clear();
@@ -170,8 +204,9 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                 {
                     EntityInfo &entityInfo = go.getComponent<EntityInfo>();
                     go.addComponent<BoxCollider2D>();
-                    go.getComponent<BoxCollider2D>().size = {entityInfo.width, entityInfo.height};
-                    m_ctx.getActiveScene().getPhysics2d().registerRigidBody2D(go);
+                    auto &collider = go.getComponent<BoxCollider2D>();
+                    collider.shapes.front().size = {entityInfo.width * 0.75f, entityInfo.height * 0.85f};
+                    m_ctx.getActiveScene().getPhysics2d().registerBoxCollider2D(go);
                 });
         }
 
@@ -329,7 +364,7 @@ void PropertiesPanel::drawPopups()
     {
         ImGui::Text("Please select a texture first!");
         ImGui::Separator();
-        if (ImGui::Button("OK", ImVec2(120, 0)))
+        if (ImGuiWrapper::Button("OK", ImVec2(120, 0)))
         {
             ImGui::CloseCurrentPopup();
         }
@@ -339,45 +374,15 @@ void PropertiesPanel::drawPopups()
 
 void PropertiesPanel::drawExportModel(GameObject &go)
 {
-    if (ImGui::Button("Export Model"))
+    if (ImGuiWrapper::Button("Export Model"))
     {
         YAML::Emitter out;
-        // FIXME: For models, we serialize only the component map (no top-level
-        // entity name wrapper) so that it can be loaded directly into
-        // GameObject's deserialization path.
-        out << YAML::BeginMap;
-        go.serializeComponent<EntityInfo>(out);
-        go.serializeComponent<Transform>(out);
-        go.serializeComponent<RenderLayer>(out);
-        go.serializeComponent<Sprite>(out);
-        go.serializeComponent<RigidBody2D>(out);
-        go.serializeComponent<BoxCollider2D>(out);
-        go.serializeComponent<Sensor2D>(out);
-        go.serializeComponent<Animator>(out);
-        go.serializeComponent<EnemyState>(out);
-        go.serializeComponent<Patrol>(out);
-        go.serializeComponent<Text>(out);
-        go.serializeComponent<TextAnchor>(out);
-        go.serializeComponent<ParticleEmitter>(out);
-        go.serializeComponent<PostProcessSettings>(out);
-        go.serializeComponent<EntityRef>(out);
-
-        // Let game code extend model export with its own components
-        // via the same registry used for scene serialization.
-        const auto &extraEntries = ComponentRegistry::instance().getEntries();
-        for (const auto &entry : extraEntries)
-        {
-            if (entry.serialize)
-            {
-                entry.serialize(go, out);
-            }
-        }
-        out << YAML::EndMap;
+        go.serialize(out);
 
         EntityInfo &info = go.getComponent<EntityInfo>();
         std::ofstream file(getGameAssetsPath("models/" + info.tag + ".yaml"), std::ios::out | std::ios::trunc);
         file << out.c_str();
 
-        std::cout << "Export model: " << info.tag << std::endl;
+        LOG_INFO(LogChannel::Editor, "Exported model '{}'", info.tag);
     }
 }

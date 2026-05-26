@@ -35,6 +35,18 @@ GameObject::GameObject(entt::registry &registry) : m_registry{&registry}
 GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGameObject, Physics2D &physics)
     : m_registry{&registry}
 {
+    if (!serializedGameObject || !serializedGameObject.IsMap() || serializedGameObject.size() != 1)
+    {
+        throw std::runtime_error("GameObject YAML must be a single tagged map entry");
+    }
+
+    auto it = serializedGameObject.begin();
+    YAML::Node components = it->second;
+    if (!components || !components.IsMap())
+    {
+        throw std::runtime_error("GameObject YAML tag must contain a component map");
+    }
+
     m_entity = m_registry->create();
     // add required components to objects that were created previously
     // and may not have them for backwards compatablity
@@ -43,23 +55,23 @@ GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGam
     addComponent<RenderLayer>();
 
     // Deserialize Components
-    deserializeComponent<EntityInfo>(serializedGameObject, "EntityInfo");
-    deserializeComponent<Transform>(serializedGameObject, "Transform");
-    deserializeComponent<RenderLayer>(serializedGameObject, "RenderLayer");
-    deserializeComponent<Sprite>(serializedGameObject, "Sprite");
-    deserializeComponent<RigidBody2D>(serializedGameObject, "RigidBody2D", physics);
-    deserializeComponent<BoxCollider2D>(serializedGameObject, "BoxCollider2D", physics);
-    deserializeComponent<Sensor2D>(serializedGameObject, "Sensor2D", physics);
-    deserializeComponent<Animator>(serializedGameObject, "Animator");
-    deserializeComponent<AudioSource>(serializedGameObject, "AudioSource");
-    deserializeComponent<EnemyState>(serializedGameObject, "EnemyState");
-    deserializeComponent<Patrol>(serializedGameObject, "Patrol");
-    deserializeComponent<Text>(serializedGameObject, "Text");
-    deserializeComponent<TextAnchor>(serializedGameObject, "TextAnchor");
-    deserializeComponent<ParticleEmitter>(serializedGameObject, "ParticleEmitter");
-    deserializeComponent<Camera>(serializedGameObject, "Camera");
-    deserializeComponent<PostProcessSettings>(serializedGameObject, "PostProcessSettings");
-    deserializeComponent<EntityRef>(serializedGameObject, "EntityRef");
+    deserializeComponent<EntityInfo>(components, "EntityInfo");
+    deserializeComponent<Transform>(components, "Transform");
+    deserializeComponent<RenderLayer>(components, "RenderLayer");
+    deserializeComponent<Sprite>(components, "Sprite");
+    deserializeComponent<RigidBody2D>(components, "RigidBody2D", physics);
+    deserializeComponent<BoxCollider2D>(components, "BoxCollider2D", physics);
+    deserializeComponent<Sensor2D>(components, "Sensor2D", physics);
+    deserializeComponent<Animator>(components, "Animator");
+    deserializeComponent<AudioSource>(components, "AudioSource");
+    deserializeComponent<EnemyState>(components, "EnemyState");
+    deserializeComponent<Patrol>(components, "Patrol");
+    deserializeComponent<Text>(components, "Text");
+    deserializeComponent<TextAnchor>(components, "TextAnchor");
+    deserializeComponent<ParticleEmitter>(components, "ParticleEmitter");
+    deserializeComponent<Camera>(components, "Camera");
+    deserializeComponent<PostProcessSettings>(components, "PostProcessSettings");
+    deserializeComponent<EntityRef>(components, "EntityRef");
 
     // Let game code plug in additional component deserialization.
     const auto &extraEntries = ComponentRegistry::instance().getEntries();
@@ -67,7 +79,7 @@ GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGam
     {
         if (entry.deserialize)
         {
-            entry.deserialize(*this, serializedGameObject);
+            entry.deserialize(*this, components);
         }
     }
 }
@@ -125,6 +137,7 @@ bool GameObject::containsPoint(glm::vec2 worldPoint) const
 bool GameObject::serialize(YAML::Emitter &out)
 {
     EntityInfo &entityInfo = getComponent<EntityInfo>();
+    out << YAML::BeginMap;
     out << YAML::Key << entityInfo.tag;
     out << YAML::Value << YAML::BeginMap;
 
@@ -136,6 +149,7 @@ bool GameObject::serialize(YAML::Emitter &out)
     serializeComponent<BoxCollider2D>(out);
     serializeComponent<Sensor2D>(out);
     serializeComponent<Animator>(out);
+    serializeComponent<AudioSource>(out);
     serializeComponent<EnemyState>(out);
     serializeComponent<Patrol>(out);
     serializeComponent<Text>(out);
@@ -155,6 +169,7 @@ bool GameObject::serialize(YAML::Emitter &out)
         }
     }
 
+    out << YAML::EndMap;
     out << YAML::EndMap;
 
     // TODO: do we need this to return a bool?

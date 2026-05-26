@@ -6,10 +6,12 @@
 
 #include "editor/EditorContext.h"
 #include "editor/panels/AssetsPanel.h"
+#include "editor/panels/LogPanel.h"
 #include "editor/panels/PropertiesPanel.h"
 #include "editor/panels/SceneHierarchyPanel.h"
 #include "editor/panels/ScenePanel.h"
 #include "editor/panels/SpriteSheetEditorPanel.h"
+#include "editor/panels/SystemsPanel.h"
 
 #include "renderer/GridRenderer.h"
 #include "renderer/PhysicsRenderer.h"
@@ -34,12 +36,13 @@ public:
 
 private:
     void updateFrame();
+    void renderMainMenuBar();
 
     // imgui panels
     void renderGrid();
     void renderPerformancePanel();
     void renderEditorProperties();
-    void renderAddNewObjectPopup();
+    CameraOld &getPlayCamera(Scene &scene);
 
     void drawMouseDebugPanel();
 
@@ -55,11 +58,12 @@ private:
     SceneHierarchyPanel m_sceneHierarchyPanel{m_ctx};
     PropertiesPanel m_propertiesPanel{m_ctx};
     AssetsPanel m_assetsPanel{m_ctx};
+    LogPanel m_logPanel{m_ctx};
+    SystemsPanel m_systemsPanel{m_ctx};
     SpriteSheetEditorPanel m_spriteSheetEditorPanel{m_ctx};
 
-    bool m_drawGrid = false;
-
     GridRenderer m_gridRenderer;
+    CameraOld m_playCamera;
 
     glm::vec4 editorModeClearColor = {0.41176f, 0.41176f, 0.41176f, 1.00f};
     glm::vec4 playModeClearColor = {0.0f, 0.0f, 0.0f, 1.0f};

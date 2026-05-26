@@ -3,6 +3,7 @@
 #include "core/AnimationMap.h"
 #include "core/AnimationPlayer.h"
 #include "core/AssetManager.h"
+#include "core/ImGuiWrapper.h"
 #include "core/SpriteSheet.h"
 
 #include "editor/DragNDropPayloads.h"
@@ -54,8 +55,8 @@ void TexturePanel::draw()
 
 void TexturePanel::renderTextureAssetsListPanel()
 {
-    ImGui::Begin("Texture Resources");
-    if (ImGui::Button("Add Texture"))
+    ImGuiWrapper::BeginPanel("Texture Resources");
+    if (ImGuiWrapper::Button("Add Texture"))
     {
         ImGuiFileDialog::Instance()->OpenDialog("ChooseTexFile", "Select a Texture", ".png,.jpg,.jpeg");
     }
@@ -71,7 +72,7 @@ void TexturePanel::renderTextureAssetsListPanel()
         }
     }
 
-    ImGui::End();
+    ImGuiWrapper::EndPanel();
 }
 
 // only copies assets if one is selected

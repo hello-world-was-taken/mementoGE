@@ -5,6 +5,9 @@
 #include "editor/EditorCamera.h"
 
 #include "util/Time.h"
+#include "util/LogChannels.h"
+
+#include <sawyer/Logger.h>
 
 // Initialize static member
 Window *Window::s_instance = nullptr;
@@ -121,6 +124,8 @@ void Window::setupWindowHints() const
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     // glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
+    
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
@@ -142,7 +147,7 @@ GLFWwindow *Window::getGlfwWindow()
 {
     if (m_glfw_window == nullptr)
     {
-        std::cout << "GLFW window is null" << std::endl;
+        LOG_ERROR(LogChannel::Window, "GLFW window is null");
         return nullptr;
     }
     return m_glfw_window;

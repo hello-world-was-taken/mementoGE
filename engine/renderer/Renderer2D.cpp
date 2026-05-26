@@ -51,11 +51,13 @@ unsigned int Renderer2D::getColorTexture()
     return m_finalFBO.getColorTexture();
 }
 
-void Renderer2D::renderScene(const CameraOld &camera, const std::vector<GameObject> &objects)
+void Renderer2D::renderScene(const CameraOld &camera,
+    const std::vector<GameObject> &objects,
+    const std::vector<GameObject> &selectedObjects)
 {
     m_finalFBO.resize();
 
-    renderLayers(camera, objects);
+    renderLayers(camera, objects, selectedObjects);
 }
 
 bool Renderer2D::hasRendererTypeEnabled(RendererType flag)
@@ -98,8 +100,12 @@ void Renderer2D::renderSprites(const CameraOld &camera, const std::vector<GameOb
 
             std::array<glm::vec3, 4> quad = gameObject.getWorldCoordinateQuad();
             auto texCoords = sprite.getNormalizedTextureCoordinates();
-            int texSlot = sprite.texture->getTextureSlot();
-            sprite.texture->bind();
+            int texSlot = -1;
+            if (sprite.texture)
+            {
+                texSlot = sprite.texture->getTextureSlot();
+                sprite.texture->bind();
+            }
 
             // TODO: this should be moved to the base renderer class or should be a common utility
             auto makeVertex = [&](const glm::vec3 &pos, const glm::vec4 &color, const glm::vec2 &uv, int t)
@@ -192,6 +198,11 @@ void Renderer2D::renderSprites(const CameraOld &camera, const std::vector<GameOb
 
 void Renderer2D::renderSelection(const CameraOld &camera, const std::vector<GameObject> &selectedObjects)
 {
+    if (selectedObjects.empty())
+    {
+        return;
+    }
+
     if (m_batch == nullptr)
     {
         m_batch = std::make_unique<RenderBatch>(m_indices, GL_TRIANGLES);
@@ -225,7 +236,7 @@ void Renderer2D::renderSelection(const CameraOld &camera, const std::vector<Game
         // GL_LINES so the "lines" have a controllable thickness.
         const float thickness = 1.0f; // world units
 
-        glm::vec4 selectionColor = glm::vec4(0.0f, 0.6f, 1.0f, 1.0f); // blue outline
+        const glm::vec4 selectionColor{0.302f, 0.522f, 0.780f, 1.0f}; // softened editor blue
 
         auto makeVertex = [&](const glm::vec3 &pos) -> Vertex
         {
@@ -291,7 +302,7 @@ void Renderer2D::renderSelection(const CameraOld &camera, const std::vector<Game
     m_batch->setIndexData(m_indices);
 
     size_t quadCount = m_vertices.size() / 4;
-    size_t indexCount = quadCount * 8;
+    size_t indexCount = quadCount * 6;
 
     m_batch->render(camera, indexCount);
 }
@@ -301,40 +312,48 @@ void Renderer2D::setClearColor(glm::vec4 color)
     clearColor = color;
 }
 
-void Renderer2D::renderLayers(const CameraOld &camera, const std::vector<GameObject> &objects)
+void Renderer2D::renderLayers(const CameraOld &camera,
+    const std::vector<GameObject> &objects,
+    const std::vector<GameObject> &selectedObjects)
 {
-    for (RenderLayerType layer : RENDER_LAYER_ORDER)
+    m_finalFBO.bind();
+
+    glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    if (hasRendererTypeEnabled(RendererType::Grid))
     {
-        m_finalFBO.bind();
+        // Keep grid tile size in sync with EditorMouseController.cpp.
+        constexpr int GRID_TILE_SIZE = 16;
+        m_gridRenderer.render(camera, GRID_TILE_SIZE);
+    }
 
-        glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    if (hasRendererTypeEnabled(RendererType::Sprite))
+    {
+        renderSprites(camera, objects);
+    }
 
-        if (hasRendererTypeEnabled(RendererType::Grid))
-        {
-            // Keep grid tile size in sync with EditorMouseController.cpp.
-            constexpr int GRID_TILE_SIZE = 16;
-            m_gridRenderer.render(camera, GRID_TILE_SIZE);
-        }
+    const bool renderPhysicsOverlay = hasRendererTypeEnabled(RendererType::Physics);
+    const bool renderSelectionOverlay = hasRendererTypeEnabled(RendererType::Selection);
+    if (renderPhysicsOverlay || renderSelectionOverlay)
+    {
+        // Debug geometry is an overlay: it must remain visible when it occupies
+        // the same depth as an opaque sprite.
+        const GLboolean depthTestWasEnabled = glIsEnabled(GL_DEPTH_TEST);
+        glDisable(GL_DEPTH_TEST);
 
-        if (hasRendererTypeEnabled(RendererType::Physics))
-        {
+        if (renderPhysicsOverlay)
             m_physicsRenderer.render(camera, objects);
-        }
 
-        if (hasRendererTypeEnabled(RendererType::Selection))
+        if (renderSelectionOverlay)
         {
-            // Selection outlines and camera view bounds are both
-            // editor-only overlays, grouped under the Selection flag.
-            renderSelection(camera, objects);
+            renderSelection(camera, selectedObjects);
             m_cameraBoundsRenderer.render(camera, objects);
         }
 
-        if (hasRendererTypeEnabled(RendererType::Sprite))
-        {
-            renderSprites(camera, objects);
-        }
-
-        m_finalFBO.unbind();
+        if (depthTestWasEnabled)
+            glEnable(GL_DEPTH_TEST);
     }
+
+    m_finalFBO.unbind();
 }

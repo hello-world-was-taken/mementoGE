@@ -24,6 +24,7 @@ private:
     void renderPlayPause();
     void renderMovementMode();
     void renderSceneViewport();
+    void renderCreateObjectPopup();
     void handleViewportDropTarget();
     void createSpriteFromPayload(const ImGuiPayload *payload);
     void createModelFromPayload(const ImGuiPayload *payload);

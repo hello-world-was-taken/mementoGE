@@ -10,7 +10,9 @@ AnimationPlayer::AnimationPlayer(const Animation &animation)
 void AnimationPlayer::update()
 {
     if (!m_playing)
+    {
         return;
+    }
 
     m_frameTimer += Time::deltaTime();
     ;
@@ -23,16 +25,21 @@ void AnimationPlayer::update()
         if (m_currentFrame >= mp_animation->frames.size())
         {
             if (m_looping)
+            {
                 m_currentFrame = 0;
+            }
             else
+            {
                 m_currentFrame = mp_animation->frames.size() - 1;
+                m_playing = false;
+            }
         }
     }
 }
 
 void AnimationPlayer::play(const Animation &animation, bool loop)
 {
-    if(mp_animation && mp_animation->name == animation.name)
+    if (mp_animation && mp_animation->name == animation.name)
     {
         return;
     }

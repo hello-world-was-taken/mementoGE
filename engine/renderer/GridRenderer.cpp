@@ -1,30 +1,45 @@
 #include "renderer/GridRenderer.h"
 #include "core/GlResourceManager.h"
 #include "opengl/Vertex.h"
+#include "renderer/util.h"
 
+#include "editor/Constants.h"
 #include "util/PathUtils.h"
-#include "util/log_error.h"
+#include "util/LogChannels.h"
 
 #include <filesystem>
 #include <glm/glm.hpp>
-#include <stdexcept>
+#include <sawyer/Logger.h>
+
+namespace
+{
+void appendLineQuad(std::vector<Vertex> &vertices,
+    const glm::vec2 &start,
+    const glm::vec2 &end,
+    float thickness)
+{
+    const glm::vec2 direction = end - start;
+    const glm::vec2 normal = glm::normalize(glm::vec2{-direction.y, direction.x}) * (thickness * 0.5f);
+    const glm::vec4 color{1.0f};
+    const glm::vec2 texCoord{0.0f};
+    constexpr int texSlot = -1;
+
+    vertices.emplace_back(Vertex{glm::vec3(start + normal, 0.0f), color, texCoord, texSlot});
+    vertices.emplace_back(Vertex{glm::vec3(start - normal, 0.0f), color, texCoord, texSlot});
+    vertices.emplace_back(Vertex{glm::vec3(end - normal, 0.0f), color, texCoord, texSlot});
+    vertices.emplace_back(Vertex{glm::vec3(end + normal, 0.0f), color, texCoord, texSlot});
+}
+} // namespace
 
 GridRenderer::GridRenderer()
 {
-    m_vao = std::make_unique<VertexArray>();
-    m_vao->bind();
-
-    // Allocate a reasonable default buffer size; it will be updated each frame.
-    // This avoids tying capacity to a specific camera/config at construction.
-    constexpr size_t DEFAULT_MAX_VERTICES = 4096;
-    m_vbo = std::make_unique<VertexBuffer>(DEFAULT_MAX_VERTICES * sizeof(Vertex), GL_DYNAMIC_DRAW);
-    m_vbo->bind();
-
-    m_vao->attachVertexAttribute(VertexAttribute{3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0}); // position
-
-    std::cout << "Curr directory: " << std::filesystem::current_path() << std::endl;
+    LOG_DEBUG(LogChannel::Renderer, "Current directory: {}", std::filesystem::current_path().string());
     m_shader = GlResourceManager::instance().getShaderProgram(
         getFilePath("shader/grid_vertex.shader"), getFilePath("shader/grid_fragment.shader"));
+
+    generateIndexArrayForTriangle(m_indices);
+    m_batch = std::make_unique<RenderBatch>(m_indices, GL_TRIANGLES);
+    m_batch->setIndexData(m_indices);
 }
 
 GridRenderer::~GridRenderer()
@@ -34,11 +49,6 @@ GridRenderer::~GridRenderer()
 void GridRenderer::generateGridLines(const CameraOld &camera, int tileSize)
 {
     m_vertices.clear();
-
-    // Default color or texcoord, unused in this case
-    glm::vec4 color = glm::vec4(1.0f); // optional
-    glm::vec2 texCoord = glm::vec2(0.0f);
-    int texSlot = 0;
 
     // Compute world-space corners by unprojecting the NDC corners
     // [-1, -1] and [1, 1]. This lets us build a grid that always
@@ -61,16 +71,16 @@ void GridRenderer::generateGridLines(const CameraOld &camera, int tileSize)
     int startY = static_cast<int>(std::floor(bottomLeft.y / tileSize)) * tileSize;
     int endY = static_cast<int>(std::ceil(topRight.y / tileSize)) * tileSize;
 
-    m_vertices.clear();
+    // Match the old one-pixel GL_LINES appearance across editor zoom levels.
+    const float lineThickness = (LOGICAL_WIDTH / WINDOW_WIDTH) * camera.getZoom();
+
     for (int x = startX; x <= endX; x += tileSize)
     {
-        m_vertices.emplace_back(Vertex{glm::vec3(x, startY, 0), color, texCoord, texSlot});
-        m_vertices.emplace_back(Vertex{glm::vec3(x, endY, 0), color, texCoord, texSlot});
+        appendLineQuad(m_vertices, {x, startY}, {x, endY}, lineThickness);
     }
     for (int y = startY; y <= endY; y += tileSize)
     {
-        m_vertices.emplace_back(Vertex{glm::vec3(startX, y, 0), color, texCoord, texSlot});
-        m_vertices.emplace_back(Vertex{glm::vec3(endX, y, 0), color, texCoord, texSlot});
+        appendLineQuad(m_vertices, {startX, y}, {endX, y}, lineThickness);
     }
 }
 
@@ -83,15 +93,8 @@ void GridRenderer::render(const CameraOld &camera, int tileSize)
     // TODO: we can avoid generating grids by caching previous camera position
     generateGridLines(camera, tileSize);
 
-    m_vao->bind();
-    // TODO: why was binding vao not enough here?
-    m_vbo->bind();
-    m_vbo->updateBufferData(m_vertices);
-    m_vbo->unbind();
+    m_batch->setVertexData(m_vertices);
 
-    glClearError();
-    glDrawArrays(GL_LINES, 0, m_vertices.size());
-    glCheckError("glDrawLines", __FILE__, __LINE__);
-
-    m_vao->unbind();
+    const size_t quadCount = m_vertices.size() / 4;
+    m_batch->render(camera, static_cast<int>(quadCount * INDICES_PER_QUAD), m_shader);
 }

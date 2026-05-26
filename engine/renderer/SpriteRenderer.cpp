@@ -9,11 +9,12 @@
 #include "renderer/util.h"
 
 #include "util/PathUtils.h"
+#include "util/LogChannels.h"
 
 #include <algorithm>
 #include <filesystem>
-#include <iostream>
 #include <memory>
+#include <sawyer/Logger.h>
 
 static std::array<glm::vec3, 4> makeQuadFromCenter(const glm::vec3 &center, float size)
 {
@@ -135,9 +136,10 @@ void SpriteRenderer::updateVertices(const std::vector<GameObject> &gameObjects)
                 resourceManager.getShaderProgram(effectRequest.vertexShaderPath, effectRequest.fragmentShaderPath);
             m_currentShader = shader;
 
-            std::cout << "ShaderEffectRequest found for GameObject with vertex shader: "
-                      << effectRequest.vertexShaderPath << " and fragment shader: " << effectRequest.fragmentShaderPath
-                      << std::endl;
+            LOG_DEBUG(LogChannel::Renderer,
+                "ShaderEffectRequest found with vertex shader '{}' and fragment shader '{}'",
+                effectRequest.vertexShaderPath,
+                effectRequest.fragmentShaderPath);
         }
     }
 }

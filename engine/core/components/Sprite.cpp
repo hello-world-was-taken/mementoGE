@@ -99,11 +99,18 @@ void Sprite::deserialize(const YAML::Node &in)
     flipX = in["Sprite"]["FlipX"] ? in["Sprite"]["FlipX"].as<bool>() : false;
     flipY = in["Sprite"]["FlipY"] ? in["Sprite"]["FlipY"].as<bool>() : false;
 
-    // Deserialize texture
+    // Deserialize texture. A missing texture is valid for solid-color quads.
     auto textureNode = in["Sprite"]["Texture"];
-    std::string filePath = textureNode["FilePath"].as<std::string>();
-    bool isTextureAtlas = textureNode["isTextureAtlas"].as<bool>();
-    texture = GlResourceManager::instance().getTexture(filePath, isTextureAtlas);
+    if (textureNode)
+    {
+        std::string filePath = textureNode["FilePath"].as<std::string>();
+        bool isTextureAtlas = textureNode["isTextureAtlas"].as<bool>();
+        texture = GlResourceManager::instance().getTexture(filePath, isTextureAtlas);
+    }
+    else
+    {
+        texture = nullptr;
+    }
 }
 
 void Sprite::drawInspector()

@@ -2,8 +2,9 @@
 #include "core/AssetManager.h"
 
 #include "util/log_error.h"
+#include "util/LogChannels.h"
 
-#include <iostream>
+#include <sawyer/Logger.h>
 
 AudioPlayer::AudioPlayer()
 {
@@ -30,8 +31,7 @@ void AudioPlayer::play(std::string &filePath)
     {
         return;
     }
-    std::cout << "Playing audio: " << filePath << std::endl;
-    std::cout << "m_source: " << m_source << std::endl;
+    LOG_DEBUG(LogChannel::Audio, "Playing audio '{}' on source {}", filePath, m_source);
     unsigned int buffer = AssetManager::instance().getAudioClip(filePath);
     alSourcei(m_source, AL_BUFFER, buffer);
     alSourcePlay(m_source);

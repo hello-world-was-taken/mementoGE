@@ -12,4 +12,6 @@ class ISystem
 public:
     virtual ~ISystem() = default;
     virtual void update(entt::registry &registry) = 0;
+    virtual void onEnabled(entt::registry &) {}
+    virtual void onDisabled(entt::registry &) {}
 };

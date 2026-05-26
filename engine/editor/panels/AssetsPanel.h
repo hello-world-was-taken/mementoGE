@@ -15,7 +15,7 @@ public:
     void draw() override;
 
 private:
-    void buildAssetsDockspace();
+    bool buildAssetsDockspace();
 
     void drawFoldersPanel();
     void drawContentPanel();

@@ -11,7 +11,7 @@
 
 SelectionRenderer::SelectionRenderer()
 {
-    generateIndexArrayForLines(m_indices);
+    generateIndexArrayForTriangle(m_indices);
 }
 
 SelectionRenderer::~SelectionRenderer() = default;
@@ -20,7 +20,7 @@ void SelectionRenderer::render(const CameraOld &camera, const std::vector<GameOb
 {
     if (m_batch == nullptr)
     {
-        m_batch = std::make_unique<RenderBatch>(m_indices, GL_LINES);
+        m_batch = std::make_unique<RenderBatch>(m_indices, GL_TRIANGLES);
     }
 
     updateVertices(selectedObjects);
@@ -29,7 +29,7 @@ void SelectionRenderer::render(const CameraOld &camera, const std::vector<GameOb
     m_batch->setIndexData(m_indices);
 
     size_t quadCount = m_vertices.size() / 4;
-    size_t indexCount = quadCount * 8;
+    size_t indexCount = quadCount * INDICES_PER_QUAD;
 
     m_batch->render(camera, indexCount);
 }
@@ -54,26 +54,24 @@ void SelectionRenderer::updateVertices(const std::vector<GameObject> &selectedOb
 
         glm::vec2 centerPos = glm::vec2{transform.position.x, transform.position.y};
 
-        glm::vec3 bottomLeft = {centerPos.x - halfWidth, centerPos.y - halfHeight, 0.0f};
-        glm::vec3 bottomRight = {centerPos.x + halfWidth, centerPos.y - halfHeight, 0.0f};
-        glm::vec3 topRight = {centerPos.x + halfWidth, centerPos.y + halfHeight, 0.0f};
-        glm::vec3 topLeft = {centerPos.x - halfWidth, centerPos.y + halfHeight, 0.0f};
+        const glm::vec4 selectionColor{0.302f, 0.522f, 0.780f, 1.0f}; // softened editor blue
+        constexpr float thickness = 1.0f;
+        const float left = centerPos.x - halfWidth;
+        const float right = centerPos.x + halfWidth;
+        const float bottom = centerPos.y - halfHeight;
+        const float top = centerPos.y + halfHeight;
 
-        glm::vec4 selectionColor = glm::vec4(0.0f, 0.6f, 1.0f, 1.0f); // blue outline
-
-        auto makeVertex = [&](const glm::vec3 &pos) -> Vertex
+        auto appendQuad = [&](float quadLeft, float quadBottom, float quadRight, float quadTop)
         {
-            return Vertex{
-                pos,
-                selectionColor,
-                glm::vec2(0.0f), // no texture
-                -1               // sentinel tex index
-            };
+            m_vertices.emplace_back(Vertex{{quadLeft, quadTop, 0.0f}, selectionColor, {0.0f, 0.0f}, -1});
+            m_vertices.emplace_back(Vertex{{quadLeft, quadBottom, 0.0f}, selectionColor, {0.0f, 0.0f}, -1});
+            m_vertices.emplace_back(Vertex{{quadRight, quadBottom, 0.0f}, selectionColor, {0.0f, 0.0f}, -1});
+            m_vertices.emplace_back(Vertex{{quadRight, quadTop, 0.0f}, selectionColor, {0.0f, 0.0f}, -1});
         };
 
-        m_vertices.push_back(makeVertex(topLeft));
-        m_vertices.push_back(makeVertex(bottomLeft));
-        m_vertices.push_back(makeVertex(bottomRight));
-        m_vertices.push_back(makeVertex(topRight));
+        appendQuad(left, top - thickness, right, top);
+        appendQuad(left, bottom, right, bottom + thickness);
+        appendQuad(left, bottom, left + thickness, top);
+        appendQuad(right - thickness, bottom, right, top);
     }
 }

@@ -4,9 +4,12 @@
 #include "core/components/Sprite.h"
 
 #include "util/PathUtils.h"
+#include "util/LogChannels.h"
 
 #include <filesystem>
 #include <fstream>
+#include <iostream>
+#include <sawyer/Logger.h>
 #include <stdexcept>
 #include <yaml-cpp/yaml.h>
 
@@ -18,7 +21,7 @@ SceneManager::SceneManager()
 
 SceneManager::~SceneManager()
 {
-    std::cout << "SceneManager destructor called" << std::endl;
+    LOG_DEBUG(LogChannel::SceneManager, "SceneManager destructor called");
     serialize();
 }
 
@@ -123,10 +126,10 @@ void SceneManager::serialize()
 
         scene.serialize(out);
         file << out.c_str();
-        std::cout << "Serialized scene '" << sceneName << "' to " << scenePath << std::endl;
+        LOG_INFO(LogChannel::SceneManager, "Serialized scene '{}' to '{}'", sceneName, scenePath.string());
     }
 
-    std::cout << "Serialized scene to scene.yaml" << std::endl;
+    LOG_INFO(LogChannel::SceneManager, "Serialized scenes");
 }
 
 void SceneManager::deserialize()
@@ -136,7 +139,7 @@ void SceneManager::deserialize()
 
     if (!std::filesystem::exists(sceneFile))
     {
-        std::cout << "scene.yaml does not exist" << std::endl;
+        LOG_WARN(LogChannel::SceneManager, "scene.yaml does not exist");
         Scene scene{"default_scene"};
         m_activeSceneName = scene.getTag();
         m_scenes.insert_or_assign(scene.getTag(), std::move(scene));
@@ -158,5 +161,5 @@ void SceneManager::deserialize()
     Scene scene{std::move(serializedScene)};
     m_activeSceneName = scene.getTag();
     m_scenes.insert_or_assign(scene.getTag(), std::move(scene));
-    std::cout << "Deserialized scene from scene.yaml" << std::endl;
+    LOG_INFO(LogChannel::SceneManager, "Deserialized scene from scene.yaml");
 }

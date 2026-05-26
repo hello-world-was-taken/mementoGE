@@ -286,14 +286,32 @@ void SpriteSheetEditorPanel::generateSpritesJson(bool onlyEnabled)
 // TODO: function is doing a lot of things. Refactor.
 void SpriteSheetEditorPanel::draw()
 {
-    ImGui::Begin("Sprite Sheet Editor");
+    if (!m_ctx.workspaceState.showSpriteSheetEditorPanel)
+    {
+        return;
+    }
+
+    const bool wasOpen = m_ctx.workspaceState.showSpriteSheetEditorPanel;
+    if (!ImGuiWrapper::BeginPanel("Sprite Sheet Editor", &m_ctx.workspaceState.showSpriteSheetEditorPanel))
+    {
+        ImGuiWrapper::EndPanel();
+        if (wasOpen != m_ctx.workspaceState.showSpriteSheetEditorPanel)
+        {
+            m_ctx.markEditorWorkspaceDirty();
+        }
+        return;
+    }
 
     loadTextureNames();
 
     if (m_textureNames.empty())
     {
         ImGui::TextUnformatted("No textures found in assets/texture.");
-        ImGui::End();
+        ImGuiWrapper::EndPanel();
+        if (wasOpen != m_ctx.workspaceState.showSpriteSheetEditorPanel)
+        {
+            m_ctx.markEditorWorkspaceDirty();
+        }
         return;
     }
 
@@ -335,7 +353,11 @@ void SpriteSheetEditorPanel::draw()
     if (!m_texture)
     {
         ImGui::Text("Unable to load %s from assets/texture.", currentName.c_str());
-        ImGui::End();
+        ImGuiWrapper::EndPanel();
+        if (wasOpen != m_ctx.workspaceState.showSpriteSheetEditorPanel)
+        {
+            m_ctx.markEditorWorkspaceDirty();
+        }
         return;
     }
 
@@ -345,7 +367,11 @@ void SpriteSheetEditorPanel::draw()
     if (texWidth <= 0 || texHeight <= 0)
     {
         ImGui::TextUnformatted("Invalid texture dimensions.");
-        ImGui::End();
+        ImGuiWrapper::EndPanel();
+        if (wasOpen != m_ctx.workspaceState.showSpriteSheetEditorPanel)
+        {
+            m_ctx.markEditorWorkspaceDirty();
+        }
         return;
     }
 
@@ -517,12 +543,12 @@ void SpriteSheetEditorPanel::draw()
     }
 
     ImGui::Separator();
-    if (ImGui::Button("Generate Sprites (Enabled)"))
+    if (ImGuiWrapper::Button("Generate Sprites (Enabled)"))
     {
         generateSpritesJson(true);
     }
     ImGui::SameLine();
-    if (ImGui::Button("Generate Sprites (All)"))
+    if (ImGuiWrapper::Button("Generate Sprites (All)"))
     {
         generateSpritesJson(false);
     }
@@ -541,5 +567,9 @@ void SpriteSheetEditorPanel::draw()
     ImGui::SameLine();
     ImGui::Text("Pixel Color: (%.2f, %.2f, %.2f)", colorPreview.x, colorPreview.y, colorPreview.z);
 
-    ImGui::End();
+    ImGuiWrapper::EndPanel();
+    if (wasOpen != m_ctx.workspaceState.showSpriteSheetEditorPanel)
+    {
+        m_ctx.markEditorWorkspaceDirty();
+    }
 }

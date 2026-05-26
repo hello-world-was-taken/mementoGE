@@ -1,7 +1,9 @@
 #include "Texture.h"
+#include "util/LogChannels.h"
 
 #include <GL/glew.h>
 #include <iostream>
+#include <sawyer/Logger.h>
 #include <stb_image/stb_image.h>
 #include <stdexcept>
 #include <yaml-cpp/yaml.h>
@@ -82,7 +84,7 @@ void Texture::generateTexture()
 
 Texture::~Texture()
 {
-    std::cout << "Texture destructor called" << std::endl;
+    LOG_DEBUG(LogChannel::OpenGL, "Texture destructor called");
     glDeleteTextures(1, &this->m_id);
 }
 

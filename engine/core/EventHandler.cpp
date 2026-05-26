@@ -47,6 +47,8 @@ void EventHandler::glfwKeyCallBack(GLFWwindow *window, int key, int scancode, in
     updateKey(GLFW_KEY_UP, KeyType::UpArrow, "UpArrowKey");
     updateKey(GLFW_KEY_DOWN, KeyType::DownArrow, "DownArrowKey");
     updateKey(GLFW_KEY_ESCAPE, KeyType::Escape, "EscapeKey");
+    updateKey(GLFW_KEY_LEFT_SHIFT, KeyType::LeftShift, "LeftShiftKey");
+    updateKey(GLFW_KEY_RIGHT_SHIFT, KeyType::RightShift, "RightShiftKey");
 
     // WASD, Space, Enter
     updateKey(GLFW_KEY_W, KeyType::W, "WKey");
@@ -103,6 +105,14 @@ void EventHandler::beginFrame()
 void EventHandler::glfwMouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
     auto *listener = EventHandler::instance();
+
+    const bool mouseInsideSceneViewport = listener->isMouseInsideSceneViewport();
+    const bool buttonWasPressedInScene = listener->m_mouseButtonStates[button];
+    if ((action == GLFW_PRESS && !mouseInsideSceneViewport) ||
+        (action == GLFW_RELEASE && !buttonWasPressedInScene))
+    {
+        return;
+    }
 
     // modifiers
     bool cmd = mods & GLFW_MOD_SUPER;
@@ -172,12 +182,22 @@ void EventHandler::glfwScrollCallback(GLFWwindow *window, double xOffset, double
 
 bool EventHandler::isMouseButtonHeld(int button) const
 {
+    if (!isMouseInsideSceneViewport())
+    {
+        return false;
+    }
+
     auto it = m_mouseButtonStates.find(button);
     return it != m_mouseButtonStates.end() && it->second;
 }
 
 bool EventHandler::wasMouseButtonPressed(int button) const
 {
+    if (!isMouseInsideSceneViewport())
+    {
+        return false;
+    }
+
     // true if this button was pressed at least once this frame.
     // We expect at most one click per frame; multiple clicks in a single frame
     // are extremely unlikely and are treated the same as a single press.
@@ -187,6 +207,11 @@ bool EventHandler::wasMouseButtonPressed(int button) const
 
 bool EventHandler::wasMouseButtonReleased(int button) const
 {
+    if (!isMouseInsideSceneViewport())
+    {
+        return false;
+    }
+
     // true if this button was released at least once this frame.
     // Like presses, we only care that a release occurred during the frame, not
     // how many times.
@@ -202,6 +227,11 @@ glm::vec2 EventHandler::getMousePos() const
 // returns the delta in window size coordinate, not game world coordinate
 glm::vec2 EventHandler::getMouseDelta() const
 {
+    if (!isMouseInsideSceneViewport())
+    {
+        return {0.0f, 0.0f};
+    }
+
     return {m_mousePos.x - m_prevMousePos.x, m_prevMousePos.y - m_mousePos.y};
 }
 
@@ -213,4 +243,22 @@ glm::vec2 EventHandler::getScrollDelta() const
 glm::vec2 EventHandler::getDragStart() const
 {
     return m_dragStart;
+}
+
+void EventHandler::setSceneViewportBounds(glm::vec2 min, glm::vec2 max)
+{
+    m_sceneViewportMin = min;
+    m_sceneViewportMax = max;
+    m_hasSceneViewportBounds = true;
+}
+
+bool EventHandler::isMouseInsideSceneViewport() const
+{
+    if (!m_hasSceneViewportBounds)
+    {
+        return true;
+    }
+
+    return m_mousePos.x >= m_sceneViewportMin.x && m_mousePos.x <= m_sceneViewportMax.x &&
+           m_mousePos.y >= m_sceneViewportMin.y && m_mousePos.y <= m_sceneViewportMax.y;
 }

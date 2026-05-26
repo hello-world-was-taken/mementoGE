@@ -12,9 +12,10 @@
 
 #include "util/log_error.h"
 #include "util/PathUtils.h"
+#include "util/LogChannels.h"
 
-#include <iostream>
 #include <memory>
+#include <sawyer/Logger.h>
 
 RenderBatch::RenderBatch(
     std::vector<unsigned int> indices,
@@ -27,7 +28,7 @@ RenderBatch::RenderBatch(
 
 RenderBatch::~RenderBatch()
 {
-    std::cout << "RenderBatch destructor called" << std::endl;
+    LOG_DEBUG(LogChannel::Renderer, "RenderBatch destructor called");
 
     m_vbo->unbind();
     m_ibo->unbind();

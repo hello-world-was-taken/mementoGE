@@ -9,10 +9,13 @@
 
 #include "physics/Physics2D.h"
 
+#include "util/LogChannels.h"
+
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <iostream>
 #include <memory>
+#include <sawyer/Logger.h>
 #include <string>
 #include <type_traits>
 #include <typeinfo>
@@ -58,8 +61,8 @@ public:
 
     entt::entity getEntityId() const
     {
-        // std::cout << "Entity ID: " << entt::to_entity(m_entity) << " Version: " << entt::to_version(m_entity) <<
-        // std::endl;
+        // LOG_DEBUG(LogChannel::GameObject, "Entity ID: {}; version: {}", entt::to_entity(m_entity),
+        // entt::to_version(m_entity));
         return m_entity;
     }
 
@@ -98,12 +101,13 @@ template <typename Component> bool GameObject::hasComponent() const
 {
     if (m_registry == nullptr || !m_registry->valid(m_entity))
     {
-        std::cout << "[GameObject] hasComponent<" << typeid(Component).name() << "> called." << std::endl;
-        std::cout << "  - Registry is null: " << (m_registry == nullptr) << std::endl;
-        if (m_registry != nullptr)
-        {
-            std::cout << " - Valid entity: " << m_registry->valid(m_entity) << std::endl;
-        }
+        const bool registryIsNull = m_registry == nullptr;
+        const bool entityIsValid = !registryIsNull && m_registry->valid(m_entity);
+        LOG_WARN(LogChannel::GameObject,
+            "hasComponent<{}> called for invalid object: registry null={}, entity valid={}",
+            typeid(Component).name(),
+            registryIsNull,
+            entityIsValid);
         return false;
     }
 
@@ -145,7 +149,10 @@ void GameObject::deserializeComponent(const YAML::Node &serializedGameObject,
 {
     if (serializedGameObject[componentName])
     {
-        addComponent<Component>();
+        if (!hasComponent<Component>())
+        {
+            addComponent<Component>();
+        }
         getComponent<Component>().deserialize(serializedGameObject);
 
         if constexpr (std::is_same_v<Component, RigidBody2D>)

@@ -41,12 +41,12 @@ void AudioSource::drawInspector()
 
             handleAudioDrop();
 
-            if (ImGui::Button("Play"))
+            if (ImGuiWrapper::Button("Play"))
             {
                 audioPlayer.play(filePath);
             }
             ImGui::SameLine();
-            if (ImGui::Button("Stop"))
+            if (ImGuiWrapper::Button("Stop"))
             {
                 audioPlayer.stop();
             }

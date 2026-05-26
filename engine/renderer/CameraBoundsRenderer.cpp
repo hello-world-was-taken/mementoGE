@@ -75,7 +75,7 @@ void CameraBoundsRenderer::updateVertices(const std::vector<GameObject> &gameObj
     // GL_LINES so the "lines" have a controllable thickness.
     const float thickness = 2.0f; // world units
 
-    glm::vec4 color{1.0f, 1.0f, 0.0f, 1.0f}; // yellow camera frame
+    const glm::vec4 color{0.820f, 0.720f, 0.300f, 1.0f}; // softened camera gold
 
     auto makeVertex = [&](const glm::vec3 &pos) -> Vertex
     {

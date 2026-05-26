@@ -7,7 +7,9 @@
 #include "core/Window.h"
 
 #include "util/PathUtils.h"
+#include "util/LogChannels.h"
 
+#include <algorithm>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
 #include <filesystem>
@@ -15,6 +17,28 @@
 #include <imgui.h>
 #include <imgui/imgui_internal.h>
 #include <memory>
+#include <sawyer/Logger.h>
+#include <string>
+
+namespace
+{
+// ImGuiIO::IniFilename stores a raw const char*, so the backing string must outlive setupImgui().
+std::string g_imguiIniPath;
+
+const ImVec4 kColorBgDark{0.086f, 0.094f, 0.114f, 1.0f};
+const ImVec4 kColorBgPanel{0.118f, 0.129f, 0.157f, 1.0f};
+const ImVec4 kColorBgRaised{0.161f, 0.176f, 0.212f, 1.0f};
+const ImVec4 kColorBgHover{0.204f, 0.227f, 0.275f, 1.0f};
+const ImVec4 kColorBorder{0.212f, 0.235f, 0.282f, 1.0f};
+const ImVec4 kColorAccent{0.298f, 0.553f, 1.0f, 1.0f};
+const ImVec4 kColorAccentHover{0.416f, 0.631f, 1.0f, 1.0f};
+const ImVec4 kColorAccentSelected{0.145f, 0.298f, 0.478f, 1.0f};
+const ImVec4 kColorText{0.902f, 0.918f, 0.941f, 1.0f};
+const ImVec4 kColorTextDisabled{0.541f, 0.576f, 0.639f, 1.0f};
+const ImVec4 kColorDangerText{0.878f, 0.388f, 0.424f, 1.0f};
+const ImVec4 kColorDangerHover{0.322f, 0.122f, 0.145f, 1.0f};
+const ImVec4 kColorDangerActive{0.431f, 0.145f, 0.169f, 1.0f};
+} // namespace
 
 void ImGuiWrapper::setupImgui(Window &window)
 {
@@ -32,13 +56,31 @@ void ImGuiWrapper::setupImgui(Window &window)
     // TODO: for now
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
 
+    std::filesystem::create_directories(getMementoEditorStateDir());
+    g_imguiIniPath = (getMementoEditorStateDir() / "imgui.ini").string();
+    io.IniFilename = g_imguiIniPath.c_str();
+
     SetupStyle();
+    SetupFonts();
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(window.getGlfwWindow(), true);
 
     const char *glsl_version = "#version 150";
     ImGui_ImplOpenGL3_Init(glsl_version);
+}
+
+void ImGuiWrapper::shutdownImgui()
+{
+    ImGuiIO &io = ImGui::GetIO();
+    if (io.IniFilename != nullptr)
+    {
+        ImGui::SaveIniSettingsToDisk(io.IniFilename);
+    }
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 }
 
 void ImGuiWrapper::beginDockspace()
@@ -102,7 +144,8 @@ void ImGuiWrapper::buildInitialLayout()
 
     // If an ini file already exists, let ImGui load and manage layout
     // rather than overriding it with a hard-coded default.
-    if (std::filesystem::exists("imgui.ini"))
+    const char *iniFilename = io.IniFilename;
+    if (iniFilename != nullptr && std::filesystem::exists(iniFilename))
     {
         return;
     }
@@ -117,8 +160,10 @@ void ImGuiWrapper::buildInitialLayout()
     ImGuiID dockspace_id = ImGui::GetID("MementoDockspace");
     ImGui::DockBuilderRemoveNode(dockspace_id);
     ImGui::DockBuilderAddNode(dockspace_id, ImGuiDockNodeFlags_DockSpace);
-    std::cout << "Size of main viewport: " << ImGui::GetMainViewport()->Size.x << "x"
-              << ImGui::GetMainViewport()->Size.y << std::endl;
+    LOG_DEBUG(LogChannel::ImGui,
+        "Main viewport size: {}x{}",
+        ImGui::GetMainViewport()->Size.x,
+        ImGui::GetMainViewport()->Size.y);
     ImGui::DockBuilderSetNodeSize(dockspace_id, ImGui::GetMainViewport()->Size);
 
     ImGuiID dock_main_id = dockspace_id;
@@ -145,17 +190,14 @@ void ImGuiWrapper::buildInitialLayout()
     ImGui::DockBuilderDockWindow("###ScenePanel", dock_top_center_id);
 
     ImGui::DockBuilderDockWindow("Assets", dock_bottom_id);
-    ImGui::DockBuilderDockWindow("Texture Resources", dock_bottom_id);
-    ImGui::DockBuilderDockWindow("Sprites", dock_bottom_id);
-    ImGui::DockBuilderDockWindow("Animations", dock_bottom_id);
-    ImGui::DockBuilderDockWindow("Scenes", dock_bottom_id);
+    ImGui::DockBuilderDockWindow("Log", dock_bottom_id);
     ImGui::DockBuilderDockWindow("Performance Stats", dock_bottom_id);
     ImGui::DockBuilderDockWindow("Dear ImGui Metrics/Debugger", dock_bottom_id);
     ImGui::DockBuilderDockWindow("Sprite Sheet Editor", dock_bottom_id);
 
     ImGui::DockBuilderDockWindow("Properties", dock_right_top_id);
     ImGui::DockBuilderDockWindow("Context", dock_right_top_id);
-    ImGui::DockBuilderDockWindow("Bound Textures##AssetsPanel", dock_right_bottom_id);
+    ImGui::DockBuilderDockWindow("Bound Textures", dock_right_bottom_id);
 
     ImGui::DockBuilderFinish(dockspace_id);
 }
@@ -238,12 +280,14 @@ void ImGuiWrapper::SetupStyle()
 {
     ImGuiStyle &style = ImGui::GetStyle();
 
-    // Flatness & rounding
-    style.FrameRounding = 4.0f; // roundness for frames (buttons, sliders ...)
-    style.WindowRounding = 6.0f;
-    style.PopupRounding = 4.0f;
-    style.GrabRounding = 4.0f; // Slider grabber
-    style.ScrollbarRounding = 12.0f;
+    // Compact, rectangular editor geometry.
+    style.WindowRounding = 0.0f;
+    style.ChildRounding = 0.0f;
+    style.FrameRounding = 1.0f;
+    style.PopupRounding = 2.0f;
+    style.GrabRounding = 1.0f;
+    style.ScrollbarRounding = 1.0f;
+    style.TabRounding = 1.0f;
 
     // Spacing & padding
     style.WindowPadding = ImVec2(10.0f, 10.0f);
@@ -251,69 +295,242 @@ void ImGuiWrapper::SetupStyle()
     style.ItemSpacing = ImVec2(6.0f, 6.0f);
     style.ItemInnerSpacing = ImVec2(6.0f, 4.0f);
 
-    // To minimize borders for a flatter look
-    style.WindowBorderSize = 0.0f;
+    // Thin borders keep adjacent dark surfaces legible.
+    style.WindowBorderSize = 1.0f;
     style.FrameBorderSize = 0.0f;
-    style.PopupBorderSize = 0.0f;
+    style.PopupBorderSize = 1.0f;
     style.TabBorderSize = 0.0f;
 
-    // Color palette (normalized color values (0.0 to 1.0))
-    ImVec4 accent_color = ImVec4(0.314f, 0.447f, 0.655f, 1.00f); // Blue-ish accent
-    ImVec4 lighter_accent_color = ImVec4(accent_color.x + 0.1f, accent_color.y + 0.1f, accent_color.z + 0.1f, 1.0f);
-    ImVec4 bg_dark = ImVec4(0.051f, 0.039f, 0.043f, 1.00f);
-    ImVec4 bg_medium = ImVec4(0.12f, 0.11f, 0.13f, 1.00f); // Soft step above bg_dark
-    ImVec4 bg_light = ImVec4(0.22f, 0.20f, 0.24f, 1.00f);  // Lightest neutral background
-    ImVec4 text_main = ImVec4(0.85f, 0.85f, 0.88f, 1.00f); // Slightly cool to fit blue accent
-
-    // Windows
-    style.Colors[ImGuiCol_WindowBg] = bg_dark;
-    style.Colors[ImGuiCol_TitleBgActive] = bg_medium;
-    style.Colors[ImGuiCol_TitleBg] = bg_dark;
-    style.Colors[ImGuiCol_Text] = text_main;
+    // Windows and text
+    style.Colors[ImGuiCol_Text] = kColorText;
+    style.Colors[ImGuiCol_TextDisabled] = kColorTextDisabled;
+    style.Colors[ImGuiCol_WindowBg] = kColorBgDark;
+    style.Colors[ImGuiCol_ChildBg] = kColorBgDark;
+    style.Colors[ImGuiCol_PopupBg] = kColorBgPanel;
+    style.Colors[ImGuiCol_TitleBg] = kColorBgDark;
+    style.Colors[ImGuiCol_TitleBgActive] = kColorBgPanel;
+    style.Colors[ImGuiCol_TitleBgCollapsed] = kColorBgDark;
+    style.Colors[ImGuiCol_MenuBarBg] = kColorBgPanel;
+    style.Colors[ImGuiCol_Border] = kColorBorder;
 
     // Frames (Buttons, Checkboxes, Sliders)
-    style.Colors[ImGuiCol_FrameBg] = bg_medium;
-    style.Colors[ImGuiCol_FrameBgHovered] = bg_light;
-    style.Colors[ImGuiCol_FrameBgActive] = bg_light;
+    style.Colors[ImGuiCol_FrameBg] = kColorBgPanel;
+    style.Colors[ImGuiCol_FrameBgHovered] = kColorBgRaised;
+    style.Colors[ImGuiCol_FrameBgActive] = kColorBgHover;
 
-    // Buttons (using the accent color)
-    style.Colors[ImGuiCol_Button] = accent_color;
-    style.Colors[ImGuiCol_ButtonHovered] = lighter_accent_color;
-    style.Colors[ImGuiCol_ButtonActive] = accent_color;
+    // Keep ordinary controls neutral; reserve blue for selection and focus.
+    style.Colors[ImGuiCol_Button] = kColorBgRaised;
+    style.Colors[ImGuiCol_ButtonHovered] = kColorBgHover;
+    style.Colors[ImGuiCol_ButtonActive] = kColorAccentSelected;
 
-    // Tab-Specific Colors:
-    style.Colors[ImGuiCol_Tab] = bg_medium;
-    style.Colors[ImGuiCol_TabHovered] = lighter_accent_color;
-    style.Colors[ImGuiCol_TabActive] = accent_color;
-    style.Colors[ImGuiCol_TabUnfocused] = bg_medium;
-    style.Colors[ImGuiCol_TabUnfocusedActive] = accent_color;
+    // Tabs
+    style.Colors[ImGuiCol_Tab] = kColorBgPanel;
+    style.Colors[ImGuiCol_TabHovered] = kColorBgHover;
+    style.Colors[ImGuiCol_TabActive] = kColorAccentSelected;
+    style.Colors[ImGuiCol_TabUnfocused] = kColorBgDark;
+    style.Colors[ImGuiCol_TabUnfocusedActive] = kColorBgRaised;
 
     // Scrollbar/Check Mark/Grab
-    style.Colors[ImGuiCol_ScrollbarBg] = bg_dark;
-    style.Colors[ImGuiCol_ScrollbarGrab] = bg_light;
-    style.Colors[ImGuiCol_CheckMark] = accent_color;
-    style.Colors[ImGuiCol_SliderGrab] = accent_color;
-    style.Colors[ImGuiCol_SliderGrabActive] = accent_color;
+    style.Colors[ImGuiCol_ScrollbarBg] = kColorBgDark;
+    style.Colors[ImGuiCol_ScrollbarGrab] = kColorBgRaised;
+    style.Colors[ImGuiCol_ScrollbarGrabHovered] = kColorBgHover;
+    style.Colors[ImGuiCol_ScrollbarGrabActive] = kColorAccentSelected;
+    style.Colors[ImGuiCol_CheckMark] = kColorAccent;
+    style.Colors[ImGuiCol_SliderGrab] = kColorAccent;
+    style.Colors[ImGuiCol_SliderGrabActive] = kColorAccentHover;
 
-    // Styling selectable (it uses headers styles)
-    style.Colors[ImGuiCol_Header] = bg_medium;
-    style.Colors[ImGuiCol_HeaderHovered] = lighter_accent_color;
-    style.Colors[ImGuiCol_HeaderActive] = accent_color;
+    // Selectables, separators and docking affordances
+    style.Colors[ImGuiCol_Header] = kColorBgRaised;
+    style.Colors[ImGuiCol_HeaderHovered] = kColorBgHover;
+    style.Colors[ImGuiCol_HeaderActive] = kColorAccentSelected;
+    style.Colors[ImGuiCol_Separator] = kColorBorder;
+    style.Colors[ImGuiCol_SeparatorHovered] = kColorAccent;
+    style.Colors[ImGuiCol_SeparatorActive] = kColorAccentHover;
+    style.Colors[ImGuiCol_DockingPreview] = kColorAccent;
+    style.Colors[ImGuiCol_TextSelectedBg] =
+        ImVec4(kColorAccent.x, kColorAccent.y, kColorAccent.z, 0.35f);
+    style.Colors[ImGuiCol_NavCursor] = kColorAccent;
+}
 
-    // Setup fonts
+void ImGuiWrapper::SetupFonts()
+{
     ImGuiIO &io = ImGui::GetIO();
 
-    ImFontConfig baseConfig;
-    baseConfig.SizePixels = 13.0f;
-    io.Fonts->AddFontDefault(&baseConfig);
+    const std::string monoPath = getGameAssetsPath("fonts/JetBrains_Mono/static/JetBrainsMono-Regular.ttf").string();
+    ImFont *uiFont = io.Fonts->AddFontFromFileTTF(monoPath.c_str(), 15.0f);
 
-    ImFontConfig config;
-    config.MergeMode = true;
-    config.GlyphMinAdvanceX = 13.0f; // Use if you want to make the icon monospaced
+    if (uiFont == nullptr)
+    {
+        uiFont = io.Fonts->AddFontDefault();
+    }
+
+    io.FontDefault = uiFont;
+
+    ImFontConfig iconConfig;
+    iconConfig.MergeMode = true;
+    iconConfig.DstFont = uiFont;
+    iconConfig.GlyphMinAdvanceX = 13.0f; // Use if you want to make the icon monospaced
+
     static const ImWchar icon_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
-    std::filesystem::path fontPath = getFilePath("fonts/fontawesome-webfont.ttf");
-    io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 13.0f, &config, icon_ranges);
+
+    std::filesystem::path iconPath = getFilePath("fonts/fontawesome-webfont.ttf");
+
+    io.Fonts->AddFontFromFileTTF(iconPath.c_str(), 13.0f, &iconConfig, icon_ranges);
     io.Fonts->Flags |= ImFontFlags_ImplicitRefSize;
+}
+
+bool ImGuiWrapper::BeginPanel(const char *name, bool *open, ImGuiWindowFlags flags)
+{
+    return ImGui::Begin(name, open, flags);
+}
+
+void ImGuiWrapper::EndPanel()
+{
+    ImGui::End();
+}
+
+bool ImGuiWrapper::Button(const char *label, const ImVec2 &size)
+{
+    return ImGui::Button(label, size);
+}
+
+bool ImGuiWrapper::ToolbarSelectable(const char *label, bool selected, const char *tooltip, const ImVec2 &size)
+{
+    ImGui::PushStyleColor(ImGuiCol_Header, kColorAccentSelected);
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, selected ? kColorAccent : kColorBgHover);
+    ImGui::PushStyleColor(ImGuiCol_HeaderActive, kColorAccentHover);
+    ImGui::PushStyleColor(ImGuiCol_Text, selected ? kColorText : kColorTextDisabled);
+
+    const bool pressed = ImGui::Selectable(label, selected, 0, size);
+
+    ImGui::PopStyleColor(4);
+
+    if (selected)
+    {
+        const ImVec2 itemMin = ImGui::GetItemRectMin();
+        const ImVec2 itemMax = ImGui::GetItemRectMax();
+        ImGui::GetWindowDrawList()->AddLine(ImVec2(itemMin.x, itemMax.y - 1.0f),
+            ImVec2(itemMax.x, itemMax.y - 1.0f),
+            ImGui::GetColorU32(kColorAccent),
+            2.0f);
+    }
+
+    if (ImGui::IsItemHovered() && tooltip != nullptr && tooltip[0] != '\0')
+    {
+        ImGui::SetTooltip("%s", tooltip);
+    }
+
+    return pressed;
+}
+
+bool ImGuiWrapper::TreeNodeEx(
+    const void *id, const char *label, ImGuiTreeNodeFlags flags, const ImGuiWrapper::Padding &padding)
+{
+    ImGuiStyle &style = ImGui::GetStyle();
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(style.ItemSpacing.x, 0.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,
+        ImVec2(padding.left > padding.right ? padding.left : padding.right,
+            padding.top > padding.bottom ? padding.top : padding.bottom));
+
+    const bool opened = ImGui::TreeNodeEx(id, flags | ImGuiTreeNodeFlags_FramePadding, "%s", label);
+
+    ImGui::PopStyleVar(2);
+
+    return opened;
+}
+
+void ImGuiWrapper::TreePop()
+{
+    ImGui::TreePop();
+}
+
+bool ImGuiWrapper::Row(const char *text,
+    const char *icon,
+    const char *buttonLabel,
+    bool buttonEnabled,
+    const ImGuiWrapper::Padding &padding,
+    const ImGuiWrapper::Margin &margin)
+{
+    ImGuiStyle &style = ImGui::GetStyle();
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(style.ItemSpacing.x, 0.0f));
+
+    const bool hasIcon = icon != nullptr && icon[0] != '\0';
+    const bool hasButton = buttonLabel != nullptr && buttonLabel[0] != '\0';
+    constexpr float rowGap = 2.0f;
+    const float outerAvailableWidth = ImGui::GetContentRegionAvail().x;
+    const ImVec2 outerMin = ImGui::GetCursorScreenPos();
+    const float availableWidth = outerAvailableWidth - margin.left - margin.right;
+    const float rowWidth = availableWidth > 0.0f ? availableWidth : 0.0f;
+    const ImVec2 rowMin = ImVec2(outerMin.x + margin.left, outerMin.y + margin.top);
+    const ImVec2 buttonTextSize = hasButton ? ImGui::CalcTextSize(buttonLabel) : ImVec2(0.0f, 0.0f);
+    const std::string displayText = hasIcon ? std::string(icon) + "  " + text : std::string(text);
+    const ImVec2 contentStartScreenPos = ImVec2(rowMin.x + padding.left, rowMin.y + padding.top);
+    const float rowTextHeight = ImGui::GetTextLineHeight() + (style.FramePadding.y * 2.0f);
+    const float rowButtonHeight = hasButton ? buttonTextSize.y + (style.FramePadding.y * 2.0f) : 0.0f;
+    const float rowHeight = rowTextHeight > rowButtonHeight ? rowTextHeight : rowButtonHeight;
+    const ImVec2 rowMax = ImVec2(rowMin.x + rowWidth, rowMin.y + padding.top + rowHeight + padding.bottom);
+    float buttonWidth = hasButton ? buttonTextSize.x + (style.FramePadding.x * 2.0f) : 0.0f;
+    buttonWidth = buttonWidth > rowButtonHeight ? buttonWidth : rowButtonHeight;
+    const float buttonX = rowMax.x - padding.right - buttonWidth;
+    const float labelRegionWidth = hasButton ? std::max(0.0f, buttonX - style.ItemSpacing.x - rowMin.x) : rowWidth;
+
+    ImGui::PushID(text);
+    ImGui::SetCursorScreenPos(rowMin);
+    const bool rowSelected =
+        ImGui::Selectable("##row_selectable", false, 0, ImVec2(labelRegionWidth, rowMax.y - rowMin.y));
+
+    ImGui::SetCursorScreenPos(contentStartScreenPos);
+    ImGui::AlignTextToFramePadding();
+    ImGui::PushClipRect(rowMin, ImVec2(rowMin.x + labelRegionWidth, rowMax.y), true);
+    ImGui::TextUnformatted(displayText.c_str());
+    ImGui::PopClipRect();
+
+    if (!hasButton)
+    {
+        ImGui::SetCursorScreenPos(ImVec2(outerMin.x, rowMax.y + rowGap + margin.bottom));
+        ImGui::PopID();
+        ImGui::PopStyleVar();
+        return rowSelected;
+    }
+
+    const float buttonHeight = buttonTextSize.y + (style.FramePadding.y * 2.0f);
+    const float buttonY = rowMin.y + padding.top + ((rowHeight - buttonHeight) * 0.5f);
+    ImGui::SetCursorScreenPos(ImVec2(buttonX, buttonY));
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+    int pushedButtonColors = 1;
+    if (buttonEnabled)
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, kColorDangerText);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, kColorDangerHover);
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, kColorDangerActive);
+        pushedButtonColors += 3;
+    }
+    if (!buttonEnabled)
+    {
+        ImGui::BeginDisabled();
+    }
+    const bool pressed = ImGui::Button(buttonLabel, ImVec2(buttonWidth, buttonHeight));
+    if (!buttonEnabled)
+    {
+        ImGui::EndDisabled();
+    }
+    ImGui::PopStyleColor(pushedButtonColors);
+
+    ImGui::SetCursorScreenPos(ImVec2(outerMin.x, rowMax.y + rowGap + margin.bottom));
+    ImGui::PopID();
+    ImGui::PopStyleVar();
+
+    return buttonEnabled && pressed;
+}
+
+void ImGuiWrapper::Collapsable(const std::string &headerName, const std::function<void()> &content)
+{
+    if (ImGui::CollapsingHeader(headerName.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        ImGui::Indent();
+        content();
+        ImGui::Unindent();
+    }
 }
 
 bool ImGuiWrapper::InputTextSimple(const char *label, std::string &value)

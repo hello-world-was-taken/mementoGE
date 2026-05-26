@@ -1,7 +1,8 @@
-#include <iostream>
 #include <GL/glew.h>
+#include <sawyer/Logger.h>
 
 #include "Indexbuffer.h"
+#include "util/LogChannels.h"
 
 IndexBuffer::IndexBuffer(
     const int length,
@@ -16,7 +17,7 @@ IndexBuffer::IndexBuffer(
 // TODO: The destructor should be the VAO destructor is called not when the object is destroyed
 IndexBuffer::~IndexBuffer()
 {
-    std::cout << "calling IndexBuffer destructor" << std::endl;
+    LOG_DEBUG(LogChannel::OpenGL, "Calling IndexBuffer destructor");
     glDeleteBuffers(1, &this->m_id);
 }
 

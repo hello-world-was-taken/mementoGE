@@ -5,6 +5,7 @@
 
 #include "core/AssetManager.h"
 #include "core/EventHandler.h"
+#include "core/ImGuiWrapper.h"
 #include "core/SpriteSheet.h"
 
 #include "editor/DragNDropPayloads.h"
@@ -30,7 +31,10 @@ ScenePanel::~ScenePanel()
 
 void ScenePanel::draw()
 {
-    m_ctx.editorMouseController.update(m_ctx);
+    if (!m_ctx.workspaceState.showScenePanel)
+    {
+        return;
+    }
 
     renderSceneViewport();
 }
@@ -41,7 +45,7 @@ void ScenePanel::renderPlayPause()
     {
         // Trying to center the components
         float spacing = ImGui::GetStyle().ItemSpacing.x;
-        float buttonWidth = 40.0f;
+        float buttonWidth = 13.0f;
         float totalWidth = 3 * buttonWidth + 2 * spacing;
 
         float availableWidth = ImGui::GetContentRegionAvail().x;
@@ -49,27 +53,41 @@ void ScenePanel::renderPlayPause()
 
         ImGui::SetCursorPosX(startX);
 
-        if (ImGui::Button(ICON_FA_PLAY))
+        if (ImGuiWrapper::ToolbarSelectable(ICON_FA_PLAY,
+                m_ctx.runtimeState == RuntimeState::Playing,
+                "Play / resume",
+                ImVec2(buttonWidth, 0.0f)))
         {
-            if (!m_ctx.isPlaying)
+            if (m_ctx.runtimeState == RuntimeState::Stopped)
             {
                 m_ctx.startRuntimeScene();
-                m_ctx.isPlaying = true;
+            }
+            else if (m_ctx.runtimeState == RuntimeState::Paused)
+            {
+                m_ctx.resumeRuntimeScene();
             }
         }
 
-        if (ImGui::Button(ICON_FA_PAUSE))
+        if (ImGuiWrapper::ToolbarSelectable(ICON_FA_PAUSE,
+                m_ctx.runtimeState == RuntimeState::Paused,
+                "Pause",
+                ImVec2(buttonWidth, 0.0f)))
         {
-            if (m_ctx.isPlaying)
+            if (m_ctx.runtimeState == RuntimeState::Playing)
             {
                 m_ctx.pauseRuntimeScene();
-                m_ctx.isPlaying = false;
             }
         }
 
-        if (ImGui::Button(ICON_FA_STOP))
+        if (ImGuiWrapper::ToolbarSelectable(ICON_FA_STOP,
+                m_ctx.runtimeState == RuntimeState::Stopped,
+                "Stop",
+                ImVec2(buttonWidth, 0.0f)))
         {
-            m_ctx.stopRuntimeScene();
+            if (m_ctx.isRuntimeActive())
+            {
+                m_ctx.stopRuntimeScene();
+            }
         }
 
         ImGui::EndMenuBar();
@@ -81,19 +99,10 @@ void ScenePanel::renderMovementMode()
     auto EditorInteractionModeSelectable =
         [&](std::string_view label, EditorInteractionMode mode, std::string_view tooltip)
     {
-        auto selectedColor = ImVec4(0.314f, 0.447f, 0.655f, 1.00f);
-
         // check current state (before clicking)
         bool wasSelected = m_ctx.interactionMode == mode;
 
-        if (wasSelected)
-        {
-            ImGui::PushStyleColor(ImGuiCol_Header, selectedColor);
-            ImGui::PushStyleColor(ImGuiCol_HeaderHovered, selectedColor);
-        }
-
-        bool selectedOnClick = wasSelected;
-        if (ImGui::Selectable(label.begin(), &selectedOnClick, 0, ImVec2(13, 0)))
+        if (ImGuiWrapper::ToolbarSelectable(label.data(), wasSelected, tooltip.data()))
         {
             if (m_ctx.interactionMode == mode)
             {
@@ -107,16 +116,6 @@ void ScenePanel::renderMovementMode()
                 m_ctx.baseInteractionMode = mode;
                 m_ctx.interactionMode = mode;
             }
-        }
-
-        if (wasSelected)
-        {
-            ImGui::PopStyleColor(2);
-        }
-
-        if (ImGui::IsItemHovered() && !tooltip.empty())
-        {
-            ImGui::SetTooltip("%s", tooltip.begin());
         }
     };
 
@@ -149,9 +148,17 @@ void ScenePanel::renderSceneViewport()
 
     // ImGui window identifiers are determined by everything after the ###
     std::string titleWithWindowId = visibleTitle + "###ScenePanel";
-    ImGui::PushStyleColor(ImGuiCol_MenuBarBg, IM_COL32(0, 0, 0, 255));
-    ImGui::Begin(titleWithWindowId.c_str(), nullptr, ImGuiWindowFlags_MenuBar);
-    ImGui::PopStyleColor();
+    const bool wasOpen = m_ctx.workspaceState.showScenePanel;
+    if (!ImGuiWrapper::BeginPanel(
+            titleWithWindowId.c_str(), &m_ctx.workspaceState.showScenePanel, ImGuiWindowFlags_MenuBar))
+    {
+        ImGuiWrapper::EndPanel();
+        if (wasOpen != m_ctx.workspaceState.showScenePanel)
+        {
+            m_ctx.markEditorWorkspaceDirty();
+        }
+        return;
+    }
 
     renderPlayPause();
     renderMovementMode();
@@ -175,13 +182,24 @@ void ScenePanel::renderSceneViewport()
     m_ctx.scenePanelTopLeftPos = ImGui::GetItemRectMin();
     m_ctx.scenePanelSize = ImGui::GetItemRectSize();
     m_ctx.sceneImageHovered = ImGui::IsItemHovered();
+    EventHandler::instance()->setSceneViewportBounds(
+        {m_ctx.scenePanelTopLeftPos.x, m_ctx.scenePanelTopLeftPos.y},
+        {m_ctx.scenePanelTopLeftPos.x + m_ctx.scenePanelSize.x,
+            m_ctx.scenePanelTopLeftPos.y + m_ctx.scenePanelSize.y});
 
-    if (!m_ctx.isPlaying)
+    m_ctx.editorMouseController.update(m_ctx);
+    renderCreateObjectPopup();
+
+    if (!m_ctx.isRuntimeActive())
     {
         renderGizmos();
     }
 
-    ImGui::End();
+    ImGuiWrapper::EndPanel();
+    if (wasOpen != m_ctx.workspaceState.showScenePanel)
+    {
+        m_ctx.markEditorWorkspaceDirty();
+    }
 }
 
 void ScenePanel::handleViewportDropTarget()
@@ -207,6 +225,50 @@ void ScenePanel::handleViewportDropTarget()
         }
 
         ImGui::EndDragDropTarget();
+    }
+}
+
+void ScenePanel::renderCreateObjectPopup()
+{
+    if (m_ctx.showCreateObjectPopup)
+    {
+        ImGui::SetNextWindowPos(m_ctx.createObjectPopupPos, ImGuiCond_Always);
+        ImGui::OpenPopup("CreateObjectPopup");
+        m_ctx.showCreateObjectPopup = false;
+    }
+
+    if (ImGui::BeginPopup("CreateObjectPopup"))
+    {
+        static char tagBuffer[64] = "";
+
+        ImGui::Text("Create New Object");
+        ImGui::Separator();
+        ImGui::InputText("Tag", tagBuffer, IM_ARRAYSIZE(tagBuffer));
+
+        if (ImGuiWrapper::Button("Create"))
+        {
+            m_ctx.performSceneEdit(
+                [&]
+                {
+                    Scene &scene = m_ctx.getActiveScene();
+                    auto &newObj = scene.addGameObject(32, 32, tagBuffer);
+                    newObj.getComponent<Transform>().position = {
+                        m_ctx.createObjectWorldPos.x, m_ctx.createObjectWorldPos.y, 0.0f};
+
+                    tagBuffer[0] = '\0';
+                    m_ctx.showCreateObjectPopup = false;
+                    ImGui::CloseCurrentPopup();
+                });
+        }
+
+        ImGui::SameLine();
+        if (ImGuiWrapper::Button("Cancel"))
+        {
+            m_ctx.showCreateObjectPopup = false;
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
     }
 }
 
