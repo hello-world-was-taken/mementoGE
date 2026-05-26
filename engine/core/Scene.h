@@ -3,14 +3,13 @@
 #include "core/GLIncludes.h"
 #include "core/GameObject.h"
 #include "core/ISystem.h"
+#include "core/Physics2D.h"
 #include "core/SceneCamera.h"
 #include "core/components/Camera.h"
 
 #include "util/log_error.h"
 
 #include "opengl/Texture.h"
-
-#include "physics/Physics2D.h"
 
 #include <entt/entt.hpp>
 #include <glm/ext/matrix_transform.hpp>

@@ -7,7 +7,7 @@
 #include "core/components/Sensor2D.h"
 #include "core/components/Transform.h"
 
-#include "physics/Physics2D.h"
+#include "core/Physics2D.h"
 
 #include "util/LogChannels.h"
 

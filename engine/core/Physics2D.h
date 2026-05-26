@@ -24,7 +24,7 @@ public:
     Physics2D(Physics2D &&other) noexcept;
     Physics2D &operator=(Physics2D &&other) noexcept;
 
-    void simulate(float timestep, entt::registry &registry);
+    void simulate(float timestep, entt::registry &registry, bool syncAuthoredTransforms = false);
 
     void registerRigidBody2D(GameObject &obj);
     void registerBoxCollider2D(GameObject &obj);
@@ -38,6 +38,7 @@ public:
 
 private:
     void syncCollisionShapes(entt::registry &registry);
+    void syncBodiesFromTransforms(entt::registry &registry);
     void refreshSensorOverlaps(entt::registry &registry);
     void syncTransforms(entt::registry &registry);
 

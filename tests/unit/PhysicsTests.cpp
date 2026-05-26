@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
 
 #include "core/GameObject.h"
+#include "core/Physics2D.h"
 #include "core/components/BoxCollider2D.h"
 #include "core/components/RigidBody2D.h"
 #include "core/components/Sensor2D.h"
 #include "core/components/Sprite.h"
-#include "physics/Physics2D.h"
 #include <algorithm>
 #include <entt/entt.hpp>
 #include <limits>
@@ -261,6 +261,28 @@ TEST(PhysicsTests, SynchronizesBodyRotationWithTransform)
     physics.simulate(1.0f / 60.0f, registry);
 
     EXPECT_NEAR(transform.rotation.z, -40.0f, 0.1f);
+}
+
+TEST(PhysicsTests, EditModeSynchronizesAuthoredTransformToPhysicsBody)
+{
+    entt::registry registry;
+    Physics2D physics({0.0f, 0.0f});
+    GameObject go(registry);
+    auto &transform = go.getComponent<Transform>();
+    go.addComponent<RigidBody2D>();
+    physics.registerRigidBody2D(go);
+
+    transform.position = {42.0f, -17.0f, transform.position.z};
+    transform.rotation.z = 35.0f;
+    physics.simulate(1.0f / 60.0f, registry, true);
+
+    const auto &body = go.getComponent<RigidBody2D>();
+    const b2Vec2 bodyPosition = b2Body_GetPosition(body.bodyId);
+    EXPECT_NEAR(bodyPosition.x, 42.0f, 0.0001f);
+    EXPECT_NEAR(bodyPosition.y, -17.0f, 0.0001f);
+    EXPECT_NEAR(glm::degrees(b2Rot_GetAngle(b2Body_GetRotation(body.bodyId))), 35.0f, 0.1f);
+    EXPECT_NEAR(transform.position.x, 42.0f, 0.0001f);
+    EXPECT_NEAR(transform.position.y, -17.0f, 0.0001f);
 }
 
 TEST(PhysicsTests, SensorAnimationStateResetsToAuthoredValues)

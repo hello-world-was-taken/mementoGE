@@ -19,7 +19,7 @@
 #include "core/GameObject.h"
 #include "core/components/Animator.h"
 
-#include "physics/Physics2D.h"
+#include "core/Physics2D.h"
 
 #include <string>
 #include <yaml-cpp/yaml.h>

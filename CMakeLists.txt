@@ -58,6 +58,9 @@ add_library(${PROJECT_NAME} STATIC
     engine/core/AssetManager.cpp
     engine/core/AnimationPlayer.cpp
     engine/core/SystemRegistry.cpp
+    engine/core/AnimationSystem.cpp
+    engine/core/Physics2D.cpp
+    engine/core/PhysicsSystem.cpp
     engine/core/FollowSystem.cpp
     engine/core/ParticleSystem.cpp
     engine/core/TextLayoutSystem.cpp
@@ -85,12 +88,10 @@ add_library(${PROJECT_NAME} STATIC
     engine/renderer/RenderBatch.cpp
     engine/renderer/SpriteRenderer.cpp
     engine/renderer/GridRenderer.cpp
+    engine/renderer/GizmoRenderer.cpp
     engine/renderer/PhysicsRenderer.cpp
     engine/renderer/SelectionRenderer.cpp
     engine/renderer/CameraBoundsRenderer.cpp
-
-    # physics
-    engine/physics/Physics2D.cpp
 
     # utils
     engine/util/log_error.cpp
@@ -152,6 +153,8 @@ if(BUILD_TESTING)
         tests/unit/GameObjectTests.cpp
         tests/unit/SceneTests.cpp
         tests/unit/PhysicsTests.cpp
+        tests/unit/FollowSystemTests.cpp
+        tests/unit/AssetLoadingTests.cpp
     )
 
     target_include_directories(memento_unit_tests

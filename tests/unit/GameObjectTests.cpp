@@ -1,8 +1,8 @@
 #include "engine/core/GameObject.h"
+#include "engine/core/Physics2D.h"
 #include "engine/core/components/EntityInfo.h"
 #include "engine/core/components/RenderLayer.h"
 #include "engine/core/components/Transform.h"
-#include "engine/physics/Physics2D.h"
 
 #include <entt/entt.hpp>
 #include <gtest/gtest.h>

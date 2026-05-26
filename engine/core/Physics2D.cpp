@@ -5,8 +5,8 @@
 #include "core/components/Sprite.h"
 #include "core/components/Transform.h"
 
+#include "core/Physics2D.h"
 #include "physics/CollisionShapeTransform.h"
-#include "physics/Physics2D.h"
 
 #include "core/Scene.h"
 
@@ -15,6 +15,7 @@
 
 #include <algorithm>
 #include <box2d/box2d.h>
+#include <cmath>
 #include <entt/entt.hpp>
 #include <iostream>
 #include <memory>
@@ -57,8 +58,13 @@ Physics2D &Physics2D::operator=(Physics2D &&other) noexcept
     return *this;
 }
 
-void Physics2D::simulate(float timestep, entt::registry &registry)
+void Physics2D::simulate(float timestep, entt::registry &registry, bool syncAuthoredTransforms)
 {
+    if (syncAuthoredTransforms)
+    {
+        syncBodiesFromTransforms(registry);
+    }
+
     syncCollisionShapes(registry);
 
     auto view = registry.view<RigidBody2D>();
@@ -79,6 +85,31 @@ void Physics2D::simulate(float timestep, entt::registry &registry)
     refreshSensorOverlaps(registry);
 
     syncTransforms(registry);
+}
+
+void Physics2D::syncBodiesFromTransforms(entt::registry &registry)
+{
+    constexpr float epsilon = 0.0001f;
+    auto view = registry.view<RigidBody2D, Transform>();
+    for (const entt::entity entity : view)
+    {
+        const auto &rb = view.get<RigidBody2D>(entity);
+        const auto &transform = view.get<Transform>(entity);
+        if (!b2Body_IsValid(rb.bodyId))
+        {
+            continue;
+        }
+
+        const b2Vec2 bodyPosition = b2Body_GetPosition(rb.bodyId);
+        const float bodyRotation = b2Rot_GetAngle(b2Body_GetRotation(rb.bodyId));
+        const float authoredRotation = glm::radians(transform.rotation.z);
+        if (std::abs(bodyPosition.x - transform.position.x) > epsilon ||
+            std::abs(bodyPosition.y - transform.position.y) > epsilon ||
+            std::abs(bodyRotation - authoredRotation) > epsilon)
+        {
+            b2Body_SetTransform(rb.bodyId, {transform.position.x, transform.position.y}, b2MakeRot(authoredRotation));
+        }
+    }
 }
 
 void Physics2D::setGravity(glm::vec2 gravity)
