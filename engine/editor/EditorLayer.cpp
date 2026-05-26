@@ -90,7 +90,7 @@ void EditorLayer::updateFrame()
             // Continue rendering while paused, but do not advance scene systems.
             if (!m_ctx.isRuntimeActive() || m_ctx.isRuntimePlaying())
             {
-                activeScene.update();
+                activeScene.update(!m_ctx.isRuntimeActive());
             }
 
             // render grid

@@ -5,6 +5,7 @@
 #include <chrono>
 #include <ctime>
 #include <imgui.h>
+#include <imgui_internal.h>
 #include <sawyer/Logger.h>
 #include <string>
 #include <vector>
@@ -27,22 +28,6 @@ const char *levelName(LogLevel level)
     return "UNKNOWN";
 }
 
-ImVec4 levelColor(LogLevel level)
-{
-    switch (level)
-    {
-    case LogLevel::Debug:
-        return ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled);
-    case LogLevel::Info:
-        return ImGui::GetStyleColorVec4(ImGuiCol_Text);
-    case LogLevel::Warn:
-        return ImVec4(0.91f, 0.68f, 0.30f, 1.0f);
-    case LogLevel::Error:
-        return ImVec4(0.95f, 0.35f, 0.35f, 1.0f);
-    }
-    return ImGui::GetStyleColorVec4(ImGuiCol_Text);
-}
-
 void formatTimestamp(const LogEntry &entry, char (&buffer)[16])
 {
     const std::time_t timestamp = std::chrono::system_clock::to_time_t(entry.timestamp);
@@ -54,6 +39,18 @@ void formatTimestamp(const LogEntry &entry, char (&buffer)[16])
 #endif
     std::strftime(buffer, sizeof(buffer), "%H:%M:%S", &localTime);
 }
+
+std::string formatEntry(const LogEntry &entry)
+{
+    char timestamp[16]{};
+    formatTimestamp(entry, timestamp);
+
+    std::string level = levelName(entry.level);
+    level.resize(5, ' ');
+
+    return "[" + std::string(timestamp) + "] [" + level + "] [" + entry.channel + "] " + entry.message;
+}
+
 } // namespace
 
 LogPanel::LogPanel(EditorContext &ctx) : EditorPanel(ctx)
@@ -78,10 +75,15 @@ void LogPanel::draw()
         return;
     }
 
+    std::vector<LogEntry> entries = Logger::getRingBufferSnapshot();
+
     if (ImGui::Button("Clear"))
     {
         Logger::clearRingBuffer();
+        entries.clear();
     }
+    ImGui::SameLine();
+    const bool copyAllRequested = ImGui::Button("Copy all");
     ImGui::SameLine();
     ImGui::Checkbox("Auto-scroll", &m_autoScroll);
     ImGui::SameLine();
@@ -97,16 +99,13 @@ void LogPanel::draw()
     ImGui::InputTextWithHint("##LogFilter", "Filter by message, channel, or file...", m_filter.data(), m_filter.size());
     ImGui::Separator();
 
-    const std::vector<LogEntry> entries = Logger::getRingBufferSnapshot();
-    std::vector<const LogEntry *> visibleEntries;
-    visibleEntries.reserve(entries.size());
+    std::string nextLogText;
 
     for (const LogEntry &entry : entries)
     {
-        const bool levelVisible = (entry.level == LogLevel::Debug && m_showDebug) ||
-                                  (entry.level == LogLevel::Info && m_showInfo) ||
-                                  (entry.level == LogLevel::Warn && m_showWarnings) ||
-                                  (entry.level == LogLevel::Error && m_showErrors);
+        const bool levelVisible =
+            (entry.level == LogLevel::Debug && m_showDebug) || (entry.level == LogLevel::Info && m_showInfo) ||
+            (entry.level == LogLevel::Warn && m_showWarnings) || (entry.level == LogLevel::Error && m_showErrors);
         if (!levelVisible)
         {
             continue;
@@ -119,45 +118,39 @@ void LogPanel::draw()
             continue;
         }
 
-        visibleEntries.push_back(&entry);
+        if (!nextLogText.empty())
+        {
+            nextLogText += '\n';
+        }
+        nextLogText += formatEntry(entry);
     }
 
-    if (ImGui::BeginChild("LogEntries", ImVec2(0.0f, 0.0f), false, ImGuiWindowFlags_HorizontalScrollbar))
+    const bool textChanged = nextLogText != m_logText;
+    m_logText = std::move(nextLogText);
+
+    if (copyAllRequested && !m_logText.empty())
     {
-        const bool shouldScrollToBottom =
-            m_autoScroll && ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - 1.0f;
+        ImGui::SetClipboardText(m_logText.c_str());
+    }
 
-        ImGuiListClipper clipper;
-        clipper.Begin(static_cast<int>(visibleEntries.size()));
-        while (clipper.Step())
+    const ImGuiID logTextId = ImGui::GetID("##LogText");
+    ImGuiWindow *logTextWindow = ImGui::FindWindowByID(logTextId);
+    const bool wasAtBottom = logTextWindow == nullptr || logTextWindow->Scroll.y >= logTextWindow->ScrollMax.y - 1.0f;
+
+    ImGui::InputTextMultiline("##LogText",
+        const_cast<char *>(m_logText.c_str()),
+        m_logText.size() + 1,
+        ImGui::GetContentRegionAvail(),
+        ImGuiInputTextFlags_ReadOnly);
+
+    if (m_autoScroll && textChanged && wasAtBottom)
+    {
+        logTextWindow = ImGui::FindWindowByID(logTextId);
+        if (logTextWindow != nullptr)
         {
-            for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
-            {
-                const LogEntry &entry = *visibleEntries[static_cast<size_t>(i)];
-                char timestamp[16]{};
-                formatTimestamp(entry, timestamp);
-
-                ImGui::PushID(i);
-                ImGui::TextColored(levelColor(entry.level),
-                    "[%s] [%-5s] [%s] %s",
-                    timestamp,
-                    levelName(entry.level),
-                    entry.channel.c_str(),
-                    entry.message.c_str());
-                if (ImGui::IsItemHovered())
-                {
-                    ImGui::SetTooltip("%s:%d", entry.filePath.c_str(), entry.line);
-                }
-                ImGui::PopID();
-            }
-        }
-
-        if (shouldScrollToBottom)
-        {
-            ImGui::SetScrollHereY(1.0f);
+            ImGui::SetScrollY(logTextWindow, logTextWindow->ScrollMax.y);
         }
     }
-    ImGui::EndChild();
 
     ImGuiWrapper::EndPanel();
     if (wasOpen != m_ctx.workspaceState.showLogPanel)

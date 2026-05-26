@@ -210,6 +210,7 @@ void EditorContext::startRuntimeScene()
     runtimeState = RuntimeState::Playing;
     selectedObjects.clear();
     selectedGameObjectsDragOffset.clear();
+    getActiveScene().setAllSystemsEnabled(true);
     getActiveScene().play();
 }
 

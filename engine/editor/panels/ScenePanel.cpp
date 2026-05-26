@@ -190,11 +190,6 @@ void ScenePanel::renderSceneViewport()
     m_ctx.editorMouseController.update(m_ctx);
     renderCreateObjectPopup();
 
-    if (!m_ctx.isRuntimeActive())
-    {
-        renderGizmos();
-    }
-
     ImGuiWrapper::EndPanel();
     if (wasOpen != m_ctx.workspaceState.showScenePanel)
     {
@@ -298,46 +293,4 @@ void ScenePanel::createModelFromPayload(const ImGuiPayload *payload)
     Scene &scene = m_ctx.getActiveScene();
     GameObject &newObj = scene.addGameObjectFromModel(modelPayload.filePath);
     newObj.getComponent<Transform>().position = {worldPos.x, worldPos.y, 0.0f};
-}
-
-void ScenePanel::renderGizmos()
-{
-    if (m_ctx.selectedObjects.size() != 1)
-    {
-        return;
-    }
-
-    GameObject &go = m_ctx.selectedObjects.back();
-    Transform &transform = go.getComponent<Transform>();
-    glm::vec3 posCenter = transform.position;
-
-    glm::vec2 screenPos = m_ctx.getScreenCoordinate({posCenter.x, posCenter.y});
-    ImDrawList *drawList = ImGui::GetWindowDrawList();
-
-    // Length of gizmo axis
-    float axisLength = 50.0f;
-
-    // X-axis (Green)
-    ImVec2 xStart = {screenPos.x, screenPos.y};
-    ImVec2 xEnd = ImVec2(screenPos.x + axisLength, screenPos.y);
-    drawList->AddLine(xStart, xEnd, IM_COL32(0, 255, 0, 255), 2.0f);
-    // Arrowhead for X
-    drawList->AddTriangleFilled(ImVec2(xEnd.x, xEnd.y),
-        ImVec2(xEnd.x - 6, xEnd.y - 4),
-        ImVec2(xEnd.x - 6, xEnd.y + 4),
-        IM_COL32(0, 255, 0, 255));
-    // Label for X
-    drawList->AddText(ImVec2(xEnd.x + 4, xEnd.y - 6), IM_COL32(0, 255, 0, 255), "X");
-
-    // Y-axis (Blue)
-    ImVec2 yStart = {screenPos.x, screenPos.y};
-    ImVec2 yEnd = ImVec2(screenPos.x, screenPos.y - axisLength);
-    drawList->AddLine(yStart, yEnd, IM_COL32(0, 0, 255, 255), 2.0f);
-    // Arrowhead for Y
-    drawList->AddTriangleFilled(ImVec2(yEnd.x, yEnd.y),
-        ImVec2(yEnd.x - 4, yEnd.y + 6),
-        ImVec2(yEnd.x + 4, yEnd.y + 6),
-        IM_COL32(0, 0, 255, 255));
-    // Label for Y
-    drawList->AddText(ImVec2(yEnd.x + 4, yEnd.y - 10), IM_COL32(0, 0, 255, 255), "Y");
 }

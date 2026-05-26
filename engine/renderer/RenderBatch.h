@@ -46,5 +46,5 @@ private:
     std::unique_ptr<VertexBuffer> m_vbo;
     std::unique_ptr<IndexBuffer> m_ibo;
 
-    std::vector<int> m_textureUnits = {0, 1, 2, 3, 4, 5, 6, 7};
+    std::vector<int> m_textureUnits = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 };

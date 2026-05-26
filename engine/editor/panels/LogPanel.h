@@ -3,6 +3,7 @@
 #include "editor/EditorPanel.h"
 
 #include <array>
+#include <string>
 
 class LogPanel : public EditorPanel
 {
@@ -19,4 +20,5 @@ private:
     bool m_showErrors = true;
     bool m_autoScroll = true;
     std::array<char, 128> m_filter{};
+    std::string m_logText;
 };

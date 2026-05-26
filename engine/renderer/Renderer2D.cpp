@@ -349,6 +349,7 @@ void Renderer2D::renderLayers(const CameraOld &camera,
         {
             renderSelection(camera, selectedObjects);
             m_cameraBoundsRenderer.render(camera, objects);
+            m_gizmoRenderer.render(camera, selectedObjects);
         }
 
         if (depthTestWasEnabled)

@@ -10,13 +10,14 @@ SystemRegistry &SystemRegistry::instance()
     return systemRegistry;
 }
 
-std::shared_ptr<ISystem> SystemRegistry::get(const std::string &systemName)
+std::unique_ptr<ISystem> SystemRegistry::create(const std::string &systemName) const
 {
     auto it = m_systemRegistry.find(systemName);
     if (it == m_systemRegistry.end())
     {
         LOG_WARN(LogChannel::SystemRegistry, "System '{}' not recognized; it is likely not registered", systemName);
+        return nullptr;
     }
 
-    return it->second;
+    return it->second();
 }

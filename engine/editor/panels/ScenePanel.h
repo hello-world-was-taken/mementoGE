@@ -20,7 +20,6 @@ private:
     EditorContext &m_ctx;
 
 private:
-    void renderGizmos();
     void renderPlayPause();
     void renderMovementMode();
     void renderSceneViewport();

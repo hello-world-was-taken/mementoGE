@@ -377,6 +377,10 @@ void AssetsPanel::drawContentPanel()
         {
             std::string jsonPath = selectedFolderPath + "/" + item.nameWithoutExtention + ".json";
             auto spriteSheet = AssetManager::instance().getSpriteSheet(jsonPath);
+            if (!spriteSheet)
+            {
+                continue;
+            }
 
             if (ImGuiWrapper::ImageButtonFixedHeight(spriteSheet->fullSprite))
             {
@@ -484,6 +488,12 @@ void AssetsPanel::drawSpritePanel()
     ImGuiWrapper::BeginPanel("Sprites");
 
     std::shared_ptr<SpriteSheet> spriteSheet = AssetManager::instance().getSpriteSheet(m_ctx.selectedTextureJsonPath);
+    if (!spriteSheet)
+    {
+        ImGui::TextWrapped("Could not load the selected sprite sheet.");
+        ImGuiWrapper::EndPanel();
+        return;
+    }
     std::shared_ptr<Texture> texture = spriteSheet->getTexture();
 
     for (Sprite &sprite : spriteSheet->getSprites())
@@ -548,6 +558,12 @@ void AssetsPanel::drawAnimationPanel()
 
     auto path = getFilePath(m_ctx.selectedTextureJsonPath);
     std::shared_ptr<AnimationMap> animationMap = AssetManager::instance().getAnimationMap(path);
+    if (!animationMap || !animationMap->getTexture())
+    {
+        ImGui::TextWrapped("Could not load the selected animation file.");
+        ImGuiWrapper::EndPanel();
+        return;
+    }
     ImTextureID texId = animationMap->getTexture()->getTextureId();
 
     // create animation player for each animation

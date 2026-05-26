@@ -12,7 +12,6 @@ enum class SystemStatus
     Running,
     Disabled,
     Paused,
-    Inactive,
 };
 
 const char *statusLabel(SystemStatus status)
@@ -25,8 +24,6 @@ const char *statusLabel(SystemStatus status)
         return "Disabled";
     case SystemStatus::Paused:
         return "Paused";
-    case SystemStatus::Inactive:
-        return "Inactive in Edit Mode";
     }
     return "Unknown";
 }
@@ -41,21 +38,17 @@ ImVec4 statusColor(SystemStatus status)
         return ImVec4(0.88f, 0.35f, 0.35f, 1.0f);
     case SystemStatus::Paused:
         return ImVec4(0.91f, 0.68f, 0.30f, 1.0f);
-    case SystemStatus::Inactive:
-        return ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled);
     }
     return ImGui::GetStyleColorVec4(ImGuiCol_Text);
 }
 
-SystemStatus currentStatus(bool enabled, bool runtimePlaying, bool runtimeActive, bool runsInEditMode)
+SystemStatus currentStatus(bool enabled, bool runtimePlaying, bool runtimeActive)
 {
     if (!enabled)
         return SystemStatus::Disabled;
     if (runtimeActive && !runtimePlaying)
         return SystemStatus::Paused;
-    if (runtimePlaying || runsInEditMode)
-        return SystemStatus::Running;
-    return SystemStatus::Inactive;
+    return SystemStatus::Running;
 }
 } // namespace
 
@@ -85,15 +78,11 @@ void SystemsPanel::draw()
     if (ImGui::Button("Enable all"))
     {
         scene.setAllSystemsEnabled(true);
-        scene.setAnimationEnabled(true);
-        scene.setPhysicsEnabled(true);
     }
     ImGui::SameLine();
     if (ImGui::Button("Disable all"))
     {
         scene.setAllSystemsEnabled(false);
-        scene.setAnimationEnabled(false);
-        scene.setPhysicsEnabled(false);
     }
 
     if (ImGui::BeginTable("SceneSystems", 3, ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_RowBg |
@@ -115,8 +104,7 @@ void SystemsPanel::draw()
             ImGui::SameLine();
             ImGui::TextUnformatted(info.name.c_str());
 
-            const SystemStatus status =
-                currentStatus(info.enabled, runtimePlaying, runtimeActive, info.runsInEditMode);
+            const SystemStatus status = currentStatus(info.enabled, runtimePlaying, runtimeActive);
             ImGui::TableSetColumnIndex(1);
             ImGui::TextColored(statusColor(status), "%s", statusLabel(status));
             ImGui::TableSetColumnIndex(2);
@@ -125,30 +113,6 @@ void SystemsPanel::draw()
         }
         ImGui::EndTable();
     }
-
-    ImGui::Spacing();
-    ImGui::SeparatorText("Engine phases");
-
-    auto drawPhase = [&](const char *name, bool enabled, double elapsedMilliseconds, auto setEnabled)
-    {
-        ImGui::PushID(name);
-        bool editedEnabled = enabled;
-        if (ImGui::Checkbox("##enabled", &editedEnabled))
-            setEnabled(editedEnabled);
-        ImGui::SameLine();
-        ImGui::TextUnformatted(name);
-        ImGui::SameLine(170.0f);
-        const SystemStatus status = currentStatus(enabled, runtimePlaying, runtimeActive, false);
-        ImGui::TextColored(statusColor(status), "%s", statusLabel(status));
-        ImGui::SameLine(320.0f);
-        ImGui::Text("%.3f ms", elapsedMilliseconds);
-        ImGui::PopID();
-    };
-
-    drawPhase("Animation", scene.isAnimationEnabled(), scene.getLastAnimationUpdateMilliseconds(),
-        [&](bool enabled) { scene.setAnimationEnabled(enabled); });
-    drawPhase("Physics", scene.isPhysicsEnabled(), scene.getLastPhysicsUpdateMilliseconds(),
-        [&](bool enabled) { scene.setPhysicsEnabled(enabled); });
 
     ImGui::Spacing();
     ImGui::SeparatorText("Rendering");

@@ -7,6 +7,7 @@
 
 #include "renderer/CameraBoundsRenderer.h"
 #include "renderer/GridRenderer.h"
+#include "renderer/GizmoRenderer.h"
 #include "renderer/PhysicsRenderer.h"
 #include "renderer/RenderBatch.h"
 #include "renderer/RendererType.h"
@@ -55,6 +56,7 @@ private:
 
     SpriteRenderer m_spriteRenderer;
     GridRenderer m_gridRenderer;
+    GizmoRenderer m_gizmoRenderer;
     PhysicsRenderer m_physicsRenderer;
     SelectionRenderer m_selectionRenderer;
     CameraBoundsRenderer m_cameraBoundsRenderer;

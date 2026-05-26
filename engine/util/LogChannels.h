@@ -3,6 +3,7 @@
 namespace LogChannel
 {
 inline constexpr char Animator[] = "Animator";
+inline constexpr char Asset[] = "Asset";
 inline constexpr char Audio[] = "Audio";
 inline constexpr char Editor[] = "Editor";
 inline constexpr char Engine[] = "Engine";
