@@ -29,7 +29,7 @@ bool Animator::play(std::string name, bool loop)
     std::filesystem::path jsonPath = it->second;
     if (jsonPath.is_relative())
     {
-        jsonPath = getGameAssetsPath(jsonPath.string());
+        jsonPath = getGameAssetPath(jsonPath.string());
     }
     auto animMap = AssetManager::instance().getAnimationMap(jsonPath.string());
     if (!animMap)

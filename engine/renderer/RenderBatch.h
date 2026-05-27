@@ -31,7 +31,10 @@ public:
 
     void setVertexData(std::vector<Vertex> &vertices);
     void setIndexData(std::vector<unsigned int> &indices);
-    void render(const CameraOld &camera, int drawCount = 1000 * 6, std::shared_ptr<Shader> customShader = nullptr);
+    void render(const CameraOld &camera,
+        int drawCount = 1000 * 6,
+        std::shared_ptr<Shader> customShader = nullptr,
+        const std::vector<std::shared_ptr<Texture>> &textures = {});
 
 private:
     void setupBuffers();

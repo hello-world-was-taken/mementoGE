@@ -27,7 +27,7 @@ void SpriteSheetEditorPanel::loadTextureNames()
         return;
     }
 
-    std::filesystem::path texDir = getGameAssetsPath("texture");
+    std::filesystem::path texDir = getGameAssetPath("texture");
     if (!std::filesystem::exists(texDir))
     {
         return;
@@ -64,7 +64,7 @@ void SpriteSheetEditorPanel::loadSelectedTexture()
 
     m_textureLoaded = true;
 
-    auto texturePath = getGameAssetsPath("texture") / m_textureNames[m_selectedTexture];
+    auto texturePath = getGameAssetPath("texture") / m_textureNames[m_selectedTexture];
     m_texture = GlResourceManager::instance().getTexture(texturePath.string(), false);
 }
 
@@ -77,7 +77,7 @@ void SpriteSheetEditorPanel::generateBoundingBoxes()
 
     m_boxesGenerated = true;
 
-    auto texturePath = getGameAssetsPath("texture") / m_textureNames[m_selectedTexture];
+    auto texturePath = getGameAssetPath("texture") / m_textureNames[m_selectedTexture];
 
     int width = 0;
     int height = 0;
@@ -229,7 +229,7 @@ void SpriteSheetEditorPanel::generateSpritesJson(bool onlyEnabled)
     }
 
     // Derive output path from texture name, e.g. <name>.json
-    auto texturePath = getGameAssetsPath("texture") / m_textureNames[m_selectedTexture];
+    auto texturePath = getGameAssetPath("texture") / m_textureNames[m_selectedTexture];
     std::filesystem::path outputPath = texturePath.parent_path() / (texturePath.stem().string() + ".json");
 
     nlohmann::json root;

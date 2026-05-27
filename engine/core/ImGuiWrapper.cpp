@@ -6,8 +6,8 @@
 #include "core/ImGuiWrapper.h"
 #include "core/Window.h"
 
-#include "util/PathUtils.h"
 #include "util/LogChannels.h"
+#include "util/PathUtils.h"
 
 #include <algorithm>
 #include <backends/imgui_impl_glfw.h>
@@ -347,8 +347,7 @@ void ImGuiWrapper::SetupStyle()
     style.Colors[ImGuiCol_SeparatorHovered] = kColorAccent;
     style.Colors[ImGuiCol_SeparatorActive] = kColorAccentHover;
     style.Colors[ImGuiCol_DockingPreview] = kColorAccent;
-    style.Colors[ImGuiCol_TextSelectedBg] =
-        ImVec4(kColorAccent.x, kColorAccent.y, kColorAccent.z, 0.35f);
+    style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(kColorAccent.x, kColorAccent.y, kColorAccent.z, 0.35f);
     style.Colors[ImGuiCol_NavCursor] = kColorAccent;
 }
 
@@ -356,7 +355,7 @@ void ImGuiWrapper::SetupFonts()
 {
     ImGuiIO &io = ImGui::GetIO();
 
-    const std::string monoPath = getGameAssetsPath("fonts/JetBrains_Mono/static/JetBrainsMono-Regular.ttf").string();
+    const std::string monoPath = getGameAssetPath("fonts/JetBrains_Mono/static/JetBrainsMono-Regular.ttf").string();
     ImFont *uiFont = io.Fonts->AddFontFromFileTTF(monoPath.c_str(), 15.0f);
 
     if (uiFont == nullptr)
@@ -373,7 +372,7 @@ void ImGuiWrapper::SetupFonts()
 
     static const ImWchar icon_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
 
-    std::filesystem::path iconPath = getFilePath("fonts/fontawesome-webfont.ttf");
+    std::filesystem::path iconPath = getEngineAssetPath("fonts/fontawesome-webfont.ttf");
 
     io.Fonts->AddFontFromFileTTF(iconPath.c_str(), 13.0f, &iconConfig, icon_ranges);
     io.Fonts->Flags |= ImFontFlags_ImplicitRefSize;

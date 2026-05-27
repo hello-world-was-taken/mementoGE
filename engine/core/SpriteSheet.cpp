@@ -43,7 +43,7 @@ std::shared_ptr<SpriteSheet> SpriteSheet::fromJson(const std::filesystem::path &
     try
     {
         std::filesystem::path texturePath = getTexturePathFromJson(data);
-        std::shared_ptr<Texture> tex = GlResourceManager::instance().getTexture(texturePath, true);
+        std::shared_ptr<Texture> tex = GlResourceManager::instance().getTexture(texturePath);
         std::shared_ptr<SpriteSheet> spriteSheet = std::make_shared<SpriteSheet>(tex);
         spriteSheet->m_jsonPath = jsonPath;
 

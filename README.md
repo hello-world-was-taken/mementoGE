@@ -120,6 +120,44 @@ endif()
 
 Inside MementoGE, the engine's CMake checks the same `EDITOR_BUILD` option and, when it is ON, defines `EDITOR_BUILD` for the `engine` target as well. This keeps the game and engine in sync: turning editor support on or off at the game level automatically enables or disables editor-only code inside the engine.
 
+### Adding a System
+
+Systems implement `ISystem` and receive scene services through `SystemContext`:
+
+```cpp
+class MovementSystem : public ISystem
+{
+public:
+    int executionOrder() const override
+    {
+        return 150;
+    }
+
+    void update(SystemContext &context) override
+    {
+        auto view = context.registry.view<Transform>();
+        // Update matching entities using context.deltaTime as needed.
+    }
+};
+```
+
+Register the type once, then add it to any scene that needs it:
+
+```cpp
+SystemRegistry::instance().registerSystem<MovementSystem>("MovementSystem");
+scene.addSystem("MovementSystem");
+```
+
+`SystemRegistry` stores factories, so every scene owns an independent system
+instance. A system controls its own execution order by overriding
+`executionOrder()`; the default is `100`. The built-in animation and physics
+systems use orders `200` and `300`, but must be registered and added like any
+other system. All systems in the scene appear in the editor's Systems panel.
+While editing, every enabled system runs. Systems start disabled, and entering
+Play enables every system on the disposable runtime scene. Use the panel
+checkboxes for temporary overrides. Runtime Pause still stops scene updates
+entirely.
+
 ## Controls
 
 | Action        | Input                                |

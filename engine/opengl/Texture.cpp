@@ -8,8 +8,7 @@
 #include <stdexcept>
 #include <yaml-cpp/yaml.h>
 
-Texture::Texture(const char *texturePath, unsigned int textureUnit, bool isTextureAtlas)
-    : m_textureSlot(textureUnit), m_isTextureAtlas(isTextureAtlas)
+Texture::Texture(const char *texturePath, bool isTextureAtlas) : m_isTextureAtlas(isTextureAtlas)
 {
     this->m_texturePath = texturePath;
     // stbi_set_flip_vertically_on_load(true);
@@ -30,8 +29,8 @@ Texture::Texture(const char *texturePath, unsigned int textureUnit, bool isTextu
     // }
 }
 
-Texture::Texture(unsigned char *textureBuffer, unsigned int textureUnit, unsigned int width, unsigned int height)
-    : m_textureSlot{textureUnit}, m_textureBuffer{textureBuffer}
+Texture::Texture(unsigned char *textureBuffer, unsigned int width, unsigned int height)
+    : m_textureBuffer{textureBuffer}
 {
     m_width = width;
     m_height = height;
@@ -43,7 +42,6 @@ Texture::Texture(unsigned char *textureBuffer, unsigned int textureUnit, unsigne
 void Texture::generateTexture()
 {
     glGenTextures(1, &this->m_id);
-    glActiveTexture(GL_TEXTURE0 + this->m_textureSlot);
     glBindTexture(GL_TEXTURE_2D, this->m_id);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -93,19 +91,14 @@ unsigned int Texture::getTextureId() const
     return m_id;
 }
 
-unsigned int Texture::getTextureSlot() const
-{
-    return m_textureSlot;
-}
-
 bool Texture::isTextureAtlas() const
 {
     return m_isTextureAtlas;
 }
 
-void Texture::bind() const
+void Texture::bind(unsigned int textureUnit) const
 {
-    glActiveTexture(GL_TEXTURE0 + this->m_textureSlot);
+    glActiveTexture(GL_TEXTURE0 + textureUnit);
     glBindTexture(GL_TEXTURE_2D, this->m_id);
 }
 

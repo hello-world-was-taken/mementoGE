@@ -4,24 +4,20 @@
 #include "core/GlResourceManager.h"
 
 #include "opengl/Vertex.h"
-#include "opengl/VertexBuffer.h"
 #include "opengl/VertexAttribute.h"
+#include "opengl/VertexBuffer.h"
 
-#include "renderer/RenderBatch.h"
 #include "renderer/Constants.h"
+#include "renderer/RenderBatch.h"
 
-#include "util/log_error.h"
-#include "util/PathUtils.h"
 #include "util/LogChannels.h"
+#include "util/PathUtils.h"
+#include "util/log_error.h"
 
 #include <memory>
 #include <sawyer/Logger.h>
 
-RenderBatch::RenderBatch(
-    std::vector<unsigned int> indices,
-    GLenum drawMode)
-    : m_indices(indices),
-      m_drawMode(drawMode)
+RenderBatch::RenderBatch(std::vector<unsigned int> indices, GLenum drawMode) : m_indices(indices), m_drawMode(drawMode)
 {
     setupBuffers();
 }
@@ -83,19 +79,27 @@ void RenderBatch::setIndexData(std::vector<unsigned int> &indices)
     m_ibo->updateIndicesData(m_indices.data(), m_indices.size());
 }
 
-void RenderBatch::render(const CameraOld &camera, int drawCount, std::shared_ptr<Shader> customShader)
+void RenderBatch::render(const CameraOld &camera,
+    int drawCount,
+    std::shared_ptr<Shader> customShader,
+    const std::vector<std::shared_ptr<Texture>> &textures)
 {
-    auto vertexShaderPath = getFilePath("shader/vertex.shader");
-    auto fragmentShaderPath = getFilePath("shader/fragment.shader");
+    auto vertexShaderPath = getEngineAssetPath("shader/vertex.shader");
+    auto fragmentShaderPath = getEngineAssetPath("shader/fragment.shader");
 
-    std::shared_ptr<Shader>
-        shader = customShader ? customShader
-                              : GlResourceManager::instance().getShaderProgram(vertexShaderPath, fragmentShaderPath);
+    std::shared_ptr<Shader> shader =
+        customShader ? customShader
+                     : GlResourceManager::instance().getShaderProgram(vertexShaderPath, fragmentShaderPath);
 
     shader->use();
     shader->setUniform4fv("u_view_matrix", camera.getViewMatrix());
     shader->setUniform4fv("u_projection_matrix", camera.getProjectionMatrix());
     shader->setMultipleTextureUnits("textures", m_textureUnits.data(), m_textureUnits.size());
+
+    for (size_t slot = 0; slot < textures.size(); ++slot)
+    {
+        textures[slot]->bind(static_cast<unsigned int>(slot));
+    }
 
     m_vao->bind();
     glClearError();

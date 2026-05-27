@@ -271,7 +271,7 @@ void AssetsPanel::drawContentPanel()
             {
                 std::string src = ImGuiFileDialog::Instance()->GetFilePathName();
                 std::string fileName = ImGuiFileDialog::Instance()->GetCurrentFileName();
-                fs::path destPath = getGameAssetsPath("audio") / fileName;
+                fs::path destPath = getGameAssetPath("audio") / fileName;
 
                 try
                 {
@@ -302,7 +302,7 @@ void AssetsPanel::drawContentPanel()
             {
                 std::string src = ImGuiFileDialog::Instance()->GetFilePathName();
                 std::string fileName = ImGuiFileDialog::Instance()->GetCurrentFileName();
-                fs::path destPath = getGameAssetsPath("fonts") / fileName;
+                fs::path destPath = getGameAssetPath("fonts") / fileName;
 
                 try
                 {
@@ -333,7 +333,7 @@ void AssetsPanel::drawContentPanel()
             {
                 std::string src = ImGuiFileDialog::Instance()->GetFilePathName();
                 std::string fileName = ImGuiFileDialog::Instance()->GetCurrentFileName();
-                fs::path destPath = getGameAssetsPath("texture") / fileName;
+                fs::path destPath = getGameAssetPath("texture") / fileName;
 
                 try
                 {
@@ -556,7 +556,7 @@ void AssetsPanel::drawAnimationPanel()
         return;
     }
 
-    auto path = getFilePath(m_ctx.selectedTextureJsonPath);
+    fs::path path = m_ctx.selectedTextureJsonPath;
     std::shared_ptr<AnimationMap> animationMap = AssetManager::instance().getAnimationMap(path);
     if (!animationMap || !animationMap->getTexture())
     {

@@ -38,7 +38,7 @@ std::shared_ptr<AnimationMap> AnimationMap::fromJson(const std::filesystem::path
     try
     {
         std::filesystem::path texturePath = getTexturePathFromJson(data);
-        auto tex = GlResourceManager::instance().getTexture(texturePath, true);
+        auto tex = GlResourceManager::instance().getTexture(texturePath);
         auto animMap = std::make_shared<AnimationMap>(tex);
         animMap->setJsonPath(jsonPath);
 

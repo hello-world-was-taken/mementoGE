@@ -4,8 +4,8 @@
 #include "renderer/util.h"
 
 #include "editor/Constants.h"
-#include "util/PathUtils.h"
 #include "util/LogChannels.h"
+#include "util/PathUtils.h"
 
 #include <filesystem>
 #include <glm/glm.hpp>
@@ -13,10 +13,7 @@
 
 namespace
 {
-void appendLineQuad(std::vector<Vertex> &vertices,
-    const glm::vec2 &start,
-    const glm::vec2 &end,
-    float thickness)
+void appendLineQuad(std::vector<Vertex> &vertices, const glm::vec2 &start, const glm::vec2 &end, float thickness)
 {
     const glm::vec2 direction = end - start;
     const glm::vec2 normal = glm::normalize(glm::vec2{-direction.y, direction.x}) * (thickness * 0.5f);
@@ -35,7 +32,7 @@ GridRenderer::GridRenderer()
 {
     LOG_DEBUG(LogChannel::Renderer, "Current directory: {}", std::filesystem::current_path().string());
     m_shader = GlResourceManager::instance().getShaderProgram(
-        getFilePath("shader/grid_vertex.shader"), getFilePath("shader/grid_fragment.shader"));
+        getEngineAssetPath("shader/grid_vertex.shader"), getEngineAssetPath("shader/grid_fragment.shader"));
 
     generateIndexArrayForTriangle(m_indices);
     m_batch = std::make_unique<RenderBatch>(m_indices, GL_TRIANGLES);

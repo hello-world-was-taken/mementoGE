@@ -6,3 +6,4 @@ constexpr int BATCH_SIZE = 10000; // TODO: changed from 1000 to test particle sy
 constexpr int VERTEX_PER_QUAD = 4;
 constexpr int INDICES_PER_QUAD = 6;
 constexpr int INDICES_PER_LINE_QUAD = 8;
+constexpr int MAX_TEXTURE_SLOTS_PER_BATCH = 16;

@@ -70,7 +70,9 @@ void Text::rebuild(Transform &transform)
             return Vertex{pos, color, uv, t};
         };
 
-        auto texSlot = font->atlasTexture->getTextureSlot();
+        // The renderer replaces this placeholder with the atlas's slot in the
+        // current draw batch.
+        constexpr int texSlot = 0;
         vertices.push_back(makeVertex(glyphVertices[0], color, glyphTextureCoords[0], texSlot));
         vertices.push_back(makeVertex(glyphVertices[1], color, glyphTextureCoords[1], texSlot));
         vertices.push_back(makeVertex(glyphVertices[2], color, glyphTextureCoords[2], texSlot));

@@ -104,8 +104,7 @@ void Sprite::deserialize(const YAML::Node &in)
     if (textureNode)
     {
         std::string filePath = textureNode["FilePath"].as<std::string>();
-        bool isTextureAtlas = textureNode["isTextureAtlas"].as<bool>();
-        texture = GlResourceManager::instance().getTexture(filePath, isTextureAtlas);
+        texture = GlResourceManager::instance().getTexture(filePath);
     }
     else
     {

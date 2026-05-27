@@ -1,9 +1,12 @@
+#include "engine/core/AnimationSystem.h"
+#include "engine/core/PhysicsSystem.h"
 #include "engine/core/Scene.h"
 #include "engine/core/SystemRegistry.h"
 #include "engine/core/components/EntityInfo.h"
 #include "engine/core/components/RenderLayer.h"
 #include "engine/core/components/Transform.h"
 
+#include <algorithm>
 #include <gtest/gtest.h>
 #include <string>
 #include <yaml-cpp/yaml.h>
@@ -13,22 +16,15 @@ namespace
 class CountingSystem : public ISystem
 {
 public:
-    void update(entt::registry &) override
+    void update(SystemContext &) override
     {
         ++updateCount;
     }
 
-    void onDisabled(entt::registry &) override
-    {
-        ++disabledCount;
-    }
-
     static int updateCount;
-    static int disabledCount;
 };
 
 int CountingSystem::updateCount = 0;
-int CountingSystem::disabledCount = 0;
 
 YAML::Node serializeToNode(Scene &scene)
 {
@@ -39,32 +35,102 @@ YAML::Node serializeToNode(Scene &scene)
 }
 } // namespace
 
-TEST(SceneTests, DisabledSystemDoesNotUpdateAndOverrideIsNotSerialized)
+TEST(SceneTests, DisabledSystemDoesNotUpdateAndEnablementIsNotSerialized)
 {
     constexpr const char *systemName = "SceneTests.CountingSystem";
     SystemRegistry::instance().registerSystem<CountingSystem>(systemName);
     CountingSystem::updateCount = 0;
-    CountingSystem::disabledCount = 0;
 
     Scene scene{"system test"};
     scene.addSystem(systemName);
+    scene.setAllSystemsEnabled(true);
     scene.play();
     scene.update();
     EXPECT_EQ(CountingSystem::updateCount, 1);
 
     ASSERT_TRUE(scene.setSystemEnabled(systemName, false));
-    EXPECT_EQ(CountingSystem::disabledCount, 1);
     scene.update();
     EXPECT_EQ(CountingSystem::updateCount, 1);
 
     const auto info = scene.getSystemInfo();
-    ASSERT_EQ(info.size(), 1u);
-    EXPECT_FALSE(info.front().enabled);
+    const auto systemInfo = std::find_if(info.begin(), info.end(), [&](const Scene::SystemInfo &entry) {
+        return entry.name == systemName;
+    });
+    ASSERT_NE(systemInfo, info.end());
+    EXPECT_FALSE(systemInfo->enabled);
 
+    ASSERT_TRUE(scene.setSystemEnabled(systemName, true));
     Scene clone = scene.clone("system test clone");
     const auto clonedInfo = clone.getSystemInfo();
-    ASSERT_EQ(clonedInfo.size(), 1u);
-    EXPECT_TRUE(clonedInfo.front().enabled);
+    const auto clonedSystemInfo =
+        std::find_if(clonedInfo.begin(), clonedInfo.end(), [&](const Scene::SystemInfo &entry) {
+            return entry.name == systemName;
+        });
+    ASSERT_NE(clonedSystemInfo, clonedInfo.end());
+    EXPECT_FALSE(clonedSystemInfo->enabled);
+}
+
+TEST(SceneTests, EngineSystemsUseTheGenericSystemInterface)
+{
+    SystemRegistry::instance().registerSystem<AnimationSystem>("AnimationSystem");
+    SystemRegistry::instance().registerSystem<PhysicsSystem>("PhysicsSystem");
+
+    Scene scene{"system test"};
+    scene.addSystem("AnimationSystem");
+    scene.addSystem("PhysicsSystem");
+    const auto info = scene.getSystemInfo();
+
+    const auto animation = std::find_if(info.begin(), info.end(), [](const Scene::SystemInfo &entry) {
+        return entry.name == "AnimationSystem";
+    });
+    const auto physics = std::find_if(info.begin(), info.end(), [](const Scene::SystemInfo &entry) {
+        return entry.name == "PhysicsSystem";
+    });
+    ASSERT_NE(animation, info.end());
+    ASSERT_NE(physics, info.end());
+
+    scene.setAllSystemsEnabled(false);
+    const auto disabledInfo = scene.getSystemInfo();
+    EXPECT_TRUE(std::all_of(disabledInfo.begin(), disabledInfo.end(), [](const Scene::SystemInfo &entry) {
+        return !entry.enabled;
+    }));
+}
+
+TEST(SceneTests, EnabledStateControlsEditModeExecution)
+{
+    constexpr const char *systemName = "SceneTests.EditModeSystem";
+    SystemRegistry::instance().registerSystem<CountingSystem>(systemName);
+    CountingSystem::updateCount = 0;
+
+    Scene scene{"edit mode system test"};
+    scene.addSystem(systemName);
+    scene.update(true);
+    EXPECT_EQ(CountingSystem::updateCount, 0);
+
+    ASSERT_TRUE(scene.setSystemEnabled(systemName, true));
+    scene.update(true);
+    EXPECT_EQ(CountingSystem::updateCount, 1);
+
+    ASSERT_TRUE(scene.setSystemEnabled(systemName, false));
+    scene.update(true);
+    EXPECT_EQ(CountingSystem::updateCount, 1);
+
+    scene.pause();
+    scene.update();
+    EXPECT_EQ(CountingSystem::updateCount, 1);
+}
+
+TEST(SceneTests, SystemRegistryCreatesIndependentSystemInstances)
+{
+    constexpr const char *systemName = "SceneTests.FactorySystem";
+    SystemRegistry::instance().registerSystem<CountingSystem>(systemName);
+
+    auto first = SystemRegistry::instance().create(systemName);
+    auto second = SystemRegistry::instance().create(systemName);
+
+    ASSERT_NE(first, nullptr);
+    ASSERT_NE(second, nullptr);
+    EXPECT_NE(first.get(), second.get());
 }
 
 TEST(SceneTests, SerializesGameObjectsAsTaggedEntries)

@@ -1,8 +1,6 @@
 #pragma once
 
 #include <filesystem>
-#include <fstream>
-#include <iostream>
 #include <nlohmann/json.h>
 #include <string>
 
@@ -20,7 +18,9 @@ inline std::filesystem::path getExecutableDir()
     wchar_t buffer[MAX_PATH];
     DWORD length = GetModuleFileNameW(nullptr, buffer, MAX_PATH);
     if (length == 0)
+    {
         return std::filesystem::current_path();
+    }
     return std::filesystem::path(buffer).parent_path();
 
 #elif defined(__APPLE__)
@@ -46,26 +46,23 @@ inline std::filesystem::path getExecutableDir()
 #endif
 }
 
-// TODO: memento specific path. Should this be deprecated?
-inline std::filesystem::path getFilePath(const std::string &relative)
+// Resolves a path relative to the engine's bundled assets directory.
+inline std::filesystem::path getEngineAssetPath(const std::string &relativeAssetPath)
 {
-    // auto base = getExecutableDir();
-    auto base = std::filesystem::path(std::string(MEMENTO_ASSET_DIR));
-    return base / relative;
+    const auto engineAssetsDirectory = std::filesystem::path(std::string(MEMENTO_ASSET_DIR));
+    return engineAssetsDirectory / relativeAssetPath;
 }
 
-// Assets directory relative path only (no "./" or absolute paths).
+// Resolves a path relative to the game's assets directory.
 // Examples: "scenes/example_scene.yaml", "audio/explosion.wav"
-inline std::filesystem::path getGameAssetsPath(const std::string &relative)
+inline std::filesystem::path getGameAssetPath(const std::string &relativeAssetPath)
 {
-    // auto base = getExecutableDir();
-    auto base = std::filesystem::path(std::string(GAME_ASSETS_DIR));
-    if (relative.empty())
+    const auto gameAssetsDirectory = std::filesystem::path(std::string(GAME_ASSETS_DIR));
+    if (relativeAssetPath.empty())
     {
-        return base;
+        return gameAssetsDirectory;
     }
-    auto temp = base / relative;
-    return base / relative;
+    return gameAssetsDirectory / relativeAssetPath;
 }
 
 inline std::filesystem::path getProjectRootPath()
@@ -84,11 +81,7 @@ inline std::filesystem::path getEditorWorkspaceStatePath()
     return getMementoEditorStateDir() / "editor-state.yaml";
 }
 
-inline std::filesystem::path getTexturePathFromJson(const std::string &jsonTexturePath)
+inline std::filesystem::path getTexturePathFromJson(const nlohmann::json &data)
 {
-    std::ifstream file(jsonTexturePath);
-    nlohmann::json data;
-    file >> data;
-
-    return getGameAssetsPath("texture") / data["meta"]["texture"];
+    return getGameAssetPath("texture") / data.at("meta").at("texture").get<std::string>();
 }

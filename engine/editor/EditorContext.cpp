@@ -15,8 +15,8 @@
 #include "core/components/TextAnchor.h"
 #include "core/components/Transform.h"
 
-#include "util/PathUtils.h"
 #include "util/LogChannels.h"
+#include "util/PathUtils.h"
 
 #include <filesystem>
 #include <fstream>
@@ -291,7 +291,7 @@ void EditorContext::serializaActiveScene()
     YAML::Emitter out;
     getActiveScene().serialize(out);
     std::string sceneName = getActiveScene().getTag();
-    std::string filePath = getGameAssetsPath("scenes/" + sceneName + ".yaml");
+    std::string filePath = getGameAssetPath("scenes/" + sceneName + ".yaml");
     std::ofstream file(filePath, std::ios::out | std::ios::trunc);
     file << out.c_str();
 
@@ -322,25 +322,45 @@ void EditorContext::loadEditorWorkspaceState()
     if (panels)
     {
         if (panels["Scene"])
+        {
             workspaceState.showScenePanel = panels["Scene"].as<bool>();
+        }
         if (panels["Hierarchy"])
+        {
             workspaceState.showHierarchyPanel = panels["Hierarchy"].as<bool>();
+        }
         if (panels["Properties"])
+        {
             workspaceState.showPropertiesPanel = panels["Properties"].as<bool>();
+        }
         if (panels["Assets"])
+        {
             workspaceState.showAssetsPanel = panels["Assets"].as<bool>();
+        }
         if (panels["SpriteSheetEditor"])
+        {
             workspaceState.showSpriteSheetEditorPanel = panels["SpriteSheetEditor"].as<bool>();
+        }
         if (panels["Performance"])
+        {
             workspaceState.showPerformancePanel = panels["Performance"].as<bool>();
+        }
         if (panels["Systems"])
+        {
             workspaceState.showSystemsPanel = panels["Systems"].as<bool>();
+        }
         if (panels["Log"])
+        {
             workspaceState.showLogPanel = panels["Log"].as<bool>();
+        }
         if (panels["Context"])
+        {
             workspaceState.showContextPanel = panels["Context"].as<bool>();
+        }
         if (panels["Metrics"])
+        {
             workspaceState.showMetricsWindow = panels["Metrics"].as<bool>();
+        }
     }
 
     const YAML::Node editor = root["Editor"];
@@ -370,9 +390,13 @@ void EditorContext::loadEditorWorkspaceState()
             }
         }
         if (editor["EditorRendererMask"])
+        {
             editorRendererMask = editor["EditorRendererMask"].as<uint32_t>();
+        }
         if (editor["RuntimeRendererMask"])
+        {
             runtimeRendererMask = editor["RuntimeRendererMask"].as<uint32_t>();
+        }
     }
 }
 

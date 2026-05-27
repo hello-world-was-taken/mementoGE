@@ -11,6 +11,7 @@
 #include "core/GameObject.h"
 #include "core/GlResourceManager.h"
 
+#include <algorithm>
 #include <vector>
 
 static std::array<glm::vec3, 4> makeQuadFromCenter(const glm::vec3 &center, float size)
@@ -67,15 +68,101 @@ bool Renderer2D::hasRendererTypeEnabled(RendererType flag)
 
 void Renderer2D::renderSprites(const CameraOld &camera, const std::vector<GameObject> &gameObjects)
 {
+    generateIndexArrayForTriangle(m_indices);
+
     if (!m_batch)
     {
         m_batch = std::make_unique<RenderBatch>(m_indices, GL_TRIANGLES);
     }
+    m_batch->setIndexData(m_indices);
 
-    generateIndexArrayForTriangle(m_indices);
+    // Preserve the existing custom-shader behavior while deciding the shader
+    // before a texture-capacity flush can submit part of the scene.
+    m_activeShader = nullptr;
+    for (const GameObject &gameObject : gameObjects)
+    {
+        if (!gameObject.hasComponent<ShaderEffectRequest>())
+        {
+            continue;
+        }
 
-    // UPDATE VERTICES
+        ShaderEffectRequest &effectRequest = gameObject.getComponent<ShaderEffectRequest>();
+        m_activeShader = GlResourceManager::instance().getShaderProgram(
+            effectRequest.vertexShaderPath, effectRequest.fragmentShaderPath);
+
+        m_activeShader->use();
+        for (const auto &[uniformName, uniformValue] : effectRequest.uniforms)
+        {
+            std::visit(
+                [&](auto &&value)
+                {
+                    using T = std::decay_t<decltype(value)>;
+                    if constexpr (std::is_same_v<T, int>)
+                        m_activeShader->setUniform1i(uniformName, value);
+                    else if constexpr (std::is_same_v<T, float>)
+                        m_activeShader->setUniform1f(uniformName, value);
+                    else if constexpr (std::is_same_v<T, glm::vec4>)
+                        m_activeShader->setUniform4f(uniformName, value);
+                    else if constexpr (std::is_same_v<T, glm::mat4>)
+                        m_activeShader->setUniform4fv(uniformName, value);
+                },
+                uniformValue);
+        }
+    }
+
     m_vertices.clear();
+    std::vector<std::shared_ptr<Texture>> batchTextures;
+
+    auto flush = [&]()
+    {
+        if (m_vertices.empty())
+        {
+            return;
+        }
+
+        m_batch->setVertexData(m_vertices);
+        m_batch->render(camera,
+            static_cast<int>((m_vertices.size() / VERTEX_PER_QUAD) * INDICES_PER_QUAD),
+            m_activeShader,
+            batchTextures);
+        m_vertices.clear();
+        batchTextures.clear();
+    };
+
+    auto appendQuad = [&](const Vertex *vertices, const std::shared_ptr<Texture> &texture)
+    {
+        auto textureIt = texture
+            ? std::find(batchTextures.begin(), batchTextures.end(), texture)
+            : batchTextures.end();
+        const bool needsTextureSlot = texture && textureIt == batchTextures.end();
+        if (m_vertices.size() / VERTEX_PER_QUAD >= BATCH_SIZE ||
+            (needsTextureSlot && batchTextures.size() >= MAX_TEXTURE_SLOTS_PER_BATCH))
+        {
+            flush();
+            textureIt = batchTextures.end();
+        }
+
+        int textureSlot = -1;
+        if (texture)
+        {
+            if (textureIt == batchTextures.end())
+            {
+                batchTextures.push_back(texture);
+                textureSlot = static_cast<int>(batchTextures.size() - 1);
+            }
+            else
+            {
+                textureSlot = static_cast<int>(std::distance(batchTextures.begin(), textureIt));
+            }
+        }
+
+        for (int i = 0; i < VERTEX_PER_QUAD; ++i)
+        {
+            Vertex vertex = vertices[i];
+            vertex.texSlot = textureSlot;
+            m_vertices.push_back(vertex);
+        }
+    };
 
     for (const GameObject &gameObject : gameObjects)
     {
@@ -85,12 +172,10 @@ void Renderer2D::renderSprites(const CameraOld &camera, const std::vector<GameOb
             Text &text = gameObject.getComponent<Text>();
             Transform &transform = gameObject.getComponent<Transform>();
             text.rebuild(transform); // FIXME: we should only rebuild when dirty.
-            std::for_each(text.vertices.begin(),
-                text.vertices.end(),
-                [&](Vertex &vertex)
-                {
-                    m_vertices.push_back(vertex);
-                });
+            for (size_t i = 0; i + VERTEX_PER_QUAD <= text.vertices.size(); i += VERTEX_PER_QUAD)
+            {
+                appendQuad(text.vertices.data() + i, text.font->atlasTexture);
+            }
         }
 
         // sprite
@@ -100,23 +185,19 @@ void Renderer2D::renderSprites(const CameraOld &camera, const std::vector<GameOb
 
             std::array<glm::vec3, 4> quad = gameObject.getWorldCoordinateQuad();
             auto texCoords = sprite.getNormalizedTextureCoordinates();
-            int texSlot = -1;
-            if (sprite.texture)
-            {
-                texSlot = sprite.texture->getTextureSlot();
-                sprite.texture->bind();
-            }
-
             // TODO: this should be moved to the base renderer class or should be a common utility
-            auto makeVertex = [&](const glm::vec3 &pos, const glm::vec4 &color, const glm::vec2 &uv, int t)
+            auto makeVertex = [&](const glm::vec3 &pos, const glm::vec4 &color, const glm::vec2 &uv)
             {
-                return Vertex{pos, color, uv, t};
+                return Vertex{pos, color, uv, -1};
             };
 
-            m_vertices.push_back(makeVertex(quad[0], sprite.color, texCoords[0], texSlot));
-            m_vertices.push_back(makeVertex(quad[1], sprite.color, texCoords[1], texSlot));
-            m_vertices.push_back(makeVertex(quad[2], sprite.color, texCoords[2], texSlot));
-            m_vertices.push_back(makeVertex(quad[3], sprite.color, texCoords[3], texSlot));
+            std::array<Vertex, VERTEX_PER_QUAD> vertices = {
+                makeVertex(quad[0], sprite.color, texCoords[0]),
+                makeVertex(quad[1], sprite.color, texCoords[1]),
+                makeVertex(quad[2], sprite.color, texCoords[2]),
+                makeVertex(quad[3], sprite.color, texCoords[3]),
+            };
+            appendQuad(vertices.data(), sprite.texture);
         }
 
         // particle
@@ -124,8 +205,6 @@ void Renderer2D::renderSprites(const CameraOld &camera, const std::vector<GameOb
         {
             const auto &emitter = gameObject.getComponent<ParticleEmitter>();
             // TODO: for now, lets just use color. -1 is treated as a special case in the fragment shader
-            int texSlot = -1;
-
             auto makeVertex = [&](const glm::vec3 &pos, const glm::vec4 &color, const glm::vec2 &uv, int t)
             {
                 return Vertex{pos, color, uv, t};
@@ -135,64 +214,18 @@ void Renderer2D::renderSprites(const CameraOld &camera, const std::vector<GameOb
             {
                 auto quad = makeQuadFromCenter(p.pos, p.size);
 
-                m_vertices.push_back(makeVertex(quad[0], p.color, {0.0f, 0.0f}, texSlot));
-                m_vertices.push_back(makeVertex(quad[1], p.color, {0.0f, 0.0f}, texSlot));
-                m_vertices.push_back(makeVertex(quad[2], p.color, {0.0f, 0.0f}, texSlot));
-                m_vertices.push_back(makeVertex(quad[3], p.color, {0.0f, 0.0f}, texSlot));
-            }
-        }
-
-        // TODO: test ShaderEffectRequest rendering
-        if (gameObject.hasComponent<ShaderEffectRequest>())
-        {
-            ShaderEffectRequest &effectRequest = gameObject.getComponent<ShaderEffectRequest>();
-
-            GlResourceManager &resourceManager = GlResourceManager::instance();
-            std::shared_ptr<Shader> shader =
-                resourceManager.getShaderProgram(effectRequest.vertexShaderPath, effectRequest.fragmentShaderPath);
-            m_activeShader = shader;
-
-            // Set shader uniforms
-            for (const auto &[uniformName, uniformValue] : effectRequest.uniforms)
-            {
-                std::visit(
-                    [&](auto &&value)
-                    {
-                        using T = std::decay_t<decltype(value)>;
-                        if constexpr (std::is_same_v<T, int>)
-                        {
-                            shader->setUniform1i(uniformName, value);
-                        }
-                        else if constexpr (std::is_same_v<T, float>)
-                        {
-                            shader->setUniform1f(uniformName, value);
-                        }
-                        else if constexpr (std::is_same_v<T, glm::vec4>)
-                        {
-                            shader->setUniform4f(uniformName, value);
-                        }
-                        else if constexpr (std::is_same_v<T, glm::mat4>)
-                        {
-                            shader->setUniform4fv(uniformName, value);
-                        }
-                    },
-                    uniformValue);
+                std::array<Vertex, VERTEX_PER_QUAD> vertices = {
+                    makeVertex(quad[0], p.color, {0.0f, 0.0f}, -1),
+                    makeVertex(quad[1], p.color, {0.0f, 0.0f}, -1),
+                    makeVertex(quad[2], p.color, {0.0f, 0.0f}, -1),
+                    makeVertex(quad[3], p.color, {0.0f, 0.0f}, -1),
+                };
+                appendQuad(vertices.data(), nullptr);
             }
         }
     }
 
-    if (m_vertices.empty())
-    {
-        return;
-    }
-
-    m_batch->setVertexData(m_vertices);
-    m_batch->setIndexData(m_indices);
-
-    size_t quadCount = m_vertices.size() / 4;
-    size_t indexCount = quadCount * 6;
-
-    m_batch->render(camera, indexCount, m_activeShader);
+    flush();
     m_activeShader = nullptr; // reset to default shader after rendering
 }
 

@@ -22,6 +22,7 @@ public:
     std::shared_ptr<AnimationMap> getAnimationMap(const std::string &jsonPath);
     std::shared_ptr<Font> getFont(const std::string &fontPath);
     unsigned int getAudioClip(const std::string &audioPath);
+    void forgetAsset(const std::string &assetPath);
 
 private:
     AssetManager() = default;

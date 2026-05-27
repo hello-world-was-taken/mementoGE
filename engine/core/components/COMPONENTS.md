@@ -63,8 +63,9 @@ Core components live in `engine/core/components/` and are available to all games
   - Inspector exposes body type, mass, damping, etc. (see implementation for exact fields).
 
 - **BoxCollider2D** (`BoxCollider2D.h`)
-  - Axis‑aligned box collider used with `RigidBody2D`.
-  - When added from the Properties panel, its default size is initialized from `EntityInfo.width/height`.
+  - Holds one or more named box shapes used with `RigidBody2D`.
+  - Each shape has an independent size, offset, and local rotation in degrees, so transparent padding does not need to collide.
+  - New colliders start slightly inset from `EntityInfo.width/height`; tune them in the inspector.
 
 - **CircleCollider2D** (`CircleCollider2D.h`)
   - Circular collider.
@@ -77,8 +78,17 @@ Core components live in `engine/core/components/` and are available to all games
   - A line/edge collider, often used for one‑way platforms or boundaries.
 
 - **Sensor2D** (`Sensor2D.h`)
-  - Trigger collider: participates in overlap queries but not physical responses.
+  - Holds one or more named trigger shapes that participate in overlap queries but not physical responses.
   - Registered separately (via `registerSensor2D`) when added.
+  - An animation frame may override a named sensor's size, offset, and active state. For example:
+
+    ```json
+    "sensors": {
+      "attack": { "size": [28, 20], "offset": [24, 8], "active": true }
+    }
+    ```
+
+    Frames without an override use the sensor shape's authored values. Horizontal/vertical sprite flips mirror the animated offset.
 
 - **JointComponent** (`JointComponent.h`)
   - Holds configuration for physics joints/constraints between bodies.

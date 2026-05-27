@@ -3,8 +3,8 @@
 #include "core/SpriteSheet.h"
 #include "core/components/Sprite.h"
 
-#include "util/PathUtils.h"
 #include "util/LogChannels.h"
+#include "util/PathUtils.h"
 
 #include <filesystem>
 #include <fstream>
@@ -112,14 +112,14 @@ void SceneManager::serialize()
         return;
     }
 
-
     for (auto &[sceneName, scene] : m_scenes)
     {
         YAML::Emitter out;
 
-        auto scenePath = getGameAssetsPath("scenes/" + sceneName + ".yaml");
+        auto scenePath = getGameAssetPath("scenes/" + sceneName + ".yaml");
         std::ofstream file(scenePath, std::ios::out | std::ios::trunc);
-        if (!file.is_open())        {
+        if (!file.is_open())
+        {
             std::cerr << "Failed to open file for writing: " << scenePath << std::endl;
             continue;
         }
@@ -135,7 +135,7 @@ void SceneManager::serialize()
 void SceneManager::deserialize()
 {
     // FIXME: hard coding scene
-    const std::string sceneFile = getGameAssetsPath("scenes/axe level 1.yaml");
+    const std::string sceneFile = getGameAssetPath("scenes/axe level 1.yaml");
 
     if (!std::filesystem::exists(sceneFile))
     {

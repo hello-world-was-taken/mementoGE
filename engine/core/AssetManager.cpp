@@ -89,3 +89,11 @@ unsigned int AssetManager::getAudioClip(const std::string &audioPath)
     audioByPath[audioPath] = buffer;
     return buffer;
 }
+
+void AssetManager::forgetAsset(const std::string &assetPath)
+{
+    spriteSheetByPath.erase(assetPath);
+    animationMaps.erase(assetPath);
+    fontByFontPath.erase(assetPath);
+    audioByPath.erase(assetPath);
+}

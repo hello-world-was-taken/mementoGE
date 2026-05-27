@@ -7,15 +7,14 @@
 class Texture
 {
 public:
-    Texture(const char *texturePath, unsigned int textureUnit, bool is_texture_atlas = false);
+    Texture(const char *texturePath, bool is_texture_atlas = false);
     // constructor used to load font
-    Texture(unsigned char *textureBuffer, unsigned int textureUnit, unsigned int width, unsigned int height);
+    Texture(unsigned char *textureBuffer, unsigned int width, unsigned int height);
     Texture(); // TODO: should only be used for serialization
     ~Texture();
     unsigned int getTextureId() const;
-    unsigned int getTextureSlot() const;
     bool isTextureAtlas() const;
-    void bind() const;
+    void bind(unsigned int textureUnit = 0) const;
     void unbind() const;
 
     int getWidth() const;
@@ -36,7 +35,6 @@ private:
     int m_nrChannels = 4; // 4 for png, 3 for jpg
     int m_width = 0;
     int m_height = 0;
-    unsigned int m_textureSlot = 0; // The texture slot in the shader. Default is 0 meaning use the color set.
     unsigned char *m_textureBuffer = nullptr;
     bool m_isTextureAtlas = false;
     std::string m_texturePath; // could be null when texture is font since we do the loading and rasterization in memory

@@ -33,24 +33,13 @@ std::shared_ptr<Shader> GlResourceManager::getShaderProgram(
     return it->second;
 }
 
-// TODO: can we remove the isSpriteSheet bool here.
-// we have two d/t classes now. SpriteSheet.h and just Sprite.h
-std::shared_ptr<Texture> GlResourceManager::getTexture(const std::string &texturePath, bool isSpriteSheet)
+std::shared_ptr<Texture> GlResourceManager::getTexture(const std::string &texturePath)
 {
-    if (m_textureSlot == 16)
-    {
-        // we use textureSlot 16 for framebuffer texture
-        throw std::runtime_error("mementoGE: Max texture limit reached!");
-    }
-
     auto it = textureByPath.find(texturePath);
     if (it == textureByPath.end())
     {
-        auto texture = std::make_shared<Texture>(texturePath.c_str(), m_textureSlot, isSpriteSheet);
-        m_textureSlot++;
+        auto texture = std::make_shared<Texture>(texturePath.c_str());
         textureByPath[texturePath] = texture;
-
-        texture->bind(); // auto-bind on load
         return texture;
     }
 
@@ -59,12 +48,6 @@ std::shared_ptr<Texture> GlResourceManager::getTexture(const std::string &textur
 
 std::shared_ptr<Texture> GlResourceManager::getFontTexture(const std::string &fontPath)
 {
-    if (m_textureSlot == 16)
-    {
-        // we use textureSlot 16 for framebuffer texture
-        throw std::runtime_error("mementoGE: Max texture limit reached!");
-    }
-
     auto it = textureByPath.find(fontPath);
     if (it != textureByPath.end())
     {
@@ -132,12 +115,19 @@ std::shared_ptr<Texture> GlResourceManager::getFontTexture(const std::string &fo
     alignedQuadByPath[fontPath] = std::move(alignedQuads);
 
     // create font texture
-    auto texture = std::make_shared<Texture>(fontAtlasBitmap.get(), m_textureSlot, fontAtlasWidth, fontAtlasHeight);
-    m_textureSlot++;
+    auto texture = std::make_shared<Texture>(fontAtlasBitmap.get(), fontAtlasWidth, fontAtlasHeight);
     textureByPath[fontPath] = texture;
-
-    texture->bind(); // auto-bind on load
     return texture;
+}
+
+void GlResourceManager::forgetTexture(const std::string &texturePath)
+{
+    // This only evicts the resource manager's cached references. If another
+    // shared_ptr still owns the Texture, it remains alive. The OpenGL texture is
+    // deleted by Texture::~Texture() only after the final owner releases it.
+    textureByPath.erase(texturePath);
+    packedCharByPath.erase(texturePath);
+    alignedQuadByPath.erase(texturePath);
 }
 
 std::array<stbtt_packedchar, GlResourceManager::charsToIncludeInFontAtlas> &GlResourceManager::getFontPackedChar(

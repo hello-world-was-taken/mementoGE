@@ -17,8 +17,9 @@ public:
     static const unsigned int charsToIncludeInFontAtlas = 95;
 
     std::shared_ptr<Shader> getShaderProgram(const std::string &vertexPath, const std::string &fragmentPath);
-    std::shared_ptr<Texture> getTexture(const std::string &texturePath, bool isSpriteSheet);
+    std::shared_ptr<Texture> getTexture(const std::string &texturePath);
     std::shared_ptr<Texture> getFontTexture(const std::string &fontPath);
+    void forgetTexture(const std::string &texturePath);
     std::array<stbtt_packedchar, charsToIncludeInFontAtlas> &getFontPackedChar(const std::string &fontPath);
     std::array<stbtt_aligned_quad, charsToIncludeInFontAtlas> &getFontAlignedQuad(const std::string &fontPath);
 
@@ -31,8 +32,6 @@ private:
     GlResourceManager &operator=(const GlResourceManager &) = delete;
     GlResourceManager(GlResourceManager &&) = delete;
     GlResourceManager &operator=(GlResourceManager &&) = delete;
-
-    unsigned int m_textureSlot = 1;
 
     // Font pixel height
     float fontSize = 64.0f;

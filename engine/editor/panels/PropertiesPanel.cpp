@@ -25,15 +25,15 @@
 #include "editor/EditorPanel.h"
 #include "editor/panels/PropertiesPanel.h"
 
-#include "util/PathUtils.h"
 #include "util/LogChannels.h"
+#include "util/PathUtils.h"
 
 #include <ImGuiFileDialog/ImGuiFileDialog.h>
 #include <filesystem>
 #include <fstream>
-#include <sawyer/Logger.h>
 #include <imgui.h>
 #include <memory>
+#include <sawyer/Logger.h>
 
 namespace fs = std::filesystem;
 
@@ -87,9 +87,8 @@ void PropertiesPanel::renderPropertiesPopupHost()
     ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImVec2(1.0f, 1.0f), ImGuiCond_Always);
 
-    ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings |
-                             ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs |
-                             ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDocking;
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav |
+                             ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDocking;
 
     if (ImGui::Begin("PropertiesPopupHost", nullptr, flags))
     {
@@ -380,7 +379,7 @@ void PropertiesPanel::drawExportModel(GameObject &go)
         go.serialize(out);
 
         EntityInfo &info = go.getComponent<EntityInfo>();
-        std::ofstream file(getGameAssetsPath("models/" + info.tag + ".yaml"), std::ios::out | std::ios::trunc);
+        std::ofstream file(getGameAssetPath("models/" + info.tag + ".yaml"), std::ios::out | std::ios::trunc);
         file << out.c_str();
 
         LOG_INFO(LogChannel::Editor, "Exported model '{}'", info.tag);
