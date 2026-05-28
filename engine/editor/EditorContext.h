@@ -31,6 +31,7 @@ struct EditorWorkspaceState
     bool showAssetsPanel = true;
     bool showSpriteSheetEditorPanel = true;
     bool showTileMapEditorPanel = true;
+    bool showGameObjectEditorPanel = true;
     bool showPerformancePanel = true;
     bool showSystemsPanel = true;
     bool showLogPanel = true;

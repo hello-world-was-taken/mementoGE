@@ -112,7 +112,7 @@ void Animator::deserialize(const YAML::Node &node)
     }
 }
 
-void Animator::drawInspector()
+void Animator::drawInspector(const std::function<void()> &drawAssetEditor)
 {
     ImGui::Separator();
     ImGuiWrapper::Collapsable("Animator",
@@ -176,6 +176,11 @@ void Animator::drawInspector()
                     animationSourceMap[animPayload.animationName] = animPayload.animationJsonPath;
                 }
                 ImGui::EndDragDropTarget();
+            }
+
+            if (drawAssetEditor)
+            {
+                drawAssetEditor();
             }
         });
 }

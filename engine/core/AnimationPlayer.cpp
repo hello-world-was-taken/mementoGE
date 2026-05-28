@@ -39,8 +39,19 @@ void AnimationPlayer::update()
 
 void AnimationPlayer::play(const Animation &animation, bool loop)
 {
-    if (mp_animation && mp_animation->name == animation.name)
+    if (animation.frames.empty())
     {
+        mp_animation = nullptr;
+        m_playing = false;
+        m_currentFrame = 0;
+        m_frameTimer = 0.0f;
+        return;
+    }
+
+    if (mp_animation == &animation)
+    {
+        m_looping = loop;
+        m_playing = true;
         return;
     }
 
@@ -65,6 +76,11 @@ void AnimationPlayer::stop()
 bool AnimationPlayer::isPlaying() const
 {
     return m_playing;
+}
+
+bool AnimationPlayer::hasAnimation() const
+{
+    return mp_animation != nullptr && !mp_animation->frames.empty() && m_currentFrame < mp_animation->frames.size();
 }
 
 const Frame &AnimationPlayer::getCurrentFrame() const

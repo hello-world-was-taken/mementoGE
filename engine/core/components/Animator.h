@@ -5,6 +5,7 @@
 
 #include "core/AnimationPlayer.h"
 
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -21,7 +22,7 @@ public:
 #ifdef EDITOR_BUILD
     void serialize(YAML::Emitter &out);
     void deserialize(const YAML::Node &in);
-    void drawInspector();
+    void drawInspector(const std::function<void()> &drawAssetEditor = {});
 #endif
 
     // private:

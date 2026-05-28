@@ -122,6 +122,7 @@ void EditorLayer::drawEditorUI()
     m_systemsPanel.draw();
     m_spriteSheetEditorPanel.draw();
     m_tileMapEditorPanel.draw();
+    m_gameObjectEditorPanel.draw();
 
     renderPerformancePanel();
     renderEditorProperties();
@@ -157,6 +158,8 @@ void EditorLayer::renderMainMenuBar()
         workspaceChanged |=
             ImGui::MenuItem("Sprite Sheet Editor", nullptr, &m_ctx.workspaceState.showSpriteSheetEditorPanel);
         workspaceChanged |= ImGui::MenuItem("Tile Map Editor", nullptr, &m_ctx.workspaceState.showTileMapEditorPanel);
+        workspaceChanged |=
+            ImGui::MenuItem("Game Object Editor", nullptr, &m_ctx.workspaceState.showGameObjectEditorPanel);
         workspaceChanged |= ImGui::MenuItem("Performance", nullptr, &m_ctx.workspaceState.showPerformancePanel);
         workspaceChanged |= ImGui::MenuItem("Systems", nullptr, &m_ctx.workspaceState.showSystemsPanel);
         workspaceChanged |= ImGui::MenuItem("Log", nullptr, &m_ctx.workspaceState.showLogPanel);

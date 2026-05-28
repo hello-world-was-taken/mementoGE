@@ -6,6 +6,7 @@
 
 #include "editor/EditorContext.h"
 #include "editor/panels/AssetsPanel.h"
+#include "editor/panels/GameObjectEditorPanel.h"
 #include "editor/panels/LogPanel.h"
 #include "editor/panels/PropertiesPanel.h"
 #include "editor/panels/SceneHierarchyPanel.h"
@@ -63,6 +64,7 @@ private:
     SystemsPanel m_systemsPanel{m_ctx};
     SpriteSheetEditorPanel m_spriteSheetEditorPanel{m_ctx};
     TileMapEditorPanel m_tileMapEditorPanel{m_ctx};
+    GameObjectEditorPanel m_gameObjectEditorPanel{m_ctx};
 
     GridRenderer m_gridRenderer;
     CameraOld m_playCamera;

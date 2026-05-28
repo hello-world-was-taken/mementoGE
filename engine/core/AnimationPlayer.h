@@ -16,6 +16,8 @@ public:
     void pause();
     void stop();
     bool isPlaying() const;
+    // TODO: only used in game object editor. Think more about it.
+    bool hasAnimation() const;
 
 private:
     const Animation *mp_animation = nullptr;

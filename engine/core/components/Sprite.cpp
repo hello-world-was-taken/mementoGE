@@ -117,6 +117,7 @@ void Sprite::drawInspector()
     ImGuiWrapper::Collapsable("Sprite",
         [&]
         {
+            ImGui::BeginChild("SpriteDropBox", ImVec2(0, 150), true, ImGuiWindowFlags_NoScrollbar);
             ImGui::ColorEdit4("Color", &color.x);
             ImGui::Checkbox("Flip X", &flipX);
             ImGui::Checkbox("Flip Y", &flipY);
@@ -124,10 +125,10 @@ void Sprite::drawInspector()
             ImGui::Text("Texture: %s", texture ? texture->getFilePath().c_str() : "None");
             ImGui::Separator();
             ImGui::Text("Size: %.1f x %.1f", width, height);
+            ImGui::Spacing();
+            ImGui::TextDisabled("Drag a sprite from Assets and drop it anywhere in this box.");
 
-            // drag-n-drop
-            // TODO: the drag area is too small. Only the above font text. Might be better
-            // to use begin child to make the whole area droppable.
+            ImGui::EndChild();
             handleSpriteDrop();
         });
 }

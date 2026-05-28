@@ -87,6 +87,7 @@ add_library(${PROJECT_NAME} STATIC
 	engine/editor/panels/AssetsPanel.cpp
 	engine/editor/panels/SpriteSheetEditorPanel.cpp
 	engine/editor/panels/TileMapEditorPanel.cpp
+	engine/editor/panels/GameObjectEditorPanel.cpp
 
     # renderer
     engine/renderer/Renderer2D.cpp
@@ -161,6 +162,7 @@ if(BUILD_TESTING)
         tests/unit/PhysicsTests.cpp
         tests/unit/FollowSystemTests.cpp
         tests/unit/AssetLoadingTests.cpp
+        tests/unit/AnimationPlayerTests.cpp
         tests/unit/TileMapTests.cpp
     )
 

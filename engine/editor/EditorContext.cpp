@@ -383,6 +383,10 @@ void EditorContext::loadEditorWorkspaceState()
         {
             workspaceState.showTileMapEditorPanel = panels["TileMapEditor"].as<bool>();
         }
+        if (panels["GameObjectEditor"])
+        {
+            workspaceState.showGameObjectEditorPanel = panels["GameObjectEditor"].as<bool>();
+        }
         if (panels["Performance"])
         {
             workspaceState.showPerformancePanel = panels["Performance"].as<bool>();
@@ -456,6 +460,7 @@ void EditorContext::saveEditorWorkspaceState()
     out << YAML::Key << "Assets" << YAML::Value << workspaceState.showAssetsPanel;
     out << YAML::Key << "SpriteSheetEditor" << YAML::Value << workspaceState.showSpriteSheetEditorPanel;
     out << YAML::Key << "TileMapEditor" << YAML::Value << workspaceState.showTileMapEditorPanel;
+    out << YAML::Key << "GameObjectEditor" << YAML::Value << workspaceState.showGameObjectEditorPanel;
     out << YAML::Key << "Performance" << YAML::Value << workspaceState.showPerformancePanel;
     out << YAML::Key << "Systems" << YAML::Value << workspaceState.showSystemsPanel;
     out << YAML::Key << "Log" << YAML::Value << workspaceState.showLogPanel;
