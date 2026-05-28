@@ -1,12 +1,9 @@
 #pragma once
 
 #include "core/Scene.h"
-#include "core/SceneManager.h"
 
-#include <sstream>
 #include <string>
 #include <vector>
-#include <yaml-cpp/yaml.h>
 
 class SceneHistory
 {
@@ -22,14 +19,14 @@ public:
     void markSaved();     // call when user presses Save
     bool isDirty() const; // return true if scene != last saved snapshot
 
-    void undo(SceneManager &sceneManager);
-    void redo(SceneManager &sceneManager);
+    bool undo(Scene &scene);
+    bool redo(Scene &scene);
 
     unsigned int getStackSize();
     unsigned int getCurrentIndex();
 
 private:
-    void applySnapshot(SceneManager &sceneManager);
+    void applySnapshot(Scene &scene);
 
     std::vector<std::string> m_snapshots;
 

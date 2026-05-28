@@ -1,7 +1,10 @@
 #include "engine/core/GameObject.h"
 #include "engine/core/Physics2D.h"
 #include "engine/core/components/EntityInfo.h"
+#include "engine/core/components/ImportedGroup.h"
 #include "engine/core/components/RenderLayer.h"
+#include "engine/core/components/ShaderEffectRequest.h"
+#include "engine/core/components/TileMapPlacement.h"
 #include "engine/core/components/Transform.h"
 
 #include <entt/entt.hpp>
@@ -97,6 +100,35 @@ hero:
     EXPECT_EQ(renderLayer.mask, 255);
 }
 
+TEST(GameObjectTests, MigratesLegacyTileMapChildToPlacementMetadata)
+{
+    const YAML::Node legacy = YAML::Load(R"(
+tree:
+  EntityInfo: {Tag: tree, Width: 32, Height: 32}
+  Transform: {Position: [0, 0, 0], Rotation: [0, 0, 0], Scale: [1, 1, 1]}
+  TileMapChild:
+    ParentUUID: 42
+    ModelPath: models/tree.yaml
+    SnappedToGrid: true
+    Column: 3
+    Row: 4
+)");
+    entt::registry registry;
+    Physics2D physics{{0.0f, 0.0f}};
+    GameObject gameObject{registry, legacy, physics};
+
+    ASSERT_TRUE(gameObject.hasComponent<TileMapPlacement>());
+    const TileMapPlacement &placement = gameObject.getComponent<TileMapPlacement>();
+    EXPECT_EQ(placement.modelPath, "models/tree.yaml");
+    EXPECT_TRUE(placement.snappedToGrid);
+    EXPECT_EQ(placement.column, 3);
+    EXPECT_EQ(placement.row, 4);
+
+    const YAML::Node migrated = serializeToNode(gameObject);
+    EXPECT_TRUE(migrated["tree"]["TileMapPlacement"]);
+    EXPECT_FALSE(migrated["tree"]["TileMapChild"]);
+}
+
 TEST(GameObjectTests, RoundTripsThroughTaggedYaml)
 {
     entt::registry registry;
@@ -122,6 +154,84 @@ TEST(GameObjectTests, RoundTripsThroughTaggedYaml)
     EXPECT_FLOAT_EQ(copy.getComponent<Transform>().position.x, 8.0f);
     EXPECT_FLOAT_EQ(copy.getComponent<Transform>().position.y, 9.0f);
     EXPECT_EQ(copy.getComponent<RenderLayer>().order, 3);
+}
+
+TEST(GameObjectTests, RoundTripsImportedGroupMetadata)
+{
+    entt::registry registry;
+    GameObject original{registry};
+    original.getComponent<EntityInfo>().tag = "imported_tree";
+    original.addComponent<ImportedGroup>();
+    ImportedGroup &group = original.getComponent<ImportedGroup>();
+    group.groupId = 9876;
+    group.sourceAsset = "assets/models/jungle.yaml";
+
+    YAML::Emitter out;
+    original.serialize(out);
+    ASSERT_TRUE(out.good()) << "YAML emitter failed: " << out.GetLastError();
+
+    entt::registry secondRegistry;
+    Physics2D physics{{0.0f, 0.0f}};
+    GameObject copy{secondRegistry, YAML::Load(out.c_str()), physics};
+
+    ASSERT_TRUE(copy.hasComponent<ImportedGroup>());
+    EXPECT_EQ(copy.getComponent<ImportedGroup>().groupId, 9876);
+    EXPECT_EQ(copy.getComponent<ImportedGroup>().sourceAsset, "assets/models/jungle.yaml");
+}
+
+TEST(GameObjectTests, RoundTripsShaderEffectUniforms)
+{
+    entt::registry registry;
+    GameObject original{registry};
+    original.getComponent<EntityInfo>().tag = "distorted_sprite";
+
+    original.addComponent<ShaderEffectRequest>();
+    ShaderEffectRequest &effect = original.getComponent<ShaderEffectRequest>();
+    effect.vertexShaderPath = "shaders/effect.vert";
+    effect.fragmentShaderPath = "shaders/effect.frag";
+    effect.uniforms["u_Mode"] = 3;
+    effect.uniforms["u_Strength"] = 0.25F;
+    effect.uniforms["u_Offset"] = glm::vec2{1.0F, 2.0F};
+    effect.uniforms["u_Direction"] = glm::vec3{3.0F, 4.0F, 5.0F};
+    effect.uniforms["u_Tint"] = glm::vec4{0.1F, 0.2F, 0.3F, 0.4F};
+
+    glm::mat4 transform{1.0F};
+    for (glm::length_t column = 0; column < 4; ++column)
+    {
+        for (glm::length_t row = 0; row < 4; ++row)
+        {
+            transform[column][row] = static_cast<float>(column * 4 + row + 1);
+        }
+    }
+    effect.uniforms["u_Transform"] = transform;
+
+    const YAML::Node serialized = serializeToNode(original);
+    ASSERT_EQ(serialized["distorted_sprite"]["ShaderEffectRequest"]["uniforms"]["u_Tint"]["type"].as<std::string>(),
+        "vec4");
+
+    entt::registry secondRegistry;
+    Physics2D physics{{0.0F, 0.0F}};
+    GameObject copy{secondRegistry, serialized, physics};
+
+    ASSERT_TRUE(copy.hasComponent<ShaderEffectRequest>());
+    const ShaderEffectRequest &loaded = copy.getComponent<ShaderEffectRequest>();
+    EXPECT_EQ(loaded.vertexShaderPath, effect.vertexShaderPath);
+    EXPECT_EQ(loaded.fragmentShaderPath, effect.fragmentShaderPath);
+    ASSERT_EQ(loaded.uniforms.size(), effect.uniforms.size());
+    EXPECT_EQ(std::get<int>(loaded.uniforms.at("u_Mode")), 3);
+    EXPECT_FLOAT_EQ(std::get<float>(loaded.uniforms.at("u_Strength")), 0.25F);
+    EXPECT_EQ(std::get<glm::vec2>(loaded.uniforms.at("u_Offset")), glm::vec2(1.0F, 2.0F));
+    EXPECT_EQ(std::get<glm::vec3>(loaded.uniforms.at("u_Direction")), glm::vec3(3.0F, 4.0F, 5.0F));
+    EXPECT_EQ(std::get<glm::vec4>(loaded.uniforms.at("u_Tint")), glm::vec4(0.1F, 0.2F, 0.3F, 0.4F));
+
+    const glm::mat4 &loadedTransform = std::get<glm::mat4>(loaded.uniforms.at("u_Transform"));
+    for (glm::length_t column = 0; column < 4; ++column)
+    {
+        for (glm::length_t row = 0; row < 4; ++row)
+        {
+            EXPECT_FLOAT_EQ(loadedTransform[column][row], transform[column][row]);
+        }
+    }
 }
 
 TEST(GameObjectTests, RejectsUntaggedComponentMap)

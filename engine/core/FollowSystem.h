@@ -7,6 +7,5 @@
 class FollowSystem : public ISystem
 {
 public:
-    void update(entt::registry &registry) override;
-    void onDisabled(entt::registry &registry) override;
+    void update(SystemContext &context) override;
 };

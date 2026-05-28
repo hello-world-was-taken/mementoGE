@@ -12,8 +12,8 @@
 
 #include "core/EventHandler.h"
 
-#include "util/Time.h"
 #include "util/LogChannels.h"
+#include "util/Time.h"
 
 #include <algorithm>
 #include <cmath>

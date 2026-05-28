@@ -4,17 +4,14 @@
 #include "core/components/Text.h"
 
 #include "core/GlResourceManager.h"
+#include "core/Window.h"
 
 #include "renderer/SpriteRenderer.h"
 #include "renderer/util.h"
 
-#include "util/PathUtils.h"
-#include "util/LogChannels.h"
-
 #include <algorithm>
-#include <filesystem>
 #include <memory>
-#include <sawyer/Logger.h>
+#include <type_traits>
 
 static std::array<glm::vec3, 4> makeQuadFromCenter(const glm::vec3 &center, float size)
 {
@@ -25,6 +22,46 @@ static std::array<glm::vec3, 4> makeQuadFromCenter(const glm::vec3 &center, floa
         glm::vec3(center.x + h, center.y + h, center.z),
         glm::vec3(center.x - h, center.y + h, center.z),
     };
+}
+
+static void applyShaderUniforms(const std::shared_ptr<Shader> &shader, const ShaderEffectRequest &request)
+{
+    shader->use();
+    for (const auto &uniform : request.uniforms)
+    {
+        const std::string &uniformName = uniform.first;
+        const ShaderUniformValue &uniformValue = uniform.second;
+        std::visit(
+            [&](auto &&value)
+            {
+                using T = std::decay_t<decltype(value)>;
+                if constexpr (std::is_same_v<T, int>)
+                {
+                    shader->setUniform1i(uniformName, value);
+                }
+                else if constexpr (std::is_same_v<T, float>)
+                {
+                    shader->setUniform1f(uniformName, value);
+                }
+                else if constexpr (std::is_same_v<T, glm::vec2>)
+                {
+                    shader->setUniform2f(uniformName, value);
+                }
+                else if constexpr (std::is_same_v<T, glm::vec3>)
+                {
+                    shader->setUniform3f(uniformName, value);
+                }
+                else if constexpr (std::is_same_v<T, glm::vec4>)
+                {
+                    shader->setUniform4f(uniformName, value);
+                }
+                else if constexpr (std::is_same_v<T, glm::mat4>)
+                {
+                    shader->setUniform4fv(uniformName, value);
+                }
+            },
+            uniformValue);
+    }
 }
 
 SpriteRenderer::SpriteRenderer()
@@ -45,26 +82,7 @@ void SpriteRenderer::render(const CameraOld &camera, const std::vector<GameObjec
 
     m_batch->setIndexData(m_indices);
 
-    // Preserve the existing behavior where the last requested shader is used
-    // for the complete sprite pass, including passes split by texture capacity.
     m_currentShader = nullptr;
-    for (const GameObject &gameObject : gameObjects)
-    {
-        if (!gameObject.hasComponent<ShaderEffectRequest>())
-        {
-            continue;
-        }
-
-        const ShaderEffectRequest &effectRequest = gameObject.getComponent<ShaderEffectRequest>();
-        m_currentShader = GlResourceManager::instance().getShaderProgram(
-            effectRequest.vertexShaderPath, effectRequest.fragmentShaderPath);
-
-        LOG_DEBUG(LogChannel::Renderer,
-            "ShaderEffectRequest found with vertex shader '{}' and fragment shader '{}'",
-            effectRequest.vertexShaderPath,
-            effectRequest.fragmentShaderPath);
-    }
-
     m_vertices.clear();
     std::vector<std::shared_ptr<Texture>> batchTextures;
 
@@ -86,9 +104,7 @@ void SpriteRenderer::render(const CameraOld &camera, const std::vector<GameObjec
 
     auto appendQuad = [&](const Vertex *vertices, const std::shared_ptr<Texture> &texture)
     {
-        auto textureIt = texture
-            ? std::find(batchTextures.begin(), batchTextures.end(), texture)
-            : batchTextures.end();
+        auto textureIt = texture ? std::find(batchTextures.begin(), batchTextures.end(), texture) : batchTextures.end();
         const bool needsTextureSlot = texture && textureIt == batchTextures.end();
         if (m_vertices.size() / VERTEX_PER_QUAD >= BATCH_SIZE ||
             (needsTextureSlot && batchTextures.size() >= MAX_TEXTURE_SLOTS_PER_BATCH))
@@ -121,6 +137,18 @@ void SpriteRenderer::render(const CameraOld &camera, const std::vector<GameObjec
 
     for (const GameObject &gameObject : gameObjects)
     {
+        const ShaderEffectRequest *effectRequest =
+            gameObject.hasComponent<ShaderEffectRequest>() ? &gameObject.getComponent<ShaderEffectRequest>() : nullptr;
+        if (effectRequest)
+        {
+            // Custom effects are isolated in their own draw call so they cannot
+            // leak onto unrelated sprites in the shared batch.
+            flush();
+            m_currentShader = GlResourceManager::instance().getShaderProgram(
+                effectRequest->vertexShaderPath, effectRequest->fragmentShaderPath);
+            applyShaderUniforms(m_currentShader, *effectRequest);
+        }
+
         // text
         if (gameObject.hasComponent<Text>())
         {
@@ -179,6 +207,11 @@ void SpriteRenderer::render(const CameraOld &camera, const std::vector<GameObjec
             }
         }
 
+        if (effectRequest)
+        {
+            flush();
+            m_currentShader = nullptr;
+        }
     }
 
     flush();

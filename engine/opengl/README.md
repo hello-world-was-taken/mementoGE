@@ -99,7 +99,7 @@ Wraps a 2D texture. Supports two creation paths:
 | `glTexParameteri` (wrap, filter)      | `generateTexture()` — sampling config |
 | `glDeleteTextures(1, &id)`            | Destructor                            |
 
-The `texSlot` field in `Vertex` indexes into the array of texture units, allowing a single draw call to sample from multiple textures.
+The `texSlot` field in `Vertex` indexes into the texture units assigned to the current batch, allowing a single draw call to sample from multiple textures. Textures do not own permanent slots: the renderer assigns slots while building a batch and flushes the batch when all 16 slots are occupied.
 
 ### FrameBuffer / FBO (`FrameBuffer.h/.cpp`)
 

@@ -27,6 +27,7 @@ add_library(${PROJECT_NAME} STATIC
     # core
     engine/core/components/EntityInfo.cpp
     engine/core/components/EntityRef.cpp
+    engine/core/components/ImportedGroup.cpp
     engine/core/components/Transform.cpp
     engine/core/components/Sprite.cpp
     engine/core/components/RigidBody2D.cpp
@@ -34,6 +35,9 @@ add_library(${PROJECT_NAME} STATIC
     engine/core/components/EnemyState.cpp
     engine/core/components/Patrol.cpp
     engine/core/components/Sensor2D.cpp
+    engine/core/components/ShaderEffectRequest.cpp
+    engine/core/TileMap.cpp
+    engine/core/components/TileMapPlacement.cpp
     engine/core/components/RenderLayer.cpp
     engine/core/components/PostProcessSettings.cpp
     engine/core/components/Camera.cpp
@@ -82,6 +86,7 @@ add_library(${PROJECT_NAME} STATIC
 	engine/editor/panels/SystemsPanel.cpp
 	engine/editor/panels/AssetsPanel.cpp
 	engine/editor/panels/SpriteSheetEditorPanel.cpp
+	engine/editor/panels/TileMapEditorPanel.cpp
 
     # renderer
     engine/renderer/Renderer2D.cpp
@@ -152,9 +157,11 @@ if(BUILD_TESTING)
     add_executable(memento_unit_tests
         tests/unit/GameObjectTests.cpp
         tests/unit/SceneTests.cpp
+        tests/unit/SceneHistoryTests.cpp
         tests/unit/PhysicsTests.cpp
         tests/unit/FollowSystemTests.cpp
         tests/unit/AssetLoadingTests.cpp
+        tests/unit/TileMapTests.cpp
     )
 
     target_include_directories(memento_unit_tests

@@ -2,6 +2,7 @@
 
 #include "core/GLIncludes.h"
 #include "core/GlResourceManager.h"
+#include "core/Window.h"
 
 #include "opengl/Vertex.h"
 #include "opengl/VertexAttribute.h"
@@ -94,6 +95,9 @@ void RenderBatch::render(const CameraOld &camera,
     shader->use();
     shader->setUniform4fv("u_view_matrix", camera.getViewMatrix());
     shader->setUniform4fv("u_projection_matrix", camera.getProjectionMatrix());
+    // Custom effects can animate in both the editor viewport and gameplay,
+    // without depending on a scene system to feed them a clock.
+    shader->setUniform1f("u_GlobalTime", Window::getWindowTime());
     shader->setMultipleTextureUnits("textures", m_textureUnits.data(), m_textureUnits.size());
 
     for (size_t slot = 0; slot < textures.size(); ++slot)

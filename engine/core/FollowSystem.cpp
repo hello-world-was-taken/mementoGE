@@ -2,22 +2,78 @@
 
 #include "core/components/Camera.h"
 #include "core/components/EntityRef.h"
+#include "core/components/EntityInfo.h"
+#include "core/components/RenderLayer.h"
 #include "core/components/RigidBody2D.h"
 #include "core/components/Transform.h"
 #include "util/Time.h"
 
 #include <algorithm>
+#include <cmath>
 #include <glm/glm.hpp>
+#include <limits>
+#include <optional>
 
-void FollowSystem::onDisabled(entt::registry &registry)
+namespace
 {
-    auto view = registry.view<EntityRef, RigidBody2D>();
-    for (entt::entity entity : view)
-        view.get<RigidBody2D>(entity).velocity = {0.0f, 0.0f};
+struct WorldBounds
+{
+    float left;
+    float right;
+    float bottom;
+    float top;
+};
+
+std::optional<WorldBounds> getBackgroundBounds(entt::registry &registry)
+{
+    auto backgrounds = registry.view<EntityInfo, RenderLayer, Transform>();
+    WorldBounds bounds{std::numeric_limits<float>::max(),
+        std::numeric_limits<float>::lowest(),
+        std::numeric_limits<float>::max(),
+        std::numeric_limits<float>::lowest()};
+    bool foundBackground = false;
+
+    for (entt::entity entity : backgrounds)
+    {
+        const RenderLayer &renderLayer = backgrounds.get<RenderLayer>(entity);
+        if (renderLayer.layer != RenderLayerType::Background)
+        {
+            continue;
+        }
+
+        const EntityInfo &info = backgrounds.get<EntityInfo>(entity);
+        const Transform &transform = backgrounds.get<Transform>(entity);
+        const float halfWidth = static_cast<float>(info.width) * std::abs(transform.scale.x) * 0.5f;
+        const float halfHeight = static_cast<float>(info.height) * std::abs(transform.scale.y) * 0.5f;
+
+        bounds.left = std::min(bounds.left, transform.position.x - halfWidth);
+        bounds.right = std::max(bounds.right, transform.position.x + halfWidth);
+        bounds.bottom = std::min(bounds.bottom, transform.position.y - halfHeight);
+        bounds.top = std::max(bounds.top, transform.position.y + halfHeight);
+        foundBackground = true;
+    }
+
+    return foundBackground ? std::optional<WorldBounds>{bounds} : std::nullopt;
 }
 
-void FollowSystem::update(entt::registry &registry)
+void clampCameraToBounds(Transform &cameraTransform, const glm::vec2 &viewportSize, const WorldBounds &bounds)
 {
+    const float maxCameraX = bounds.right - viewportSize.x;
+    const float maxCameraY = bounds.top - viewportSize.y;
+
+    cameraTransform.position.x = maxCameraX >= bounds.left
+                                     ? std::clamp(cameraTransform.position.x, bounds.left, maxCameraX)
+                                     : (bounds.left + bounds.right - viewportSize.x) * 0.5f;
+    cameraTransform.position.y = maxCameraY >= bounds.bottom
+                                     ? std::clamp(cameraTransform.position.y, bounds.bottom, maxCameraY)
+                                     : (bounds.bottom + bounds.top - viewportSize.y) * 0.5f;
+}
+} // namespace
+
+void FollowSystem::update(SystemContext &context)
+{
+    entt::registry &registry = context.registry;
+    const std::optional<WorldBounds> backgroundBounds = getBackgroundBounds(registry);
     auto view = registry.view<EntityRef, Transform>();
 
     for (entt::entity entity : view)
@@ -66,6 +122,11 @@ void FollowSystem::update(entt::registry &registry)
             {
                 followerTransform.position.y = targetTransform.position.y - deadZoneInset.y - deadZoneSize.y;
             }
+
+            if (backgroundBounds)
+            {
+                clampCameraToBounds(followerTransform, viewportSize, *backgroundBounds);
+            }
             continue;
         }
 
@@ -86,7 +147,7 @@ void FollowSystem::update(entt::registry &registry)
             continue;
         }
 
-        const float deltaTime = Time::deltaTime();
+        const float deltaTime = context.deltaTime;
         if (deltaTime <= 0.0f)
         {
             followerRigidBody.velocity = glm::vec2(0.0f, 0.0f);

@@ -110,6 +110,11 @@ void Shader::setUniform2f(const std::string &name, const glm::vec2 value)
     glUniform2f(getUniformLocation(name), value.x, value.y);
 }
 
+void Shader::setUniform3f(const std::string &name, const glm::vec3 value)
+{
+    glUniform3f(getUniformLocation(name), value.x, value.y, value.z);
+}
+
 void Shader::setUniform4fv(const std::string &name, glm::mat4 value)
 {
     // we could have also used glm::value_ptr(value) instead of value[0][0]

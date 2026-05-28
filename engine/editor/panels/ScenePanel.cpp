@@ -1,4 +1,5 @@
 #include "core/components/Sprite.h"
+#include "core/TileMap.h"
 #include "core/components/Transform.h"
 
 #include "core/IconsFontAwesome4.h"
@@ -20,6 +21,7 @@
 #include <memory>
 #include <nlohmann/json.h>
 #include <string>
+#include <yaml-cpp/yaml.h>
 
 ScenePanel::ScenePanel(EditorContext &ctx) : EditorPanel(ctx), m_ctx{ctx}
 {
@@ -291,6 +293,18 @@ void ScenePanel::createModelFromPayload(const ImGuiPayload *payload)
     glm::vec2 worldPos = m_ctx.getWorldCoordinate(handler->getMousePos());
 
     Scene &scene = m_ctx.getActiveScene();
-    GameObject &newObj = scene.addGameObjectFromModel(modelPayload.filePath);
+    const YAML::Node asset = YAML::LoadFile(modelPayload.filePath);
+    if (TileMap::isTileMapAsset(asset))
+    {
+        TileMapImportContext context;
+        context.importTransform.position = {worldPos.x, worldPos.y, 0.0f};
+        context.sourceAsset = modelPayload.filePath;
+        context.createSceneObject =
+            [&scene](const YAML::Node &object) -> GameObject & { return scene.addGameObjectFromSerialized(object); };
+        TileMap::flattenIntoScene(asset, context);
+        return;
+    }
+
+    GameObject &newObj = scene.addGameObjectFromSerialized(asset);
     newObj.getComponent<Transform>().position = {worldPos.x, worldPos.y, 0.0f};
 }

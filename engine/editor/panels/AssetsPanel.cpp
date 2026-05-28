@@ -8,6 +8,7 @@
 #include "core/IconsFontAwesome4.h"
 #include "core/ImGuiWrapper.h"
 #include "core/SpriteSheet.h"
+#include "core/TileMap.h"
 
 #include "editor/Constants.h"
 #include "editor/DragNDropPayloads.h"
@@ -115,6 +116,7 @@ enum class YamlAssetKind
     Unknown,
     Scene,
     Model,
+    TileMap,
 };
 
 YamlAssetKind getYamlAssetKind(const fs::path &path)
@@ -142,7 +144,11 @@ YamlAssetKind getYamlAssetKind(const fs::path &path)
     try
     {
         const YAML::Node root = YAML::LoadFile(key);
-        if (root.begin() != root.end())
+        if (TileMap::isTileMapAsset(root))
+        {
+            kind = YamlAssetKind::TileMap;
+        }
+        else if (root.begin() != root.end())
         {
             const YAML::Node contents = root.begin()->second;
             if (contents["GameObjects"])
@@ -820,9 +826,10 @@ void AssetsPanel::drawContentPanel()
         else if (item.extension == ".yaml" || item.extension == ".yml")
         {
             const YamlAssetKind kind = getYamlAssetKind(currentAssetPath);
-            const char *icon = kind == YamlAssetKind::Scene ? ICON_FA_GAMEPAD
-                                                            : (kind == YamlAssetKind::Model ? ICON_FA_CUBE
-                                                                                           : getIconForItem(item));
+            const char *icon = kind == YamlAssetKind::Scene     ? ICON_FA_GAMEPAD
+                               : kind == YamlAssetKind::TileMap ? ICON_FA_MAP
+                               : kind == YamlAssetKind::Model   ? ICON_FA_CUBE
+                                                                : getIconForItem(item);
             std::string label = std::string(icon) + "  " + item.nameWithoutExtention;
 
             if (kind == YamlAssetKind::Scene)
@@ -838,7 +845,7 @@ void AssetsPanel::drawContentPanel()
                     m_ctx.markEditorWorkspaceDirty();
                 }
             }
-            else if (kind == YamlAssetKind::Model)
+            else if (kind == YamlAssetKind::Model || kind == YamlAssetKind::TileMap)
             {
                 if (ImGui::Selectable(
                         label.c_str(), selected, ImGuiSelectableFlags_None, ImVec2(assetCellWidth, 0.0f)))
@@ -847,7 +854,7 @@ void AssetsPanel::drawContentPanel()
                     m_selectedAssetPath = currentAssetPath;
                 }
 
-                // GameObject models remain draggable regardless of their containing folder.
+                // GameObject and tile-map assets remain draggable regardless of their containing folder.
                 if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
                 {
                     ModelPayload payload{};

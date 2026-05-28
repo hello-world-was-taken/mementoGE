@@ -1,11 +1,8 @@
 #include "editor/SceneHistory.h"
 
 #include "core/Scene.h"
-#include "core/SceneManager.h"
 
-#include <sstream>
 #include <string>
-#include <vector>
 #include <yaml-cpp/yaml.h>
 
 void SceneHistory::pushInitialScene(Scene &scene)
@@ -17,6 +14,7 @@ void SceneHistory::pushSnapshot(Scene &scene)
 {
     YAML::Emitter out;
     scene.serialize(out);
+    const std::string snapshot = out.c_str();
 
     // If future snapshots exist, erase them
     if (m_currentIndex + 1 < (int)m_snapshots.size())
@@ -30,7 +28,14 @@ void SceneHistory::pushSnapshot(Scene &scene)
         m_snapshots.erase(m_snapshots.begin() + m_currentIndex + 1, m_snapshots.end());
     }
 
-    m_snapshots.push_back(out.c_str());
+    // Editing helpers may submit the current state as their "before" snapshot.
+    // Do not make the user undo through identical states.
+    if (m_currentIndex >= 0 && m_snapshots[m_currentIndex] == snapshot)
+    {
+        return;
+    }
+
+    m_snapshots.push_back(snapshot);
     m_currentIndex = (int)m_snapshots.size() - 1;
 }
 
@@ -53,34 +58,34 @@ bool SceneHistory::canRedo() const
     return m_currentIndex + 1 < (int)m_snapshots.size();
 }
 
-void SceneHistory::undo(SceneManager &sceneManager)
+bool SceneHistory::undo(Scene &scene)
 {
     if (!canUndo())
     {
-        return;
+        return false;
     }
     m_currentIndex--;
 
-    applySnapshot(sceneManager);
+    applySnapshot(scene);
+    return true;
 }
 
-void SceneHistory::redo(SceneManager &sceneManager)
+bool SceneHistory::redo(Scene &scene)
 {
     if (!canRedo())
     {
-        return;
+        return false;
     }
     m_currentIndex++;
 
-    applySnapshot(sceneManager);
+    applySnapshot(scene);
+    return true;
 }
 
-void SceneHistory::applySnapshot(SceneManager &sceneManager)
+void SceneHistory::applySnapshot(Scene &scene)
 {
-    std::string activeSceneName = sceneManager.getActiveScene().getTag();
-    std::string snapshot = m_snapshots[m_currentIndex];
-    YAML::Node node = YAML::Load(snapshot);
-    sceneManager.m_scenes.insert_or_assign(activeSceneName, std::move(node));
+    YAML::Node node = YAML::Load(m_snapshots[m_currentIndex]);
+    scene = Scene{std::move(node)};
 }
 
 unsigned int SceneHistory::getStackSize()

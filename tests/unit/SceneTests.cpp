@@ -7,6 +7,8 @@
 #include "engine/core/components/Transform.h"
 
 #include <algorithm>
+#include <filesystem>
+#include <fstream>
 #include <gtest/gtest.h>
 #include <string>
 #include <yaml-cpp/yaml.h>
@@ -53,17 +55,22 @@ TEST(SceneTests, DisabledSystemDoesNotUpdateAndEnablementIsNotSerialized)
     EXPECT_EQ(CountingSystem::updateCount, 1);
 
     const auto info = scene.getSystemInfo();
-    const auto systemInfo = std::find_if(info.begin(), info.end(), [&](const Scene::SystemInfo &entry) {
-        return entry.name == systemName;
-    });
+    const auto systemInfo = std::find_if(info.begin(),
+        info.end(),
+        [&](const Scene::SystemInfo &entry)
+        {
+            return entry.name == systemName;
+        });
     ASSERT_NE(systemInfo, info.end());
     EXPECT_FALSE(systemInfo->enabled);
 
     ASSERT_TRUE(scene.setSystemEnabled(systemName, true));
     Scene clone = scene.clone("system test clone");
     const auto clonedInfo = clone.getSystemInfo();
-    const auto clonedSystemInfo =
-        std::find_if(clonedInfo.begin(), clonedInfo.end(), [&](const Scene::SystemInfo &entry) {
+    const auto clonedSystemInfo = std::find_if(clonedInfo.begin(),
+        clonedInfo.end(),
+        [&](const Scene::SystemInfo &entry)
+        {
             return entry.name == systemName;
         });
     ASSERT_NE(clonedSystemInfo, clonedInfo.end());
@@ -80,20 +87,29 @@ TEST(SceneTests, EngineSystemsUseTheGenericSystemInterface)
     scene.addSystem("PhysicsSystem");
     const auto info = scene.getSystemInfo();
 
-    const auto animation = std::find_if(info.begin(), info.end(), [](const Scene::SystemInfo &entry) {
-        return entry.name == "AnimationSystem";
-    });
-    const auto physics = std::find_if(info.begin(), info.end(), [](const Scene::SystemInfo &entry) {
-        return entry.name == "PhysicsSystem";
-    });
+    const auto animation = std::find_if(info.begin(),
+        info.end(),
+        [](const Scene::SystemInfo &entry)
+        {
+            return entry.name == "AnimationSystem";
+        });
+    const auto physics = std::find_if(info.begin(),
+        info.end(),
+        [](const Scene::SystemInfo &entry)
+        {
+            return entry.name == "PhysicsSystem";
+        });
     ASSERT_NE(animation, info.end());
     ASSERT_NE(physics, info.end());
 
     scene.setAllSystemsEnabled(false);
     const auto disabledInfo = scene.getSystemInfo();
-    EXPECT_TRUE(std::all_of(disabledInfo.begin(), disabledInfo.end(), [](const Scene::SystemInfo &entry) {
-        return !entry.enabled;
-    }));
+    EXPECT_TRUE(std::all_of(disabledInfo.begin(),
+        disabledInfo.end(),
+        [](const Scene::SystemInfo &entry)
+        {
+            return !entry.enabled;
+        }));
 }
 
 TEST(SceneTests, EnabledStateControlsEditModeExecution)

@@ -10,8 +10,10 @@
 
 #include "core/GameObject.h"
 #include "core/GlResourceManager.h"
+#include "core/Window.h"
 
 #include <algorithm>
+#include <type_traits>
 #include <vector>
 
 static std::array<glm::vec3, 4> makeQuadFromCenter(const glm::vec3 &center, float size)
@@ -23,6 +25,46 @@ static std::array<glm::vec3, 4> makeQuadFromCenter(const glm::vec3 &center, floa
         glm::vec3(center.x + h, center.y + h, center.z),
         glm::vec3(center.x - h, center.y + h, center.z),
     };
+}
+
+static void applyShaderUniforms(const std::shared_ptr<Shader> &shader, const ShaderEffectRequest &request)
+{
+    shader->use();
+    for (const auto &uniform : request.uniforms)
+    {
+        const std::string &uniformName = uniform.first;
+        const ShaderUniformValue &uniformValue = uniform.second;
+        std::visit(
+            [&](auto &&value)
+            {
+                using T = std::decay_t<decltype(value)>;
+                if constexpr (std::is_same_v<T, int>)
+                {
+                    shader->setUniform1i(uniformName, value);
+                }
+                else if constexpr (std::is_same_v<T, float>)
+                {
+                    shader->setUniform1f(uniformName, value);
+                }
+                else if constexpr (std::is_same_v<T, glm::vec2>)
+                {
+                    shader->setUniform2f(uniformName, value);
+                }
+                else if constexpr (std::is_same_v<T, glm::vec3>)
+                {
+                    shader->setUniform3f(uniformName, value);
+                }
+                else if constexpr (std::is_same_v<T, glm::vec4>)
+                {
+                    shader->setUniform4f(uniformName, value);
+                }
+                else if constexpr (std::is_same_v<T, glm::mat4>)
+                {
+                    shader->setUniform4fv(uniformName, value);
+                }
+            },
+            uniformValue);
+    }
 }
 
 Renderer2D::Renderer2D()
@@ -52,9 +94,8 @@ unsigned int Renderer2D::getColorTexture()
     return m_finalFBO.getColorTexture();
 }
 
-void Renderer2D::renderScene(const CameraOld &camera,
-    const std::vector<GameObject> &objects,
-    const std::vector<GameObject> &selectedObjects)
+void Renderer2D::renderScene(
+    const CameraOld &camera, const std::vector<GameObject> &objects, const std::vector<GameObject> &selectedObjects)
 {
     m_finalFBO.resize();
 
@@ -76,40 +117,7 @@ void Renderer2D::renderSprites(const CameraOld &camera, const std::vector<GameOb
     }
     m_batch->setIndexData(m_indices);
 
-    // Preserve the existing custom-shader behavior while deciding the shader
-    // before a texture-capacity flush can submit part of the scene.
     m_activeShader = nullptr;
-    for (const GameObject &gameObject : gameObjects)
-    {
-        if (!gameObject.hasComponent<ShaderEffectRequest>())
-        {
-            continue;
-        }
-
-        ShaderEffectRequest &effectRequest = gameObject.getComponent<ShaderEffectRequest>();
-        m_activeShader = GlResourceManager::instance().getShaderProgram(
-            effectRequest.vertexShaderPath, effectRequest.fragmentShaderPath);
-
-        m_activeShader->use();
-        for (const auto &[uniformName, uniformValue] : effectRequest.uniforms)
-        {
-            std::visit(
-                [&](auto &&value)
-                {
-                    using T = std::decay_t<decltype(value)>;
-                    if constexpr (std::is_same_v<T, int>)
-                        m_activeShader->setUniform1i(uniformName, value);
-                    else if constexpr (std::is_same_v<T, float>)
-                        m_activeShader->setUniform1f(uniformName, value);
-                    else if constexpr (std::is_same_v<T, glm::vec4>)
-                        m_activeShader->setUniform4f(uniformName, value);
-                    else if constexpr (std::is_same_v<T, glm::mat4>)
-                        m_activeShader->setUniform4fv(uniformName, value);
-                },
-                uniformValue);
-        }
-    }
-
     m_vertices.clear();
     std::vector<std::shared_ptr<Texture>> batchTextures;
 
@@ -131,9 +139,7 @@ void Renderer2D::renderSprites(const CameraOld &camera, const std::vector<GameOb
 
     auto appendQuad = [&](const Vertex *vertices, const std::shared_ptr<Texture> &texture)
     {
-        auto textureIt = texture
-            ? std::find(batchTextures.begin(), batchTextures.end(), texture)
-            : batchTextures.end();
+        auto textureIt = texture ? std::find(batchTextures.begin(), batchTextures.end(), texture) : batchTextures.end();
         const bool needsTextureSlot = texture && textureIt == batchTextures.end();
         if (m_vertices.size() / VERTEX_PER_QUAD >= BATCH_SIZE ||
             (needsTextureSlot && batchTextures.size() >= MAX_TEXTURE_SLOTS_PER_BATCH))
@@ -166,6 +172,16 @@ void Renderer2D::renderSprites(const CameraOld &camera, const std::vector<GameOb
 
     for (const GameObject &gameObject : gameObjects)
     {
+        const ShaderEffectRequest *effectRequest =
+            gameObject.hasComponent<ShaderEffectRequest>() ? &gameObject.getComponent<ShaderEffectRequest>() : nullptr;
+        if (effectRequest)
+        {
+            flush();
+            m_activeShader = GlResourceManager::instance().getShaderProgram(
+                effectRequest->vertexShaderPath, effectRequest->fragmentShaderPath);
+            applyShaderUniforms(m_activeShader, *effectRequest);
+        }
+
         // text
         if (gameObject.hasComponent<Text>())
         {
@@ -222,6 +238,12 @@ void Renderer2D::renderSprites(const CameraOld &camera, const std::vector<GameOb
                 };
                 appendQuad(vertices.data(), nullptr);
             }
+        }
+
+        if (effectRequest)
+        {
+            flush();
+            m_activeShader = nullptr;
         }
     }
 
@@ -345,9 +367,8 @@ void Renderer2D::setClearColor(glm::vec4 color)
     clearColor = color;
 }
 
-void Renderer2D::renderLayers(const CameraOld &camera,
-    const std::vector<GameObject> &objects,
-    const std::vector<GameObject> &selectedObjects)
+void Renderer2D::renderLayers(
+    const CameraOld &camera, const std::vector<GameObject> &objects, const std::vector<GameObject> &selectedObjects)
 {
     m_finalFBO.bind();
 
@@ -376,7 +397,9 @@ void Renderer2D::renderLayers(const CameraOld &camera,
         glDisable(GL_DEPTH_TEST);
 
         if (renderPhysicsOverlay)
+        {
             m_physicsRenderer.render(camera, objects);
+        }
 
         if (renderSelectionOverlay)
         {
@@ -386,7 +409,9 @@ void Renderer2D::renderLayers(const CameraOld &camera,
         }
 
         if (depthTestWasEnabled)
+        {
             glEnable(GL_DEPTH_TEST);
+        }
     }
 
     m_finalFBO.unbind();
