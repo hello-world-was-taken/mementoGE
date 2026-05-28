@@ -61,6 +61,7 @@ public:
     void setGravity(glm::vec2 gravity);
 
     std::vector<GameObject> &getGameObjects();
+    GameObject *findGameObjectByUuid(uint64_t uuid);
     GameObject *findPrimaryCamera();
 
     const std::string &getTag() const;

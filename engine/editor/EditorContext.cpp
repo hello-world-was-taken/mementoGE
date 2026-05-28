@@ -198,6 +198,44 @@ void EditorContext::endEdit()
     snapshotScene();
 }
 
+bool EditorContext::undoActiveScene()
+{
+    if (isRuntimeActive())
+    {
+        return false;
+    }
+
+    SceneHistory &history = getSelectedSceneHistory();
+    if (!history.canUndo())
+    {
+        return false;
+    }
+
+    selectedObjects.clear();
+    selectedGameObjectsDragOffset.clear();
+    editingInProgress = false;
+    return history.undo(getActiveScene());
+}
+
+bool EditorContext::redoActiveScene()
+{
+    if (isRuntimeActive())
+    {
+        return false;
+    }
+
+    SceneHistory &history = getSelectedSceneHistory();
+    if (!history.canRedo())
+    {
+        return false;
+    }
+
+    selectedObjects.clear();
+    selectedGameObjectsDragOffset.clear();
+    editingInProgress = false;
+    return history.redo(getActiveScene());
+}
+
 void EditorContext::startRuntimeScene()
 {
     if (runtimeState != RuntimeState::Stopped)
@@ -341,6 +379,10 @@ void EditorContext::loadEditorWorkspaceState()
         {
             workspaceState.showSpriteSheetEditorPanel = panels["SpriteSheetEditor"].as<bool>();
         }
+        if (panels["TileMapEditor"])
+        {
+            workspaceState.showTileMapEditorPanel = panels["TileMapEditor"].as<bool>();
+        }
         if (panels["Performance"])
         {
             workspaceState.showPerformancePanel = panels["Performance"].as<bool>();
@@ -413,6 +455,7 @@ void EditorContext::saveEditorWorkspaceState()
     out << YAML::Key << "Properties" << YAML::Value << workspaceState.showPropertiesPanel;
     out << YAML::Key << "Assets" << YAML::Value << workspaceState.showAssetsPanel;
     out << YAML::Key << "SpriteSheetEditor" << YAML::Value << workspaceState.showSpriteSheetEditorPanel;
+    out << YAML::Key << "TileMapEditor" << YAML::Value << workspaceState.showTileMapEditorPanel;
     out << YAML::Key << "Performance" << YAML::Value << workspaceState.showPerformancePanel;
     out << YAML::Key << "Systems" << YAML::Value << workspaceState.showSystemsPanel;
     out << YAML::Key << "Log" << YAML::Value << workspaceState.showLogPanel;

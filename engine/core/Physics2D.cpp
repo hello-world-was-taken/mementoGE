@@ -60,10 +60,9 @@ Physics2D &Physics2D::operator=(Physics2D &&other) noexcept
 
 void Physics2D::simulate(float timestep, entt::registry &registry, bool syncAuthoredTransforms)
 {
-    if (syncAuthoredTransforms)
-    {
-        syncBodiesFromTransforms(registry);
-    }
+    // Static and kinematic bodies may be moved by scene systems (for example,
+    // editor transforms). Dynamic bodies remain physics-owned outside edit mode.
+    syncBodiesFromTransforms(registry, syncAuthoredTransforms);
 
     syncCollisionShapes(registry);
 
@@ -87,14 +86,18 @@ void Physics2D::simulate(float timestep, entt::registry &registry, bool syncAuth
     syncTransforms(registry);
 }
 
-void Physics2D::syncBodiesFromTransforms(entt::registry &registry)
+void Physics2D::syncBodiesFromTransforms(entt::registry &registry, bool includeDynamicBodies)
 {
     constexpr float epsilon = 0.0001f;
     auto view = registry.view<RigidBody2D, Transform>();
     for (const entt::entity entity : view)
     {
         const auto &rb = view.get<RigidBody2D>(entity);
-        const auto &transform = view.get<Transform>(entity);
+        if (!includeDynamicBodies && rb.type == BodyType::Dynamic)
+        {
+            continue;
+        }
+        const Transform &transform = view.get<Transform>(entity);
         if (!b2Body_IsValid(rb.bodyId))
         {
             continue;
@@ -153,7 +156,7 @@ void Physics2D::registerRigidBody2D(GameObject &obj)
 void Physics2D::createBody(GameObject &obj)
 {
     EntityInfo &entityInfo = obj.getComponent<EntityInfo>();
-    Transform &transform = obj.getComponent<Transform>();
+    const Transform &transform = obj.getComponent<Transform>();
     RigidBody2D &rb = obj.getComponent<RigidBody2D>();
 
     b2BodyDef bodyDef = b2DefaultBodyDef();

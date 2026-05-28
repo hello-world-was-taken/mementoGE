@@ -221,6 +221,18 @@ std::vector<GameObject> &Scene::getGameObjects()
     return m_gameObjects;
 }
 
+GameObject *Scene::findGameObjectByUuid(uint64_t uuid)
+{
+    for (GameObject &gameObject : m_gameObjects)
+    {
+        if (gameObject.hasComponent<EntityInfo>() && gameObject.getComponent<EntityInfo>().uuid == uuid)
+        {
+            return &gameObject;
+        }
+    }
+    return nullptr;
+}
+
 // FIXME: should be removed once we move rendering logic
 // out from BaseGame.h to a rendering system
 GameObject *Scene::findPrimaryCamera()
@@ -268,7 +280,10 @@ void Scene::addSystemEntry(std::string name, std::unique_ptr<ISystem> system)
 {
     const auto duplicate = std::find_if(m_systems.begin(),
         m_systems.end(),
-        [&](const SystemEntry &entry) { return entry.name == name; });
+        [&](const SystemEntry &entry)
+        {
+            return entry.name == name;
+        });
     if (duplicate != m_systems.end())
     {
         return;

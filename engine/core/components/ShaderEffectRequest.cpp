@@ -1,10 +1,12 @@
 #include "core/components/ShaderEffectRequest.h"
 
+#include <yaml-cpp/yaml.h>
+
 #ifdef EDITOR_BUILD
 #include "core/ImGuiWrapper.h"
 
 #include <imgui.h>
-#include <yaml-cpp/yaml.h>
+#endif
 
 void ShaderEffectRequest::serialize(YAML::Emitter &out)
 {
@@ -32,14 +34,14 @@ void ShaderEffectRequest::deserialize(const YAML::Node &node)
     }
 }
 
+#ifdef EDITOR_BUILD
 void ShaderEffectRequest::drawInspector()
 {
     ImGuiWrapper::Collapsable("Shader Effect Request",
         [&]
         {
-            ImGui::InputText("Vertex Shader Path", &vertexShaderPath);
-            ImGui::InputText("Fragment Shader Path", &fragmentShaderPath);
+            ImGuiWrapper::InputTextSimple("Vertex Shader Path", vertexShaderPath);
+            ImGuiWrapper::InputTextSimple("Fragment Shader Path", fragmentShaderPath);
         });
 }
-
 #endif

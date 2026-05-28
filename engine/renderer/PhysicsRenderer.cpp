@@ -100,7 +100,7 @@ void PhysicsRenderer::render(const CameraOld &camera, const std::vector<GameObje
 
 void PhysicsRenderer::updateSensor2DVertices(const GameObject &gameObject, float lineThickness)
 {
-    Transform &transform = gameObject.getComponent<Transform>();
+    const Transform &transform = gameObject.getComponent<Transform>();
     const Sensor2D &sensor = gameObject.getComponent<Sensor2D>();
     const Sprite *sprite = gameObject.hasComponent<Sprite>() ? &gameObject.getComponent<Sprite>() : nullptr;
     const bool flipX = sprite && sprite->flipX;
@@ -122,7 +122,7 @@ void PhysicsRenderer::updateSensor2DVertices(const GameObject &gameObject, float
 
 void PhysicsRenderer::updateBoxCollider2DVertices(const GameObject &gameObject, float lineThickness)
 {
-    Transform &transform = gameObject.getComponent<Transform>();
+    const Transform &transform = gameObject.getComponent<Transform>();
     const BoxCollider2D &collider = gameObject.getComponent<BoxCollider2D>();
     const Sprite *sprite = gameObject.hasComponent<Sprite>() ? &gameObject.getComponent<Sprite>() : nullptr;
     const bool flipX = sprite && sprite->flipX != collider.referenceFlipX;

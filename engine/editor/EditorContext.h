@@ -30,6 +30,7 @@ struct EditorWorkspaceState
     bool showPropertiesPanel = true;
     bool showAssetsPanel = true;
     bool showSpriteSheetEditorPanel = true;
+    bool showTileMapEditorPanel = true;
     bool showPerformancePanel = true;
     bool showSystemsPanel = true;
     bool showLogPanel = true;
@@ -131,6 +132,8 @@ struct EditorContext
     void snapshotScene();
     void startEdit();
     void endEdit();
+    bool undoActiveScene();
+    bool redoActiveScene();
 
     // TODO: move this to editor layer. EditorContext should be
     // just state as much as possible

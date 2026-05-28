@@ -1,7 +1,6 @@
 #pragma once
 
 #include "renderer/Constants.h"
-
 #include <vector>
 
 /**

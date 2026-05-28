@@ -12,9 +12,11 @@
 #include "util/LogChannels.h"
 
 #include <entt/entt.hpp>
+#include <functional>
 #include <glm/glm.hpp>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <sawyer/Logger.h>
 #include <string>
 #include <type_traits>

@@ -121,6 +121,7 @@ void EditorLayer::drawEditorUI()
     m_logPanel.draw();
     m_systemsPanel.draw();
     m_spriteSheetEditorPanel.draw();
+    m_tileMapEditorPanel.draw();
 
     renderPerformancePanel();
     renderEditorProperties();
@@ -155,6 +156,7 @@ void EditorLayer::renderMainMenuBar()
         workspaceChanged |= ImGui::MenuItem("Assets", nullptr, &m_ctx.workspaceState.showAssetsPanel);
         workspaceChanged |=
             ImGui::MenuItem("Sprite Sheet Editor", nullptr, &m_ctx.workspaceState.showSpriteSheetEditorPanel);
+        workspaceChanged |= ImGui::MenuItem("Tile Map Editor", nullptr, &m_ctx.workspaceState.showTileMapEditorPanel);
         workspaceChanged |= ImGui::MenuItem("Performance", nullptr, &m_ctx.workspaceState.showPerformancePanel);
         workspaceChanged |= ImGui::MenuItem("Systems", nullptr, &m_ctx.workspaceState.showSystemsPanel);
         workspaceChanged |= ImGui::MenuItem("Log", nullptr, &m_ctx.workspaceState.showLogPanel);
@@ -174,6 +176,20 @@ void EditorLayer::renderMainMenuBar()
             workspaceChanged = true;
         }
 
+        ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("Edit"))
+    {
+        SceneHistory &history = m_ctx.getSelectedSceneHistory();
+        if (ImGui::MenuItem("Undo", "Cmd/Ctrl+Z", false, history.canUndo()))
+        {
+            m_ctx.undoActiveScene();
+        }
+        if (ImGui::MenuItem("Redo", "Cmd/Ctrl+Shift+Z", false, history.canRedo()))
+        {
+            m_ctx.redoActiveScene();
+        }
         ImGui::EndMenu();
     }
 
@@ -464,24 +480,23 @@ void EditorLayer::handleEditorShortcuts()
         LOG_DEBUG(LogChannel::Editor, "Event '{}': cmd={}", e.name, e.cmd);
         if (e.type == EventType::Key || e.type == EventType::KeyRepeat)
         {
+            const bool primaryModifier = e.cmd || e.ctrl;
+
             // Undo
-            if (e.keyType == KeyType::Z && e.cmd == true)
+            if (e.keyType == KeyType::Z && primaryModifier && !e.shift)
             {
-                m_ctx.selectedGameObjectsDragOffset.clear();
-                m_ctx.selectedObjects.clear();
-                // m_ctx.getSelectedSceneHistory().undo(m_ctx.sceneManager);
+                m_ctx.undoActiveScene();
             }
 
-            // Redo
-            else if (e.keyType == KeyType::Y && e.cmd == true)
+            // Redo (Cmd/Ctrl+Shift+Z on macOS and most editors, Ctrl+Y on Windows)
+            else if ((e.keyType == KeyType::Z && primaryModifier && e.shift) ||
+                     (e.keyType == KeyType::Y && primaryModifier))
             {
-                m_ctx.selectedGameObjectsDragOffset.clear();
-                m_ctx.selectedObjects.clear();
-                // m_ctx.getSelectedSceneHistory().redo(m_ctx.sceneManager);
+                m_ctx.redoActiveScene();
             }
 
             // Save
-            else if (e.keyType == KeyType::S && e.cmd == true && (e.cmd || e.cmd))
+            else if (e.keyType == KeyType::S && primaryModifier)
             {
                 m_ctx.serializaActiveScene();                // write to disk
                 m_ctx.getSelectedSceneHistory().markSaved(); // clear the "*" dirty flag
@@ -489,13 +504,13 @@ void EditorLayer::handleEditorShortcuts()
             }
 
             // Copy selected game objects (Cmd + C)
-            else if (e.type == EventType::Key && e.keyType == KeyType::C && e.cmd == true)
+            else if (e.type == EventType::Key && e.keyType == KeyType::C && primaryModifier)
             {
                 m_ctx.copySelectedObjectsToClipboard();
             }
 
             // Paste copied game objects (Cmd + V)
-            else if (e.type == EventType::Key && e.keyType == KeyType::V && e.cmd == true)
+            else if (e.type == EventType::Key && e.keyType == KeyType::V && primaryModifier)
             {
                 m_ctx.performSceneEdit(
                     [&]

@@ -4,6 +4,7 @@
 #include "core/components/EnemyState.h"
 #include "core/components/EntityInfo.h"
 #include "core/components/EntityRef.h"
+#include "core/components/ImportedGroup.h"
 #include "core/components/ParticleEmitter.h"
 #include "core/components/Patrol.h"
 #include "core/components/PostProcessSettings.h"
@@ -151,6 +152,7 @@ void PropertiesPanel::renderPropertiesPanel()
     drawComponentInspector<AudioSource>(go);
     drawComponentInspector<Camera>(go);
     drawComponentInspector<EntityRef>(go);
+    drawComponentInspector<ImportedGroup>(go);
 
     // Let game code draw inspectors for its own components via the
     // global component registry.

@@ -71,5 +71,7 @@ public:
     const std::vector<Entry> &getEntries() const;
 
 private:
+    ComponentRegistry() = default;
+
     std::vector<Entry> m_entries;
 };

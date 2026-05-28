@@ -3,6 +3,7 @@
 #include "editor/EditorContext.h"
 #include "editor/EditorPanel.h"
 
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -15,15 +16,18 @@ public:
     void draw() override;
 
 private:
-    bool buildAssetsDockspace();
-
-    void drawFoldersPanel();
     void drawContentPanel();
     void drawSpritePanel();
     void drawAnimationPanel();
     void drawBoundTextures();
+    void requestAssetDeletion(const std::filesystem::path &assetPath);
+    void drawDeleteAssetPopup();
+    bool deletePendingAsset();
 
 private:
-    bool m_rebuildDock = true; // rebuild dock on on first render
     EditorContext &m_ctx;
+    std::filesystem::path m_selectedAssetPath;
+    std::filesystem::path m_pendingDeletionPath;
+    bool m_openDeleteAssetPopup = false;
+    std::string m_deleteAssetError;
 };

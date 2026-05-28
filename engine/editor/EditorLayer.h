@@ -12,6 +12,7 @@
 #include "editor/panels/ScenePanel.h"
 #include "editor/panels/SpriteSheetEditorPanel.h"
 #include "editor/panels/SystemsPanel.h"
+#include "editor/panels/TileMapEditorPanel.h"
 
 #include "renderer/GridRenderer.h"
 #include "renderer/PhysicsRenderer.h"
@@ -61,6 +62,7 @@ private:
     LogPanel m_logPanel{m_ctx};
     SystemsPanel m_systemsPanel{m_ctx};
     SpriteSheetEditorPanel m_spriteSheetEditorPanel{m_ctx};
+    TileMapEditorPanel m_tileMapEditorPanel{m_ctx};
 
     GridRenderer m_gridRenderer;
     CameraOld m_playCamera;

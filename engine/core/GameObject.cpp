@@ -4,15 +4,18 @@
 #include "core/components/EnemyState.h"
 #include "core/components/EntityInfo.h"
 #include "core/components/EntityRef.h"
+#include "core/components/ImportedGroup.h"
 #include "core/components/ParticleEmitter.h"
 #include "core/components/Patrol.h"
 #include "core/components/PostProcessSettings.h"
 #include "core/components/RenderLayer.h"
 #include "core/components/RigidBody2D.h"
 #include "core/components/Sensor2D.h"
+#include "core/components/ShaderEffectRequest.h"
 #include "core/components/Sprite.h"
 #include "core/components/Text.h"
 #include "core/components/TextAnchor.h"
+#include "core/components/TileMapPlacement.h"
 #include "core/components/Transform.h"
 
 #include "core/ComponentRegistry.h"
@@ -21,6 +24,7 @@
 
 #include "core/Physics2D.h"
 
+#include <cmath>
 #include <string>
 #include <yaml-cpp/yaml.h>
 
@@ -72,6 +76,16 @@ GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGam
     deserializeComponent<Camera>(components, "Camera");
     deserializeComponent<PostProcessSettings>(components, "PostProcessSettings");
     deserializeComponent<EntityRef>(components, "EntityRef");
+    deserializeComponent<ImportedGroup>(components, "ImportedGroup");
+    deserializeComponent<ShaderEffectRequest>(components, "ShaderEffectRequest");
+    if (components["TileMapPlacement"])
+    {
+        deserializeComponent<TileMapPlacement>(components, "TileMapPlacement");
+    }
+    else
+    {
+        deserializeComponent<TileMapPlacement>(components, "TileMapChild");
+    }
 
     // Let game code plug in additional component deserialization.
     const auto &extraEntries = ComponentRegistry::instance().getEntries();
@@ -104,8 +118,7 @@ std::array<glm::vec3, 4> GameObject::getQuad() const
 // we want to draw the batch in a single draw call?
 std::array<glm::vec3, 4> GameObject::getWorldCoordinateQuad() const
 {
-    Transform transform = getComponent<Transform>();
-    glm::mat4x4 modelMatrix = transform.getModelMatrix();
+    const glm::mat4x4 modelMatrix = getComponent<Transform>().getModelMatrix();
 
     std::array<glm::vec3, 4> quad = getQuad();
     std::array<glm::vec3, 4> transformedQuad = quad;
@@ -158,6 +171,9 @@ bool GameObject::serialize(YAML::Emitter &out)
     serializeComponent<Camera>(out);
     serializeComponent<PostProcessSettings>(out);
     serializeComponent<EntityRef>(out);
+    serializeComponent<ImportedGroup>(out);
+    serializeComponent<ShaderEffectRequest>(out);
+    serializeComponent<TileMapPlacement>(out);
 
     // Let game code plug in additional component serialization.
     const auto &extraEntries = ComponentRegistry::instance().getEntries();

@@ -107,7 +107,6 @@ void SceneHierarchyPanel::drawGameObjectNode(GameObject &go)
         drawComponentRemoveRow<Text>(go, "Text");
         drawComponentRemoveRow<ParticleEmitter>(go, "Particle Emitter");
         drawComponentRemoveRow<EntityRef>(go, "Entity Ref");
-
         // Let game code provide remove-rows for its own components via
         // the global component registry.
         const auto &extraEntries = ComponentRegistry::instance().getEntries();

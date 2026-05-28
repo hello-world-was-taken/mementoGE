@@ -9,7 +9,7 @@
 #include <yaml-cpp/yaml.h>
 #endif
 
-glm::mat4x4 Transform::getModelMatrix()
+glm::mat4x4 Transform::getModelMatrix() const
 {
     glm::mat4x4 modelMatrix = glm::mat4(1.0f);
     modelMatrix = glm::translate(modelMatrix, position);

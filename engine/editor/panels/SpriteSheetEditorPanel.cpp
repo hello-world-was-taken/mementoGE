@@ -65,7 +65,7 @@ void SpriteSheetEditorPanel::loadSelectedTexture()
     m_textureLoaded = true;
 
     auto texturePath = getGameAssetPath("texture") / m_textureNames[m_selectedTexture];
-    m_texture = GlResourceManager::instance().getTexture(texturePath.string(), false);
+    m_texture = GlResourceManager::instance().getTexture(texturePath.string());
 }
 
 void SpriteSheetEditorPanel::generateBoundingBoxes()
