@@ -45,7 +45,7 @@ TEST(PhysicsTests, RemoveRigidbodyClearsSensorOverlaps)
     GameObject bodyObj(registry);
     bodyObj.addComponent<RigidBody2D>();
     // register the body with the physics world
-    physics.registerRigidBody2D(bodyObj);
+    physics.registerEntity(registry, bodyObj.getEntityId());
 
     auto bodyEntity = bodyObj.getEntityId();
     auto &rb = bodyObj.getComponent<RigidBody2D>();
@@ -82,7 +82,7 @@ TEST(PhysicsTests, DestroyingEntityCleansUpRigidBody)
 
     GameObject go(registry);
     go.addComponent<RigidBody2D>();
-    physics.registerRigidBody2D(go);
+    physics.registerEntity(registry, go.getEntityId());
 
     b2BodyId bodyId = go.getComponent<RigidBody2D>().bodyId;
     ASSERT_TRUE(b2Body_IsValid(bodyId));
@@ -92,13 +92,28 @@ TEST(PhysicsTests, DestroyingEntityCleansUpRigidBody)
     EXPECT_FALSE(b2Body_IsValid(bodyId));
 }
 
+TEST(PhysicsTests, RebuildInitializesPhysicsComponentsFromRegistry)
+{
+    entt::registry registry;
+    Physics2D physics({0.0f, 0.0f});
+
+    GameObject go(registry);
+    go.addComponent<BoxCollider2D>();
+
+    physics.rebuild(registry);
+
+    ASSERT_TRUE(go.hasComponent<RigidBody2D>());
+    EXPECT_TRUE(b2Body_IsValid(go.getComponent<RigidBody2D>().bodyId));
+    EXPECT_TRUE(b2Shape_IsValid(go.getComponent<BoxCollider2D>().shapes.front().shapeId));
+}
+
 TEST(PhysicsTests, RegistersMultipleOffsetColliderShapes)
 {
     entt::registry registry;
     Physics2D physics({0.0f, 0.0f});
     GameObject go(registry);
     go.addComponent<RigidBody2D>();
-    physics.registerRigidBody2D(go);
+    physics.registerEntity(registry, go.getEntityId());
 
     go.addComponent<BoxCollider2D>();
     auto &collider = go.getComponent<BoxCollider2D>();
@@ -107,7 +122,7 @@ TEST(PhysicsTests, RegistersMultipleOffsetColliderShapes)
         BoxColliderShape2D{"head", {10.0f, 4.0f}, {-3.0f, 5.0f}, 90.0f},
     };
 
-    physics.registerBoxCollider2D(go);
+    physics.registerEntity(registry, go.getEntityId());
 
     ASSERT_EQ(collider.shapes.size(), 2u);
     for (const auto &shape : collider.shapes)
@@ -147,7 +162,7 @@ TEST(PhysicsTests, SecondaryColliderShapeParticipatesInSensorOverlaps)
     auto &targetBody = target.getComponent<RigidBody2D>();
     targetBody.type = BodyType::Dynamic;
     targetBody.velocity = {0.0f, 0.0f};
-    physics.registerRigidBody2D(target);
+    physics.registerEntity(registry, target.getEntityId());
 
     target.addComponent<BoxCollider2D>();
     auto &collider = target.getComponent<BoxCollider2D>();
@@ -155,11 +170,11 @@ TEST(PhysicsTests, SecondaryColliderShapeParticipatesInSensorOverlaps)
         BoxColliderShape2D{"primary", {2.0f, 2.0f}, {-10.0f, 0.0f}},
         BoxColliderShape2D{"secondary", {2.0f, 2.0f}, {10.0f, 0.0f}},
     };
-    physics.registerBoxCollider2D(target);
+    physics.registerEntity(registry, target.getEntityId());
 
     GameObject detector(registry);
     detector.addComponent<RigidBody2D>();
-    physics.registerRigidBody2D(detector);
+    physics.registerEntity(registry, detector.getEntityId());
     detector.addComponent<Sensor2D>();
     auto &sensor = detector.getComponent<Sensor2D>();
     auto &sensorShape = sensor.shapes.front();
@@ -167,7 +182,7 @@ TEST(PhysicsTests, SecondaryColliderShapeParticipatesInSensorOverlaps)
     sensorShape.size = {2.0f, 2.0f};
     sensorShape.offset = {10.0f, 0.0f};
     sensor.resetAnimationState();
-    physics.registerSensor2D(detector);
+    physics.registerEntity(registry, detector.getEntityId());
 
     physics.simulate(1.0f / 60.0f, registry);
 
@@ -183,20 +198,20 @@ TEST(PhysicsTests, SpriteFlipsMirrorColliderAndSensorShapes)
     go.addComponent<Sprite>();
     auto &sprite = go.getComponent<Sprite>();
     go.addComponent<RigidBody2D>();
-    physics.registerRigidBody2D(go);
+    physics.registerEntity(registry, go.getEntityId());
 
     go.addComponent<BoxCollider2D>();
     auto &colliderShape = go.getComponent<BoxCollider2D>().shapes.front();
     colliderShape.size = {10.0f, 4.0f};
     colliderShape.offset = {3.0f, 2.0f};
     colliderShape.rotation = 30.0f;
-    physics.registerBoxCollider2D(go);
+    physics.registerEntity(registry, go.getEntityId());
 
     go.addComponent<Sensor2D>();
     auto &sensorShape = go.getComponent<Sensor2D>().shapes.front();
     sensorShape.size = {6.0f, 2.0f};
     sensorShape.offset = {8.0f, 1.0f};
-    physics.registerSensor2D(go);
+    physics.registerEntity(registry, go.getEntityId());
 
     sprite.flipX = true;
     physics.simulate(1.0f / 60.0f, registry);
@@ -222,7 +237,7 @@ TEST(PhysicsTests, ColliderUsesInitialSpriteFlipAsItsReferenceOrientation)
     auto &sprite = go.getComponent<Sprite>();
     sprite.flipX = true;
     go.addComponent<RigidBody2D>();
-    physics.registerRigidBody2D(go);
+    physics.registerEntity(registry, go.getEntityId());
 
     go.addComponent<BoxCollider2D>();
     auto &collider = go.getComponent<BoxCollider2D>();
@@ -230,7 +245,7 @@ TEST(PhysicsTests, ColliderUsesInitialSpriteFlipAsItsReferenceOrientation)
     shape.size = {10.0f, 4.0f};
     shape.offset = {3.0f, 2.0f};
     shape.rotation = 30.0f;
-    physics.registerBoxCollider2D(go);
+    physics.registerEntity(registry, go.getEntityId());
 
     EXPECT_TRUE(collider.hasFlipReference);
     EXPECT_TRUE(collider.referenceFlipX);
@@ -253,7 +268,7 @@ TEST(PhysicsTests, SynchronizesBodyRotationWithTransform)
     go.addComponent<RigidBody2D>();
     auto &body = go.getComponent<RigidBody2D>();
     body.type = BodyType::Dynamic;
-    physics.registerRigidBody2D(go);
+    physics.registerEntity(registry, go.getEntityId());
 
     EXPECT_NEAR(glm::degrees(b2Rot_GetAngle(b2Body_GetRotation(body.bodyId))), 25.0f, 0.1f);
 
@@ -270,7 +285,7 @@ TEST(PhysicsTests, EditModeSynchronizesAuthoredTransformToPhysicsBody)
     GameObject go(registry);
     auto &transform = go.getComponent<Transform>();
     go.addComponent<RigidBody2D>();
-    physics.registerRigidBody2D(go);
+    physics.registerEntity(registry, go.getEntityId());
 
     transform.position = {42.0f, -17.0f, transform.position.z};
     transform.rotation.z = 35.0f;
@@ -333,13 +348,13 @@ TEST(PhysicsTests, AnimatedColliderShapeCanBeDisabledAndReenabled)
     Physics2D physics({0.0f, 0.0f});
     GameObject go(registry);
     go.addComponent<RigidBody2D>();
-    physics.registerRigidBody2D(go);
+    physics.registerEntity(registry, go.getEntityId());
 
     go.addComponent<BoxCollider2D>();
     auto &shape = go.getComponent<BoxCollider2D>().shapes.front();
     shape.name = "handle";
     shape.size = {10.0f, 2.0f};
-    physics.registerBoxCollider2D(go);
+    physics.registerEntity(registry, go.getEntityId());
     ASSERT_TRUE(b2Shape_IsValid(shape.shapeId));
 
     shape.animatedActive = false;

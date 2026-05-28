@@ -179,7 +179,7 @@ entirely.
 - [ ] Custom shader and material editing support
 - [x] Physics integration (Box2D)
 - [x] Audio system (OpenAL)
-- [x] Hot-reload shaders and assets during runtime
+- [ ] Hot-reload shaders and assets during runtime
 - [x] Cross-platform support (Window/MacOS)
 - [x] Sprite based animation
 - [x] Proper logging system

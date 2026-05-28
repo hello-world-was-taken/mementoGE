@@ -1,5 +1,4 @@
 #include "engine/core/TileMap.h"
-#include "engine/core/Physics2D.h"
 #include "engine/core/components/EntityInfo.h"
 #include "engine/core/components/ImportedGroup.h"
 #include "engine/core/components/TileMapPlacement.h"
@@ -46,7 +45,6 @@ TEST(TileMapTests, LoadsStandaloneAssetDocument)
 TEST(TileMapTests, FlattensObjectsThroughSceneFactory)
 {
     entt::registry registry;
-    Physics2D physics{{0.0f, 0.0f}};
     std::vector<GameObject> sceneObjects;
     TileMapImportContext context;
     context.importTransform.position = {100.0f, 50.0f, 0.0f};
@@ -54,7 +52,7 @@ TEST(TileMapTests, FlattensObjectsThroughSceneFactory)
     context.createSceneObject =
         [&](const YAML::Node &node) -> GameObject &
         {
-            sceneObjects.emplace_back(registry, node, physics);
+            sceneObjects.emplace_back(registry, node);
             return sceneObjects.back();
         };
 

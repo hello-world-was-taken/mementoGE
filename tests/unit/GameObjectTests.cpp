@@ -1,5 +1,4 @@
 #include "engine/core/GameObject.h"
-#include "engine/core/Physics2D.h"
 #include "engine/core/components/EntityInfo.h"
 #include "engine/core/components/ImportedGroup.h"
 #include "engine/core/components/RenderLayer.h"
@@ -78,8 +77,7 @@ hero:
 )";
 
     entt::registry registry;
-    Physics2D physics{{0.0f, 0.0f}};
-    GameObject gameObject{registry, YAML::Load(yaml), physics};
+    GameObject gameObject{registry, YAML::Load(yaml)};
 
     const auto &info = gameObject.getComponent<EntityInfo>();
     EXPECT_EQ(info.uuid, 42);
@@ -114,8 +112,7 @@ tree:
     Row: 4
 )");
     entt::registry registry;
-    Physics2D physics{{0.0f, 0.0f}};
-    GameObject gameObject{registry, legacy, physics};
+    GameObject gameObject{registry, legacy};
 
     ASSERT_TRUE(gameObject.hasComponent<TileMapPlacement>());
     const TileMapPlacement &placement = gameObject.getComponent<TileMapPlacement>();
@@ -145,8 +142,7 @@ TEST(GameObjectTests, RoundTripsThroughTaggedYaml)
     ASSERT_TRUE(out.good()) << "YAML emitter failed: " << out.GetLastError();
 
     entt::registry secondRegistry;
-    Physics2D physics{{0.0f, 0.0f}};
-    GameObject copy{secondRegistry, YAML::Load(out.c_str()), physics};
+    GameObject copy{secondRegistry, YAML::Load(out.c_str())};
 
     EXPECT_EQ(copy.getComponent<EntityInfo>().tag, "crate");
     EXPECT_EQ(copy.getComponent<EntityInfo>().width, 16);
@@ -171,8 +167,7 @@ TEST(GameObjectTests, RoundTripsImportedGroupMetadata)
     ASSERT_TRUE(out.good()) << "YAML emitter failed: " << out.GetLastError();
 
     entt::registry secondRegistry;
-    Physics2D physics{{0.0f, 0.0f}};
-    GameObject copy{secondRegistry, YAML::Load(out.c_str()), physics};
+    GameObject copy{secondRegistry, YAML::Load(out.c_str())};
 
     ASSERT_TRUE(copy.hasComponent<ImportedGroup>());
     EXPECT_EQ(copy.getComponent<ImportedGroup>().groupId, 9876);
@@ -210,8 +205,7 @@ TEST(GameObjectTests, RoundTripsShaderEffectUniforms)
         "vec4");
 
     entt::registry secondRegistry;
-    Physics2D physics{{0.0F, 0.0F}};
-    GameObject copy{secondRegistry, serialized, physics};
+    GameObject copy{secondRegistry, serialized};
 
     ASSERT_TRUE(copy.hasComponent<ShaderEffectRequest>());
     const ShaderEffectRequest &loaded = copy.getComponent<ShaderEffectRequest>();
@@ -248,8 +242,7 @@ Transform:
 )";
 
     entt::registry registry;
-    Physics2D physics{{0.0f, 0.0f}};
     const YAML::Node node = YAML::Load(yaml);
 
-    EXPECT_THROW(GameObject(registry, node, physics), std::runtime_error);
+    EXPECT_THROW(GameObject(registry, node), std::runtime_error);
 }

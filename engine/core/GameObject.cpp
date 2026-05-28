@@ -22,8 +22,6 @@
 #include "core/GameObject.h"
 #include "core/components/Animator.h"
 
-#include "core/Physics2D.h"
-
 #include <cmath>
 #include <string>
 #include <yaml-cpp/yaml.h>
@@ -36,8 +34,7 @@ GameObject::GameObject(entt::registry &registry) : m_registry{&registry}
     addComponent<RenderLayer>();
 }
 
-GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGameObject, Physics2D &physics)
-    : m_registry{&registry}
+GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGameObject) : m_registry{&registry}
 {
     if (!serializedGameObject || !serializedGameObject.IsMap() || serializedGameObject.size() != 1)
     {
@@ -63,9 +60,9 @@ GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGam
     deserializeComponent<Transform>(components, "Transform");
     deserializeComponent<RenderLayer>(components, "RenderLayer");
     deserializeComponent<Sprite>(components, "Sprite");
-    deserializeComponent<RigidBody2D>(components, "RigidBody2D", physics);
-    deserializeComponent<BoxCollider2D>(components, "BoxCollider2D", physics);
-    deserializeComponent<Sensor2D>(components, "Sensor2D", physics);
+    deserializeComponent<RigidBody2D>(components, "RigidBody2D");
+    deserializeComponent<BoxCollider2D>(components, "BoxCollider2D");
+    deserializeComponent<Sensor2D>(components, "Sensor2D");
     deserializeComponent<Animator>(components, "Animator");
     deserializeComponent<AudioSource>(components, "AudioSource");
     deserializeComponent<EnemyState>(components, "EnemyState");

@@ -1,15 +1,9 @@
 #pragma once
 
-#include "core/Camera.h"
-#include "core/components/BoxCollider2D.h"
-#include "core/components/RigidBody2D.h"
-
 #include <box2d/box2d.h>
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <memory>
-
-class GameObject;
 
 class Physics2D
 {
@@ -26,9 +20,11 @@ public:
 
     void simulate(float timestep, entt::registry &registry, bool syncAuthoredTransforms = false);
 
-    void registerRigidBody2D(GameObject &obj);
-    void registerBoxCollider2D(GameObject &obj);
-    void registerSensor2D(GameObject &obj);
+    // Recreate physics resources for every physics entity in a fully loaded registry.
+    void rebuild(entt::registry &registry);
+
+    // Initialize physics resources for one entity added or changed at runtime.
+    void registerEntity(entt::registry &registry, entt::entity entity);
 
     // Remove the physics body (and associated sensor contacts) for an entity.
     // The caller must pass the registry that owns the entity.
@@ -42,7 +38,9 @@ private:
     void refreshSensorOverlaps(entt::registry &registry);
     void syncTransforms(entt::registry &registry);
 
-    void createBody(GameObject &obj);
+    void createBody(entt::registry &registry, entt::entity entity);
+    void createBoxCollider(entt::registry &registry, entt::entity entity);
+    void createSensor(entt::registry &registry, entt::entity entity);
 
 private:
     b2WorldId m_worldId;

@@ -1,22 +1,15 @@
 #pragma once
 
-#include "core/components/BoxCollider2D.h"
 #include "core/components/EnemyState.h"
 #include "core/components/EntityInfo.h"
-#include "core/components/RigidBody2D.h"
-#include "core/components/Sensor2D.h"
 #include "core/components/Transform.h"
-
-#include "core/Physics2D.h"
 
 #include "util/LogChannels.h"
 
 #include <entt/entt.hpp>
-#include <functional>
 #include <glm/glm.hpp>
 #include <iostream>
 #include <memory>
-#include <optional>
 #include <sawyer/Logger.h>
 #include <string>
 #include <type_traits>
@@ -42,7 +35,7 @@ class GameObject
 {
 public:
     GameObject(entt::registry &registry);
-    GameObject(entt::registry &registry, const YAML::Node &serializedGameObject, Physics2D &physics);
+    GameObject(entt::registry &registry, const YAML::Node &serializedGameObject);
     ~GameObject() = default;
 
     template <typename Component, typename... Args> void addComponent(Args &&...args);
@@ -51,9 +44,7 @@ public:
     template <typename Component> void removeComponent();
     template <typename Component> void serializeComponent(YAML::Emitter &out);
     template <typename Component>
-    void deserializeComponent(const YAML::Node &serializedGameObject,
-        const std::string &componentName,
-        std::optional<std::reference_wrapper<Physics2D>> physics = std::nullopt);
+    void deserializeComponent(const YAML::Node &serializedGameObject, const std::string &componentName);
 
     std::array<glm::vec3, 4> getQuad() const;
     std::array<glm::vec3, 4> getWorldCoordinateQuad() const;
@@ -146,8 +137,7 @@ template <typename Component> void GameObject::serializeComponent(YAML::Emitter 
 
 template <typename Component>
 void GameObject::deserializeComponent(const YAML::Node &serializedGameObject,
-    const std::string &componentName,
-    std::optional<std::reference_wrapper<Physics2D>> physics)
+    const std::string &componentName)
 {
     if (serializedGameObject[componentName])
     {
@@ -157,28 +147,7 @@ void GameObject::deserializeComponent(const YAML::Node &serializedGameObject,
         }
         getComponent<Component>().deserialize(serializedGameObject);
 
-        if constexpr (std::is_same_v<Component, RigidBody2D>)
-        {
-            if (physics)
-            {
-                physics->get().registerRigidBody2D(*this);
-            }
-        }
-        else if constexpr (std::is_same_v<Component, BoxCollider2D>)
-        {
-            if (physics)
-            {
-                physics->get().registerBoxCollider2D(*this);
-            }
-        }
-        else if constexpr (std::is_same_v<Component, Sensor2D>)
-        {
-            if (physics)
-            {
-                physics->get().registerSensor2D(*this);
-            }
-        }
-        else if constexpr (std::is_same_v<Component, EnemyState>)
+        if constexpr (std::is_same_v<Component, EnemyState>)
         {
             getComponent<EnemyState>().startPosition = glm::vec3{getComponent<Transform>().position};
         }

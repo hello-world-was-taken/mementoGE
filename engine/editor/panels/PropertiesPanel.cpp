@@ -1,4 +1,5 @@
 #include "core/components/AudioSource.h"
+#include "core/components/BoxCollider2D.h"
 #include "core/components/Camera.h"
 #include "core/components/CircleCollider2D.h"
 #include "core/components/EnemyState.h"
@@ -9,6 +10,7 @@
 #include "core/components/Patrol.h"
 #include "core/components/PostProcessSettings.h"
 #include "core/components/RenderLayer.h"
+#include "core/components/RigidBody2D.h"
 #include "core/components/Sensor2D.h"
 #include "core/components/Sprite.h"
 #include "core/components/Text.h"
@@ -194,7 +196,7 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                 [&]
                 {
                     go.addComponent<RigidBody2D>();
-                    m_ctx.getActiveScene().getPhysics2d().registerRigidBody2D(go);
+                    m_ctx.getActiveScene().getPhysics2d().registerEntity(go.getRegistry(), go.getEntityId());
                 });
         }
 
@@ -207,7 +209,7 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                     go.addComponent<BoxCollider2D>();
                     auto &collider = go.getComponent<BoxCollider2D>();
                     collider.shapes.front().size = {entityInfo.width * 0.75f, entityInfo.height * 0.85f};
-                    m_ctx.getActiveScene().getPhysics2d().registerBoxCollider2D(go);
+                    m_ctx.getActiveScene().getPhysics2d().registerEntity(go.getRegistry(), go.getEntityId());
                 });
         }
 
@@ -217,7 +219,7 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                 [&]
                 {
                     go.addComponent<CircleCollider2D>();
-                    m_ctx.getActiveScene().getPhysics2d().registerRigidBody2D(go);
+                    m_ctx.getActiveScene().getPhysics2d().registerEntity(go.getRegistry(), go.getEntityId());
                 });
         }
 
@@ -227,7 +229,7 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                 [&]
                 {
                     go.addComponent<Sensor2D>();
-                    m_ctx.getActiveScene().getPhysics2d().registerSensor2D(go);
+                    m_ctx.getActiveScene().getPhysics2d().registerEntity(go.getRegistry(), go.getEntityId());
                 });
         }
 

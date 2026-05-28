@@ -1,4 +1,5 @@
 #include "core/components/BoxCollider2D.h"
+#include "core/components/CircleCollider2D.h"
 #include "core/components/EntityInfo.h"
 #include "core/components/RigidBody2D.h"
 #include "core/components/Sensor2D.h"
@@ -7,8 +8,6 @@
 
 #include "core/Physics2D.h"
 #include "physics/CollisionShapeTransform.h"
-
-#include "core/Scene.h"
 
 #include "util/LogChannels.h"
 #include "util/Time.h"
@@ -148,16 +147,93 @@ void Physics2D::removeRigidbody(entt::entity entity, entt::registry &registry)
     }
 }
 
-void Physics2D::registerRigidBody2D(GameObject &obj)
+void Physics2D::rebuild(entt::registry &registry)
 {
-    createBody(obj);
+    const b2Vec2 gravity = b2World_GetGravity(m_worldId);
+    b2DestroyWorld(m_worldId);
+
+    b2WorldDef worldDef = b2DefaultWorldDef();
+    worldDef.gravity = gravity;
+    m_worldId = b2CreateWorld(&worldDef);
+
+    // Collision components are allowed to omit an explicit rigid body. In that
+    // case they receive the same default static body used by incremental setup.
+    for (const entt::entity entity : registry.view<BoxCollider2D>())
+    {
+        for (auto &shape : registry.get<BoxCollider2D>(entity).shapes)
+        {
+            shape.shapeId = b2_nullShapeId;
+        }
+        if (!registry.all_of<RigidBody2D>(entity))
+        {
+            registry.emplace<RigidBody2D>(entity);
+        }
+    }
+    for (const entt::entity entity : registry.view<Sensor2D>())
+    {
+        Sensor2D &sensor = registry.get<Sensor2D>(entity);
+        sensor.overlappingObjects.clear();
+        for (auto &shape : sensor.shapes)
+        {
+            shape.shapeId = b2_nullShapeId;
+        }
+        if (!registry.all_of<RigidBody2D>(entity))
+        {
+            registry.emplace<RigidBody2D>(entity);
+        }
+    }
+    for (const entt::entity entity : registry.view<CircleCollider2D>())
+    {
+        registry.get<CircleCollider2D>(entity).shapeId = b2_nullShapeId;
+        if (!registry.all_of<RigidBody2D>(entity))
+        {
+            registry.emplace<RigidBody2D>(entity);
+        }
+    }
+
+    for (const entt::entity entity : registry.view<RigidBody2D>())
+    {
+        registry.get<RigidBody2D>(entity).bodyId = b2_nullBodyId;
+        registerEntity(registry, entity);
+    }
 }
 
-void Physics2D::createBody(GameObject &obj)
+void Physics2D::registerEntity(entt::registry &registry, entt::entity entity)
 {
-    EntityInfo &entityInfo = obj.getComponent<EntityInfo>();
-    const Transform &transform = obj.getComponent<Transform>();
-    RigidBody2D &rb = obj.getComponent<RigidBody2D>();
+    if (!registry.valid(entity))
+    {
+        return;
+    }
+
+    const bool needsBody = registry.any_of<BoxCollider2D, Sensor2D, CircleCollider2D>(entity);
+    if (needsBody && !registry.all_of<RigidBody2D>(entity))
+    {
+        registry.emplace<RigidBody2D>(entity);
+    }
+
+    if (!registry.all_of<RigidBody2D, Transform>(entity))
+    {
+        return;
+    }
+
+    if (!b2Body_IsValid(registry.get<RigidBody2D>(entity).bodyId))
+    {
+        createBody(registry, entity);
+    }
+    if (registry.all_of<BoxCollider2D>(entity))
+    {
+        createBoxCollider(registry, entity);
+    }
+    if (registry.all_of<Sensor2D>(entity))
+    {
+        createSensor(registry, entity);
+    }
+}
+
+void Physics2D::createBody(entt::registry &registry, entt::entity entity)
+{
+    const Transform &transform = registry.get<Transform>(entity);
+    RigidBody2D &rb = registry.get<RigidBody2D>(entity);
 
     b2BodyDef bodyDef = b2DefaultBodyDef();
     bodyDef.type = (rb.type == BodyType::Static)    ? b2_staticBody
@@ -171,30 +247,20 @@ void Physics2D::createBody(GameObject &obj)
     b2BodyId bodyId = b2CreateBody(m_worldId, &bodyDef);
     if (!b2Body_IsValid(bodyId))
     {
-        std::cerr << "[Physics2D] Failed to create body for GameObject: " << entityInfo.tag << std::endl;
+        const EntityInfo *entityInfo = registry.try_get<EntityInfo>(entity);
+        std::cerr << "[Physics2D] Failed to create body for entity"
+                  << (entityInfo ? ": " + entityInfo->tag : "") << std::endl;
     }
     rb.bodyId = bodyId;
 }
 
-void Physics2D::registerBoxCollider2D(GameObject &obj)
+void Physics2D::createBoxCollider(entt::registry &registry, entt::entity entity)
 {
-    EntityInfo &entityInfo = obj.getComponent<EntityInfo>();
-    if (!obj.hasComponent<BoxCollider2D>())
-    {
-        std::cerr << "GameObject " << entityInfo.tag << " missing BoxCollider2D component!\n";
-        return;
-    }
-
-    if (!obj.hasComponent<RigidBody2D>())
-    {
-        obj.addComponent<RigidBody2D>();
-        registerRigidBody2D(obj);
-    }
-
-    RigidBody2D &rb = obj.getComponent<RigidBody2D>();
-    BoxCollider2D &collider = obj.getComponent<BoxCollider2D>();
+    const EntityInfo *entityInfo = registry.try_get<EntityInfo>(entity);
+    RigidBody2D &rb = registry.get<RigidBody2D>(entity);
+    BoxCollider2D &collider = registry.get<BoxCollider2D>(entity);
     collider.resetAnimationState();
-    const Sprite *sprite = obj.hasComponent<Sprite>() ? &obj.getComponent<Sprite>() : nullptr;
+    const Sprite *sprite = registry.try_get<Sprite>(entity);
     if (sprite && !collider.hasFlipReference)
     {
         collider.referenceFlipX = sprite->flipX;
@@ -206,7 +272,7 @@ void Physics2D::registerBoxCollider2D(GameObject &obj)
 
     for (auto &box : collider.shapes)
     {
-        if (!box.animatedActive)
+        if (!box.animatedActive || b2Shape_IsValid(box.shapeId))
         {
             continue;
         }
@@ -218,7 +284,7 @@ void Physics2D::registerBoxCollider2D(GameObject &obj)
             b2MakeRot(glm::radians(rotation)));
         b2ShapeDef shapeDef = b2DefaultShapeDef();
         shapeDef.enableSensorEvents = true;
-        shapeDef.userData = reinterpret_cast<void *>(static_cast<uintptr_t>(obj.getEntityId()));
+        shapeDef.userData = reinterpret_cast<void *>(static_cast<uintptr_t>(entity));
         shapeDef.density = box.density;
         shapeDef.material.friction = box.friction;
         shapeDef.material.restitution = box.restitution;
@@ -226,48 +292,41 @@ void Physics2D::registerBoxCollider2D(GameObject &obj)
 
         if (!b2Shape_IsValid(box.shapeId))
         {
-            std::cerr << "Failed to attach shape '" << box.name << "' to body: " << entityInfo.tag << std::endl;
+            std::cerr << "Failed to attach shape '" << box.name << "' to body"
+                      << (entityInfo ? ": " + entityInfo->tag : "") << std::endl;
         }
     }
 }
 
-void Physics2D::registerSensor2D(GameObject &obj)
+void Physics2D::createSensor(entt::registry &registry, entt::entity entity)
 {
-    EntityInfo &entityInfo = obj.getComponent<EntityInfo>();
-    if (!obj.hasComponent<Sensor2D>())
-    {
-        std::cerr << "GameObject " << entityInfo.tag << " missing Sensor2D component!\n";
-        return;
-    }
-
-    if (!obj.hasComponent<RigidBody2D>())
-    {
-        obj.addComponent<RigidBody2D>();
-        registerRigidBody2D(obj);
-    }
-
-    RigidBody2D &rb = obj.getComponent<RigidBody2D>();
-    Sensor2D &sensor = obj.getComponent<Sensor2D>();
+    const EntityInfo *entityInfo = registry.try_get<EntityInfo>(entity);
+    RigidBody2D &rb = registry.get<RigidBody2D>(entity);
+    Sensor2D &sensor = registry.get<Sensor2D>(entity);
     sensor.resetAnimationState();
-    const Sprite *sprite = obj.hasComponent<Sprite>() ? &obj.getComponent<Sprite>() : nullptr;
+    const Sprite *sprite = registry.try_get<Sprite>(entity);
     const bool flipX = sprite && sprite->flipX;
     const bool flipY = sprite && sprite->flipY;
 
     for (auto &sensorShape : sensor.shapes)
     {
+        if (b2Shape_IsValid(sensorShape.shapeId))
+        {
+            continue;
+        }
         const glm::vec2 offset = mirrorCollisionOffset(sensorShape.animatedOffset, flipX, flipY);
         b2Polygon polygon = b2MakeOffsetBox(
             sensorShape.animatedSize.x * 0.5f, sensorShape.animatedSize.y * 0.5f, {offset.x, offset.y}, b2Rot_identity);
         b2ShapeDef shapeDef = b2DefaultShapeDef();
         shapeDef.isSensor = true;
         shapeDef.enableSensorEvents = true;
-        shapeDef.userData = reinterpret_cast<void *>(static_cast<uintptr_t>(obj.getEntityId()));
+        shapeDef.userData = reinterpret_cast<void *>(static_cast<uintptr_t>(entity));
         sensorShape.shapeId = b2CreatePolygonShape(rb.bodyId, &shapeDef, &polygon);
 
         if (!b2Shape_IsValid(sensorShape.shapeId))
         {
             std::cerr << "[Physics2D] Failed to create sensor shape '" << sensorShape.name
-                      << "' for GameObject: " << entityInfo.tag << std::endl;
+                      << "' for entity" << (entityInfo ? ": " + entityInfo->tag : "") << std::endl;
         }
     }
 }

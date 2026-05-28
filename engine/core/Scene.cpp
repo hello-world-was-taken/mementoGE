@@ -1,4 +1,5 @@
 #include "core/components/EntityInfo.h"
+#include "core/components/RigidBody2D.h"
 
 #include "core/Scene.h"
 #include "core/SystemRegistry.h"
@@ -179,16 +180,16 @@ GameObject &Scene::addGameObjectFromModel(const std::string &modelPath)
         throw e;
     }
 
-    GameObject gameObj{m_registry, root, m_physicsWorld};
+    GameObject gameObj{m_registry, root};
+    m_physicsWorld.registerEntity(m_registry, gameObj.getEntityId());
     m_gameObjects.push_back(std::move(gameObj));
     return m_gameObjects.back();
 }
 
 GameObject &Scene::addGameObjectFromSerialized(const YAML::Node &serializedGameObject)
 {
-    // FIXME: Keep this in sync with addGameObjectFromModel and
-    // GameObject::GameObject(entt::registry&, const YAML::Node&, Physics2D&).
-    GameObject gameObj{m_registry, serializedGameObject, m_physicsWorld};
+    GameObject gameObj{m_registry, serializedGameObject};
+    m_physicsWorld.registerEntity(m_registry, gameObj.getEntityId());
     m_gameObjects.push_back(std::move(gameObj));
     return m_gameObjects.back();
 }
@@ -410,8 +411,12 @@ void Scene::deserialize(const YAML::Node &in)
         YAML::Node gameObjects = it->second["GameObjects"];
         for (const auto &serializedGameObject : gameObjects)
         {
-            GameObject gameObj{m_registry, serializedGameObject, m_physicsWorld};
+            GameObject gameObj{m_registry, serializedGameObject};
             m_gameObjects.push_back(std::move(gameObj));
         }
     }
+
+    // Runtime resources are created only after every entity and component has
+    // been deserialized, so component parsing is independent of load order.
+    m_physicsWorld.rebuild(m_registry);
 }
