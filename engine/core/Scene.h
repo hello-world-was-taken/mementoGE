@@ -90,7 +90,8 @@ private:
     std::string m_playerTag = "Player";
 
     entt::registry m_registry;
-    Physics2D m_physicsWorld{{0.0f, -9.8f}};
+    glm::vec2 m_gravity{0.0f, -9.8f};
+    Physics2D m_physicsWorld{m_gravity};
     std::vector<std::shared_ptr<Texture>> m_textures;
 
     std::vector<GameObject> m_gameObjects;

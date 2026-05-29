@@ -48,9 +48,11 @@ Window::Window()
         return;
     }
 
-    // alpha blending
+    // stb_image loads PNGs with straight (unassociated) alpha, and the sprite
+    // shader outputs straight-alpha colors. Use the matching blend function so
+    // partially transparent edge pixels do not produce bright color fringes.
     glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_DEPTH_TEST);
 }
 

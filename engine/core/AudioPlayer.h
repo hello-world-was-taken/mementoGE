@@ -7,8 +7,12 @@ class AudioPlayer
 public:
     AudioPlayer();
     ~AudioPlayer();
+    AudioPlayer(const AudioPlayer &) = delete;
+    AudioPlayer &operator=(const AudioPlayer &) = delete;
+    AudioPlayer(AudioPlayer &&other) noexcept;
+    AudioPlayer &operator=(AudioPlayer &&other) noexcept;
 
-    void play(std::string &filePath);
+    void play(const std::string &filePath);
     void stop();
     void pause();
 
@@ -19,6 +23,7 @@ public:
     void setPitch(float pitch);
     void setPosition(const glm::vec3 &pos);
     void setVelocity(const glm::vec3 &vel);
+    void setRelative(bool relative);
 
 private:
     unsigned int m_source = 0;

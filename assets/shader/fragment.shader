@@ -21,7 +21,9 @@ void main()
 
     switch (v_tex_slot)
     {
-        case -1: texColor = v_color; break; // sprites with no texture
+        // Untextured geometry already carries its complete color in v_color.
+        // Use white here so the final tint multiplication applies it once.
+        case -1: texColor = vec4(1.0); break;
         case 0:  texColor = texture(textures[0], v_texture_coordinate); break;
         case 1:  texColor = texture(textures[1], v_texture_coordinate); break;
         case 2:  texColor = texture(textures[2], v_texture_coordinate); break;
@@ -39,7 +41,7 @@ void main()
         case 14: texColor = texture(textures[14], v_texture_coordinate); break;
         case 15: texColor = texture(textures[15], v_texture_coordinate); break;
         default:
-            texColor = v_color;
+            texColor = vec4(1.0);
             break;
     }
 

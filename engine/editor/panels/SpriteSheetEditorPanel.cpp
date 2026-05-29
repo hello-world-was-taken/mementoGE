@@ -198,6 +198,13 @@ void SpriteSheetEditorPanel::generateBoundingBoxes()
 
             floodFill(x, y, minX, maxX, minY, maxY);
 
+            const int boxWidth = maxX - minX + 1;
+            const int boxHeight = maxY - minY + 1;
+            if (boxWidth < m_minSpriteWidth || boxHeight < m_minSpriteHeight)
+            {
+                continue;
+            }
+
             // Expand max by 1 so the box fully covers the last pixel
             glm::vec2 minP{static_cast<float>(minX), static_cast<float>(minY)};
             glm::vec2 maxP{static_cast<float>(maxX + 1), static_cast<float>(maxY + 1)};
@@ -387,6 +394,7 @@ void SpriteSheetEditorPanel::draw()
             m_backgroundMode = BackgroundDetectionMode::Transparent;
             m_boxes.clear();
             m_boxesGenerated = false;
+            m_selectedIndex = -1;
         }
     }
     ImGui::SameLine();
@@ -399,7 +407,22 @@ void SpriteSheetEditorPanel::draw()
             m_backgroundMode = BackgroundDetectionMode::FirstPixel;
             m_boxes.clear();
             m_boxesGenerated = false;
+            m_selectedIndex = -1;
         }
+    }
+
+    int minimumSpriteSize[2] = {m_minSpriteWidth, m_minSpriteHeight};
+    if (ImGui::InputInt2("Minimum Sprite Size", minimumSpriteSize))
+    {
+        m_minSpriteWidth = std::clamp(minimumSpriteSize[0], 1, texWidth);
+        m_minSpriteHeight = std::clamp(minimumSpriteSize[1], 1, texHeight);
+        m_boxes.clear();
+        m_boxesGenerated = false;
+        m_selectedIndex = -1;
+    }
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::SetTooltip("Ignore detected regions smaller than this width or height (pixels).");
     }
 
     // Fit image within available content region while preserving aspect ratio

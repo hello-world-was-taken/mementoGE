@@ -36,6 +36,7 @@ private:
     void syncCollisionShapes(entt::registry &registry);
     void syncBodiesFromTransforms(entt::registry &registry, bool includeDynamicBodies);
     void refreshSensorOverlaps(entt::registry &registry);
+    void syncVelocities(entt::registry &registry);
     void syncTransforms(entt::registry &registry);
 
     void createBody(entt::registry &registry, entt::entity entity);

@@ -41,10 +41,17 @@ public:
     ~AudioSystem() = default;
 
     void update(SystemContext &context) override;
+    int executionOrder() const override
+    {
+        return 150;
+    }
 
 private:
+    static constexpr float WORLD_GAIN_FADE_PER_SECOND = 4.0f;
+
     UniqueDevicePtr m_device = nullptr;
     UniqueContextPtr m_context = nullptr;
+    float m_worldGain = 1.0f;
 
-    void updateListener(entt::registry &registry);
+    void updateListener(entt::registry &registry, float deltaTime);
 };

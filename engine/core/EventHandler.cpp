@@ -55,6 +55,7 @@ void EventHandler::glfwKeyCallBack(GLFWwindow *window, int key, int scancode, in
     updateKey(GLFW_KEY_A, KeyType::A, "AKey");
     updateKey(GLFW_KEY_S, KeyType::S, "SKey");
     updateKey(GLFW_KEY_D, KeyType::D, "DKey");
+    updateKey(GLFW_KEY_F, KeyType::F, "FKey");
     updateKey(GLFW_KEY_SPACE, KeyType::Space, "SpaceKey");
 
     updateKey(GLFW_KEY_ENTER, KeyType::Enter, "EnterKey");
@@ -108,8 +109,7 @@ void EventHandler::glfwMouseButtonCallback(GLFWwindow *window, int button, int a
 
     const bool mouseInsideSceneViewport = listener->isMouseInsideSceneViewport();
     const bool buttonWasPressedInScene = listener->m_mouseButtonStates[button];
-    if ((action == GLFW_PRESS && !mouseInsideSceneViewport) ||
-        (action == GLFW_RELEASE && !buttonWasPressedInScene))
+    if ((action == GLFW_PRESS && !mouseInsideSceneViewport) || (action == GLFW_RELEASE && !buttonWasPressedInScene))
     {
         return;
     }

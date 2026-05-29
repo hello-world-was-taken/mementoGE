@@ -23,6 +23,12 @@ struct AudioSource
     bool looping = false;
     float gain = 1.0f;
     float pitch = 1.0f;
+    bool relative = false;
+
+    // Runtime playback state. Transient one-shot effects remove their entity
+    // after playback so combat can freely overlap sounds without leaking.
+    bool destroyWhenFinished = false;
+    bool started = false;
 
     // AudioPlayer runtime
     AudioPlayer audioPlayer;

@@ -487,6 +487,7 @@ bool ImGuiWrapper::Row(const char *text,
     if (!hasButton)
     {
         ImGui::SetCursorScreenPos(ImVec2(outerMin.x, rowMax.y + rowGap + margin.bottom));
+        ImGui::Dummy(ImVec2(0.0f, 0.0f));
         ImGui::PopID();
         ImGui::PopStyleVar();
         return rowSelected;
@@ -516,6 +517,7 @@ bool ImGuiWrapper::Row(const char *text,
     ImGui::PopStyleColor(pushedButtonColors);
 
     ImGui::SetCursorScreenPos(ImVec2(outerMin.x, rowMax.y + rowGap + margin.bottom));
+    ImGui::Dummy(ImVec2(0.0f, 0.0f));
     ImGui::PopID();
     ImGui::PopStyleVar();
 

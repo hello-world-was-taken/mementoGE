@@ -82,6 +82,10 @@ void Physics2D::simulate(float timestep, entt::registry &registry, bool syncAuth
     b2World_Step(m_worldId, timestep, 4);
     refreshSensorOverlaps(registry);
 
+    // Preserve gravity, impulses, and collision response for the next gameplay
+    // update. Systems can then change one velocity axis without erasing the
+    // velocity Box2D calculated on the other axis.
+    syncVelocities(registry);
     syncTransforms(registry);
 }
 
@@ -142,8 +146,14 @@ void Physics2D::removeRigidbody(entt::entity entity, entt::registry &registry)
     auto view = registry.view<Sensor2D>();
     for (entt::entity sensorEntity : view)
     {
-        auto &list = view.get<Sensor2D>(sensorEntity).overlappingObjects;
+        Sensor2D &sensor = view.get<Sensor2D>(sensorEntity);
+        auto &list = sensor.overlappingObjects;
         list.erase(std::remove(list.begin(), list.end(), entity), list.end());
+        for (SensorShape2D &shape : sensor.shapes)
+        {
+            auto &shapeList = shape.overlappingObjects;
+            shapeList.erase(std::remove(shapeList.begin(), shapeList.end(), entity), shapeList.end());
+        }
     }
 }
 
@@ -172,7 +182,7 @@ void Physics2D::rebuild(entt::registry &registry)
     for (const entt::entity entity : registry.view<Sensor2D>())
     {
         Sensor2D &sensor = registry.get<Sensor2D>(entity);
-        sensor.overlappingObjects.clear();
+        sensor.clearOverlaps();
         for (auto &shape : sensor.shapes)
         {
             shape.shapeId = b2_nullShapeId;
@@ -248,8 +258,8 @@ void Physics2D::createBody(entt::registry &registry, entt::entity entity)
     if (!b2Body_IsValid(bodyId))
     {
         const EntityInfo *entityInfo = registry.try_get<EntityInfo>(entity);
-        std::cerr << "[Physics2D] Failed to create body for entity"
-                  << (entityInfo ? ": " + entityInfo->tag : "") << std::endl;
+        std::cerr << "[Physics2D] Failed to create body for entity" << (entityInfo ? ": " + entityInfo->tag : "")
+                  << std::endl;
     }
     rb.bodyId = bodyId;
 }
@@ -325,8 +335,8 @@ void Physics2D::createSensor(entt::registry &registry, entt::entity entity)
 
         if (!b2Shape_IsValid(sensorShape.shapeId))
         {
-            std::cerr << "[Physics2D] Failed to create sensor shape '" << sensorShape.name
-                      << "' for entity" << (entityInfo ? ": " + entityInfo->tag : "") << std::endl;
+            std::cerr << "[Physics2D] Failed to create sensor shape '" << sensorShape.name << "' for entity"
+                      << (entityInfo ? ": " + entityInfo->tag : "") << std::endl;
         }
     }
 }
@@ -436,13 +446,13 @@ void Physics2D::refreshSensorOverlaps(entt::registry &registry)
     for (entt::entity sensorEntity : view)
     {
         auto &sensor = view.get<Sensor2D>(sensorEntity);
-        sensor.overlappingObjects.clear();
+        sensor.clearOverlaps();
         if (!sensor.isActive)
         {
             continue;
         }
 
-        for (const auto &shape : sensor.shapes)
+        for (auto &shape : sensor.shapes)
         {
             if (!shape.animatedActive || !b2Shape_IsValid(shape.shapeId))
             {
@@ -465,14 +475,38 @@ void Physics2D::refreshSensorOverlaps(entt::registry &registry)
                 }
                 entt::entity other =
                     static_cast<entt::entity>(reinterpret_cast<uintptr_t>(b2Shape_GetUserData(overlaps[i])));
-                if (registry.valid(other) && other != sensorEntity &&
-                    std::find(sensor.overlappingObjects.begin(), sensor.overlappingObjects.end(), other) ==
-                        sensor.overlappingObjects.end())
+                if (!registry.valid(other) || other == sensorEntity)
+                {
+                    continue;
+                }
+                if (std::find(shape.overlappingObjects.begin(), shape.overlappingObjects.end(), other) ==
+                    shape.overlappingObjects.end())
+                {
+                    shape.overlappingObjects.push_back(other);
+                }
+                if (std::find(sensor.overlappingObjects.begin(), sensor.overlappingObjects.end(), other) ==
+                    sensor.overlappingObjects.end())
                 {
                     sensor.overlappingObjects.push_back(other);
                 }
             }
         }
+    }
+}
+
+void Physics2D::syncVelocities(entt::registry &registry)
+{
+    auto view = registry.view<RigidBody2D>();
+    for (const entt::entity entity : view)
+    {
+        RigidBody2D &body = view.get<RigidBody2D>(entity);
+        if (body.type != BodyType::Dynamic || !b2Body_IsValid(body.bodyId))
+        {
+            continue;
+        }
+
+        const b2Vec2 velocity = b2Body_GetLinearVelocity(body.bodyId);
+        body.velocity = {velocity.x, velocity.y};
     }
 }
 

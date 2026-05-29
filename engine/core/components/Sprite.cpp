@@ -5,6 +5,7 @@
 #include "core/ImGuiWrapper.h"
 
 #include "editor/DragNDropPayloads.h" // FIXME: core shouldn't depend on editor layer
+#include "util/PathUtils.h"
 
 #include <imgui.h>
 #endif
@@ -103,8 +104,12 @@ void Sprite::deserialize(const YAML::Node &in)
     auto textureNode = in["Sprite"]["Texture"];
     if (textureNode)
     {
-        std::string filePath = textureNode["FilePath"].as<std::string>();
-        texture = GlResourceManager::instance().getTexture(filePath);
+        std::filesystem::path filePath = textureNode["FilePath"].as<std::string>();
+        if (filePath.is_relative())
+        {
+            filePath = getGameAssetPath(filePath.string());
+        }
+        texture = GlResourceManager::instance().getTexture(filePath.string());
     }
     else
     {

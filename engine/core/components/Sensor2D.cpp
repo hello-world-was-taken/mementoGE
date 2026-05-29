@@ -2,10 +2,10 @@
 
 #ifdef EDITOR_BUILD
 #include "core/ImGuiWrapper.h"
-#include <imgui.h>
-#include <yaml-cpp/yaml.h>
 #include <cstddef>
 #include <cstdio>
+#include <imgui.h>
+#include <yaml-cpp/yaml.h>
 #endif
 
 void SensorShape2D::resetAnimationState()
@@ -18,22 +18,41 @@ void SensorShape2D::resetAnimationState()
 void Sensor2D::resetAnimationState()
 {
     for (auto &shape : shapes)
+    {
         shape.resetAnimationState();
+    }
+}
+
+void Sensor2D::clearOverlaps()
+{
+    overlappingObjects.clear();
+    for (auto &shape : shapes)
+    {
+        shape.overlappingObjects.clear();
+    }
 }
 
 SensorShape2D *Sensor2D::findShape(const std::string &name)
 {
     for (auto &shape : shapes)
+    {
         if (shape.name == name)
+        {
             return &shape;
+        }
+    }
     return nullptr;
 }
 
 const SensorShape2D *Sensor2D::findShape(const std::string &name) const
 {
     for (const auto &shape : shapes)
+    {
         if (shape.name == name)
+        {
             return &shape;
+        }
+    }
     return nullptr;
 }
 
@@ -66,11 +85,15 @@ void Sensor2D::serialize(YAML::Emitter &out)
 void Sensor2D::deserialize(const YAML::Node &node)
 {
     if (!node["Sensor2D"])
+    {
         return;
+    }
 
     const auto &data = node["Sensor2D"];
     if (data["isActive"])
+    {
         isActive = data["isActive"].as<bool>();
+    }
     shapes.clear();
 
     auto readShape = [](const YAML::Node &shapeNode, const std::string &fallbackName)
@@ -78,11 +101,17 @@ void Sensor2D::deserialize(const YAML::Node &node)
         SensorShape2D shape;
         shape.name = shapeNode["name"] ? shapeNode["name"].as<std::string>() : fallbackName;
         if (shapeNode["size"])
+        {
             shape.size = {shapeNode["size"][0].as<float>(), shapeNode["size"][1].as<float>()};
+        }
         if (shapeNode["offset"])
+        {
             shape.offset = {shapeNode["offset"][0].as<float>(), shapeNode["offset"][1].as<float>()};
+        }
         if (shapeNode["isActive"])
+        {
             shape.isActive = shapeNode["isActive"].as<bool>();
+        }
         shape.resetAnimationState();
         return shape;
     };
@@ -90,7 +119,9 @@ void Sensor2D::deserialize(const YAML::Node &node)
     if (data["shapes"])
     {
         for (std::size_t i = 0; i < data["shapes"].size(); ++i)
+        {
             shapes.push_back(readShape(data["shapes"][i], "sensor_" + std::to_string(i)));
+        }
     }
     else
     {
@@ -98,7 +129,9 @@ void Sensor2D::deserialize(const YAML::Node &node)
     }
 
     if (shapes.empty())
+    {
         shapes.emplace_back();
+    }
     resetAnimationState();
 }
 
@@ -117,7 +150,9 @@ void Sensor2D::drawInspector()
                 char name[64]{};
                 std::snprintf(name, sizeof(name), "%s", shape.name.c_str());
                 if (ImGui::InputText("Name", name, sizeof(name)))
+                {
                     shape.name = name;
+                }
                 SetFieldWidth();
                 ImGui::DragFloat2("Size", &shape.size.x, 0.01f, 0.01f);
                 SetFieldWidth();
@@ -126,14 +161,18 @@ void Sensor2D::drawInspector()
                 ImGui::Checkbox("Active", &shape.isActive);
                 shape.resetAnimationState();
                 if (shapes.size() > 1 && ImGui::Button("Remove shape"))
+                {
                     shapeToRemove = i;
+                }
                 ImGui::Separator();
                 ImGui::PopID();
             }
             if (shapeToRemove < shapes.size())
             {
                 if (b2Shape_IsValid(shapes[shapeToRemove].shapeId))
+                {
                     b2DestroyShape(shapes[shapeToRemove].shapeId, true);
+                }
                 shapes.erase(shapes.begin() + static_cast<std::ptrdiff_t>(shapeToRemove));
             }
             if (ImGui::Button("Add sensor shape"))

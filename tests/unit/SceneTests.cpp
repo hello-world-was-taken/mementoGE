@@ -239,3 +239,24 @@ TEST(SceneTests, RoundTripsSerializedSceneThroughDeserializer)
     EXPECT_FLOAT_EQ(copiedCrate.getComponent<Transform>().position.y, 96.0f);
     EXPECT_EQ(copiedCrate.getComponent<RenderLayer>().order, 5);
 }
+
+TEST(SceneTests, RoundTripsSceneGravity)
+{
+    Scene original{"gravity scene"};
+    original.setGravity({0.0f, -520.0f});
+
+    YAML::Emitter serialized;
+    original.serialize(serialized);
+    ASSERT_TRUE(serialized.good());
+    YAML::Node firstPass = YAML::Load(serialized.c_str());
+    ASSERT_TRUE(firstPass["gravity scene"]["Gravity"].IsSequence());
+    EXPECT_FLOAT_EQ(firstPass["gravity scene"]["Gravity"][0].as<float>(), 0.0f);
+    EXPECT_FLOAT_EQ(firstPass["gravity scene"]["Gravity"][1].as<float>(), -520.0f);
+
+    Scene copy{YAML::Load(serialized.c_str())};
+    YAML::Emitter roundTripped;
+    copy.serialize(roundTripped);
+    YAML::Node secondPass = YAML::Load(roundTripped.c_str());
+    EXPECT_FLOAT_EQ(secondPass["gravity scene"]["Gravity"][0].as<float>(), 0.0f);
+    EXPECT_FLOAT_EQ(secondPass["gravity scene"]["Gravity"][1].as<float>(), -520.0f);
+}

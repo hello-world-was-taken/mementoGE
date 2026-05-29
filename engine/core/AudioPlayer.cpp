@@ -1,8 +1,8 @@
 #include "core/AudioPlayer.h"
 #include "core/AssetManager.h"
 
-#include "util/log_error.h"
 #include "util/LogChannels.h"
+#include "util/log_error.h"
 
 #include <sawyer/Logger.h>
 
@@ -14,7 +14,29 @@ AudioPlayer::AudioPlayer()
 
 AudioPlayer::~AudioPlayer()
 {
-    alDeleteSources(1, &m_source);
+    if (m_source != 0)
+    {
+        alDeleteSources(1, &m_source);
+    }
+}
+
+AudioPlayer::AudioPlayer(AudioPlayer &&other) noexcept : m_source(other.m_source)
+{
+    other.m_source = 0;
+}
+
+AudioPlayer &AudioPlayer::operator=(AudioPlayer &&other) noexcept
+{
+    if (this != &other)
+    {
+        if (m_source != 0)
+        {
+            alDeleteSources(1, &m_source);
+        }
+        m_source = other.m_source;
+        other.m_source = 0;
+    }
+    return *this;
 }
 
 // void AudioPlayer::setBuffer(ALuint buffer)
@@ -25,7 +47,7 @@ AudioPlayer::~AudioPlayer()
 // TODO: think more about how we can setBuffer
 // only once. Currently, we are resetting it on
 // every play.
-void AudioPlayer::play(std::string &filePath)
+void AudioPlayer::play(const std::string &filePath)
 {
     if (isPlaying())
     {
@@ -73,9 +95,19 @@ void AudioPlayer::setVelocity(const glm::vec3 &vel)
     alSource3f(m_source, AL_VELOCITY, vel.x, vel.y, vel.z);
 }
 
+void AudioPlayer::setRelative(bool relative)
+{
+    alSourcei(m_source, AL_SOURCE_RELATIVE, relative ? AL_TRUE : AL_FALSE);
+}
+
 bool AudioPlayer::isPlaying() const
 {
-    ALint state;
+    if (m_source == 0)
+    {
+        return false;
+    }
+
+    ALint state = AL_STOPPED;
     alGetSourcei(m_source, AL_SOURCE_STATE, &state);
     return state == AL_PLAYING;
 }

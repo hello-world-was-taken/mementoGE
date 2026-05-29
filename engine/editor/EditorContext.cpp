@@ -243,8 +243,12 @@ void EditorContext::startRuntimeScene()
         return;
     }
 
-    // always insert/assign in playmode
-    sceneByScenePathMap.insert_or_assign("runtime_scene", getActiveScene().clone("runtime_scene"));
+    // Store the play-mode copy under an internal map key, but preserve the
+    // authored scene tag. The tag is user-facing (for example in the Scene
+    // panel title) and must not become "runtime_scene" after play mode ends.
+    Scene &editorScene = getActiveScene();
+    const std::string editorSceneTag = editorScene.getTag();
+    sceneByScenePathMap.insert_or_assign("runtime_scene", editorScene.clone(editorSceneTag));
     runtimeState = RuntimeState::Playing;
     selectedObjects.clear();
     selectedGameObjectsDragOffset.clear();
@@ -326,14 +330,25 @@ void EditorContext::deserializeSelectedScene()
 
 void EditorContext::serializaActiveScene()
 {
+    // A runtime scene is an ephemeral clone. It must never become an asset or
+    // overwrite the selected authored scene.
+    if (isRuntimeActive())
+    {
+        LOG_WARN(LogChannel::Editor, "Cannot save a scene while play mode is active");
+        return;
+    }
+
+    Scene &scene = getActiveScene();
     YAML::Emitter out;
-    getActiveScene().serialize(out);
-    std::string sceneName = getActiveScene().getTag();
-    std::string filePath = getGameAssetPath("scenes/" + sceneName + ".yaml");
+    scene.serialize(out);
+
+    const std::string sceneName = scene.getTag();
+    const std::filesystem::path filePath = selectedScenePath.empty() ? getGameAssetPath("scenes/" + sceneName + ".yaml")
+                                                                     : std::filesystem::path(selectedScenePath);
     std::ofstream file(filePath, std::ios::out | std::ios::trunc);
     file << out.c_str();
 
-    LOG_INFO(LogChannel::Editor, "Serialized scene to '{}.yaml'", sceneName);
+    LOG_INFO(LogChannel::Editor, "Serialized scene '{}' to '{}'", sceneName, filePath.string());
 }
 
 // TODO: Is there a better place to put this?

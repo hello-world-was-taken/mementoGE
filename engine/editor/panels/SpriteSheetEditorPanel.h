@@ -45,6 +45,9 @@ private:
 
     BackgroundDetectionMode m_backgroundMode = BackgroundDetectionMode::Transparent;
 
+    int m_minSpriteWidth = 8;
+    int m_minSpriteHeight = 8;
+
     int m_selectedIndex = -1;
 
     std::string m_lastOutputPath;

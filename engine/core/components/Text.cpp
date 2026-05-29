@@ -47,16 +47,16 @@ void Text::rebuild(Transform &transform)
 
         if (h > 0.0f) // division by zero check
         {
-            float aspectRatio = w / h;
+            aspectRatio = w / h;
         }
 
         auto size = fontSize * aspectRatio;
 
         // The order of vertices of a quad goes top-right, top-left, bottom-left, bottom-right
-        glm::vec3 glyphVertices[4] = {{position.x + size, position.y + size, 0},
-            {position.x, position.y + size, 0},
-            {position.x, position.y, 0},
-            {position.x + size, position.y, 0}};
+        glm::vec3 glyphVertices[4] = {{position.x + size, position.y + size, position.z},
+            {position.x, position.y + size, position.z},
+            {position.x, position.y, position.z},
+            {position.x + size, position.y, position.z}};
 
         glm::vec2 glyphTextureCoords[4] = {
             {alignedQuad.s1, alignedQuad.t0},

@@ -874,6 +874,10 @@ void GameObjectEditorPanel::drawAddComponentCombo(GameObject &object)
     {
         object.addComponent<PostProcessSettings>();
     }
+    if (!object.hasComponent<ImportedGroup>() && ImGui::Selectable("Imported Group"))
+    {
+        object.addComponent<ImportedGroup>();
+    }
     if (!object.hasComponent<ShaderEffectRequest>() && ImGui::Selectable("Shader Effect"))
     {
         object.addComponent<ShaderEffectRequest>();

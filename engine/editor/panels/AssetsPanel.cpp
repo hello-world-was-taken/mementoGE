@@ -733,7 +733,9 @@ void AssetsPanel::drawContentPanel()
     };
 
     constexpr float assetCellWidth = 150.0f;
-    constexpr float assetCellHeight = 142.0f;
+    constexpr float previewAssetCellHeight = 142.0f;
+    const float assetCellHeight =
+        category == "scenes" ? ImGui::GetFrameHeightWithSpacing() : previewAssetCellHeight;
     const float gridRight = ImGui::GetCursorScreenPos().x + ImGui::GetContentRegionAvail().x;
 
     for (const auto &item : contents)

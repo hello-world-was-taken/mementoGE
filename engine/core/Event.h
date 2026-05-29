@@ -30,6 +30,7 @@ enum class KeyType
     A,
     S,
     D,
+    F,
     M,
     C,
     V,

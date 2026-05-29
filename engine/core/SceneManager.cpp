@@ -22,7 +22,6 @@ SceneManager::SceneManager()
 SceneManager::~SceneManager()
 {
     LOG_DEBUG(LogChannel::SceneManager, "SceneManager destructor called");
-    serialize();
 }
 
 void SceneManager::update()

@@ -12,6 +12,7 @@
 #include "core/components/RenderLayer.h"
 #include "core/components/RigidBody2D.h"
 #include "core/components/Sensor2D.h"
+#include "core/components/ShaderEffectRequest.h"
 #include "core/components/Sprite.h"
 #include "core/components/Text.h"
 #include "core/components/TextAnchor.h"
@@ -155,6 +156,7 @@ void PropertiesPanel::renderPropertiesPanel()
     drawComponentInspector<Camera>(go);
     drawComponentInspector<EntityRef>(go);
     drawComponentInspector<ImportedGroup>(go);
+    drawComponentInspector<ShaderEffectRequest>(go);
 
     // Let game code draw inspectors for its own components via the
     // global component registry.
@@ -185,12 +187,9 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
 {
     ImGui::Separator();
     SetFieldWidth(150);
-    // TODO: using templates might be better than listing the selectables. We have ones that have
-    // physics call and one without a simple if constexpr
-    // would suffice I think
     if (ImGui::BeginCombo("Add Component", "Select..."))
     {
-        if (ImGui::Selectable("Rigidbody2D"))
+        if (!go.hasComponent<RigidBody2D>() && ImGui::Selectable("Rigidbody2D"))
         {
             m_ctx.performSceneEdit(
                 [&]
@@ -200,7 +199,7 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                 });
         }
 
-        if (ImGui::Selectable("BoxCollider2D"))
+        if (!go.hasComponent<BoxCollider2D>() && ImGui::Selectable("BoxCollider2D"))
         {
             m_ctx.performSceneEdit(
                 [&]
@@ -213,7 +212,7 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                 });
         }
 
-        if (ImGui::Selectable("CircleCollider2D"))
+        if (!go.hasComponent<CircleCollider2D>() && ImGui::Selectable("CircleCollider2D"))
         {
             m_ctx.performSceneEdit(
                 [&]
@@ -223,7 +222,7 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                 });
         }
 
-        if (ImGui::Selectable("Sensor2D"))
+        if (!go.hasComponent<Sensor2D>() && ImGui::Selectable("Sensor2D"))
         {
             m_ctx.performSceneEdit(
                 [&]
@@ -233,7 +232,16 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                 });
         }
 
-        if (ImGui::Selectable("Animator"))
+        if (!go.hasComponent<Sprite>() && ImGui::Selectable("Sprite"))
+        {
+            m_ctx.performSceneEdit(
+                [&]
+                {
+                    go.addComponent<Sprite>();
+                });
+        }
+
+        if (!go.hasComponent<Animator>() && ImGui::Selectable("Animator"))
         {
             m_ctx.performSceneEdit(
                 [&]
@@ -242,7 +250,7 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                 });
         }
 
-        if (ImGui::Selectable("Audio Source"))
+        if (!go.hasComponent<AudioSource>() && ImGui::Selectable("Audio Source"))
         {
             m_ctx.performSceneEdit(
                 [&]
@@ -251,7 +259,7 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                 });
         }
 
-        if (ImGui::Selectable("Camera"))
+        if (!go.hasComponent<Camera>() && ImGui::Selectable("Camera"))
         {
             m_ctx.performSceneEdit(
                 [&]
@@ -260,7 +268,7 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                 });
         }
 
-        if (ImGui::Selectable("Entity Ref"))
+        if (!go.hasComponent<EntityRef>() && ImGui::Selectable("Entity Ref"))
         {
             m_ctx.performSceneEdit(
                 [&]
@@ -269,7 +277,7 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                 });
         }
 
-        if (ImGui::Selectable("Enemy Stats"))
+        if (!go.hasComponent<EnemyState>() && ImGui::Selectable("Enemy Stats"))
         {
             m_ctx.performSceneEdit(
                 [&]
@@ -279,7 +287,7 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                 });
         }
 
-        if (ImGui::Selectable("Patrol"))
+        if (!go.hasComponent<Patrol>() && ImGui::Selectable("Patrol"))
         {
             m_ctx.performSceneEdit(
                 [&]
@@ -288,7 +296,7 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                 });
         }
 
-        if (ImGui::Selectable("Text"))
+        if (!go.hasComponent<Text>() && ImGui::Selectable("Text"))
         {
             m_ctx.performSceneEdit(
                 [&]
@@ -298,7 +306,7 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
         }
 
         // TODO: should we just add text anchor properties to Text?
-        if (ImGui::Selectable("Text Anchor"))
+        if (!go.hasComponent<TextAnchor>() && ImGui::Selectable("Text Anchor"))
         {
             m_ctx.performSceneEdit(
                 [&]
@@ -307,7 +315,7 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
                 });
         }
 
-        if (ImGui::Selectable("Particle Emitter"))
+        if (!go.hasComponent<ParticleEmitter>() && ImGui::Selectable("Particle Emitter"))
         {
             m_ctx.performSceneEdit(
                 [&]
@@ -335,13 +343,30 @@ void PropertiesPanel::drawAddComponentCombo(GameObject &go)
             }
         }
 
-        // TODO: this should only be selected for the camera
-        if (ImGui::Selectable("Post Processing Settings"))
+        if (!go.hasComponent<PostProcessSettings>() && ImGui::Selectable("Post Processing Settings"))
         {
             m_ctx.performSceneEdit(
                 [&]
                 {
                     go.addComponent<PostProcessSettings>();
+                });
+        }
+
+        if (!go.hasComponent<ImportedGroup>() && ImGui::Selectable("Imported Group"))
+        {
+            m_ctx.performSceneEdit(
+                [&]
+                {
+                    go.addComponent<ImportedGroup>();
+                });
+        }
+
+        if (!go.hasComponent<ShaderEffectRequest>() && ImGui::Selectable("Shader Effect"))
+        {
+            m_ctx.performSceneEdit(
+                [&]
+                {
+                    go.addComponent<ShaderEffectRequest>();
                 });
         }
 

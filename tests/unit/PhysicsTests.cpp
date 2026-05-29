@@ -61,7 +61,9 @@ TEST(PhysicsTests, RemoveRigidbodyClearsSensorOverlaps)
 
     // Simulate an overlap recorded by the physics system
     sensor.overlappingObjects.push_back(bodyEntity);
+    sensor.shapes.front().overlappingObjects.push_back(bodyEntity);
     ASSERT_EQ(sensor.overlappingObjects.size(), 1u);
+    ASSERT_EQ(sensor.shapes.front().overlappingObjects.size(), 1u);
 
     // Remove the rigid body and verify the sensor's list is cleared
     physics.removeRigidbody(bodyEntity, registry);
@@ -71,6 +73,9 @@ TEST(PhysicsTests, RemoveRigidbodyClearsSensorOverlaps)
     // Sensor should no longer reference the removed entity
     EXPECT_TRUE(std::find(sensor.overlappingObjects.begin(), sensor.overlappingObjects.end(), bodyEntity) ==
                 sensor.overlappingObjects.end());
+    EXPECT_TRUE(std::find(sensor.shapes.front().overlappingObjects.begin(),
+                    sensor.shapes.front().overlappingObjects.end(),
+                    bodyEntity) == sensor.shapes.front().overlappingObjects.end());
 }
 
 TEST(PhysicsTests, DestroyingEntityCleansUpRigidBody)
@@ -188,6 +193,9 @@ TEST(PhysicsTests, SecondaryColliderShapeParticipatesInSensorOverlaps)
 
     EXPECT_NE(std::find(sensor.overlappingObjects.begin(), sensor.overlappingObjects.end(), target.getEntityId()),
         sensor.overlappingObjects.end());
+    EXPECT_NE(
+        std::find(sensorShape.overlappingObjects.begin(), sensorShape.overlappingObjects.end(), target.getEntityId()),
+        sensorShape.overlappingObjects.end());
 }
 
 TEST(PhysicsTests, SpriteFlipsMirrorColliderAndSensorShapes)
@@ -370,4 +378,91 @@ TEST(PhysicsTests, AnimatedColliderShapeCanBeDisabledAndReenabled)
     ASSERT_TRUE(b2Shape_IsValid(shape.shapeId));
     expectPolygonNear(
         b2Shape_GetPolygon(shape.shapeId), b2MakeOffsetBox(7.0f, 2.0f, {2.0f, -1.0f}, b2MakeRot(glm::radians(35.0f))));
+}
+
+TEST(PhysicsTests, DynamicVelocityRetainsGravityAfterSimulation)
+{
+    entt::registry registry;
+    Physics2D physics({0.0f, -10.0f});
+    GameObject player(registry);
+    player.addComponent<RigidBody2D>();
+    auto &body = player.getComponent<RigidBody2D>();
+    body.type = BodyType::Dynamic;
+    body.velocity = {3.0f, 0.0f};
+    player.addComponent<BoxCollider2D>();
+    physics.registerEntity(registry, player.getEntityId());
+
+    physics.simulate(0.25f, registry);
+
+    EXPECT_NEAR(body.velocity.x, 3.0f, 0.001f);
+    EXPECT_LT(body.velocity.y, -2.0f);
+}
+
+TEST(PhysicsTests, SensorShapesKeepIndependentOverlapResults)
+{
+    entt::registry registry;
+    Physics2D physics({0.0f, 0.0f});
+
+    GameObject ground(registry);
+    ground.getComponent<Transform>().position = {0.0f, -1.0f, 0.0f};
+    ground.addComponent<RigidBody2D>();
+    ground.addComponent<BoxCollider2D>();
+    ground.getComponent<BoxCollider2D>().shapes.front().size = {10.0f, 2.0f};
+    ground.getComponent<BoxCollider2D>().resetAnimationState();
+    physics.registerEntity(registry, ground.getEntityId());
+
+    GameObject wall(registry);
+    wall.getComponent<Transform>().position = {5.0f, 1.0f, 0.0f};
+    wall.addComponent<RigidBody2D>();
+    wall.addComponent<BoxCollider2D>();
+    wall.getComponent<BoxCollider2D>().shapes.front().size = {2.0f, 2.0f};
+    wall.getComponent<BoxCollider2D>().resetAnimationState();
+    physics.registerEntity(registry, wall.getEntityId());
+
+    GameObject player(registry);
+    player.getComponent<Transform>().position = {0.0f, 1.0f, 0.0f};
+    player.addComponent<RigidBody2D>();
+    auto &body = player.getComponent<RigidBody2D>();
+    body.type = BodyType::Dynamic;
+    player.addComponent<BoxCollider2D>();
+    player.getComponent<BoxCollider2D>().shapes.front().size = {2.0f, 2.0f};
+    player.getComponent<BoxCollider2D>().resetAnimationState();
+    player.addComponent<Sensor2D>();
+    Sensor2D &sensor = player.getComponent<Sensor2D>();
+    sensor.shapes = {
+        SensorShape2D{"ground_check", {1.5f, 0.5f}, {0.0f, -1.1f}},
+        SensorShape2D{"side_check", {0.5f, 1.5f}, {5.0f, 0.0f}},
+    };
+    sensor.resetAnimationState();
+    physics.registerEntity(registry, player.getEntityId());
+
+    physics.simulate(1.0f / 60.0f, registry);
+
+    const SensorShape2D *groundSensor = sensor.findShape("ground_check");
+    const SensorShape2D *sideSensor = sensor.findShape("side_check");
+    ASSERT_NE(groundSensor, nullptr);
+    ASSERT_NE(sideSensor, nullptr);
+    EXPECT_NE(
+        std::find(
+            groundSensor->overlappingObjects.begin(), groundSensor->overlappingObjects.end(), ground.getEntityId()),
+        groundSensor->overlappingObjects.end());
+    EXPECT_EQ(
+        std::find(groundSensor->overlappingObjects.begin(), groundSensor->overlappingObjects.end(), wall.getEntityId()),
+        groundSensor->overlappingObjects.end());
+    EXPECT_NE(
+        std::find(sideSensor->overlappingObjects.begin(), sideSensor->overlappingObjects.end(), wall.getEntityId()),
+        sideSensor->overlappingObjects.end());
+    EXPECT_EQ(
+        std::find(sideSensor->overlappingObjects.begin(), sideSensor->overlappingObjects.end(), ground.getEntityId()),
+        sideSensor->overlappingObjects.end());
+    EXPECT_NE(std::find(sensor.overlappingObjects.begin(), sensor.overlappingObjects.end(), ground.getEntityId()),
+        sensor.overlappingObjects.end());
+    EXPECT_NE(std::find(sensor.overlappingObjects.begin(), sensor.overlappingObjects.end(), wall.getEntityId()),
+        sensor.overlappingObjects.end());
+
+    b2Body_SetTransform(body.bodyId, {0.0f, 8.0f}, b2Rot_identity);
+    b2Body_SetLinearVelocity(body.bodyId, {0.0f, 0.0f});
+    body.velocity = {0.0f, 0.0f};
+    physics.simulate(1.0f / 60.0f, registry);
+    EXPECT_TRUE(groundSensor->overlappingObjects.empty());
 }

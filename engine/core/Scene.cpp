@@ -28,7 +28,8 @@ Scene::Scene(const YAML::Node &&serializedScene) : m_registry{}
 }
 
 Scene::Scene(Scene &&other) noexcept
-    : m_registry(std::move(other.m_registry)), m_physicsWorld(std::move(other.m_physicsWorld)),
+    : m_registry(std::move(other.m_registry)), m_gravity(other.m_gravity),
+      m_physicsWorld(std::move(other.m_physicsWorld)),
       m_textures(std::move(other.m_textures)), m_systems(std::move(other.m_systems)), mTag(std::move(other.mTag))
 {
     bindRigidBodyDestroyCallback();
@@ -48,6 +49,7 @@ Scene &Scene::operator=(Scene &&other)
     {
         m_registry = std::move(other.m_registry);
         bindRigidBodyDestroyCallback();
+        m_gravity = other.m_gravity;
         m_physicsWorld = std::move(other.m_physicsWorld);
         m_textures = std::move(other.m_textures);
         m_systems = std::move(other.m_systems);
@@ -269,6 +271,7 @@ Physics2D &Scene::getPhysics2d()
 
 void Scene::setGravity(glm::vec2 gravity)
 {
+    m_gravity = gravity;
     m_physicsWorld.setGravity(gravity);
 }
 
@@ -361,6 +364,9 @@ bool Scene::serialize(YAML::Emitter &out)
     out << YAML::Key << mTag;
     out << YAML::Value << YAML::BeginMap;
 
+    out << YAML::Key << "Gravity" << YAML::Value << YAML::Flow << YAML::BeginSeq << m_gravity.x << m_gravity.y
+        << YAML::EndSeq;
+
     out << YAML::Key << "GameObjects";
     out << YAML::Value << YAML::BeginSeq;
 
@@ -391,6 +397,11 @@ void Scene::deserialize(const YAML::Node &in)
     {
         LOG_INFO(LogChannel::Scene, "Deserializing scene: {}", it->first.as<std::string>());
         mTag = it->first.as<std::string>();
+
+        if (const YAML::Node gravity = it->second["Gravity"]; gravity && gravity.IsSequence() && gravity.size() >= 2)
+        {
+            setGravity({gravity[0].as<float>(), gravity[1].as<float>()});
+        }
 
         // Deserializing Systems
         // FIXME: Systems should be deserialized first as there might be game object

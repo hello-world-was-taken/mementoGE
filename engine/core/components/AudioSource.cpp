@@ -16,6 +16,7 @@ void AudioSource::serialize(YAML::Emitter &out)
     out << YAML::Key << "Looping" << YAML::Value << looping;
     out << YAML::Key << "Gain" << YAML::Value << gain;
     out << YAML::Key << "Pitch" << YAML::Value << pitch;
+    out << YAML::Key << "Relative" << YAML::Value << relative;
 
     out << YAML::EndMap;
 }
@@ -27,6 +28,7 @@ void AudioSource::deserialize(const YAML::Node &in)
     looping = node["Looping"] ? node["Looping"].as<bool>() : false;
     gain = node["Gain"] ? node["Gain"].as<float>() : 1.0f;
     pitch = node["Pitch"] ? node["Pitch"].as<float>() : 1.0f;
+    relative = node["Relative"] ? node["Relative"].as<bool>() : false;
 }
 
 void AudioSource::drawInspector()
@@ -38,6 +40,7 @@ void AudioSource::drawInspector()
             ImGui::SliderFloat("Gain", &gain, 0.0f, 2.0f);
             ImGui::SliderFloat("Pitch", &pitch, 0.5f, 2.0f);
             ImGui::Checkbox("Looping", &looping);
+            ImGui::Checkbox("Relative", &relative);
 
             handleAudioDrop();
 

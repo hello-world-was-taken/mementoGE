@@ -22,6 +22,11 @@ struct SensorShape2D
     glm::vec2 animatedOffset{0.0f, 0.0f};
     bool animatedActive = true;
 
+    // Runtime overlap results for this specific sensor shape. Keeping these on
+    // the shape lets gameplay distinguish, for example, a foot sensor from an
+    // attack sensor on the same entity.
+    std::vector<entt::entity> overlappingObjects;
+
     void resetAnimationState();
 };
 
@@ -34,6 +39,7 @@ struct Sensor2D
     std::vector<entt::entity> overlappingObjects;
 
     void resetAnimationState();
+    void clearOverlaps();
     SensorShape2D *findShape(const std::string &name);
     const SensorShape2D *findShape(const std::string &name) const;
 
