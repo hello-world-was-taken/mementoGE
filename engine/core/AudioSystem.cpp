@@ -11,6 +11,19 @@
 #include <glm/glm.hpp>
 #include <vector>
 
+SystemDescriptor AudioSystem::descriptor() const
+{
+    return SystemDescriptor::named("AudioSystem")
+        .reads<Transform>()
+        .writes<AudioSource>()
+        .readsResource(SystemResource::AudioSettings)
+        .writesResource(SystemResource::AudioDevice)
+        .writesResource(SystemResource::AssetCache)
+        .requestsStructuralChanges()
+        .withAffinity(SystemThreadAffinity::AnyWorker)
+        .nonReentrant();
+}
+
 AudioSystem::AudioSystem()
 {
     m_device = UniqueDevicePtr(alcOpenDevice(nullptr));

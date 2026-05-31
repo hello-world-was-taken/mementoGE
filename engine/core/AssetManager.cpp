@@ -68,8 +68,16 @@ std::shared_ptr<Font> AssetManager::getFont(const std::string &fontPath)
     auto fontAtlas = GlResourceManager::instance().getFontTexture(fontPath);
     auto packedChar = GlResourceManager::instance().getFontPackedChar(fontPath);
     auto alignedQuad = GlResourceManager::instance().getFontAlignedQuad(fontPath);
-    auto font = std::make_shared<Font>(
-        Font{fontPath, fontAtlas, packedChar, alignedQuad}); // FIXME: we are copying packedChar here.
+    auto metrics = GlResourceManager::instance().getFontMetrics(fontPath);
+    auto font = std::make_shared<Font>(Font{
+        fontPath,
+        fontAtlas,
+        packedChar,
+        alignedQuad,
+        64.0f,
+        32,
+        static_cast<unsigned int>(Font::glyphCount),
+        metrics}); // FIXME: copies atlas data.
 
     fontByFontPath[fontPath] = font;
 

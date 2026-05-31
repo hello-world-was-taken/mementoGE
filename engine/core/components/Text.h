@@ -35,6 +35,7 @@ struct Text
     std::vector<Vertex> vertices;
 
     bool needsRebuild = true; // TODO: not being used
+    glm::vec2 measure() const;
     void rebuild(Transform &transform);
 
 #ifdef EDITOR_BUILD

@@ -23,6 +23,13 @@ public:
         ++updateCount;
     }
 
+    SystemDescriptor descriptor() const override
+    {
+        return SystemDescriptor::named("SceneTests.CountingSystem")
+            .onMainThread()
+            .nonReentrant();
+    }
+
     static int updateCount;
 };
 

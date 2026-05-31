@@ -10,41 +10,6 @@
 
 namespace
 {
-// Approximate the rendered text size in world units using the
-// same per-glyph sizing logic as Text::rebuild. This lets the
-// layout system position text so that the whole block stays
-// within the owning game object's bounds for different anchor points.
-glm::vec2 computeTextSize(const Text &text)
-{
-    if (!text.font || text.content.empty())
-    {
-        return {0.0f, 0.0f};
-    }
-
-    float totalWidth = 0.0f;
-    float maxHeight = 0.0f;
-
-    for (char ch : text.content)
-    {
-        const stbtt_packedchar &packedChar = text.font->getPackedChar(ch);
-
-        float w = static_cast<float>(packedChar.x1 - packedChar.x0);
-        float h = static_cast<float>(packedChar.y1 - packedChar.y0);
-
-        float aspect = 1.0f;
-        if (h > 0.0f)
-        {
-            aspect = w / h;
-        }
-
-        float glyphSize = text.fontSize * aspect;
-        totalWidth += glyphSize;
-        maxHeight = std::max(maxHeight, text.fontSize);
-    }
-
-    return {totalWidth, maxHeight};
-}
-
 // Compute the bottom-left position of the text block inside the
 // game object's rectangle, using the object's size (EntityInfo.width/height)
 // as the reference. The rectangle is centered around the Transform position.
@@ -91,6 +56,14 @@ glm::vec2 computeAnchorPosition(
 }
 } // namespace
 
+SystemDescriptor TextLayoutSystem::descriptor() const
+{
+    return SystemDescriptor::named("TextLayoutSystem")
+        .reads<Transform, TextAnchor, EntityInfo>()
+        .writes<Text>()
+        .nonReentrant();
+}
+
 void TextLayoutSystem::update(SystemContext &context)
 {
     entt::registry &registry = context.registry;
@@ -107,7 +80,7 @@ void TextLayoutSystem::update(SystemContext &context)
         auto &anchorComp = view.get<TextAnchor>(entity);
         auto &info = view.get<EntityInfo>(entity);
 
-        glm::vec2 textSize = computeTextSize(text);
+        glm::vec2 textSize = text.measure();
         glm::vec2 objectCenter{transform.position.x, transform.position.y};
         glm::vec2 objectSize{static_cast<float>(info.width), static_cast<float>(info.height)};
 

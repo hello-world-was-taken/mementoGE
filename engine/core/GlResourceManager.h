@@ -1,11 +1,11 @@
 #pragma once
 
+#include "core/Font.h"
 #include "opengl/Shader.h"
 #include "opengl/Texture.h"
 
 #include <map>
 #include <memory>
-#include <stb_truetype/stb_truetype.h>
 
 class GlResourceManager
 {
@@ -22,6 +22,7 @@ public:
     void forgetTexture(const std::string &texturePath);
     std::array<stbtt_packedchar, charsToIncludeInFontAtlas> &getFontPackedChar(const std::string &fontPath);
     std::array<stbtt_aligned_quad, charsToIncludeInFontAtlas> &getFontAlignedQuad(const std::string &fontPath);
+    const FontMetrics &getFontMetrics(const std::string &fontPath);
 
 private:
     GlResourceManager() = default;
@@ -42,4 +43,5 @@ private:
     std::map<std::string, std::shared_ptr<Texture>> textureByPath;
     std::map<std::string, std::array<stbtt_packedchar, charsToIncludeInFontAtlas>> packedCharByPath;
     std::map<std::string, std::array<stbtt_aligned_quad, charsToIncludeInFontAtlas>> alignedQuadByPath;
+    std::map<std::string, FontMetrics> fontMetricsByPath;
 };

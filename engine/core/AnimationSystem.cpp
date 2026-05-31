@@ -5,6 +5,16 @@
 #include "core/components/Sensor2D.h"
 #include "core/components/Sprite.h"
 
+SystemDescriptor AnimationSystem::descriptor() const
+{
+    return SystemDescriptor::named("AnimationSystem")
+        .writes<Animator, Sprite, BoxCollider2D, Sensor2D>()
+        .readsResource(SystemResource::Time)
+        .requestsStructuralChanges()
+        .before("PhysicsSystem")
+        .nonReentrant();
+}
+
 void AnimationSystem::update(SystemContext &context)
 {
     entt::registry &registry = context.registry;

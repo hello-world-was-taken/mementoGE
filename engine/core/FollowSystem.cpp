@@ -70,6 +70,15 @@ void clampCameraToBounds(Transform &cameraTransform, const glm::vec2 &viewportSi
 }
 } // namespace
 
+SystemDescriptor FollowSystem::descriptor() const
+{
+    return SystemDescriptor::named("FollowSystem")
+        .reads<EntityInfo, RenderLayer, Camera>()
+        .writes<EntityRef, Transform, RigidBody2D>()
+        .after("PhysicsSystem")
+        .nonReentrant();
+}
+
 void FollowSystem::update(SystemContext &context)
 {
     entt::registry &registry = context.registry;

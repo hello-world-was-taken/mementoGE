@@ -122,12 +122,19 @@ Inside MementoGE, the engine's CMake checks the same `EDITOR_BUILD` option and, 
 
 ### Adding a System
 
-Systems implement `ISystem` and receive scene services through `SystemContext`:
+Systems implement `ISystem`, declare their access through the required `descriptor()` override, and receive scene services through `SystemContext`:
 
 ```cpp
 class MovementSystem : public ISystem
 {
 public:
+    SystemDescriptor descriptor() const override
+    {
+        return SystemDescriptor::named("MovementSystem")
+            .writes<Transform>()
+            .nonReentrant();
+    }
+
     int executionOrder() const override
     {
         return 150;
@@ -152,7 +159,11 @@ scene.addSystem("MovementSystem");
 instance. A system controls its own execution order by overriding
 `executionOrder()`; the default is `100`. The built-in animation and physics
 systems use orders `200` and `300`, but must be registered and added like any
-other system. All systems in the scene appear in the editor's Systems panel.
+other system. Equal orders preserve insertion order. Descriptor `before`/`after`
+requirements and read/write conflicts are metadata for a future dependency
+scheduler; they do not change the current sequential loop. That scheduler will
+use explicit dependencies first and numeric order as a deterministic fallback.
+All systems in the scene appear in the editor's Systems panel.
 While editing, every enabled system runs. Systems start disabled, and entering
 Play enables every system on the disposable runtime scene. Use the panel
 checkboxes for temporary overrides. Runtime Pause still stops scene updates

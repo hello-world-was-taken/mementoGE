@@ -13,4 +13,5 @@ public:
     ~TextLayoutSystem() override = default;
 
     void update(SystemContext &context) override;
+    SystemDescriptor descriptor() const override;
 };

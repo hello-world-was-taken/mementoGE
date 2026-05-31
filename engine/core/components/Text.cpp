@@ -7,6 +7,7 @@
 
 #include "editor/DragNDropPayloads.h" // FIXME: core depending on editor
 
+#include <algorithm>
 #include <iostream>
 
 #ifdef EDITOR_BUILD
@@ -16,9 +17,130 @@
 #include <yaml-cpp/yaml.h>
 #endif
 
-// FIXME: for the moment rebuild gets called everyframe in sprite renderer.
-// Also, small letters don't align with the baseline. But that is okay for
-// the current usecase.
+namespace
+{
+struct GlyphLayout
+{
+    char character;
+    float left;
+    float right;
+    float bottom;
+    float top;
+};
+
+struct TextGeometryLayout
+{
+    std::vector<GlyphLayout> glyphs;
+    glm::vec2 boundsMin{0.0f, 0.0f};
+    glm::vec2 size{0.0f, 0.0f};
+};
+
+std::size_t nextCharacterIndex(const std::string &content, std::size_t index)
+{
+    ++index;
+    while (index < content.size() && content[index] == '\r')
+    {
+        ++index;
+    }
+    return index;
+}
+
+TextGeometryLayout layoutText(const Text &text)
+{
+    TextGeometryLayout layout;
+    if (!text.font || text.content.empty() || text.fontSize <= 0.0f || text.font->pixelSize <= 0.0f)
+    {
+        return layout;
+    }
+
+    const Font &font = *text.font;
+    const float scale = text.fontSize / font.pixelSize;
+    const float ascent = (font.metrics.valid ? font.metrics.ascent : font.pixelSize) * scale;
+    const float descent = (font.metrics.valid ? font.metrics.descent : 0.0f) * scale;
+    const float lineGap = (font.metrics.valid ? font.metrics.lineGap : 0.0f) * scale;
+    const float glyphLineHeight = std::max(text.fontSize, ascent - descent);
+    const float lineAdvance = glyphLineHeight + lineGap + text.lineSpacing;
+    const std::size_t lineCount = 1 + static_cast<std::size_t>(std::count(text.content.begin(), text.content.end(), '\n'));
+    const float blockHeight = glyphLineHeight + static_cast<float>(lineCount - 1) * lineAdvance;
+
+    float minX = 0.0f;
+    float maxX = 0.0f;
+    float minY = 0.0f;
+    float maxY = blockHeight;
+    float penX = 0.0f;
+    float baselineY = blockHeight - ascent;
+
+    const auto finishLine = [&]
+    {
+        minX = std::min(minX, penX);
+        maxX = std::max(maxX, penX);
+    };
+
+    for (std::size_t index = 0; index < text.content.size(); ++index)
+    {
+        const char ch = text.content[index];
+        if (ch == '\r')
+        {
+            continue;
+        }
+        if (ch == '\n')
+        {
+            finishLine();
+            penX = 0.0f;
+            baselineY -= lineAdvance;
+            continue;
+        }
+
+        const std::size_t nextIndex = nextCharacterIndex(text.content, index);
+        const bool hasNextOnLine = nextIndex < text.content.size() && text.content[nextIndex] != '\n';
+
+        if (ch == '\t')
+        {
+            penX += font.getPackedChar(' ').xadvance * scale * 4.0f;
+            if (hasNextOnLine)
+            {
+                penX += text.letterSpacing;
+            }
+            continue;
+        }
+
+        const stbtt_packedchar &packedChar = font.getPackedChar(ch);
+        const float left = penX + packedChar.xoff * scale;
+        const float right = penX + packedChar.xoff2 * scale;
+        const float top = baselineY - packedChar.yoff * scale;
+        const float bottom = baselineY - packedChar.yoff2 * scale;
+
+        // Spaces and a few control/fallback glyphs can have no bitmap. Their
+        // advance still contributes to measurement, but no degenerate quad is emitted.
+        if (packedChar.x1 > packedChar.x0 && packedChar.y1 > packedChar.y0)
+        {
+            layout.glyphs.push_back({ch, left, right, bottom, top});
+            minX = std::min(minX, left);
+            maxX = std::max(maxX, right);
+            minY = std::min(minY, bottom);
+            maxY = std::max(maxY, top);
+        }
+
+        penX += packedChar.xadvance * scale;
+        if (hasNextOnLine)
+        {
+            penX += font.getKerning(ch, text.content[nextIndex]) * scale + text.letterSpacing;
+        }
+    }
+
+    finishLine();
+    layout.boundsMin = {minX, minY};
+    layout.size = {maxX - minX, maxY - minY};
+    return layout;
+}
+} // namespace
+
+glm::vec2 Text::measure() const
+{
+    return layoutText(*this).size;
+}
+
+// FIXME: for the moment rebuild gets called every frame in sprite renderer.
 void Text::rebuild(Transform &transform)
 {
     vertices.clear();
@@ -29,34 +151,19 @@ void Text::rebuild(Transform &transform)
         return;
     }
 
-    // Start from the owning object's transform position, then apply the
-    // text's local offset that layout systems (e.g. TextLayoutSystem)
-    // compute. This keeps the game object's Transform stable while
-    // allowing text to be positioned relative to it.
-    glm::vec3 position = transform.position;
-    position.x += localOffset.x;
-    position.y += localOffset.y;
-    for (const char &ch : content)
+    const TextGeometryLayout layout = layoutText(*this);
+    const glm::vec3 origin = transform.position + glm::vec3(localOffset - layout.boundsMin, 0.0f);
+
+    for (const GlyphLayout &glyph : layout.glyphs)
     {
-        const stbtt_packedchar &packedChar = font->getPackedChar(ch);
-        const stbtt_aligned_quad &alignedQuad = font->getAlignedQuad(ch);
-
-        float aspectRatio = 1;
-        float w = static_cast<float>(packedChar.x1 - packedChar.x0);
-        float h = static_cast<float>(packedChar.y1 - packedChar.y0);
-
-        if (h > 0.0f) // division by zero check
-        {
-            aspectRatio = w / h;
-        }
-
-        auto size = fontSize * aspectRatio;
+        const stbtt_aligned_quad &alignedQuad = font->getAlignedQuad(glyph.character);
 
         // The order of vertices of a quad goes top-right, top-left, bottom-left, bottom-right
-        glm::vec3 glyphVertices[4] = {{position.x + size, position.y + size, position.z},
-            {position.x, position.y + size, position.z},
-            {position.x, position.y, position.z},
-            {position.x + size, position.y, position.z}};
+        const glm::vec3 glyphVertices[4] = {
+            {origin.x + glyph.right, origin.y + glyph.top, origin.z},
+            {origin.x + glyph.left, origin.y + glyph.top, origin.z},
+            {origin.x + glyph.left, origin.y + glyph.bottom, origin.z},
+            {origin.x + glyph.right, origin.y + glyph.bottom, origin.z}};
 
         glm::vec2 glyphTextureCoords[4] = {
             {alignedQuad.s1, alignedQuad.t0},
@@ -77,8 +184,6 @@ void Text::rebuild(Transform &transform)
         vertices.push_back(makeVertex(glyphVertices[1], color, glyphTextureCoords[1], texSlot));
         vertices.push_back(makeVertex(glyphVertices[2], color, glyphTextureCoords[2], texSlot));
         vertices.push_back(makeVertex(glyphVertices[3], color, glyphTextureCoords[3], texSlot));
-
-        position += glm::vec3(size, 0.0f, 0.0f);
     }
 }
 
@@ -89,6 +194,8 @@ void Text::serialize(YAML::Emitter &out)
 
     out << YAML::Key << "Content" << YAML::Value << content;
     out << YAML::Key << "FontSize" << YAML::Value << fontSize;
+    out << YAML::Key << "LetterSpacing" << YAML::Value << letterSpacing;
+    out << YAML::Key << "LineSpacing" << YAML::Value << lineSpacing;
 
     out << YAML::Key << "Color" << YAML::Value << YAML::Flow << YAML::BeginSeq << color.r << color.g << color.b
         << color.a << YAML::EndSeq;
@@ -120,6 +227,16 @@ void Text::deserialize(const YAML::Node &in)
         fontSize = textNode["FontSize"].as<float>();
     }
 
+    if (textNode["LetterSpacing"])
+    {
+        letterSpacing = textNode["LetterSpacing"].as<float>();
+    }
+
+    if (textNode["LineSpacing"])
+    {
+        lineSpacing = textNode["LineSpacing"].as<float>();
+    }
+
     if (textNode["Color"])
     {
         auto c = textNode["Color"];
@@ -144,6 +261,16 @@ void Text::drawInspector()
             }
 
             if (ImGui::DragFloat("Font Size", &fontSize, 0.5f, 1.0f, 512.0f))
+            {
+                needsRebuild = true;
+            }
+
+            if (ImGui::DragFloat("Letter Spacing", &letterSpacing, 0.1f, -64.0f, 64.0f))
+            {
+                needsRebuild = true;
+            }
+
+            if (ImGui::DragFloat("Line Spacing", &lineSpacing, 0.1f, -64.0f, 128.0f))
             {
                 needsRebuild = true;
             }

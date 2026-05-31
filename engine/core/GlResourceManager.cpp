@@ -72,6 +72,36 @@ std::shared_ptr<Texture> GlResourceManager::getFontTexture(const std::string &fo
 
     std::array<stbtt_packedchar, charsToIncludeInFontAtlas> packedChars;
     std::array<stbtt_aligned_quad, charsToIncludeInFontAtlas> alignedQuads;
+    FontMetrics metrics;
+
+    stbtt_fontinfo fontInfo;
+    const int fontOffset = stbtt_GetFontOffsetForIndex(fontDataBuf.get(), 0);
+    if (fontOffset >= 0 && stbtt_InitFont(&fontInfo, fontDataBuf.get(), fontOffset))
+    {
+        int ascent;
+        int descent;
+        int lineGap;
+        stbtt_GetFontVMetrics(&fontInfo, &ascent, &descent, &lineGap);
+
+        const float metricScale = stbtt_ScaleForPixelHeight(&fontInfo, fontSize);
+        metrics.ascent = static_cast<float>(ascent) * metricScale;
+        metrics.descent = static_cast<float>(descent) * metricScale;
+        metrics.lineGap = static_cast<float>(lineGap) * metricScale;
+
+        for (unsigned int left = 0; left < charsToIncludeInFontAtlas; ++left)
+        {
+            for (unsigned int right = 0; right < charsToIncludeInFontAtlas; ++right)
+            {
+                const int leftCodepoint = static_cast<int>(codePointOfFirstChar + left);
+                const int rightCodepoint = static_cast<int>(codePointOfFirstChar + right);
+                metrics.kerning[left * charsToIncludeInFontAtlas + right] =
+                    static_cast<float>(stbtt_GetCodepointKernAdvance(&fontInfo, leftCodepoint, rightCodepoint)) *
+                    metricScale;
+            }
+        }
+
+        metrics.valid = true;
+    }
 
     stbtt_pack_context ctx;
 
@@ -95,7 +125,8 @@ std::shared_ptr<Texture> GlResourceManager::getFontTexture(const std::string &fo
 
     for (int i = 0; i < charsToIncludeInFontAtlas; i++)
     {
-        float unusedX, unusedY;
+        float unusedX = 0.0f;
+        float unusedY = 0.0f;
 
         stbtt_GetPackedQuad(packedChars.begin(), // Array of stbtt_packedchar
             fontAtlasWidth,                      // Width of the font atlas texture
@@ -113,6 +144,7 @@ std::shared_ptr<Texture> GlResourceManager::getFontTexture(const std::string &fo
 
     packedCharByPath[fontPath] = std::move(packedChars);
     alignedQuadByPath[fontPath] = std::move(alignedQuads);
+    fontMetricsByPath[fontPath] = std::move(metrics);
 
     // create font texture
     auto texture = std::make_shared<Texture>(fontAtlasBitmap.get(), fontAtlasWidth, fontAtlasHeight);
@@ -128,6 +160,7 @@ void GlResourceManager::forgetTexture(const std::string &texturePath)
     textureByPath.erase(texturePath);
     packedCharByPath.erase(texturePath);
     alignedQuadByPath.erase(texturePath);
+    fontMetricsByPath.erase(texturePath);
 }
 
 std::array<stbtt_packedchar, GlResourceManager::charsToIncludeInFontAtlas> &GlResourceManager::getFontPackedChar(
@@ -149,6 +182,17 @@ std::array<stbtt_aligned_quad, GlResourceManager::charsToIncludeInFontAtlas> &Gl
     if (it == alignedQuadByPath.end())
     {
         throw std::runtime_error("Font is not rasterized! Load the font before trying to access aligned quad.");
+    }
+
+    return it->second;
+}
+
+const FontMetrics &GlResourceManager::getFontMetrics(const std::string &fontPath)
+{
+    auto it = fontMetricsByPath.find(fontPath);
+    if (it == fontMetricsByPath.end())
+    {
+        throw std::runtime_error("Font is not rasterized! Load the font before trying to access its metrics.");
     }
 
     return it->second;

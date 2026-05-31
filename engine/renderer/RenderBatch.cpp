@@ -15,6 +15,7 @@
 #include "util/PathUtils.h"
 #include "util/log_error.h"
 
+#include <algorithm>
 #include <memory>
 #include <sawyer/Logger.h>
 
@@ -98,6 +99,16 @@ void RenderBatch::render(const CameraOld &camera,
     // Custom effects can animate in both the editor viewport and gameplay,
     // without depending on a scene system to feed them a clock.
     shader->setUniform1f("u_GlobalTime", Window::getWindowTime());
+
+    // The shader declares all 16 sampler entries, so macOS validates all of
+    // their assigned texture units even when a batch uses fewer textures.
+    // Point unused samplers at unit 0 instead of unbound texture units. The
+    // vertex texture slot still selects only the entries used by this batch.
+    std::fill(m_textureUnits.begin(), m_textureUnits.end(), 0);
+    for (size_t slot = 0; slot < textures.size(); ++slot)
+    {
+        m_textureUnits[slot] = static_cast<int>(slot);
+    }
     shader->setMultipleTextureUnits("textures", m_textureUnits.data(), m_textureUnits.size());
 
     for (size_t slot = 0; slot < textures.size(); ++slot)

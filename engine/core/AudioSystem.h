@@ -41,6 +41,7 @@ public:
     ~AudioSystem() = default;
 
     void update(SystemContext &context) override;
+    SystemDescriptor descriptor() const override;
     int executionOrder() const override
     {
         return 150;

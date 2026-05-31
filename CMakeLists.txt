@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(OpenGL REQUIRED)
+find_package(Threads REQUIRED)
 
 # turn on glew static options
 set(glew-cmake_BUILD_SHARED OFF CACHE BOOL "" FORCE)
@@ -62,6 +63,7 @@ add_library(${PROJECT_NAME} STATIC
     engine/core/AssetManager.cpp
     engine/core/AnimationPlayer.cpp
     engine/core/SystemRegistry.cpp
+    engine/core/jobs/JobSystem.cpp
     engine/core/AnimationSystem.cpp
     engine/core/Physics2D.cpp
     engine/core/PhysicsSystem.cpp
@@ -129,6 +131,7 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     PUBLIC glfw yaml-cpp box2d OpenAL sawyer
     PUBLIC OpenGL::GL
+    PUBLIC Threads::Threads
     PUBLIC libglew_static
     PRIVATE opengl
 )
@@ -162,6 +165,10 @@ if(BUILD_TESTING)
         tests/unit/PhysicsTests.cpp
         tests/unit/FollowSystemTests.cpp
         tests/unit/AssetLoadingTests.cpp
+        tests/unit/JobSystemTests.cpp
+        tests/unit/SystemDescriptorTests.cpp
+        tests/unit/FontTests.cpp
+        tests/unit/TextTests.cpp
         tests/unit/AnimationPlayerTests.cpp
         tests/unit/TileMapTests.cpp
     )

@@ -8,4 +8,5 @@ class ParticleSystem : public ISystem
 {
 public:
     void update(SystemContext &context) override;
+    SystemDescriptor descriptor() const override;
 };

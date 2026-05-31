@@ -100,6 +100,7 @@ protected:
             // FIXME: the only reason we have m_gameCamera is because render
             // accepts CameraOld and not the Camera gameobject component.
             m_spriteRenderer.render(m_gameCamera, gameObjects);
+
         }
         else
         {

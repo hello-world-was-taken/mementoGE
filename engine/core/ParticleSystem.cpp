@@ -26,6 +26,17 @@ template <typename T> T random(T min, T max)
     }
 }
 
+SystemDescriptor ParticleSystem::descriptor() const
+{
+    return SystemDescriptor::named("ParticleSystem")
+        .reads<Transform>()
+        .writes<ParticleEmitter>()
+        .readsResource(SystemResource::Time)
+        .writesResource(SystemResource::Random)
+        .after("PhysicsSystem")
+        .nonReentrant();
+}
+
 void ParticleSystem::update(SystemContext &context)
 {
     entt::registry &registry = context.registry;
