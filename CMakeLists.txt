@@ -49,6 +49,7 @@ add_library(${PROJECT_NAME} STATIC
     engine/core/components/AudioSource.cpp
 
     engine/core/Window.cpp
+    engine/core/FrameContext.cpp
     engine/core/Camera.cpp  # TODO: remove. we have it as a component now
     engine/core/CameraUtils.cpp
     engine/core/SceneCamera.cpp
@@ -164,6 +165,8 @@ if(BUILD_TESTING)
         tests/unit/SceneHistoryTests.cpp
         tests/unit/PhysicsTests.cpp
         tests/unit/FollowSystemTests.cpp
+        tests/unit/FrameContextTests.cpp
+        tests/unit/InputSnapshotTests.cpp
         tests/unit/AssetLoadingTests.cpp
         tests/unit/JobSystemTests.cpp
         tests/unit/SystemDescriptorTests.cpp

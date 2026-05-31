@@ -15,7 +15,8 @@ CameraBoundsRenderer::CameraBoundsRenderer()
 
 CameraBoundsRenderer::~CameraBoundsRenderer() = default;
 
-void CameraBoundsRenderer::render(const CameraOld &editorCamera, const std::vector<GameObject> &gameObjects)
+void CameraBoundsRenderer::render(
+    const CameraOld &editorCamera, double elapsedTime, const std::vector<GameObject> &gameObjects)
 {
     if (!m_batch)
     {
@@ -35,7 +36,7 @@ void CameraBoundsRenderer::render(const CameraOld &editorCamera, const std::vect
     size_t quadCount = m_vertices.size() / 4;
     size_t indexCount = quadCount * 6;
 
-    m_batch->render(editorCamera, static_cast<int>(indexCount));
+    m_batch->render(editorCamera, elapsedTime, static_cast<int>(indexCount));
 }
 
 void CameraBoundsRenderer::updateVertices(const std::vector<GameObject> &gameObjects)

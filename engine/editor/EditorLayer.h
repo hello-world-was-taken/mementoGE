@@ -37,7 +37,7 @@ public:
     EditorContext &getEditorContext();
 
 private:
-    void updateFrame();
+    void updateFrame(const FrameContext &frame);
     void renderMainMenuBar();
 
     // imgui panels
@@ -50,7 +50,7 @@ private:
 
     std::vector<std::string> getTextureFiles(const std::string &folderPath);
 
-    void handleEditorShortcuts();
+    void handleEditorShortcuts(const InputSnapshot &input);
 
 private:
     Window m_window;

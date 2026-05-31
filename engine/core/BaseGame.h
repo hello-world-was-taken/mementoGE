@@ -8,6 +8,7 @@
 #include "core/components/Transform.h"
 
 #include "renderer/SpriteRenderer.h"
+#include "util/Time.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <string>
@@ -18,7 +19,7 @@ public:
     virtual ~BaseGame() = default;
 
     virtual void onStart() = 0;
-    virtual void onUpdate() = 0;
+    virtual void onUpdate(const FrameContext &frame) = 0;
     virtual void onShutdown() = 0;
 
     // Entry point for the engine user (they call this, nothing else)
@@ -33,19 +34,15 @@ protected:
     void runLoop()
     {
         glfwSwapInterval(1);
+        Time::reset();
 
         while (!glfwWindowShouldClose(m_window.getGlfwWindow()))
         {
             Time::update();
-            glfwPollEvents();
-
-            updateFrame();
-
-            // We reset per-frame input state here because glfwPollEvents() (called at the
-            // start of the loop) populates the state. If we called
-            // beginFrame() immediately after polling but before updateFrame(), we would
-            // wipe out the input data before the game logic could read it.
             EventHandler::instance()->beginFrame();
+            glfwPollEvents();
+            const FrameContext frame = captureFrameContext(Time::deltaTime(), Time::elapsedTime());
+            updateFrame(frame);
 
             glfwSwapBuffers(m_window.getGlfwWindow());
         }
@@ -56,16 +53,16 @@ protected:
 
     // when changing consider if we should make similar updates
     // to editor layer loop as well
-    void updateFrame()
+    void updateFrame(const FrameContext &frame)
     {
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // User logic
-        onUpdate();
+        onUpdate(frame);
 
         // Engine logic
-        m_sceneManager.update();
+        m_sceneManager.update(frame);
 
         // FIXME: the whole rendering specific thing that is happening
         // here should be moved to a rendering system. It doesn't make
@@ -85,7 +82,7 @@ protected:
             float cameraAspect = w / h;
 
             // Letterbox/pillarbox: fit the camera's aspect ratio into the window
-            auto [vpX, vpY, vpW, vpH] = m_window.getViewportForAspect(cameraAspect);
+            auto [vpX, vpY, vpW, vpH] = frame.window.getViewportForAspect(cameraAspect);
 
             // FIXME: anything specific to glfw shouldn't be called here
             // Window.h should handle this as well
@@ -99,7 +96,7 @@ protected:
 
             // FIXME: the only reason we have m_gameCamera is because render
             // accepts CameraOld and not the Camera gameobject component.
-            m_spriteRenderer.render(m_gameCamera, gameObjects);
+            m_spriteRenderer.render(m_gameCamera, frame.elapsedTime, gameObjects);
 
         }
         else

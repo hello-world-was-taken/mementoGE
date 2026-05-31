@@ -18,6 +18,7 @@
 
 #include "util/PathUtils.h"
 #include "util/LogChannels.h"
+#include "util/Time.h"
 
 #include <filesystem>
 #include <fstream>
@@ -53,13 +54,15 @@ EditorContext &EditorLayer::getEditorContext()
 void EditorLayer::run()
 {
     glfwSwapInterval(1);
+    Time::reset();
 
     while (!glfwWindowShouldClose(m_window.getGlfwWindow()))
     {
         Time::update();
+        EventHandler::instance()->beginFrame();
         glfwPollEvents();
-
-        updateFrame();
+        m_ctx.frame = captureFrameContext(Time::deltaTime(), Time::elapsedTime());
+        updateFrame(m_ctx.frame);
 
         glfwSwapBuffers(m_window.getGlfwWindow());
     }
@@ -67,12 +70,12 @@ void EditorLayer::run()
     glfwTerminate();
 }
 
-void EditorLayer::updateFrame()
+void EditorLayer::updateFrame(const FrameContext &frame)
 {
     ImGuiWrapper::ImGuiFrame(
         [&]()
         {
-            handleEditorShortcuts();
+            handleEditorShortcuts(frame.input);
 
             if (m_ctx.isRuntimeActive())
             {
@@ -90,7 +93,7 @@ void EditorLayer::updateFrame()
             // Continue rendering while paused, but do not advance scene systems.
             if (!m_ctx.isRuntimeActive() || m_ctx.isRuntimePlaying())
             {
-                activeScene.update(!m_ctx.isRuntimeActive());
+                activeScene.update(frame, !m_ctx.isRuntimeActive());
             }
 
             // render grid
@@ -101,12 +104,10 @@ void EditorLayer::updateFrame()
 
             CameraOld &camera =
                 m_ctx.isRuntimeActive() ? getPlayCamera(activeScene) : static_cast<CameraOld &>(m_ctx.editorCamera);
-            m_ctx.renderer2D.renderScene(camera, activeScene.getGameObjects(), m_ctx.selectedObjects);
+            m_ctx.renderer2D.renderScene(camera, frame.elapsedTime, activeScene.getGameObjects(), m_ctx.selectedObjects);
 
             drawEditorUI();
         });
-
-    EventHandler::instance()->beginFrame();
 }
 
 void EditorLayer::drawEditorUI()
@@ -280,7 +281,7 @@ void EditorLayer::renderGrid()
     }
 
     constexpr int GRID_TILE_SIZE = 16;
-    m_gridRenderer.render(m_ctx.editorCamera, GRID_TILE_SIZE);
+    m_gridRenderer.render(m_ctx.editorCamera, m_ctx.frame.elapsedTime, GRID_TILE_SIZE);
 }
 
 CameraOld &EditorLayer::getPlayCamera(Scene &scene)
@@ -464,22 +465,16 @@ void EditorLayer::renderEditorProperties()
     }
 }
 
-// TODO, might be a good idea to move this to a separate thread
-void EditorLayer::handleEditorShortcuts()
+void EditorLayer::handleEditorShortcuts(const InputSnapshot &input)
 {
-    // if it is play mode, the player controller should process events.
-    // as a side note, we may need to make the events last for the current frame
-    // and reset them on next render. Doing that will help us have multiple processors
+    // Shortcut events are broadcast in this frame only. Runtime scenes ignore editor shortcuts.
     if (m_ctx.isRuntimeActive())
     {
         return;
     }
 
-    EventHandler *eventHandler = EventHandler::instance();
-
-    while (eventHandler->hasPendingEvents())
+    for (const Event &e : input.events)
     {
-        Event e = eventHandler->nextEvent();
         LOG_DEBUG(LogChannel::Editor, "Event '{}': cmd={}", e.name, e.cmd);
         if (e.type == EventType::Key || e.type == EventType::KeyRepeat)
         {
@@ -531,9 +526,9 @@ void EditorLayer::handleEditorShortcuts()
     // These work in addition to the toolbar buttons and temporarily
     // override the interaction mode while the key is held.
 
-    bool spaceHeld = eventHandler->isKeyPressed(KeyType::Space);
-    bool mHeld = eventHandler->isKeyPressed(KeyType::M);
-    bool sHeld = eventHandler->isKeyPressed(KeyType::S);
+    bool spaceHeld = input.isKeyHeld(KeyType::Space);
+    bool mHeld = input.isKeyHeld(KeyType::M);
+    bool sHeld = input.isKeyHeld(KeyType::S);
 
     EditorInteractionMode newMode = m_ctx.baseInteractionMode;
 

@@ -9,7 +9,6 @@ SystemDescriptor AnimationSystem::descriptor() const
 {
     return SystemDescriptor::named("AnimationSystem")
         .writes<Animator, Sprite, BoxCollider2D, Sensor2D>()
-        .readsResource(SystemResource::Time)
         .requestsStructuralChanges()
         .before("PhysicsSystem")
         .nonReentrant();
@@ -31,7 +30,7 @@ void AnimationSystem::update(SystemContext &context)
         {
             registry.emplace<Sprite>(entity);
         }
-        animator.update();
+        animator.update(context.frame.deltaTime);
 
         auto &sprite = registry.get<Sprite>(entity);
         const bool flipX = sprite.flipX;

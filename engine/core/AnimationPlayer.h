@@ -7,9 +7,8 @@ public:
     AnimationPlayer() = default;
     AnimationPlayer(const Animation &animation);
 
-    // update should be called every frame
-    // TODO: should we pass deltaTime or keep on using Time::deltaTime()
-    void update();
+    // Advances playback using the caller's captured frame delta in seconds.
+    void update(float deltaTime);
     const Frame &getCurrentFrame() const;
 
     void play(const Animation &animation, bool loop = true);

@@ -79,7 +79,7 @@ PhysicsRenderer::~PhysicsRenderer()
     LOG_DEBUG(LogChannel::Renderer, "PhysicsRenderer destructor called");
 }
 
-void PhysicsRenderer::render(const CameraOld &camera, const std::vector<GameObject> &gameObjects)
+void PhysicsRenderer::render(const CameraOld &camera, double elapsedTime, const std::vector<GameObject> &gameObjects)
 {
 
     if (m_batch == nullptr)
@@ -95,7 +95,7 @@ void PhysicsRenderer::render(const CameraOld &camera, const std::vector<GameObje
     size_t quadCount = m_vertices.size() / 4;
     size_t indexCount = quadCount * INDICES_PER_QUAD;
 
-    m_batch->render(camera, indexCount);
+    m_batch->render(camera, elapsedTime, indexCount);
 }
 
 void PhysicsRenderer::updateSensor2DVertices(const GameObject &gameObject, float lineThickness)

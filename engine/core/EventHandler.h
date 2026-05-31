@@ -2,19 +2,33 @@
 
 #include "core/Event.h"
 #include "core/GLIncludes.h"
+#include "core/InputSnapshot.h"
 
+#include <cstddef>
 #include <glm/glm.hpp>
-#include <map>
-#include <queue>
+#include <unordered_map>
+#include <vector>
 
-// TODO: handle mouse events here as well
+// TODO: Move to a bounded input-event queue containing press/release, mouse
+// movement/scroll, and continued-held events generated every frame from GLFW
+// state polling on the main thread (not GLFW_REPEAT). Publish the ordered events
+// as an immutable per-frame batch that all systems can read without popping.
+// Migrate InputSnapshot state queries to read that batch instead of copied maps.
+
+// Main/platform-thread capture and editor polling only; this live state is not
+// synchronized. Systems read InputSnapshot through their const FrameContext.
 class EventHandler
 {
 public:
+    static constexpr std::size_t MAX_EVENTS_PER_CAPTURE = 4096;
+
     static EventHandler *instance();
 
-    // Lifecycle
+    // Start before polling events. Clears prior frame edges, deltas, and events.
     void beginFrame();
+    // Drains the event batch while leaving polling state available to the
+    // main-thread editor until beginFrame() starts the next frame.
+    InputSnapshot captureSnapshot();
 
     // Keyboard Polling
     bool isKeyPressed(KeyType key) const;
@@ -30,10 +44,6 @@ public:
     glm::vec2 getDragStart() const;
     void setSceneViewportBounds(glm::vec2 min, glm::vec2 max);
 
-    // Event Queue
-    bool hasPendingEvents() const;
-    Event nextEvent();
-
     // The idea here is we have an event listener for other windowing
     // systems we can add later as well. Then our window would choose
     // which one to use.
@@ -46,9 +56,14 @@ private:
     EventHandler() = default;
 
     bool isMouseInsideSceneViewport() const;
+    void recordEvent(Event event);
+    void logDroppedEvents() const;
 
-    std::queue<Event> m_eventQueue;
+    std::vector<Event> m_events;
+    std::size_t m_droppedEventCount = 0;
     std::unordered_map<KeyType, bool> m_keyStates;
+    std::unordered_map<KeyType, bool> m_keyPressedFrame;
+    std::unordered_map<KeyType, bool> m_keyReleasedFrame;
 
     // Mouse State
     std::unordered_map<int, bool> m_mouseButtonStates;        // Is currently held down?
@@ -56,7 +71,7 @@ private:
     std::unordered_map<int, bool> m_mouseButtonReleasedFrame; // Was released this frame?
 
     glm::vec2 m_mousePos{0.0f, 0.0f};
-    glm::vec2 m_prevMousePos{0.0f, 0.0f};
+    glm::vec2 m_mouseDelta{0.0f, 0.0f};
     glm::vec2 m_scrollDelta{0.0f, 0.0f};
     glm::vec2 m_dragStart{0.0f, 0.0f};
     glm::vec2 m_sceneViewportMin{0.0f, 0.0f};

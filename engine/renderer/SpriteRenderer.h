@@ -19,7 +19,7 @@ public:
     SpriteRenderer();
     ~SpriteRenderer();
 
-    void render(const CameraOld &camera, const std::vector<GameObject> &gameObjects);
+    void render(const CameraOld &camera, double elapsedTime, const std::vector<GameObject> &gameObjects);
 
 private:
     std::unique_ptr<RenderBatch> m_batch;

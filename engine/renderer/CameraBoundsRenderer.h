@@ -21,7 +21,7 @@ public:
     // Draw a thin box representing the gameplay camera's view.
     // For now this is a fixed box at the origin using the logical
     // resolution, rendered with the editor camera.
-    void render(const CameraOld &editorCamera, const std::vector<GameObject> &gameObjects);
+    void render(const CameraOld &editorCamera, double elapsedTime, const std::vector<GameObject> &gameObjects);
 
 private:
     void updateVertices(const std::vector<GameObject> &gameObjects);

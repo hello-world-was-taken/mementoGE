@@ -17,7 +17,7 @@ public:
     GizmoRenderer(const GizmoRenderer &) = delete;
     GizmoRenderer &operator=(const GizmoRenderer &) = delete;
 
-    void render(const CameraOld &camera, const std::vector<GameObject> &selectedObjects);
+    void render(const CameraOld &camera, double elapsedTime, const std::vector<GameObject> &selectedObjects);
 
 private:
     void updateVertices(const CameraOld &camera, const std::vector<GameObject> &selectedObjects);

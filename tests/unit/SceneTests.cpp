@@ -54,11 +54,11 @@ TEST(SceneTests, DisabledSystemDoesNotUpdateAndEnablementIsNotSerialized)
     scene.addSystem(systemName);
     scene.setAllSystemsEnabled(true);
     scene.play();
-    scene.update();
+    scene.update(FrameContext{});
     EXPECT_EQ(CountingSystem::updateCount, 1);
 
     ASSERT_TRUE(scene.setSystemEnabled(systemName, false));
-    scene.update();
+    scene.update(FrameContext{});
     EXPECT_EQ(CountingSystem::updateCount, 1);
 
     const auto info = scene.getSystemInfo();
@@ -127,19 +127,19 @@ TEST(SceneTests, EnabledStateControlsEditModeExecution)
 
     Scene scene{"edit mode system test"};
     scene.addSystem(systemName);
-    scene.update(true);
+    scene.update(FrameContext{}, true);
     EXPECT_EQ(CountingSystem::updateCount, 0);
 
     ASSERT_TRUE(scene.setSystemEnabled(systemName, true));
-    scene.update(true);
+    scene.update(FrameContext{}, true);
     EXPECT_EQ(CountingSystem::updateCount, 1);
 
     ASSERT_TRUE(scene.setSystemEnabled(systemName, false));
-    scene.update(true);
+    scene.update(FrameContext{}, true);
     EXPECT_EQ(CountingSystem::updateCount, 1);
 
     scene.pause();
-    scene.update();
+    scene.update(FrameContext{});
     EXPECT_EQ(CountingSystem::updateCount, 1);
 }
 

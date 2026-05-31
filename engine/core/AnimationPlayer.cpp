@@ -1,21 +1,18 @@
 #include "core/AnimationPlayer.h"
 
-#include "util/Time.h"
-
 AnimationPlayer::AnimationPlayer(const Animation &animation)
 {
     play(animation);
 }
 
-void AnimationPlayer::update()
+void AnimationPlayer::update(float deltaTime)
 {
     if (!m_playing)
     {
         return;
     }
 
-    m_frameTimer += Time::deltaTime();
-    ;
+    m_frameTimer += deltaTime;
     const Frame &frame = mp_animation->frames[m_currentFrame];
 
     if (m_frameTimer >= frame.duration)

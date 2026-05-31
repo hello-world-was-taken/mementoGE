@@ -6,7 +6,6 @@
 #include "core/components/RenderLayer.h"
 #include "core/components/RigidBody2D.h"
 #include "core/components/Transform.h"
-#include "util/Time.h"
 
 #include <algorithm>
 #include <cmath>
@@ -156,7 +155,7 @@ void FollowSystem::update(SystemContext &context)
             continue;
         }
 
-        const float deltaTime = context.deltaTime;
+        const float deltaTime = context.frame.deltaTime;
         if (deltaTime <= 0.0f)
         {
             followerRigidBody.velocity = glm::vec2(0.0f, 0.0f);

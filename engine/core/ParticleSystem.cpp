@@ -3,8 +3,6 @@
 
 #include "core/ParticleSystem.h"
 
-#include "util/Time.h"
-
 #include <entt/entt.hpp>
 
 // TODO: move this to util
@@ -31,7 +29,6 @@ SystemDescriptor ParticleSystem::descriptor() const
     return SystemDescriptor::named("ParticleSystem")
         .reads<Transform>()
         .writes<ParticleEmitter>()
-        .readsResource(SystemResource::Time)
         .writesResource(SystemResource::Random)
         .after("PhysicsSystem")
         .nonReentrant();
@@ -40,7 +37,7 @@ SystemDescriptor ParticleSystem::descriptor() const
 void ParticleSystem::update(SystemContext &context)
 {
     entt::registry &registry = context.registry;
-    float dt = Time::deltaTime();
+    const float dt = context.frame.deltaTime;
     auto view = registry.view<Transform, ParticleEmitter>();
 
     for (entt::entity entity : view)

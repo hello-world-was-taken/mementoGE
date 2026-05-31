@@ -1,7 +1,8 @@
 #include "core/EventHandler.h"
+#include "util/LogChannels.h"
 
-#include <imgui.h>
-#include <iostream>
+#include <sawyer/Logger.h>
+#include <utility>
 
 EventHandler *EventHandler::instance()
 {
@@ -27,15 +28,17 @@ void EventHandler::glfwKeyCallBack(GLFWwindow *window, int key, int scancode, in
             {
             case GLFW_PRESS:
                 listener->m_keyStates[type] = true;
-                listener->m_eventQueue.push(Event{name, EventType::Key, true, type, cmd, ctrl, shift, alt});
+                listener->m_keyPressedFrame[type] = true;
+                listener->recordEvent(Event{name, EventType::Key, true, type, cmd, ctrl, shift, alt});
                 break;
             case GLFW_REPEAT:
                 listener->m_keyStates[type] = true;
-                listener->m_eventQueue.push(Event{name, EventType::KeyRepeat, true, type, cmd, ctrl, shift, alt});
+                listener->recordEvent(Event{name, EventType::KeyRepeat, true, type, cmd, ctrl, shift, alt});
                 break;
             case GLFW_RELEASE:
                 listener->m_keyStates[type] = false;
-                listener->m_eventQueue.push(Event{name, EventType::KeyRelease, false, type, cmd, ctrl, shift, alt});
+                listener->m_keyReleasedFrame[type] = true;
+                listener->recordEvent(Event{name, EventType::KeyRelease, false, type, cmd, ctrl, shift, alt});
                 break;
             }
         }
@@ -71,22 +74,49 @@ void EventHandler::glfwKeyCallBack(GLFWwindow *window, int key, int scancode, in
     updateKey(GLFW_KEY_Z, KeyType::Z, "ZKey");
 }
 
-bool EventHandler::hasPendingEvents() const
+void EventHandler::recordEvent(Event event)
 {
-    return !m_eventQueue.empty();
+    if (m_events.size() >= MAX_EVENTS_PER_CAPTURE)
+    {
+        ++m_droppedEventCount;
+        return;
+    }
+    m_events.push_back(std::move(event));
 }
 
-Event EventHandler::nextEvent()
+void EventHandler::logDroppedEvents() const
 {
-    if (m_eventQueue.empty())
+    if (m_droppedEventCount > 0)
     {
-        return Event{"None", EventType::None, false, KeyType::None};
+        LOG_WARN(LogChannel::Input,
+            "Dropped {} input events because the capture buffer reached its capacity of {}",
+            m_droppedEventCount,
+            MAX_EVENTS_PER_CAPTURE);
     }
+}
 
-    Event event = m_eventQueue.front();
-    m_eventQueue.pop();
-
-    return event;
+InputSnapshot EventHandler::captureSnapshot()
+{
+    InputSnapshot snapshot;
+    snapshot.keyHeld = m_keyStates;
+    snapshot.keyPressed = m_keyPressedFrame;
+    snapshot.keyReleased = m_keyReleasedFrame;
+    snapshot.mouseHeld = m_mouseButtonStates;
+    snapshot.mousePressed = m_mouseButtonPressedFrame;
+    snapshot.mouseReleased = m_mouseButtonReleasedFrame;
+    snapshot.mousePos = m_mousePos;
+    snapshot.mouseDelta = m_mouseDelta;
+    snapshot.scrollDelta = m_scrollDelta;
+    snapshot.dragStart = m_dragStart;
+    snapshot.sceneViewportMin = m_sceneViewportMin;
+    snapshot.sceneViewportMax = m_sceneViewportMax;
+    snapshot.hasSceneViewportBounds = m_hasSceneViewportBounds;
+    snapshot.events = std::move(m_events);
+    snapshot.droppedEventCount = m_droppedEventCount;
+    logDroppedEvents();
+    m_events.clear();
+    m_droppedEventCount = 0;
+    return snapshot;
 }
 
 bool EventHandler::isKeyPressed(KeyType key) const
@@ -97,10 +127,16 @@ bool EventHandler::isKeyPressed(KeyType key) const
 
 void EventHandler::beginFrame()
 {
-    m_prevMousePos = m_mousePos;
+    // Report overflow even if the previous batch was never captured.
+    logDroppedEvents();
+    m_mouseDelta = {0.0f, 0.0f};
     m_scrollDelta = {0.0f, 0.0f};
+    m_keyPressedFrame.clear();
+    m_keyReleasedFrame.clear();
     m_mouseButtonPressedFrame.clear();
     m_mouseButtonReleasedFrame.clear();
+    m_events.clear();
+    m_droppedEventCount = 0;
 }
 
 void EventHandler::glfwMouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
@@ -139,29 +175,29 @@ void EventHandler::glfwMouseButtonCallback(GLFWwindow *window, int button, int a
 
         listener->m_mouseButtonStates[button] = true;
         listener->m_mouseButtonPressedFrame[button] = true;
-        listener->m_mouseButtonReleasedFrame[button] = false;
 
         event.name = "MouseButtonPress_" + std::to_string(button);
         event.type = EventType::MouseButtonPress;
-        listener->m_eventQueue.push(event);
+        listener->recordEvent(std::move(event));
     }
     else if (action == GLFW_RELEASE)
     {
         listener->m_mouseButtonStates[button] = false;
-        listener->m_mouseButtonPressedFrame[button] = false;
         listener->m_mouseButtonReleasedFrame[button] = true;
 
         event.name = "MouseButtonRelease_" + std::to_string(button);
         event.type = EventType::MouseButtonRelease;
-        listener->m_eventQueue.push(event);
+        listener->recordEvent(std::move(event));
     }
 }
 
 void EventHandler::glfwCursorPosCallback(GLFWwindow *window, double xPos, double yPos)
 {
     auto *listener = EventHandler::instance();
-    listener->m_prevMousePos = listener->m_mousePos;
-    listener->m_mousePos = {static_cast<float>(xPos), static_cast<float>(yPos)};
+    const glm::vec2 nextPosition{static_cast<float>(xPos), static_cast<float>(yPos)};
+    listener->m_mouseDelta +=
+        glm::vec2{nextPosition.x - listener->m_mousePos.x, listener->m_mousePos.y - nextPosition.y};
+    listener->m_mousePos = nextPosition;
 
     // TODO: I don't think we need push an event for cursor position.
     // Storing the location should be fine.
@@ -170,14 +206,14 @@ void EventHandler::glfwCursorPosCallback(GLFWwindow *window, double xPos, double
 void EventHandler::glfwScrollCallback(GLFWwindow *window, double xOffset, double yOffset)
 {
     auto *listener = EventHandler::instance();
-    listener->m_scrollDelta = {static_cast<float>(xOffset), static_cast<float>(yOffset)};
+    listener->m_scrollDelta += glm::vec2{static_cast<float>(xOffset), static_cast<float>(yOffset)};
 
     Event event;
     event.name = "MouseScroll";
     event.type = EventType::MouseScroll;
     event.scrollX = static_cast<float>(xOffset);
     event.scrollY = static_cast<float>(yOffset);
-    listener->m_eventQueue.push(event);
+    listener->recordEvent(std::move(event));
 }
 
 bool EventHandler::isMouseButtonHeld(int button) const
@@ -232,7 +268,7 @@ glm::vec2 EventHandler::getMouseDelta() const
         return {0.0f, 0.0f};
     }
 
-    return {m_mousePos.x - m_prevMousePos.x, m_prevMousePos.y - m_mousePos.y};
+    return m_mouseDelta;
 }
 
 glm::vec2 EventHandler::getScrollDelta() const

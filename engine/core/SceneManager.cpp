@@ -24,9 +24,9 @@ SceneManager::~SceneManager()
     LOG_DEBUG(LogChannel::SceneManager, "SceneManager destructor called");
 }
 
-void SceneManager::update()
+void SceneManager::update(const FrameContext &frame)
 {
-    getActiveScene().update();
+    getActiveScene().update(frame);
 }
 
 void SceneManager::loadScene(std::string sceneName)

@@ -407,7 +407,7 @@ void GameObjectEditorPanel::drawPreview()
     if (object->hasComponent<Animator>())
     {
         Animator &animator = object->getComponent<Animator>();
-        animator.update();
+        animator.update(m_ctx.frame.deltaTime);
         if (animator.animationPlayer.hasAnimation())
         {
             const bool flipX = hasPreviewSprite ? previewSprite.flipX : false;

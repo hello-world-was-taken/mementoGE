@@ -73,7 +73,7 @@ SpriteRenderer::~SpriteRenderer()
 {
 }
 
-void SpriteRenderer::render(const CameraOld &camera, const std::vector<GameObject> &gameObjects)
+void SpriteRenderer::render(const CameraOld &camera, double elapsedTime, const std::vector<GameObject> &gameObjects)
 {
     if (!m_batch)
     {
@@ -95,6 +95,7 @@ void SpriteRenderer::render(const CameraOld &camera, const std::vector<GameObjec
 
         m_batch->setVertexData(m_vertices);
         m_batch->render(camera,
+            elapsedTime,
             static_cast<int>((m_vertices.size() / VERTEX_PER_QUAD) * INDICES_PER_QUAD),
             m_currentShader,
             batchTextures);

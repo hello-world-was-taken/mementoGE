@@ -33,7 +33,9 @@ TEST(FollowSystemTests, ClampsCameraToBackgroundBounds)
 
     FollowSystem system;
     Physics2D physics{{0.0f, 0.0f}};
-    SystemContext context{registry, physics, 1.0f / 60.0f};
+    FrameContext frame;
+    frame.deltaTime = 1.0f / 60.0f;
+    SystemContext context{registry, physics, frame};
 
     targetTransform.position = {-1000.0f, -1000.0f, 0.0f};
     system.update(context);

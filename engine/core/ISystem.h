@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/FrameContext.h"
 #include "core/Physics2D.h"
 #include "core/SystemDescriptor.h"
 
@@ -9,7 +10,7 @@ struct SystemContext
 {
     entt::registry &registry;
     Physics2D &physics;
-    float deltaTime;
+    const FrameContext &frame; // Immutable inputs; registry/physics access is still mutable.
     bool editMode = false;
 };
 

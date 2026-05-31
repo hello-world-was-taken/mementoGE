@@ -41,7 +41,7 @@ public:
     Scene(Scene &&other) noexcept;      // move constructor
     Scene &operator=(Scene &&other);    // move assignment operator
 
-    void update(bool editMode = false);
+    void update(const FrameContext &frame, bool editMode = false);
 
     void play();
     void pause();

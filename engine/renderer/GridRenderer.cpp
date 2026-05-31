@@ -81,7 +81,7 @@ void GridRenderer::generateGridLines(const CameraOld &camera, int tileSize)
     }
 }
 
-void GridRenderer::render(const CameraOld &camera, int tileSize)
+void GridRenderer::render(const CameraOld &camera, double elapsedTime, int tileSize)
 {
     m_shader->use();
     m_shader->setUniform4fv("u_view_matrix", camera.getViewMatrix());
@@ -93,5 +93,5 @@ void GridRenderer::render(const CameraOld &camera, int tileSize)
     m_batch->setVertexData(m_vertices);
 
     const size_t quadCount = m_vertices.size() / 4;
-    m_batch->render(camera, static_cast<int>(quadCount * INDICES_PER_QUAD), m_shader);
+    m_batch->render(camera, elapsedTime, static_cast<int>(quadCount * INDICES_PER_QUAD), m_shader);
 }

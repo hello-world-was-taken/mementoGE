@@ -15,7 +15,7 @@ public:
     Animator() = default;
 
     bool play(std::string name, bool loop = true);
-    void update();
+    void update(float deltaTime);
     const Sprite &getCurrentSprite() const;
     const Frame &getCurrentFrame() const;
 

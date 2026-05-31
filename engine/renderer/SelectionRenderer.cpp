@@ -16,7 +16,8 @@ SelectionRenderer::SelectionRenderer()
 
 SelectionRenderer::~SelectionRenderer() = default;
 
-void SelectionRenderer::render(const CameraOld &camera, const std::vector<GameObject> &selectedObjects)
+void SelectionRenderer::render(
+    const CameraOld &camera, double elapsedTime, const std::vector<GameObject> &selectedObjects)
 {
     if (m_batch == nullptr)
     {
@@ -31,7 +32,7 @@ void SelectionRenderer::render(const CameraOld &camera, const std::vector<GameOb
     size_t quadCount = m_vertices.size() / 4;
     size_t indexCount = quadCount * INDICES_PER_QUAD;
 
-    m_batch->render(camera, indexCount);
+    m_batch->render(camera, elapsedTime, indexCount);
 }
 
 void SelectionRenderer::updateVertices(const std::vector<GameObject> &selectedObjects)

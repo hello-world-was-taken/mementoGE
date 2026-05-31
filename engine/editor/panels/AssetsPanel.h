@@ -18,7 +18,7 @@ public:
 private:
     void drawContentPanel();
     void drawSpritePanel();
-    void drawAnimationPanel();
+    void drawAnimationPanel(float deltaTime);
     void drawBoundTextures();
     void requestAssetDeletion(const std::filesystem::path &assetPath);
     void drawDeleteAssetPopup();

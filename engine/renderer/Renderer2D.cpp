@@ -10,7 +10,6 @@
 
 #include "core/GameObject.h"
 #include "core/GlResourceManager.h"
-#include "core/Window.h"
 
 #include <algorithm>
 #include <type_traits>
@@ -95,11 +94,14 @@ unsigned int Renderer2D::getColorTexture()
 }
 
 void Renderer2D::renderScene(
-    const CameraOld &camera, const std::vector<GameObject> &objects, const std::vector<GameObject> &selectedObjects)
+    const CameraOld &camera,
+    double elapsedTime,
+    const std::vector<GameObject> &objects,
+    const std::vector<GameObject> &selectedObjects)
 {
     m_finalFBO.resize();
 
-    renderLayers(camera, objects, selectedObjects);
+    renderLayers(camera, elapsedTime, objects, selectedObjects);
 }
 
 bool Renderer2D::hasRendererTypeEnabled(RendererType flag)
@@ -107,7 +109,7 @@ bool Renderer2D::hasRendererTypeEnabled(RendererType flag)
     return (static_cast<uint32_t>(m_enabledRenderers) & static_cast<uint32_t>(flag)) != 0;
 }
 
-void Renderer2D::renderSprites(const CameraOld &camera, const std::vector<GameObject> &gameObjects)
+void Renderer2D::renderSprites(const CameraOld &camera, double elapsedTime, const std::vector<GameObject> &gameObjects)
 {
     generateIndexArrayForTriangle(m_indices);
 
@@ -130,6 +132,7 @@ void Renderer2D::renderSprites(const CameraOld &camera, const std::vector<GameOb
 
         m_batch->setVertexData(m_vertices);
         m_batch->render(camera,
+            elapsedTime,
             static_cast<int>((m_vertices.size() / VERTEX_PER_QUAD) * INDICES_PER_QUAD),
             m_activeShader,
             batchTextures);
@@ -251,7 +254,8 @@ void Renderer2D::renderSprites(const CameraOld &camera, const std::vector<GameOb
     m_activeShader = nullptr; // reset to default shader after rendering
 }
 
-void Renderer2D::renderSelection(const CameraOld &camera, const std::vector<GameObject> &selectedObjects)
+void Renderer2D::renderSelection(
+    const CameraOld &camera, double elapsedTime, const std::vector<GameObject> &selectedObjects)
 {
     if (selectedObjects.empty())
     {
@@ -359,7 +363,7 @@ void Renderer2D::renderSelection(const CameraOld &camera, const std::vector<Game
     size_t quadCount = m_vertices.size() / 4;
     size_t indexCount = quadCount * 6;
 
-    m_batch->render(camera, indexCount);
+    m_batch->render(camera, elapsedTime, indexCount);
 }
 
 void Renderer2D::setClearColor(glm::vec4 color)
@@ -368,7 +372,10 @@ void Renderer2D::setClearColor(glm::vec4 color)
 }
 
 void Renderer2D::renderLayers(
-    const CameraOld &camera, const std::vector<GameObject> &objects, const std::vector<GameObject> &selectedObjects)
+    const CameraOld &camera,
+    double elapsedTime,
+    const std::vector<GameObject> &objects,
+    const std::vector<GameObject> &selectedObjects)
 {
     m_finalFBO.bind();
 
@@ -379,12 +386,12 @@ void Renderer2D::renderLayers(
     {
         // Keep grid tile size in sync with EditorMouseController.cpp.
         constexpr int GRID_TILE_SIZE = 16;
-        m_gridRenderer.render(camera, GRID_TILE_SIZE);
+        m_gridRenderer.render(camera, elapsedTime, GRID_TILE_SIZE);
     }
 
     if (hasRendererTypeEnabled(RendererType::Sprite))
     {
-        renderSprites(camera, objects);
+        renderSprites(camera, elapsedTime, objects);
     }
 
     const bool renderPhysicsOverlay = hasRendererTypeEnabled(RendererType::Physics);
@@ -398,14 +405,14 @@ void Renderer2D::renderLayers(
 
         if (renderPhysicsOverlay)
         {
-            m_physicsRenderer.render(camera, objects);
+            m_physicsRenderer.render(camera, elapsedTime, objects);
         }
 
         if (renderSelectionOverlay)
         {
-            renderSelection(camera, selectedObjects);
-            m_cameraBoundsRenderer.render(camera, objects);
-            m_gizmoRenderer.render(camera, selectedObjects);
+            renderSelection(camera, elapsedTime, selectedObjects);
+            m_cameraBoundsRenderer.render(camera, elapsedTime, objects);
+            m_gizmoRenderer.render(camera, elapsedTime, selectedObjects);
         }
 
         if (depthTestWasEnabled)

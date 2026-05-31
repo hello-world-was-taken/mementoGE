@@ -13,7 +13,7 @@ public:
     SceneManager();
     ~SceneManager();
 
-    void update();
+    void update(const FrameContext &frame);
 
     void loadScene(std::string sceneName);
     void unloadScene(std::string sceneName);

@@ -19,5 +19,5 @@ SystemDescriptor PhysicsSystem::descriptor() const
 
 void PhysicsSystem::update(SystemContext &context)
 {
-    context.physics.simulate(context.deltaTime, context.registry, context.editMode);
+    context.physics.simulate(context.frame.deltaTime, context.registry, context.editMode);
 }

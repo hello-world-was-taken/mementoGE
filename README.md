@@ -124,6 +124,12 @@ Inside MementoGE, the engine's CMake checks the same `EDITOR_BUILD` option and, 
 
 Systems implement `ISystem`, declare their access through the required `descriptor()` override, and receive scene services through `SystemContext`:
 
+Systems receive a mutable `SystemContext &`. It contains the scene's mutable registry and physics references,
+`const FrameContext &frame`, and `editMode`. The game/editor loop captures one
+frame after `beginFrame()` and GLFW event polling. Its variable `deltaTime`,
+`elapsedTime`, input snapshot, and window metrics are shared by all
+updates through a const reference. Keep the frame alive until updates finish.
+
 ```cpp
 class MovementSystem : public ISystem
 {
@@ -143,7 +149,7 @@ public:
     void update(SystemContext &context) override
     {
         auto view = context.registry.view<Transform>();
-        // Update matching entities using context.deltaTime as needed.
+        // Update matching entities using context.frame.deltaTime as needed.
     }
 };
 ```
@@ -153,6 +159,7 @@ Register the type once, then add it to any scene that needs it:
 ```cpp
 SystemRegistry::instance().registerSystem<MovementSystem>("MovementSystem");
 scene.addSystem("MovementSystem");
+scene.setSystemEnabled("MovementSystem", true);
 ```
 
 `SystemRegistry` stores factories, so every scene owns an independent system
@@ -168,6 +175,17 @@ While editing, every enabled system runs. Systems start disabled, and entering
 Play enables every system on the disposable runtime scene. Use the panel
 checkboxes for temporary overrides. Runtime Pause still stops scene updates
 entirely.
+
+Systems read `context.frame.input.isKeyHeld(...)`, key/mouse edge helpers, and
+the broadcast `context.frame.input.events` vector. They use
+`context.frame.window` for pure viewport and screen-to-world calculations.
+Snapshot reads need no Input/Window resource declarations, and Time is no longer
+a scheduling resource. Platform capture and window operations remain on the
+main thread. `AnimationPlayer::update(float)` and `Animator::update(float)` take
+explicit delta time; rendering receives frame elapsed time for shader effects.
+The loop remains sequential and variable-step; a dependency scheduler and fixed
+simulation ticks are later work. See [Engine Concurrency Design](../../../docs/concurrency-design.md)
+and [Multithreading Migration Plan](docs/multithreading-plan.md).
 
 ## Controls
 

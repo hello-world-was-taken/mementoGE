@@ -17,7 +17,7 @@ public:
 
     // Render grid lines using the given camera and tile size.
     // Tile size should be kept in sync with editor snap settings.
-    void render(const CameraOld &camera, int tileSize);
+    void render(const CameraOld &camera, double elapsedTime, int tileSize);
 
 private:
     void generateGridLines(const CameraOld &camera, int tileSize);

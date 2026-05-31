@@ -419,7 +419,7 @@ void AssetsPanel::draw()
 
                     ImGui::TextUnformatted("Animations");
                     ImGui::BeginChild("##AnimationAssets", ImVec2(0.0f, 0.0f), true);
-                    drawAnimationPanel();
+                    drawAnimationPanel(m_ctx.frame.deltaTime);
                     ImGui::EndChild();
                 }
                 ImGui::EndTable();
@@ -1041,7 +1041,7 @@ void AssetsPanel::drawSpritePanel()
 
 }
 
-void AssetsPanel::drawAnimationPanel()
+void AssetsPanel::drawAnimationPanel(float deltaTime)
 {
     if (m_ctx.selectedTextureJsonPath.empty())
     {
@@ -1070,7 +1070,7 @@ void AssetsPanel::drawAnimationPanel()
         {
             animationPlayerMap[playerKey] = AnimationPlayer{animation};
         }
-        animationPlayerMap[playerKey].update();
+        animationPlayerMap[playerKey].update(deltaTime);
 
         std::array<glm::vec2, 4> texCoord =
             animationPlayerMap[playerKey].getCurrentFrame().sprite.getNormalizedTextureCoordinates();

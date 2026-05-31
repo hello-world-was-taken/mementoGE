@@ -49,9 +49,9 @@ bool Animator::play(std::string name, bool loop)
     return true;
 }
 
-void Animator::update()
+void Animator::update(float deltaTime)
 {
-    animationPlayer.update();
+    animationPlayer.update(deltaTime);
 }
 
 const Sprite &Animator::getCurrentSprite() const

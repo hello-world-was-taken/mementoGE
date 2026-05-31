@@ -5,7 +5,6 @@
 #include "core/SystemRegistry.h"
 
 #include "util/LogChannels.h"
-#include "util/Time.h"
 
 #include <algorithm>
 #include <chrono>
@@ -97,14 +96,14 @@ Scene Scene::clone(std::string tag)
     return Scene{std::move(serializedScene)};
 }
 
-void Scene::update(bool editMode)
+void Scene::update(const FrameContext &frame, bool editMode)
 {
     if (!m_play && !editMode)
     {
         return;
     }
 
-    SystemContext context{m_registry, m_physicsWorld, Time::deltaTime(), editMode};
+    SystemContext context{m_registry, m_physicsWorld, frame, editMode};
     for (auto &entry : m_systems)
     {
         if (!entry.enabled)

@@ -4,7 +4,6 @@
 #include "editor/Constants.h"
 #include "editor/EditorCamera.h"
 
-#include "util/Time.h"
 #include "util/LogChannels.h"
 
 #include <sawyer/Logger.h>
@@ -71,7 +70,7 @@ Window *Window::instance()
     return s_instance;
 }
 
-float Window::getWindowTime()
+double Window::getWindowTime()
 {
     return glfwGetTime();
 }
@@ -95,28 +94,16 @@ std::pair<int, int> Window::getWindowSize() const
 // to preserve the target aspect ratio.
 Viewport Window::getViewportForAspect(float targetAspect) const
 {
-    int fbWidth, fbHeight;
-    glfwGetFramebufferSize(m_glfw_window, &fbWidth, &fbHeight);
+    return captureMetrics().getViewportForAspect(targetAspect);
+}
 
-    float windowAspect = static_cast<float>(fbWidth) / static_cast<float>(fbHeight);
-
-    int vpX = 0, vpY = 0, vpW = fbWidth, vpH = fbHeight;
-    if (targetAspect > windowAspect)
-    {
-        // Camera wider than window: pillarbox (bars top/bottom)
-        vpW = fbWidth;
-        vpH = static_cast<int>(fbWidth / targetAspect);
-        vpY = (fbHeight - vpH) / 2;
-    }
-    else
-    {
-        // Camera taller than window: letterbox (bars left/right)
-        vpH = fbHeight;
-        vpW = static_cast<int>(fbHeight * targetAspect);
-        vpX = (fbWidth - vpW) / 2;
-    }
-
-    return {vpX, vpY, vpW, vpH};
+WindowMetrics Window::captureMetrics() const
+{
+    WindowMetrics result;
+    glfwGetWindowSize(m_glfw_window, &result.width, &result.height);
+    glfwGetFramebufferSize(m_glfw_window, &result.framebufferWidth, &result.framebufferHeight);
+    glfwGetWindowContentScale(m_glfw_window, &result.contentScaleX, &result.contentScaleY);
+    return result;
 }
 
 void Window::setupWindowHints() const

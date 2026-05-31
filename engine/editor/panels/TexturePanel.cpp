@@ -10,7 +10,6 @@
 #include "editor/panels/TexturePanel.h"
 
 #include "util/PathUtils.h"
-#include "util/Time.h"
 
 #include <ImGuiFileDialog/ImGuiFileDialog.h>
 #include <filesystem>

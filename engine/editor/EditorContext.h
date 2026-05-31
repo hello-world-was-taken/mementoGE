@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/Camera.h"
+#include "core/FrameContext.h"
 #include "core/MovementMode.h"
 #include "core/Scene.h"
 #include "core/Window.h"
@@ -49,6 +50,8 @@ enum class RuntimeState
 struct EditorContext
 {
     Window &window;
+    // Set once before updating/drawing a frame; panels read the same captured time.
+    FrameContext frame;
 
     float viewportWidth = WINDOW_WIDTH;
     float viewportHeight = WINDOW_HEIGHT;

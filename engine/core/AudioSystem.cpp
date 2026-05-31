@@ -45,7 +45,7 @@ void AudioSystem::update(SystemContext &context)
 {
     entt::registry &registry = context.registry;
     // Update listener (camera)
-    updateListener(registry, context.deltaTime);
+    updateListener(registry, context.frame.deltaTime);
 
     auto view = registry.view<AudioSource>();
     std::vector<entt::entity> completedOneShots;

@@ -9,6 +9,7 @@ inline constexpr char Editor[] = "Editor";
 inline constexpr char Engine[] = "Engine";
 inline constexpr char GameObject[] = "GameObject";
 inline constexpr char ImGui[] = "ImGui";
+inline constexpr char Input[] = "Input";
 inline constexpr char OpenGL[] = "OpenGL";
 inline constexpr char Physics[] = "Physics";
 inline constexpr char PostProcess[] = "PostProcess";

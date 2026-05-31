@@ -2,7 +2,6 @@
 
 #include "core/GLIncludes.h"
 #include "core/GlResourceManager.h"
-#include "core/Window.h"
 
 #include "opengl/Vertex.h"
 #include "opengl/VertexAttribute.h"
@@ -82,6 +81,7 @@ void RenderBatch::setIndexData(std::vector<unsigned int> &indices)
 }
 
 void RenderBatch::render(const CameraOld &camera,
+    double elapsedTime,
     int drawCount,
     std::shared_ptr<Shader> customShader,
     const std::vector<std::shared_ptr<Texture>> &textures)
@@ -98,7 +98,7 @@ void RenderBatch::render(const CameraOld &camera,
     shader->setUniform4fv("u_projection_matrix", camera.getProjectionMatrix());
     // Custom effects can animate in both the editor viewport and gameplay,
     // without depending on a scene system to feed them a clock.
-    shader->setUniform1f("u_GlobalTime", Window::getWindowTime());
+    shader->setUniform1f("u_GlobalTime", static_cast<float>(elapsedTime));
 
     // The shader declares all 16 sampler entries, so macOS validates all of
     // their assigned texture units even when a batch uses fewer textures.

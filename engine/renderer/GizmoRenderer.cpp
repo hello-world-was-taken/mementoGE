@@ -24,7 +24,7 @@ GizmoRenderer::GizmoRenderer()
 
 GizmoRenderer::~GizmoRenderer() = default;
 
-void GizmoRenderer::render(const CameraOld &camera, const std::vector<GameObject> &selectedObjects)
+void GizmoRenderer::render(const CameraOld &camera, double elapsedTime, const std::vector<GameObject> &selectedObjects)
 {
     updateVertices(camera, selectedObjects);
     if (m_vertices.empty())
@@ -39,7 +39,7 @@ void GizmoRenderer::render(const CameraOld &camera, const std::vector<GameObject
 
     m_batch->setVertexData(m_vertices);
     m_batch->setIndexData(m_indices);
-    m_batch->render(camera, static_cast<int>((m_vertices.size() / 4) * INDICES_PER_QUAD));
+    m_batch->render(camera, elapsedTime, static_cast<int>((m_vertices.size() / 4) * INDICES_PER_QUAD));
 }
 
 void GizmoRenderer::updateVertices(const CameraOld &camera, const std::vector<GameObject> &selectedObjects)

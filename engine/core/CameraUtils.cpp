@@ -2,7 +2,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 glm::vec2 CameraUtils::screenToWorld(
-    const Window &window, const Camera &camera, const Transform &camTransform, glm::vec2 screenPos)
+    const WindowMetrics &window, const Camera &camera, const Transform &camTransform, glm::vec2 screenPos)
 {
     // 1. Get Viewport from Window
     float w = camera.logicalWidth * camera.zoom;
@@ -10,6 +10,12 @@ glm::vec2 CameraUtils::screenToWorld(
     float cameraAspect = w / h;
 
     auto [vpX, vpY, vpW, vpH] = window.getViewportForAspect(cameraAspect);
+
+    // A minimized window has no usable viewport. Avoid division by zero.
+    if (window.width <= 0 || window.height <= 0 || vpW <= 0 || vpH <= 0)
+    {
+        return glm::vec2(camTransform.position);
+    }
 
     // 2. Normalize Mouse Position (0..1) relative to the Window
     auto [winWidth, winHeight] = window.getWindowSize();

@@ -19,15 +19,12 @@ enum class SystemResource
 {
     RegistryStructure, // Entity creation/destruction and component addition/removal.
     PhysicsWorld,      // Box2D world, bodies, shapes, and simulation state.
-    Input,             // EventHandler keyboard/mouse state and queued events.
+    Input,             // Live input capture state (immutable frame snapshots need no declaration).
     Window,            // Window state and platform operations (GLFW).
     AudioSettings,     // Global volume and world gain.
     AudioDevice,       // OpenAL device, context, sources, and buffers.
     SceneLifecycle,    // Scene lifetime, transitions, and play/pause state.
     AssetCache,        // Shared caches of loaded assets.
-    // TODO: Remove Time and its access declarations once all systems/helpers
-    // read timing from the immutable frame context instead of the global clock.
-    Time,              // Frame timing and delta time.
     Random,            // Random generator state.
 };
 

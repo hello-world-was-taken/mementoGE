@@ -19,7 +19,7 @@ public:
     SelectionRenderer(const SelectionRenderer &) = delete;
     SelectionRenderer &operator=(const SelectionRenderer &) = delete;
 
-    void render(const CameraOld &camera, const std::vector<GameObject> &gameObjects);
+    void render(const CameraOld &camera, double elapsedTime, const std::vector<GameObject> &gameObjects);
 
 private:
     void updateVertices(const std::vector<GameObject> &selectedObjects);

@@ -43,11 +43,18 @@ enum class KeyType
     Space,
 };
 
+enum class MouseButton
+{
+    Left = 0,
+    Right = 1,
+    Middle = 2,
+};
+
 struct Event
 {
     std::string name;
-    EventType type; // keyboard, mouse, window events
-    bool isPressed;
+    EventType type = EventType::None; // keyboard, mouse, window events
+    bool isPressed = false;
     KeyType keyType = KeyType::None;
 
     // modifiers, maybe we could use bit manipulation instead
