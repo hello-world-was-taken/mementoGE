@@ -37,7 +37,6 @@ public:
     EditorContext &getEditorContext();
 
 private:
-    void updateFrame(const FrameContext &frame);
     void renderMainMenuBar();
 
     // imgui panels
@@ -55,7 +54,6 @@ private:
 private:
     Window m_window;
     EditorContext m_ctx{m_window};
-
     ScenePanel m_scenePanel{m_ctx};
     SceneHierarchyPanel m_sceneHierarchyPanel{m_ctx};
     PropertiesPanel m_propertiesPanel{m_ctx};

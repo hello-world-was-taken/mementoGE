@@ -10,6 +10,7 @@
 #include "renderer/SpriteRenderer.h"
 #include "util/Time.h"
 
+#include <cmath>
 #include <glm/gtc/matrix_transform.hpp>
 #include <string>
 
@@ -36,13 +37,43 @@ protected:
         glfwSwapInterval(1);
         Time::reset();
 
+        constexpr double fixedDeltaTime = 1.0 / 60.0;
+        constexpr int maxStepsPerFrame = 8;
+        double accumulatedTime = 0.0;
+        double simulatedTime = 0.0;
+        InputSnapshot pendingInput;
+
         while (!glfwWindowShouldClose(m_window.getGlfwWindow()))
         {
             Time::update();
             EventHandler::instance()->beginFrame();
             glfwPollEvents();
             const FrameContext frame = captureFrameContext(Time::deltaTime(), Time::elapsedTime());
-            updateFrame(frame);
+
+            pendingInput.accumulate(frame.input);
+            accumulatedTime += frame.deltaTime;
+
+            int steps = 0;
+            while (accumulatedTime >= fixedDeltaTime && steps < maxStepsPerFrame)
+            {
+                const FrameContext tick{
+                    static_cast<float>(fixedDeltaTime), simulatedTime + fixedDeltaTime, pendingInput, frame.window};
+                onUpdate(tick);
+                m_sceneManager.update(tick);
+                simulatedTime = tick.elapsedTime;
+                accumulatedTime -= fixedDeltaTime;
+                ++steps;
+
+                // Later catch-up ticks keep held state without repeating edges or events.
+                pendingInput.clearTransientState();
+            }
+            if (accumulatedTime >= fixedDeltaTime)
+            {
+                // Drop excess catch-up work while retaining time toward the next tick.
+                accumulatedTime = std::fmod(accumulatedTime, fixedDeltaTime);
+            }
+
+            renderFrame(frame);
 
             glfwSwapBuffers(m_window.getGlfwWindow());
         }
@@ -53,16 +84,10 @@ protected:
 
     // when changing consider if we should make similar updates
     // to editor layer loop as well
-    void updateFrame(const FrameContext &frame)
+    void renderFrame(const FrameContext &frame)
     {
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // User logic
-        onUpdate(frame);
-
-        // Engine logic
-        m_sceneManager.update(frame);
 
         // FIXME: the whole rendering specific thing that is happening
         // here should be moved to a rendering system. It doesn't make
@@ -75,7 +100,7 @@ protected:
         if (cameraObj)
         {
             Camera &cam = cameraObj->getComponent<Camera>();
-            Transform &camTransform = cameraObj->getComponent<Transform>();
+            const Transform &camTransform = cameraObj->getComponent<Transform>();
 
             float w = cam.logicalWidth * cam.zoom;
             float h = cam.logicalHeight * cam.zoom;

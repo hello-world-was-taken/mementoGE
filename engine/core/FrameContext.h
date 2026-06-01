@@ -4,11 +4,12 @@
 #include "core/WindowMetrics.h"
 
 // One value owned by the frame loop and passed by const reference to all readers.
-// deltaTime is still variable; fixed simulation ticks are a separate migration.
+// Frame capture describes presentation time. The main run loops supply systems
+// with a tick context whose timing advances only in fixed simulation steps.
 struct FrameContext
 {
-    float deltaTime = 0.0f;  // Seconds since the previous frame.
-    double elapsedTime = 0.0; // Captured platform-clock seconds for presentation.
+    float deltaTime = 0.0f;   // Seconds: fixed step for systems, real frame delta for presentation.
+    double elapsedTime = 0.0; // Simulation seconds for ticks, platform-clock seconds for presentation.
     InputSnapshot input;
     WindowMetrics window;
 };

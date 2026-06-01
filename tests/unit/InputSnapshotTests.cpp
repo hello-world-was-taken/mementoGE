@@ -182,29 +182,32 @@ TEST_F(InputSnapshotTests, BeginFrameDiscardsUncapturedEventsAndPreservesHeldSta
     EXPECT_FALSE(input.wasMouseButtonPressed(MouseButton::Middle));
     EXPECT_EQ(input.getScrollDelta(), glm::vec2{0.0f});
     EXPECT_TRUE(input.events.empty());
-    EXPECT_EQ(input.droppedEventCount, 0u);
 }
 
-TEST_F(InputSnapshotTests, BoundsEventStorageWithoutLosingFinalStateOrStickyEdges)
+TEST_F(InputSnapshotTests, CapturesAllEventsInOrderBeyondTheFormerLimit)
 {
     auto *handler = EventHandler::instance();
     key(GLFW_KEY_W, GLFW_PRESS);
-    for (std::size_t index = 0; index < EventHandler::MAX_EVENTS_PER_CAPTURE + 4; ++index)
+    for (std::size_t index = 0; index < 4998; ++index)
     {
         key(GLFW_KEY_W, GLFW_REPEAT);
     }
     key(GLFW_KEY_W, GLFW_RELEASE);
 
     const InputSnapshot input = handler->captureSnapshot();
-    EXPECT_EQ(input.events.size(), EventHandler::MAX_EVENTS_PER_CAPTURE);
-    EXPECT_EQ(input.droppedEventCount, 6u);
+    ASSERT_EQ(input.events.size(), 5000u);
+    EXPECT_EQ(input.events.front().type, EventType::Key);
+    for (std::size_t index = 1; index + 1 < input.events.size(); ++index)
+    {
+        EXPECT_EQ(input.events[index].type, EventType::KeyRepeat);
+    }
+    EXPECT_EQ(input.events.back().type, EventType::KeyRelease);
     EXPECT_FALSE(input.isKeyHeld(KeyType::W));
     EXPECT_TRUE(input.wasKeyPressed(KeyType::W));
     EXPECT_TRUE(input.wasKeyReleased(KeyType::W));
 
     const InputSnapshot drained = handler->captureSnapshot();
     EXPECT_TRUE(drained.events.empty());
-    EXPECT_EQ(drained.droppedEventCount, 0u);
     EXPECT_TRUE(drained.wasKeyPressed(KeyType::W));
     EXPECT_TRUE(drained.wasKeyReleased(KeyType::W));
 }
@@ -227,7 +230,6 @@ TEST_F(InputSnapshotTests, RuntimeFramesWithoutEventReadersDoNotAccumulateABackl
     const InputSnapshot input = handler->captureSnapshot();
     ASSERT_EQ(input.events.size(), 1u);
     EXPECT_EQ(input.events[0].keyType, KeyType::Space);
-    EXPECT_EQ(input.droppedEventCount, 0u);
     EXPECT_EQ(input.getScrollDelta(), glm::vec2{0.0f});
 }
 
@@ -249,4 +251,145 @@ TEST_F(InputSnapshotTests, ReplayValuesDoNotDependOnLiveInput)
     EXPECT_EQ(frozen.getMousePos(), (glm::vec2{12.0f, 34.0f}));
     ASSERT_EQ(frozen.events.size(), 1u);
     EXPECT_EQ(frozen.events[0].keyType, KeyType::F);
+}
+
+TEST_F(InputSnapshotTests, AccumulatingFramesKeepsQuickPressReleaseAndLatestState)
+{
+    InputSnapshot pending;
+    InputSnapshot press;
+    press.keyHeld[KeyType::Space] = true;
+    press.keyPressed[KeyType::Space] = true;
+    press.mouseHeld[0] = true;
+    press.mousePressed[0] = true;
+    press.mouseDelta = {2.0f, 3.0f};
+    press.scrollDelta = {1.0f, 0.5f};
+    press.events.push_back(Event{"press", EventType::Key, true, KeyType::Space});
+    pending.accumulate(press);
+
+    InputSnapshot release;
+    release.keyHeld[KeyType::Space] = false;
+    release.keyPressed[KeyType::Space] = false; // A later frame must not erase the pending edge.
+    release.keyReleased[KeyType::Space] = true;
+    release.mouseHeld[0] = false;
+    release.mousePressed[0] = false;
+    release.mouseReleased[0] = true;
+    release.mouseDelta = {-1.0f, 5.0f};
+    release.scrollDelta = {2.0f, 0.25f};
+    release.events.push_back(Event{"release", EventType::KeyRelease, false, KeyType::Space});
+    pending.accumulate(release);
+
+    InputSnapshot latest;
+    latest.keyHeld[KeyType::D] = true;
+    latest.mouseHeld[1] = true;
+    latest.mousePos = {50.0f, 60.0f};
+    latest.mouseDelta = {4.0f, -2.0f};
+    latest.scrollDelta = {-0.5f, 1.0f};
+    latest.dragStart = {10.0f, 20.0f};
+    latest.hasSceneViewportBounds = true;
+    latest.sceneViewportMin = {1.0f, 2.0f};
+    latest.sceneViewportMax = {200.0f, 300.0f};
+    pending.accumulate(latest);
+
+    EXPECT_FALSE(pending.isKeyHeld(KeyType::Space));
+    EXPECT_TRUE(pending.isKeyHeld(KeyType::D));
+    EXPECT_TRUE(pending.wasKeyPressed(KeyType::Space));
+    EXPECT_TRUE(pending.wasKeyReleased(KeyType::Space));
+    EXPECT_FALSE(pending.isMouseButtonHeld(MouseButton::Left));
+    EXPECT_TRUE(pending.isMouseButtonHeld(MouseButton::Right));
+    EXPECT_TRUE(pending.wasMouseButtonPressed(MouseButton::Left));
+    EXPECT_TRUE(pending.wasMouseButtonReleased(MouseButton::Left));
+    EXPECT_EQ(pending.getMousePos(), (glm::vec2{50.0f, 60.0f}));
+    EXPECT_EQ(pending.getMouseDelta(), (glm::vec2{5.0f, 6.0f}));
+    EXPECT_EQ(pending.getScrollDelta(), (glm::vec2{2.5f, 1.75f}));
+    EXPECT_EQ(pending.getDragStart(), (glm::vec2{10.0f, 20.0f}));
+    EXPECT_EQ(pending.sceneViewportMin, latest.sceneViewportMin);
+    EXPECT_EQ(pending.sceneViewportMax, latest.sceneViewportMax);
+    EXPECT_TRUE(pending.hasSceneViewportBounds);
+    ASSERT_EQ(pending.events.size(), 2u);
+    EXPECT_EQ(pending.events[0].name, "press");
+    EXPECT_EQ(pending.events[1].name, "release");
+    EXPECT_TRUE(press.wasKeyPressed(KeyType::Space));
+    ASSERT_EQ(press.events.size(), 1u);
+}
+
+TEST_F(InputSnapshotTests, ClearingConsumedInputPreservesHeldStateAndFrozenValues)
+{
+    InputSnapshot pending;
+    pending.keyHeld[KeyType::D] = true;
+    pending.keyPressed[KeyType::D] = true;
+    pending.keyReleased[KeyType::A] = true;
+    pending.mouseHeld[1] = true;
+    pending.mousePressed[1] = true;
+    pending.mouseReleased[0] = true;
+    pending.mousePos = {50.0f, 60.0f};
+    pending.mouseDelta = {4.0f, 5.0f};
+    pending.scrollDelta = {1.0f, 2.0f};
+    pending.dragStart = {10.0f, 20.0f};
+    pending.hasSceneViewportBounds = true;
+    pending.sceneViewportMin = {1.0f, 2.0f};
+    pending.sceneViewportMax = {200.0f, 300.0f};
+    pending.events.push_back(Event{"DKey", EventType::Key, true, KeyType::D});
+    const InputSnapshot firstTick = pending;
+
+    pending.clearTransientState();
+    EXPECT_TRUE(pending.isKeyHeld(KeyType::D));
+    EXPECT_TRUE(pending.isMouseButtonHeld(MouseButton::Right));
+    EXPECT_FALSE(pending.wasKeyPressed(KeyType::D));
+    EXPECT_FALSE(pending.wasKeyReleased(KeyType::A));
+    EXPECT_FALSE(pending.wasMouseButtonPressed(MouseButton::Right));
+    EXPECT_FALSE(pending.wasMouseButtonReleased(MouseButton::Left));
+    EXPECT_EQ(pending.getMouseDelta(), glm::vec2{0.0f});
+    EXPECT_EQ(pending.getScrollDelta(), glm::vec2{0.0f});
+    EXPECT_TRUE(pending.events.empty());
+    EXPECT_EQ(pending.getMousePos(), firstTick.getMousePos());
+    EXPECT_EQ(pending.getDragStart(), firstTick.getDragStart());
+    EXPECT_EQ(pending.sceneViewportMin, firstTick.sceneViewportMin);
+    EXPECT_EQ(pending.sceneViewportMax, firstTick.sceneViewportMax);
+    EXPECT_TRUE(pending.hasSceneViewportBounds);
+    EXPECT_TRUE(firstTick.wasKeyPressed(KeyType::D));
+    EXPECT_EQ(firstTick.events.size(), 1u);
+}
+
+TEST_F(InputSnapshotTests, AccumulatedFramesRetainEveryEventInOrderBeyondTheFormerLimit)
+{
+    InputSnapshot pending;
+    InputSnapshot first;
+    first.keyHeld[KeyType::F] = true;
+    first.keyPressed[KeyType::F] = true;
+    first.events.resize(5000, Event{"first", EventType::KeyRepeat, true, KeyType::F});
+    first.events.front() = Event{"press", EventType::Key, true, KeyType::F};
+    pending.accumulate(first);
+
+    InputSnapshot second;
+    second.keyHeld[KeyType::F] = true;
+    second.events = {
+        Event{"second0", EventType::KeyRepeat, true, KeyType::F},
+        Event{"second1", EventType::KeyRepeat, true, KeyType::F},
+        Event{"second2", EventType::KeyRepeat, true, KeyType::F},
+        Event{"second3", EventType::KeyRepeat, true, KeyType::F},
+        Event{"second4", EventType::KeyRepeat, true, KeyType::F},
+    };
+    pending.accumulate(second);
+
+    InputSnapshot release;
+    release.keyReleased[KeyType::F] = true;
+    release.events.push_back(Event{"release", EventType::KeyRelease, false, KeyType::F});
+    pending.accumulate(release);
+
+    ASSERT_EQ(pending.events.size(), 5006u);
+    EXPECT_EQ(pending.events.front().name, "press");
+    EXPECT_EQ(pending.events[4999].name, "first");
+    for (std::size_t index = 0; index < second.events.size(); ++index)
+    {
+        EXPECT_EQ(pending.events[5000 + index].name, second.events[index].name);
+    }
+    EXPECT_EQ(pending.events.back().name, "release");
+    EXPECT_TRUE(pending.wasKeyPressed(KeyType::F));
+    EXPECT_TRUE(pending.wasKeyReleased(KeyType::F));
+    EXPECT_FALSE(pending.isKeyHeld(KeyType::F));
+
+    pending.clearTransientState();
+    pending.accumulate(release);
+    ASSERT_EQ(pending.events.size(), 1u);
+    EXPECT_EQ(pending.events.front().name, "release");
 }

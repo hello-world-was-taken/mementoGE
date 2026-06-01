@@ -1,7 +1,5 @@
 #include "core/EventHandler.h"
-#include "util/LogChannels.h"
 
-#include <sawyer/Logger.h>
 #include <utility>
 
 EventHandler *EventHandler::instance()
@@ -76,23 +74,7 @@ void EventHandler::glfwKeyCallBack(GLFWwindow *window, int key, int scancode, in
 
 void EventHandler::recordEvent(Event event)
 {
-    if (m_events.size() >= MAX_EVENTS_PER_CAPTURE)
-    {
-        ++m_droppedEventCount;
-        return;
-    }
     m_events.push_back(std::move(event));
-}
-
-void EventHandler::logDroppedEvents() const
-{
-    if (m_droppedEventCount > 0)
-    {
-        LOG_WARN(LogChannel::Input,
-            "Dropped {} input events because the capture buffer reached its capacity of {}",
-            m_droppedEventCount,
-            MAX_EVENTS_PER_CAPTURE);
-    }
 }
 
 InputSnapshot EventHandler::captureSnapshot()
@@ -112,10 +94,7 @@ InputSnapshot EventHandler::captureSnapshot()
     snapshot.sceneViewportMax = m_sceneViewportMax;
     snapshot.hasSceneViewportBounds = m_hasSceneViewportBounds;
     snapshot.events = std::move(m_events);
-    snapshot.droppedEventCount = m_droppedEventCount;
-    logDroppedEvents();
     m_events.clear();
-    m_droppedEventCount = 0;
     return snapshot;
 }
 
@@ -127,8 +106,6 @@ bool EventHandler::isKeyPressed(KeyType key) const
 
 void EventHandler::beginFrame()
 {
-    // Report overflow even if the previous batch was never captured.
-    logDroppedEvents();
     m_mouseDelta = {0.0f, 0.0f};
     m_scrollDelta = {0.0f, 0.0f};
     m_keyPressedFrame.clear();
@@ -136,7 +113,6 @@ void EventHandler::beginFrame()
     m_mouseButtonPressedFrame.clear();
     m_mouseButtonReleasedFrame.clear();
     m_events.clear();
-    m_droppedEventCount = 0;
 }
 
 void EventHandler::glfwMouseButtonCallback(GLFWwindow *window, int button, int action, int mods)

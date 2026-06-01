@@ -20,6 +20,7 @@
 #include "util/LogChannels.h"
 #include "util/Time.h"
 
+#include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <glm/gtc/matrix_transform.hpp>
@@ -56,58 +57,95 @@ void EditorLayer::run()
     glfwSwapInterval(1);
     Time::reset();
 
+    constexpr double fixedDelta = 1.0 / 60.0;
+    constexpr int maxStepsPerFrame = 8;
+    double accumulator = 0.0;
+    double simulationTime = 0.0;
+    InputSnapshot pendingInput;
+    Scene *simulatedScene = nullptr;
+    RuntimeState simulatedState = RuntimeState::Stopped;
+
     while (!glfwWindowShouldClose(m_window.getGlfwWindow()))
     {
         Time::update();
         EventHandler::instance()->beginFrame();
         glfwPollEvents();
         m_ctx.frame = captureFrameContext(Time::deltaTime(), Time::elapsedTime());
-        updateFrame(m_ctx.frame);
+        const FrameContext &frame = m_ctx.frame;
+
+        ImGuiWrapper::ImGuiFrame(
+            [&]()
+            {
+                handleEditorShortcuts(frame.input);
+
+                if (m_ctx.isRuntimeActive())
+                {
+                    m_ctx.renderer2D.setClearColor(playModeClearColor);
+                    m_ctx.renderer2D.setRendererEnablement(static_cast<RendererType>(m_ctx.runtimeRendererMask));
+                }
+                else
+                {
+                    m_ctx.renderer2D.setClearColor(editorModeClearColor);
+                    m_ctx.renderer2D.setRendererEnablement(static_cast<RendererType>(m_ctx.editorRendererMask));
+                }
+
+                Scene &activeScene = m_ctx.getActiveScene();
+                const bool sceneChanged = simulatedScene != &activeScene;
+                const bool runtimePaused = m_ctx.isRuntimeActive() && !m_ctx.isRuntimePlaying();
+                if (sceneChanged || simulatedState != m_ctx.runtimeState || runtimePaused)
+                {
+                    // Paused input and wall time must not replay after resuming.
+                    accumulator = 0.0;
+                    pendingInput = {};
+                    if (sceneChanged)
+                    {
+                        simulationTime = 0.0;
+                    }
+                    simulatedScene = &activeScene;
+                    simulatedState = m_ctx.runtimeState;
+                }
+
+                // Continue rendering while paused, but do not advance scene systems.
+                if (!runtimePaused)
+                {
+                    pendingInput.accumulate(frame.input);
+                    accumulator += frame.deltaTime;
+                    int steps = 0;
+                    while (accumulator >= fixedDelta && steps < maxStepsPerFrame)
+                    {
+                        const FrameContext tick{
+                            static_cast<float>(fixedDelta), simulationTime + fixedDelta, pendingInput, frame.window};
+                        activeScene.update(tick, !m_ctx.isRuntimeActive());
+                        simulationTime = tick.elapsedTime;
+                        accumulator -= fixedDelta;
+                        ++steps;
+
+                        // Later catch-up ticks retain held state without repeating one-shot input.
+                        pendingInput.clearTransientState();
+                    }
+                    if (accumulator >= fixedDelta)
+                    {
+                        accumulator = std::fmod(accumulator, fixedDelta);
+                    }
+                }
+
+                // render grid
+                if (!m_ctx.isRuntimeActive())
+                {
+                    renderGrid();
+                }
+
+                CameraOld &camera =
+                    m_ctx.isRuntimeActive() ? getPlayCamera(activeScene) : static_cast<CameraOld &>(m_ctx.editorCamera);
+                m_ctx.renderer2D.renderScene(camera, frame.elapsedTime, activeScene.getGameObjects(), m_ctx.selectedObjects);
+
+                drawEditorUI();
+            });
 
         glfwSwapBuffers(m_window.getGlfwWindow());
     }
 
     glfwTerminate();
-}
-
-void EditorLayer::updateFrame(const FrameContext &frame)
-{
-    ImGuiWrapper::ImGuiFrame(
-        [&]()
-        {
-            handleEditorShortcuts(frame.input);
-
-            if (m_ctx.isRuntimeActive())
-            {
-                m_ctx.renderer2D.setClearColor(playModeClearColor);
-                m_ctx.renderer2D.setRendererEnablement(static_cast<RendererType>(m_ctx.runtimeRendererMask));
-            }
-            else
-            {
-                m_ctx.renderer2D.setClearColor(editorModeClearColor);
-                m_ctx.renderer2D.setRendererEnablement(static_cast<RendererType>(m_ctx.editorRendererMask));
-            }
-
-            Scene &activeScene = m_ctx.getActiveScene();
-
-            // Continue rendering while paused, but do not advance scene systems.
-            if (!m_ctx.isRuntimeActive() || m_ctx.isRuntimePlaying())
-            {
-                activeScene.update(frame, !m_ctx.isRuntimeActive());
-            }
-
-            // render grid
-            if (!m_ctx.isRuntimeActive())
-            {
-                renderGrid();
-            }
-
-            CameraOld &camera =
-                m_ctx.isRuntimeActive() ? getPlayCamera(activeScene) : static_cast<CameraOld &>(m_ctx.editorCamera);
-            m_ctx.renderer2D.renderScene(camera, frame.elapsedTime, activeScene.getGameObjects(), m_ctx.selectedObjects);
-
-            drawEditorUI();
-        });
 }
 
 void EditorLayer::drawEditorUI()
@@ -293,7 +331,7 @@ CameraOld &EditorLayer::getPlayCamera(Scene &scene)
     }
 
     Camera &camera = cameraObj->getComponent<Camera>();
-    Transform &cameraTransform = cameraObj->getComponent<Transform>();
+    const Transform &cameraTransform = cameraObj->getComponent<Transform>();
 
     const float width = camera.logicalWidth * camera.zoom;
     const float height = camera.logicalHeight * camera.zoom;

@@ -126,9 +126,11 @@ Systems implement `ISystem`, declare their access through the required `descript
 
 Systems receive a mutable `SystemContext &`. It contains the scene's mutable registry and physics references,
 `const FrameContext &frame`, and `editMode`. The game/editor loop captures one
-frame after `beginFrame()` and GLFW event polling. Its variable `deltaTime`,
-`elapsedTime`, input snapshot, and window metrics are shared by all
-updates through a const reference. Keep the frame alive until updates finish.
+presentation frame after `beginFrame()` and GLFW event polling. Local accumulator
+logic in `BaseGame::runLoop()` and `EditorLayer::run()` derives zero or more ticks
+with fixed `deltaTime` and simulation
+`elapsedTime`; all systems in one tick share its input and window values through
+a const reference. Keep the tick frame alive until updates finish.
 
 ```cpp
 class MovementSystem : public ISystem
@@ -182,9 +184,20 @@ the broadcast `context.frame.input.events` vector. They use
 Snapshot reads need no Input/Window resource declarations, and Time is no longer
 a scheduling resource. Platform capture and window operations remain on the
 main thread. `AnimationPlayer::update(float)` and `Animator::update(float)` take
-explicit delta time; rendering receives frame elapsed time for shader effects.
-The loop remains sequential and variable-step; a dependency scheduler and fixed
-simulation ticks are later work. See [Engine Concurrency Design](../../../docs/concurrency-design.md)
+explicit delta time. Local loop constants set `1/60`-second ticks, at most eight
+per presentation frame. Any remaining whole-tick backlog is discarded, keeping
+the fractional remainder for the next frame. Input edges/events
+survive frames without a tick and are consumed only by the first catch-up tick.
+`InputSnapshot::accumulate()` and `clearTransientState()` share input buffering
+between the loops; the accumulator, simulation clock, and pending input remain
+local run-loop variables.
+Rendering draws the latest simulation transforms once per presentation frame;
+UI, previews, and shader clocks use real presentation time. Render interpolation
+is deferred in the [project TODO](../../../TODO.md).
+See the [fixed-step rendering diagrams](docs/box2d-and-physics.md#fixed-ticks-and-latest-pose-rendering)
+for examples of faster rendering and faster simulation.
+Scene systems remain sequential; dependency scheduling is later work.
+See [Engine Concurrency Design](../../../docs/concurrency-design.md)
 and [Multithreading Migration Plan](docs/multithreading-plan.md).
 
 ## Controls

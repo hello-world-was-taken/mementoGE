@@ -166,6 +166,7 @@ if(BUILD_TESTING)
         tests/unit/PhysicsTests.cpp
         tests/unit/FollowSystemTests.cpp
         tests/unit/FrameContextTests.cpp
+        tests/unit/FixedSimulationTests.cpp
         tests/unit/InputSnapshotTests.cpp
         tests/unit/AssetLoadingTests.cpp
         tests/unit/JobSystemTests.cpp

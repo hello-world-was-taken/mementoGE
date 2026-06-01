@@ -2,7 +2,6 @@
 
 #include "core/Event.h"
 
-#include <cstddef>
 #include <glm/glm.hpp>
 #include <unordered_map>
 #include <vector>
@@ -26,8 +25,41 @@ struct InputSnapshot
     glm::vec2 sceneViewportMax{0.0f};
     bool hasSceneViewportBounds = false;
 
+    // Uncapped for now: normal frame input batches are small, so retain every event.
     std::vector<Event> events;
-    std::size_t droppedEventCount = 0;
+
+    // Buffer presentation input until a simulation tick. Latest held/pointer
+    // state wins; edges, motion, scroll, and ordered events survive skipped ticks.
+    void accumulate(const InputSnapshot &latest)
+    {
+        keyHeld = latest.keyHeld;
+        mouseHeld = latest.mouseHeld;
+        mousePos = latest.mousePos;
+        dragStart = latest.dragStart;
+        sceneViewportMin = latest.sceneViewportMin;
+        sceneViewportMax = latest.sceneViewportMax;
+        hasSceneViewportBounds = latest.hasSceneViewportBounds;
+
+        mergeEdges(keyPressed, latest.keyPressed);
+        mergeEdges(keyReleased, latest.keyReleased);
+        mergeEdges(mousePressed, latest.mousePressed);
+        mergeEdges(mouseReleased, latest.mouseReleased);
+        mouseDelta += latest.mouseDelta;
+        scrollDelta += latest.scrollDelta;
+        events.insert(events.end(), latest.events.begin(), latest.events.end());
+    }
+
+    // Consume one-shot input after the first tick; retain held and pointer state.
+    void clearTransientState()
+    {
+        keyPressed.clear();
+        keyReleased.clear();
+        mousePressed.clear();
+        mouseReleased.clear();
+        mouseDelta = {0.0f, 0.0f};
+        scrollDelta = {0.0f, 0.0f};
+        events.clear();
+    }
 
     bool isKeyHeld(KeyType key) const
     {
@@ -102,6 +134,18 @@ struct InputSnapshot
     }
 
 private:
+    template <typename Key>
+    static void mergeEdges(std::unordered_map<Key, bool> &pending, const std::unordered_map<Key, bool> &incoming)
+    {
+        for (const auto &[key, active] : incoming)
+        {
+            if (active)
+            {
+                pending[key] = true;
+            }
+        }
+    }
+
     template <typename Key> static bool stateIsSet(const std::unordered_map<Key, bool> &states, Key key)
     {
         const auto it = states.find(key);

@@ -4,12 +4,11 @@
 #include "core/GLIncludes.h"
 #include "core/InputSnapshot.h"
 
-#include <cstddef>
 #include <glm/glm.hpp>
 #include <unordered_map>
 #include <vector>
 
-// TODO: Move to a bounded input-event queue containing press/release, mouse
+// TODO: Move to an input-event queue containing press/release, mouse
 // movement/scroll, and continued-held events generated every frame from GLFW
 // state polling on the main thread (not GLFW_REPEAT). Publish the ordered events
 // as an immutable per-frame batch that all systems can read without popping.
@@ -20,8 +19,6 @@
 class EventHandler
 {
 public:
-    static constexpr std::size_t MAX_EVENTS_PER_CAPTURE = 4096;
-
     static EventHandler *instance();
 
     // Start before polling events. Clears prior frame edges, deltas, and events.
@@ -57,10 +54,8 @@ private:
 
     bool isMouseInsideSceneViewport() const;
     void recordEvent(Event event);
-    void logDroppedEvents() const;
 
     std::vector<Event> m_events;
-    std::size_t m_droppedEventCount = 0;
     std::unordered_map<KeyType, bool> m_keyStates;
     std::unordered_map<KeyType, bool> m_keyPressedFrame;
     std::unordered_map<KeyType, bool> m_keyReleasedFrame;
