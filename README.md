@@ -126,7 +126,7 @@ Systems implement `ISystem`, declare their access through the required `descript
 
 Systems receive a mutable `SystemContext &`. It contains the scene's mutable registry and physics references,
 `const FrameContext &frame`, and `editMode`. The game/editor loop captures one
-presentation frame after `beginFrame()` and GLFW event polling. Local accumulator
+presentation frame after GLFW event polling. Local accumulator
 logic in `BaseGame::runLoop()` and `EditorLayer::run()` derives zero or more ticks
 with fixed `deltaTime` and simulation
 `elapsedTime`; all systems in one tick share its input and window values through
@@ -178,16 +178,50 @@ Play enables every system on the disposable runtime scene. Use the panel
 checkboxes for temporary overrides. Runtime Pause still stops scene updates
 entirely.
 
-Systems read `context.frame.input.isKeyHeld(...)`, key/mouse edge helpers, and
-the broadcast `context.frame.input.events` vector. They use
-`context.frame.window` for pure viewport and screen-to-world calculations.
+Systems and editor tools traverse the same read-only
+`context.frame.input.events` vector. `InputSnapshot` has no key/button maps or
+input-query helpers. GLFW callbacks feed `EventHandler` on the main thread;
+gameplay and editor consumers handle the captured engine events rather than
+polling GLFW directly. Reading the batch never removes another reader's input.
+
+| Event | Use |
+| --- | --- |
+| `KeyPress`, `KeyRelease`, `MouseButtonPress`, `MouseButtonRelease` | One-shot transitions, including a press and release before the next tick |
+| `KeyHeld`, `MouseButtonHeld` | Continuous input, emitted once per currently held input in each tick |
+| `KeyRepeat` | Native keyboard repeat; separate from continuous held input |
+| `MouseMove`, `MouseScroll` | Ordered movement deltas and scroll amounts |
+| `MousePosition` | Latest cursor position, retained even when the cursor has not moved |
+
+`Event` exposes engine-defined input values: `KeyType`, `MouseButton`, and
+modifier flags. `EventType` identifies press, release, repeat, or held input;
+there is no separate `isPressed` flag. `KeyType` covers letters, digits,
+navigation, function keys, punctuation, keypad keys, and left/right modifiers.
+Unmapped keys use `KeyType::Unknown`. `MouseButton` distinguishes left, right,
+middle, buttons 4–8, and unknown or absent buttons.
+Native key/button codes and scancodes stay in `EventHandler`'s private platform
+state to match callback transitions; consumers never compare GLFW input constants.
+Callbacks maintain held input and modifiers. Losing window focus queues releases
+and clears that retained state. Cursor position is seeded once when window
+callbacks are installed, then updated by cursor callbacks. `captureSnapshot()`
+publishes the retained values without polling key, button, cursor, or focus state;
+the run loop still calls `glfwPollEvents()` to dispatch platform callbacks.
+Callbacks queue one-shot events until capture drains them; there is no
+frame-start input clearing that could discard events delivered between captures.
+Pointer events carry their coordinates, drag origin, and `insideSceneViewport`.
+Presses outside the viewport do not start scene interactions; releases still
+end active drags outside it.
+Input event storage is uncapped for now because normal frame batches are small.
+Consumers use `context.frame.window` for pure viewport and screen-to-world calculations.
 Snapshot reads need no Input/Window resource declarations, and Time is no longer
 a scheduling resource. Platform capture and window operations remain on the
 main thread. `AnimationPlayer::update(float)` and `Animator::update(float)` take
 explicit delta time. Local loop constants set `1/60`-second ticks, at most eight
 per presentation frame. Any remaining whole-tick backlog is discarded, keeping
-the fractional remainder for the next frame. Input edges/events
-survive frames without a tick and are consumed only by the first catch-up tick.
+the fractional remainder for the next frame. Ordered one-shot events survive
+frames without a tick and appear only in the first catch-up tick. Accumulation
+replaces prior held/pointer records with the latest capture, so rendering faster
+than simulation does not duplicate continuous actions. Later catch-up ticks
+retain only `KeyHeld`, `MouseButtonHeld`, and `MousePosition`.
 `InputSnapshot::accumulate()` and `clearTransientState()` share input buffering
 between the loops; the accumulator, simulation clock, and pending input remain
 local run-loop variables.

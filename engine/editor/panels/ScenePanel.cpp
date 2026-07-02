@@ -273,8 +273,15 @@ void ScenePanel::createSpriteFromPayload(const ImGuiPayload *payload)
 {
     IM_ASSERT(payload->DataSize == sizeof(SpritePayload));
     SpritePayload spritePayload = *(SpritePayload *)payload->Data;
-    EventHandler *handler = EventHandler::instance();
-    glm::vec2 worldPos = m_ctx.getWorldCoordinate(handler->getMousePos());
+    glm::vec2 mousePos{0.0f};
+    for (const Event &event : m_ctx.frame.input.events)
+    {
+        if (event.type == EventType::MousePosition)
+        {
+            mousePos = {event.mouseX, event.mouseY};
+        }
+    }
+    glm::vec2 worldPos = m_ctx.getWorldCoordinate(mousePos);
 
     const float aspectRatio = spritePayload.width / spritePayload.height;
 
@@ -289,8 +296,15 @@ void ScenePanel::createModelFromPayload(const ImGuiPayload *payload)
     IM_ASSERT(payload->DataSize == sizeof(ModelPayload));
     ModelPayload modelPayload = *(ModelPayload *)payload->Data;
 
-    EventHandler *handler = EventHandler::instance();
-    glm::vec2 worldPos = m_ctx.getWorldCoordinate(handler->getMousePos());
+    glm::vec2 mousePos{0.0f};
+    for (const Event &event : m_ctx.frame.input.events)
+    {
+        if (event.type == EventType::MousePosition)
+        {
+            mousePos = {event.mouseX, event.mouseY};
+        }
+    }
+    glm::vec2 worldPos = m_ctx.getWorldCoordinate(mousePos);
 
     Scene &scene = m_ctx.getActiveScene();
     const YAML::Node asset = YAML::LoadFile(modelPayload.filePath);

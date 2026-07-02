@@ -1,7 +1,6 @@
 #pragma once
 
 #include "core/Camera.h"
-#include "core/EventHandler.h"
 #include "core/GameObject.h"
 #include "core/MovementMode.h"
 #include "core/Scene.h"
@@ -22,9 +21,10 @@ public:
 
     // only handles the single click. If user drags, it won't be handled here
     void handleSingleLeftClick(EditorContext &ctx, Scene &scene, glm::vec2 mouseWorldPos);
-    void handleRightClick(EditorContext &ctx, Scene &scene, glm::vec2 mouseWorldPos);
-    void handleDragging(EditorContext &ctx, Scene &scene, glm::vec2 dragStartPos, glm::vec2 mouseWorldPos);
-    void handleZoom(EditorContext &ctx);
+    void handleRightClick(EditorContext &ctx, Scene &scene, glm::vec2 mouseWorldPos, ImVec2 mouseScreenPos);
+    void handleDragging(
+        EditorContext &ctx, Scene &scene, glm::vec2 dragStartPos, glm::vec2 mouseWorldPos, glm::vec2 mouseDelta);
+    void handleZoom(EditorContext &ctx, float scrollDelta);
 
     void selectObjectsInDrag(EditorContext &ctx, Scene &scene, glm::vec2 worldDragStart, glm::vec2 mouseWorldPos);
 
@@ -40,7 +40,10 @@ private:
     void handleRightClickOnEmpty(EditorContext &ctx, glm::vec2 mouseWorldPos, const ImVec2 &mouseScreenPos);
     // based on m_mode, move the game object to snap to grid or free
     void moveSelectedGameObjects(EditorContext &ctx, glm::vec2 mouseWorldPos);
-    void moveCamera(EditorContext &ctx);
+    void moveCamera(EditorContext &ctx, glm::vec2 mouseDelta);
+    void finishDragging(EditorContext &ctx);
 
     bool m_isDraggingObjects = false;
+    bool m_leftDragActive = false;
+    glm::vec2 m_dragStart{0.0f};
 };

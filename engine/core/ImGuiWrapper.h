@@ -2,6 +2,8 @@
 
 #include "core/components/Sprite.h"
 
+#include "core/InputSnapshot.h"
+
 #include "core/GLIncludes.h"
 #include "core/Window.h"
 
@@ -13,8 +15,8 @@ void setupImgui(Window &window);
 void shutdownImgui();
 void beginDockspace();
 void buildInitialLayout();
-void applySmoothScrolling();
-void ImGuiFrame(const std::function<void()> &func);
+void applySmoothScrolling(const InputSnapshot &input);
+void ImGuiFrame(const InputSnapshot &input, const std::function<void()> &func);
 void SetupStyle();
 void SetupFonts();
 

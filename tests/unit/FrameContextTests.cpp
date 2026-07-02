@@ -24,10 +24,18 @@ template <int Id> class FrameReader final : public ISystem
 public:
     void update(SystemContext &context) override
     {
+        bool pressed = false;
+        for (const Event &event : context.frame.input.events)
+        {
+            if (event.type == EventType::KeyPress && event.keyType == KeyType::Space)
+            {
+                pressed = true;
+            }
+        }
         observations.push_back({&context.frame,
             context.frame.deltaTime,
             context.frame.elapsedTime,
-            context.frame.input.wasKeyPressed(KeyType::Space),
+            pressed,
             context.frame.input.events.size()});
     }
 
@@ -54,9 +62,8 @@ TEST(FrameContextTests, AllSystemsReadTheSameFrameWithoutConsumingEvents)
     FrameContext frame;
     frame.deltaTime = 0.125f;
     frame.elapsedTime = 15.75;
-    frame.input.keyPressed[KeyType::Space] = true;
     Event event{};
-    event.type = EventType::Key;
+    event.type = EventType::KeyPress;
     event.keyType = KeyType::Space;
     frame.input.events.push_back(event);
     observations.clear();

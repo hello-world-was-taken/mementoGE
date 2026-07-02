@@ -1,6 +1,5 @@
 #pragma once
 
-#include "core/EventHandler.h"
 #include "core/Scene.h"
 #include "core/Window.h"
 

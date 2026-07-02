@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core/Camera.h"
-#include "core/EventHandler.h"
+#include "core/FrameContext.h"
 #include "core/SceneManager.h"
 #include "core/Window.h"
 #include "core/components/Camera.h"
@@ -46,7 +46,6 @@ protected:
         while (!glfwWindowShouldClose(m_window.getGlfwWindow()))
         {
             Time::update();
-            EventHandler::instance()->beginFrame();
             glfwPollEvents();
             const FrameContext frame = captureFrameContext(Time::deltaTime(), Time::elapsedTime());
 

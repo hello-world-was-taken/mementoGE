@@ -6,7 +6,6 @@
 #include "core/components/CircleCollider2D.h"
 #include "core/components/RigidBody2D.h"
 
-#include "core/EventHandler.h"
 #include "core/ImGuiWrapper.h"
 #include "core/MovementMode.h"
 #include "core/SpriteSheet.h"
@@ -68,12 +67,11 @@ void EditorLayer::run()
     while (!glfwWindowShouldClose(m_window.getGlfwWindow()))
     {
         Time::update();
-        EventHandler::instance()->beginFrame();
         glfwPollEvents();
         m_ctx.frame = captureFrameContext(Time::deltaTime(), Time::elapsedTime());
         const FrameContext &frame = m_ctx.frame;
 
-        ImGuiWrapper::ImGuiFrame(
+        ImGuiWrapper::ImGuiFrame(frame.input,
             [&]()
             {
                 handleEditorShortcuts(frame.input);
@@ -413,8 +411,15 @@ void EditorLayer::renderEditorProperties()
     ImGuiWrapper::Collapsable("Mouse / Coordinates",
         [&]
         {
-            ImVec2 mouseScreen = ImGui::GetMousePos();
-            glm::vec2 world = m_ctx.getWorldCoordinate({mouseScreen.x, mouseScreen.y});
+            glm::vec2 mouseScreen{0.0f};
+            for (const Event &event : m_ctx.frame.input.events)
+            {
+                if (event.type == EventType::MousePosition)
+                {
+                    mouseScreen = {event.mouseX, event.mouseY};
+                }
+            }
+            glm::vec2 world = m_ctx.getWorldCoordinate(mouseScreen);
 
             ImGui::Text("Mouse Screen: (%.1f, %.1f)", mouseScreen.x, mouseScreen.y);
             ImGui::Text("Mouse World:  (%.2f, %.2f)", world.x, world.y);
@@ -423,8 +428,6 @@ void EditorLayer::renderEditorProperties()
     ImGuiWrapper::Collapsable("Key Listener State",
         [&]
         {
-            EventHandler *handler = EventHandler::instance();
-
             struct KeyInfo
             {
                 KeyType type;
@@ -453,7 +456,15 @@ void EditorLayer::renderEditorProperties()
             ImGui::Text("Tracked Keys:");
             for (const auto &key : keys)
             {
-                bool pressed = handler->isKeyPressed(key.type);
+                bool pressed = false;
+                for (const Event &event : m_ctx.frame.input.events)
+                {
+                    if (event.type == EventType::KeyHeld && event.keyType == key.type)
+                    {
+                        pressed = true;
+                        break;
+                    }
+                }
                 ImGui::Text("%s: %s", key.name, pressed ? "Pressed" : "Released");
             }
         });
@@ -511,11 +522,20 @@ void EditorLayer::handleEditorShortcuts(const InputSnapshot &input)
         return;
     }
 
+    bool spaceHeld = false;
+    bool mHeld = false;
+    bool sHeld = false;
     for (const Event &e : input.events)
     {
-        LOG_DEBUG(LogChannel::Editor, "Event '{}': cmd={}", e.name, e.cmd);
-        if (e.type == EventType::Key || e.type == EventType::KeyRepeat)
+        if (e.type == EventType::KeyHeld)
         {
+            spaceHeld |= e.keyType == KeyType::Space;
+            mHeld |= e.keyType == KeyType::M;
+            sHeld |= e.keyType == KeyType::S;
+        }
+        if (e.type == EventType::KeyPress || e.type == EventType::KeyRepeat)
+        {
+            LOG_DEBUG(LogChannel::Editor, "Event '{}': cmd={}", e.name, e.cmd);
             const bool primaryModifier = e.cmd || e.ctrl;
 
             // Undo
@@ -540,13 +560,13 @@ void EditorLayer::handleEditorShortcuts(const InputSnapshot &input)
             }
 
             // Copy selected game objects (Cmd + C)
-            else if (e.type == EventType::Key && e.keyType == KeyType::C && primaryModifier)
+            else if (e.type == EventType::KeyPress && e.keyType == KeyType::C && primaryModifier)
             {
                 m_ctx.copySelectedObjectsToClipboard();
             }
 
             // Paste copied game objects (Cmd + V)
-            else if (e.type == EventType::Key && e.keyType == KeyType::V && primaryModifier)
+            else if (e.type == EventType::KeyPress && e.keyType == KeyType::V && primaryModifier)
             {
                 m_ctx.performSceneEdit(
                     [&]
@@ -563,10 +583,6 @@ void EditorLayer::handleEditorShortcuts(const InputSnapshot &input)
     // - Hold S      : Selection mode
     // These work in addition to the toolbar buttons and temporarily
     // override the interaction mode while the key is held.
-
-    bool spaceHeld = input.isKeyHeld(KeyType::Space);
-    bool mHeld = input.isKeyHeld(KeyType::M);
-    bool sHeld = input.isKeyHeld(KeyType::S);
 
     EditorInteractionMode newMode = m_ctx.baseInteractionMode;
 
@@ -592,13 +608,26 @@ void EditorLayer::drawMouseDebugPanel()
     ImGui::Separator();
     ImGui::Text("Mouse Debug");
 
-    EventHandler *handler = EventHandler::instance();
-
-    // Current position
-    glm::vec2 pos = handler->getMousePos();
-    glm::vec2 delta = handler->getMouseDelta();
-    glm::vec2 prev = pos - delta;
-    glm::vec2 scroll = handler->getScrollDelta();
+    glm::vec2 pos{0.0f};
+    glm::vec2 delta{0.0f};
+    glm::vec2 scroll{0.0f};
+    for (const Event &event : m_ctx.frame.input.events)
+    {
+        if (event.type == EventType::MousePosition)
+        {
+            pos = {event.mouseX, event.mouseY};
+        }
+        else if (event.type == EventType::MouseMove)
+        {
+            delta += glm::vec2{event.mouseDeltaX, event.mouseDeltaY};
+        }
+        else if (event.type == EventType::MouseScroll)
+        {
+            scroll += glm::vec2{event.scrollX, event.scrollY};
+        }
+    }
+    // Motion events use upward-positive Y; cursor coordinates use downward-positive Y.
+    const glm::vec2 prev = pos - glm::vec2{delta.x, -delta.y};
 
     ImGui::Text("Mouse Position: (%.1f, %.1f)", pos.x, pos.y);
     ImGui::Text("Previous Position: (%.1f, %.1f)", prev.x, prev.y);
@@ -610,17 +639,27 @@ void EditorLayer::drawMouseDebugPanel()
     // Show states for common mouse buttons
     struct ButtonInfo
     {
-        int id;
+        MouseButton id;
         const char *name;
     };
     std::vector<ButtonInfo> buttons = {
-        {GLFW_MOUSE_BUTTON_LEFT, "Left"}, {GLFW_MOUSE_BUTTON_RIGHT, "Right"}, {GLFW_MOUSE_BUTTON_MIDDLE, "Middle"}};
+        {MouseButton::Left, "Left"}, {MouseButton::Right, "Right"}, {MouseButton::Middle, "Middle"}};
 
     for (const auto &btn : buttons)
     {
-        bool held = handler->isMouseButtonHeld(btn.id);
-        bool pressed = handler->wasMouseButtonPressed(btn.id);
-        bool released = handler->wasMouseButtonReleased(btn.id);
+        bool held = false;
+        bool pressed = false;
+        bool released = false;
+        for (const Event &event : m_ctx.frame.input.events)
+        {
+            if (event.mouseButton != btn.id)
+            {
+                continue;
+            }
+            held |= event.type == EventType::MouseButtonHeld;
+            pressed |= event.type == EventType::MouseButtonPress;
+            released |= event.type == EventType::MouseButtonRelease;
+        }
 
         ImGui::Text("%s Button: Held=%s, Pressed=%s, Released=%s",
             btn.name,

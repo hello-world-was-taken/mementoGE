@@ -1,6 +1,5 @@
 #include "core/components/Sprite.h"
 
-#include "core/EventHandler.h"
 #include "core/GLIncludes.h"
 #include "core/IconsFontAwesome4.h"
 #include "core/ImGuiWrapper.h"
@@ -202,16 +201,22 @@ void ImGuiWrapper::buildInitialLayout()
     ImGui::DockBuilderFinish(dockspace_id);
 }
 
-void ImGuiWrapper::applySmoothScrolling()
+void ImGuiWrapper::applySmoothScrolling(const InputSnapshot &input)
 {
     ImGuiIO &io = ImGui::GetIO();
-    EventHandler *eventHandler = EventHandler::instance();
 
     const float scrollMultiplier = 0.5f;
     const float scrollSmoothing = 8.0f;
     static ImVec2 scrollEnergy = ImVec2(0.0f, 0.0f);
 
-    glm::vec2 scrollDelta = eventHandler->getScrollDelta();
+    glm::vec2 scrollDelta{0.0f};
+    for (const Event &event : input.events)
+    {
+        if (event.type == EventType::MouseScroll)
+        {
+            scrollDelta += glm::vec2{event.scrollX, event.scrollY};
+        }
+    }
 
     scrollDelta.x *= scrollMultiplier;
     scrollDelta.y *= scrollMultiplier;
@@ -253,9 +258,9 @@ void ImGuiWrapper::applySmoothScrolling()
     io.AddMouseWheelEvent(-scroll_now.x, scroll_now.y);
 }
 
-void ImGuiWrapper::ImGuiFrame(const std::function<void()> &func)
+void ImGuiWrapper::ImGuiFrame(const InputSnapshot &input, const std::function<void()> &func)
 {
-    applySmoothScrolling();
+    applySmoothScrolling(input);
 
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();

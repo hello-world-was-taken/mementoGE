@@ -122,10 +122,16 @@ void Window::setupWindowHints() const
 
 void Window::setupCallBack() const
 {
+    // Seed the pointer once; subsequent input is recorded by callbacks.
+    double cursorX, cursorY;
+    glfwGetCursorPos(m_glfw_window, &cursorX, &cursorY);
+    EventHandler::instance()->initializeCursorPosition(cursorX, cursorY);
+
     glfwSetCursorPosCallback(m_glfw_window, EventHandler::glfwCursorPosCallback);
     glfwSetMouseButtonCallback(m_glfw_window, EventHandler::glfwMouseButtonCallback);
     glfwSetScrollCallback(m_glfw_window, EventHandler::glfwScrollCallback);
     glfwSetKeyCallback(m_glfw_window, EventHandler::glfwKeyCallBack);
+    glfwSetWindowFocusCallback(m_glfw_window, EventHandler::glfwWindowFocusCallback);
 }
 
 void Window::initializeWindow()
