@@ -8,6 +8,7 @@
 #endif
 
 class GameObject;
+class SystemEntities;
 
 struct EntityRef
 {
@@ -15,10 +16,14 @@ struct EntityRef
     entt::entity target = entt::null;
 
     bool resolve(entt::registry &registry);
+    bool resolve(const SystemEntities &entities);
 
 #ifdef EDITOR_BUILD
     void serialize(YAML::Emitter &out);
     void deserialize(const YAML::Node &node);
     void drawInspector(GameObject &go);
 #endif
+
+private:
+    template <typename Entities> bool resolveFrom(const Entities &entities);
 };

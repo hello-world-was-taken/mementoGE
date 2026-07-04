@@ -65,8 +65,11 @@ public:
     void setGravity(glm::vec2 gravity);
 
     std::vector<GameObject> &getGameObjects();
+    const std::vector<GameObject> &getGameObjects() const;
     GameObject *findGameObjectByUuid(uint64_t uuid);
+    const GameObject *findGameObjectByUuid(uint64_t uuid) const;
     GameObject *findPrimaryCamera();
+    const GameObject *findPrimaryCamera() const;
 
     const std::string &getTag() const;
     bool serialize(YAML::Emitter &out);

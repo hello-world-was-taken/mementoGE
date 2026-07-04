@@ -66,19 +66,19 @@ SystemDescriptor TextLayoutSystem::descriptor() const
 
 void TextLayoutSystem::update(SystemContext &context)
 {
-    entt::registry &registry = context.registry;
+    SystemEntities &registry = context.entities;
     // For every entity that has Text + TextAnchor + Transform, compute
     // where the text should appear within the game object's own bounds
     // and store that as a local offset on the Text component. This way
     // we do not move the game object itself, only the text relative to it.
-    auto view = registry.view<Transform, Text, TextAnchor, EntityInfo>();
+    auto view = registry.view<const Transform, Text, const TextAnchor, const EntityInfo>();
 
     for (entt::entity entity : view)
     {
-        auto &transform = view.get<Transform>(entity);
+        auto &transform = view.get<const Transform>(entity);
         auto &text = view.get<Text>(entity);
-        auto &anchorComp = view.get<TextAnchor>(entity);
-        auto &info = view.get<EntityInfo>(entity);
+        auto &anchorComp = view.get<const TextAnchor>(entity);
+        auto &info = view.get<const EntityInfo>(entity);
 
         glm::vec2 textSize = text.measure();
         glm::vec2 objectCenter{transform.position.x, transform.position.y};

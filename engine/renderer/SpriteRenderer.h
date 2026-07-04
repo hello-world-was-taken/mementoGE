@@ -19,7 +19,8 @@ public:
     SpriteRenderer();
     ~SpriteRenderer();
 
-    void render(const CameraOld &camera, double elapsedTime, const std::vector<GameObject> &gameObjects);
+    // Text geometry is rebuilt here on the render owner, so objects are mutable.
+    void render(const CameraOld &camera, double elapsedTime, std::vector<GameObject> &gameObjects);
 
 private:
     std::unique_ptr<RenderBatch> m_batch;

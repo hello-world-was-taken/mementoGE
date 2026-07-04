@@ -1,5 +1,6 @@
 #include "core/SystemScheduler.h"
 #include "core/ISystem.h"
+#include "core/SystemContext.h"
 
 SystemScheduler::SystemScheduler(JobSystemConfig config)
     // Keep the waiting caller from taking worker updates out of the queue.
@@ -9,7 +10,10 @@ SystemScheduler::SystemScheduler(JobSystemConfig config)
 
 void SystemScheduler::run(ISystem &system, SystemContext &context)
 {
-    if (system.descriptor().threadAffinity() == SystemThreadAffinity::MainThread)
+    const auto descriptor = system.descriptor();
+    SystemEntities::UpdateScope access(context.entities, descriptor);
+
+    if (descriptor.threadAffinity() == SystemThreadAffinity::MainThread)
     {
         system.update(context);
         return;

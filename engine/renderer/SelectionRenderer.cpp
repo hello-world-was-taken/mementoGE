@@ -46,7 +46,7 @@ void SelectionRenderer::updateVertices(const std::vector<GameObject> &selectedOb
             continue;
         }
 
-        EntityInfo &entityInfo = obj.getComponent<EntityInfo>();
+        const EntityInfo &entityInfo = obj.getComponent<EntityInfo>();
         const Transform &transform = obj.getComponent<Transform>();
         glm::vec2 size = {entityInfo.width, entityInfo.height};
 

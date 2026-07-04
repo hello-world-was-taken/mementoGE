@@ -40,7 +40,8 @@ public:
 
     template <typename Component, typename... Args> void addComponent(Args &&...args);
     template <typename Component> bool hasComponent() const;
-    template <typename Component> Component &getComponent() const;
+    template <typename Component> Component &getComponent();
+    template <typename Component> const Component &getComponent() const;
     template <typename Component> void removeComponent();
     template <typename Component> void serializeComponent(YAML::Emitter &out);
     template <typename Component>
@@ -62,6 +63,11 @@ public:
     // FIXME: returning a reference, which itself is passed in as a
     // reference. Not a good idea.
     entt::registry &getRegistry()
+    {
+        return *m_registry;
+    }
+
+    const entt::registry &getRegistry() const
     {
         return *m_registry;
     }
@@ -107,7 +113,7 @@ template <typename Component> bool GameObject::hasComponent() const
     return m_registry->all_of<Component>(m_entity);
 }
 
-template <typename Component> Component &GameObject::getComponent() const
+template <typename Component> Component &GameObject::getComponent()
 {
     if (!hasComponent<Component>())
     {
@@ -118,6 +124,17 @@ template <typename Component> Component &GameObject::getComponent() const
         throw std::runtime_error("Component does not exist");
     }
     return m_registry->get<Component>(m_entity);
+}
+
+template <typename Component> const Component &GameObject::getComponent() const
+{
+    if (!hasComponent<Component>())
+    {
+        std::cerr << "ERROR: Component " << typeid(Component).name() << " does not exist for the Game Object"
+                  << std::endl;
+        throw std::runtime_error("Component does not exist");
+    }
+    return getRegistry().get<Component>(m_entity);
 }
 
 template <typename Component> void GameObject::removeComponent()

@@ -22,7 +22,7 @@ private:
     void renderPropertiesPopupHost();
     void renderPropertiesInPopup();
 
-    template <typename T> void drawComponentInspector(const GameObject &gameObject);
+    template <typename T> void drawComponentInspector(GameObject &gameObject);
 
     void drawAddComponentCombo(GameObject &go);
     void drawRigidBodySettings(GameObject &go);
@@ -51,7 +51,7 @@ struct has_drawInspector_go<T, std::void_t<decltype(std::declval<T>().drawInspec
 {
 };
 
-template <typename T> void PropertiesPanel::drawComponentInspector(const GameObject &gameObject)
+template <typename T> void PropertiesPanel::drawComponentInspector(GameObject &gameObject)
 {
     if (gameObject.hasComponent<T>())
     {
@@ -62,7 +62,7 @@ template <typename T> void PropertiesPanel::drawComponentInspector(const GameObj
         }
         else if constexpr (has_drawInspector_go<T>::value)
         {
-            component.drawInspector(const_cast<GameObject &>(gameObject));
+            component.drawInspector(gameObject);
         }
         else
         {

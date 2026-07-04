@@ -1,10 +1,11 @@
 #include "core/components/EntityRef.h"
 #include "core/GameObject.h"
+#include "core/SystemEntities.h"
 #include "core/components/EntityInfo.h"
 
-bool EntityRef::resolve(entt::registry &registry)
+template <typename Entities> bool EntityRef::resolveFrom(const Entities &entities)
 {
-    if (target != entt::null && registry.valid(target))
+    if (target != entt::null && entities.valid(target))
     {
         return true;
     }
@@ -15,10 +16,10 @@ bool EntityRef::resolve(entt::registry &registry)
         return false;
     }
 
-    auto view = registry.view<EntityInfo>();
+    auto view = entities.template view<const EntityInfo>();
     for (auto entity : view)
     {
-        auto &info = view.get<EntityInfo>(entity);
+        const auto &info = view.template get<const EntityInfo>(entity);
         if (info.uuid == targetUuid)
         {
             target = entity;
@@ -28,6 +29,16 @@ bool EntityRef::resolve(entt::registry &registry)
 
     target = entt::null;
     return false;
+}
+
+bool EntityRef::resolve(entt::registry &registry)
+{
+    return resolveFrom(registry);
+}
+
+bool EntityRef::resolve(const SystemEntities &entities)
+{
+    return resolveFrom(entities);
 }
 
 #ifdef EDITOR_BUILD

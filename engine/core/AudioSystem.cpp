@@ -18,6 +18,8 @@ SystemDescriptor AudioSystem::descriptor() const
         .writes<AudioSource>()
         .readsResource(SystemResource::AudioSettings)
         .writesResource(SystemResource::AudioDevice)
+        // Destroying an audio entity may also trigger rigid-body cleanup.
+        .writesResource(SystemResource::PhysicsWorld)
         .writesResource(SystemResource::AssetCache)
         .requestsStructuralChanges()
         .withAffinity(SystemThreadAffinity::AnyWorker)
@@ -45,9 +47,9 @@ AudioSystem::AudioSystem()
 
 void AudioSystem::update(SystemContext &context)
 {
-    entt::registry &registry = context.registry;
+    SystemEntities &registry = context.entities;
     // Update listener (camera)
-    updateListener(registry, context.frame.deltaTime);
+    updateListener(context.frame.deltaTime);
 
     auto view = registry.view<AudioSource>();
     std::vector<entt::entity> completedOneShots;
@@ -59,7 +61,7 @@ void AudioSystem::update(SystemContext &context)
         // Keep gameobject's and audioplayer's position in sync
         if (registry.any_of<Transform>(entity))
         {
-            const auto &transform = registry.get<Transform>(entity);
+            const auto &transform = registry.get<const Transform>(entity);
             audioSource.audioPlayer.setPosition(audioSource.relative ? glm::vec3{0.0f} : transform.position);
         }
 
@@ -91,7 +93,7 @@ void AudioSystem::update(SystemContext &context)
     }
 }
 
-void AudioSystem::updateListener(entt::registry &registry, float deltaTime)
+void AudioSystem::updateListener(float deltaTime)
 {
     glm::vec3 pos{0.0f};
     glm::vec3 forward{0.0f, 0.0f, -1.0f};

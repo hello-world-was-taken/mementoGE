@@ -97,7 +97,7 @@ GameObject::GameObject(entt::registry &registry, const YAML::Node &serializedGam
 
 std::array<glm::vec3, 4> GameObject::getQuad() const
 {
-    EntityInfo &entityInfo = getComponent<EntityInfo>();
+    const EntityInfo &entityInfo = getComponent<EntityInfo>();
 
     float halfWidth = entityInfo.width * 0.5f;
     float halfHeight = entityInfo.height * 0.5f;
@@ -137,7 +137,7 @@ void GameObject::updateEntityReference(entt::registry &registry)
 // optimization
 bool GameObject::containsPoint(glm::vec2 worldPoint) const
 {
-    EntityInfo &entityInfo = getComponent<EntityInfo>();
+    const EntityInfo &entityInfo = getComponent<EntityInfo>();
     std::array<glm::vec3, 4> worldQuad = getWorldCoordinateQuad();
     glm::vec2 topLeft = worldQuad[0];
     return topLeft.x <= worldPoint.x && worldPoint.x <= topLeft.x + entityInfo.width && topLeft.y >= worldPoint.y &&

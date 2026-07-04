@@ -23,9 +23,9 @@ struct WorldBounds
     float top;
 };
 
-std::optional<WorldBounds> getBackgroundBounds(entt::registry &registry)
+std::optional<WorldBounds> getBackgroundBounds(const SystemEntities &registry)
 {
-    auto backgrounds = registry.view<EntityInfo, RenderLayer, Transform>();
+    auto backgrounds = registry.view<const EntityInfo, const RenderLayer, const Transform>();
     WorldBounds bounds{std::numeric_limits<float>::max(),
         std::numeric_limits<float>::lowest(),
         std::numeric_limits<float>::max(),
@@ -34,14 +34,14 @@ std::optional<WorldBounds> getBackgroundBounds(entt::registry &registry)
 
     for (entt::entity entity : backgrounds)
     {
-        const RenderLayer &renderLayer = backgrounds.get<RenderLayer>(entity);
+        const RenderLayer &renderLayer = backgrounds.get<const RenderLayer>(entity);
         if (renderLayer.layer != RenderLayerType::Background)
         {
             continue;
         }
 
-        const EntityInfo &info = backgrounds.get<EntityInfo>(entity);
-        const Transform &transform = backgrounds.get<Transform>(entity);
+        const EntityInfo &info = backgrounds.get<const EntityInfo>(entity);
+        const Transform &transform = backgrounds.get<const Transform>(entity);
         const float halfWidth = static_cast<float>(info.width) * std::abs(transform.scale.x) * 0.5f;
         const float halfHeight = static_cast<float>(info.height) * std::abs(transform.scale.y) * 0.5f;
 
@@ -81,7 +81,7 @@ SystemDescriptor FollowSystem::descriptor() const
 
 void FollowSystem::update(SystemContext &context)
 {
-    entt::registry &registry = context.registry;
+    SystemEntities &registry = context.entities;
     const std::optional<WorldBounds> backgroundBounds = getBackgroundBounds(registry);
     auto view = registry.view<EntityRef, Transform>();
 
@@ -103,7 +103,7 @@ void FollowSystem::update(SystemContext &context)
 
         if (registry.any_of<Camera>(entity))
         {
-            Camera &camera = registry.get<Camera>(entity);
+            const Camera &camera = registry.get<const Camera>(entity);
             const float zoom = std::max(camera.zoom, 0.01f);
             const glm::vec2 viewportSize{camera.logicalWidth * zoom, camera.logicalHeight * zoom};
             const glm::vec2 deadZoneSize{viewportSize.x * 0.45f, viewportSize.y * 0.45f};

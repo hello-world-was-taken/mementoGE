@@ -124,8 +124,12 @@ Inside MementoGE, the engine's CMake checks the same `EDITOR_BUILD` option and, 
 
 Systems implement `ISystem`, declare their access through the required `descriptor()` override, and receive scene services through `SystemContext`:
 
-Systems receive a mutable `SystemContext &`. It contains the scene's mutable registry and physics references,
-`const FrameContext &frame`, and `editMode`.
+Systems receive a mutable `SystemContext &`, declared in
+[SystemContext.h](engine/core/SystemContext.h). It contains descriptor-checked
+`SystemEntities entities`, `const FrameContext &frame`, and `editMode`, plus
+narrow physics operations. It exposes no raw registry, physics world, scene,
+or job-submission handle.
+
 The game/editor loop captures one
 presentation frame after GLFW event polling. Local accumulator
 logic in `BaseGame::runLoop()` and `EditorLayer::run()` derives zero or more ticks
@@ -135,6 +139,9 @@ a const reference. The scheduler keeps each update's context and tick frame in
 scope until the update finishes.
 
 ```cpp
+#include "core/ISystem.h"
+#include "core/SystemContext.h"
+
 class MovementSystem : public ISystem
 {
 public:
@@ -147,7 +154,7 @@ public:
 
     void update(SystemContext &context) override
     {
-        auto view = context.registry.view<Transform>();
+        auto view = context.entities.view<Transform>();
         // Update matching entities using context.frame.deltaTime as needed.
     }
 };
@@ -201,20 +208,20 @@ systems can use the default `AnyWorker` affinity once their called services
 support it. With workers configured, these updates run on a worker; with zero
 workers, they run inline.
 
-For direct CPU work, the pool exposes one synchronous operation:
-
-```cpp
-jobs.runAndWait([&system, &context]
-{
-    system.update(context);
-});
-// The whole update has finished; its outputs can now be consumed.
-```
-
 Ordinary scene execution uses `SystemScheduler::run(system, context)` to apply
-affinity centrally. Exceptions propagate after completion, and the scene does
+affinity and activate descriptor-checked ECS access. Its worker path uses
+`JobSystem::runAndWait()`; calling `update()` directly does not establish the
+access scope. Exceptions propagate after completion, and the scene does
 not start a successor after failure. System timings include dispatch and wait.
 Grouped child jobs and automatic range splitting are deferred.
+
+Graph construction, whole-system dispatch, and checked ECS access are
+implemented. Read components through `const T` and request mutable `T` only when
+the descriptor declares `writes<T>()`. Views and references are borrowed for one
+update and must not escape it. EnTT may create component pools lazily during
+these exclusive updates; pool preparation is deferred until registry access
+can overlap. Structural mutations remain immediate, explicitly permitted, and
+exclusive; deferred commits and concurrent updates are later steps.
 
 Running systems one at a time preserves exclusive access between updates. It
 does not make arbitrary overlapping registry, physics, audio, asset, or platform
@@ -272,7 +279,7 @@ UI, previews, and shader clocks use real presentation time. Render interpolation
 is deferred in the [project TODO](../../../TODO.md).
 See the [fixed-step rendering diagrams](docs/box2d-and-physics.md#fixed-ticks-and-latest-pose-rendering)
 for examples of faster rendering and faster simulation.
-Scene systems remain sequential; dependency scheduling is later work.
+Scene systems remain sequential; concurrent system execution is later work.
 See [Engine Concurrency Design](../../../docs/concurrency-design.md)
 and [Multithreading Migration Plan](docs/multithreading-plan.md).
 
@@ -345,56 +352,105 @@ and [Multithreading Migration Plan](docs/multithreading-plan.md).
 
 ### Animation Support
 
-The engine now supports basic 2D sprite animations via JSON-defined animation maps. Each animation map JSON file defines the texture, sprite layout, and animations.
+Animation maps define a texture, named sprite frames, and animations that play
+those frames in a specified order. Each frame can also override existing
+collider and sensor shapes.
 
 #### Example JSON
 
 ```json
 {
-  "meta": { "texture": "name.png" },
+  "meta": { "texture": "character.png" },
   "frames": {
-    "sprite-1-1": { "x": 0, "y": 0, "rotation": 0, "w": 13, "h": 4 },
-    "sprite-1-2": { "x": 13, "y": 0, "rotation": 0, "w": 15, "h": 5 },
-    "sprite-1-3": { "x": 28, "y": 0, "rotation": 0, "w": 8, "h": 5 },
-    "sprite-1-4": { "x": 36, "y": 0, "rotation": 0, "w": 24, "h": 6 },
-    "sprite-1-5": { "x": 60, "y": 0, "rotation": 0, "w": 11, "h": 6 },
-    "sprite-1-6": { "x": 71, "y": 0, "rotation": 0, "w": 5, "h": 7 },
-    "sprite-1-7": { "x": 76, "y": 0, "rotation": 0, "w": 18, "h": 7 },
-    "sprite-1-8": { "x": 94, "y": 0, "rotation": 0, "w": 5, "h": 7 }
+    "idle_0": { "x": 0, "y": 0, "w": 32, "h": 32, "duration": 0.2 },
+    "attack_0": {
+      "x": 32, "y": 0, "w": 32, "h": 32, "duration": 0.08,
+      "colliders": {
+        "body": { "size": [12, 22], "offset": [0, -4], "rotation": 0 }
+      },
+      "sensors": {
+        "attack": { "size": [30, 22], "offset": [13, 1], "active": false }
+      }
+    },
+    "attack_1": {
+      "x": 64, "y": 0, "w": 32, "h": 32, "duration": 0.08,
+      "sensors": {
+        "attack": { "size": [30, 22], "offset": [13, 1], "active": true }
+      }
+    }
   },
   "animations": {
-    "idle": {
-      "frames": [
-        "sprite-1-1",
-        "sprite-1-2",
-        "sprite-1-3",
-        "sprite-1-4",
-        "sprite-1-5",
-        "sprite-1-6",
-        "sprite-1-7",
-        "sprite-1-8"
-      ]
-    }
+    "idle": { "frames": ["idle_0"] },
+    "attack": { "frames": ["attack_0", "attack_1"] }
   }
 }
 ```
 
 #### JSON Fields
 
-- **texture**: Path to the sprite sheet image.
-- **spriteWidth / spriteHeight**: Dimensions of a single frame in pixels.
-- **spriteGapX / spriteGapY**: Horizontal and vertical spacing between frames in the sheet.
-- **spriteCount**: Total number of frames in the sheet.
-- **columns**: Number of columns in the sprite sheet.
-- **animations**: Dictionary of animation definitions:
-  - **startFrame**: Index of the first frame in the animation.
-  - **frameCount**: Number of frames in the animation.
-  - **duration**: Time in seconds per frame.
-  - **loop**: Whether the animation should repeat.
+| Field | Meaning |
+| --- | --- |
+| `meta.texture` | Texture path. Relative paths resolve under `GAME_ASSETS_DIR/texture`, independently of the JSON file's location. |
+| `frames` | Dictionary of frame names and their sprite rectangles. |
+| `frames.<name>.x`, `y`, `w`, `h` | Rectangle position and dimensions in atlas pixels. |
+| `frames.<name>.duration` | Seconds to display this frame; defaults to `0.1`. Use a positive value. |
+| `frames.<name>.colliders` | Optional overrides for named `BoxCollider2D` shapes. |
+| `frames.<name>.sensors` | Optional overrides for named `Sensor2D` shapes. |
+| `animations.<name>.frames` | Ordered array of frame names. Frames can be reused across animations. |
 
-#### Important Note
+Every listed frame name should exist, and every animation should contain at
+least one valid frame. The loader skips unknown frame names; empty animations
+are not playable. Frame-level sprite `rotation` is not parsed.
 
-Currently, each sprite’s JSON **must include an animation named `idle`**, as this is used as the default animation when an Animator component is added to a GameObject.
+#### Collider and Sensor Overrides
+
+Shape names such as `body` and `attack` must already exist on the entity's
+`BoxCollider2D` or `Sensor2D` component. Unmatched shape names are skipped;
+animation frames do not create shapes or add these components.
+
+Both shape types support optional `size`, `offset`, and `active` overrides.
+`size` is full width and height, and `offset` is relative to the physics body,
+using scene physics units. Box colliders also support `rotation` in degrees.
+Sensors have no rotation override.
+
+Each update resets shape size, offset, and collider rotation to their authored
+values before applying the current frame's overrides. Collider activation
+resets to `true`; sensor activation resets to the shape's authored `isActive`.
+See [Box2D and physics](docs/box2d-and-physics.md) for shape setup and physics behavior.
+
+#### Configuring and Playing Animations
+
+`Animator::animationSourceMap` maps each animation name to a JSON source that
+defines that same name. Relative JSON paths resolve from the game's assets
+directory (`GAME_ASSETS_DIR`):
+
+```cpp
+gameObject.addComponent<Animator>();
+Animator &animator = gameObject.getComponent<Animator>();
+animator.animationSourceMap["idle"] = "texture/character.json";
+animator.animationSourceMap["attack"] = "texture/character.json";
+animator.play("idle"); // Looping defaults to true.
+
+// Later, when an attack starts:
+animator.play("attack", false); // Stop on the final frame when finished.
+```
+
+`play()` returns `false` if the source mapping, file, or requested animation
+cannot be found. Looping is chosen through `play(name, loop)`; the loader does
+not read a JSON `loop` setting. Any animation name is valid. A newly added
+`Animator` has no selected animation; choose one in the inspector or call
+`play()`. Scene loading resumes a nonempty serialized `CurrentAnimation` with
+looping enabled. An animation named `idle` is optional.
+
+Register, add, and enable `AnimationSystem` in the scene. It advances playback
+with `context.frame.deltaTime`, updates the sprite, and applies shape overrides
+before `PhysicsSystem`. Editor previews supply their own presentation delta.
+`AnimationPlayer` also supports pause and stop; stop resets playback to the
+first frame. Playback currently advances at most one frame per update and
+discards leftover elapsed time when advancing.
+
+The first `Animator::play()` for an uncached source can load its texture through
+OpenGL. Systems that can reach that loading path must run on the main thread.
 
 ### Contributing
 

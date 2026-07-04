@@ -73,7 +73,7 @@ SpriteRenderer::~SpriteRenderer()
 {
 }
 
-void SpriteRenderer::render(const CameraOld &camera, double elapsedTime, const std::vector<GameObject> &gameObjects)
+void SpriteRenderer::render(const CameraOld &camera, double elapsedTime, std::vector<GameObject> &gameObjects)
 {
     if (!m_batch)
     {
@@ -136,7 +136,7 @@ void SpriteRenderer::render(const CameraOld &camera, double elapsedTime, const s
         }
     };
 
-    for (const GameObject &gameObject : gameObjects)
+    for (GameObject &gameObject : gameObjects)
     {
         const ShaderEffectRequest *effectRequest =
             gameObject.hasComponent<ShaderEffectRequest>() ? &gameObject.getComponent<ShaderEffectRequest>() : nullptr;
@@ -154,7 +154,7 @@ void SpriteRenderer::render(const CameraOld &camera, double elapsedTime, const s
         if (gameObject.hasComponent<Text>())
         {
             Text &text = gameObject.getComponent<Text>();
-            Transform &transform = gameObject.getComponent<Transform>();
+            const Transform &transform = gameObject.getComponent<Transform>();
             text.rebuild(transform); // FIXME: we should only rebuild when dirty.
             for (size_t i = 0; i + VERTEX_PER_QUAD <= text.vertices.size(); i += VERTEX_PER_QUAD)
             {
@@ -165,7 +165,7 @@ void SpriteRenderer::render(const CameraOld &camera, double elapsedTime, const s
         // sprite
         if (gameObject.hasComponent<Sprite>())
         {
-            Sprite &sprite = gameObject.getComponent<Sprite>();
+            const Sprite &sprite = gameObject.getComponent<Sprite>();
 
             std::array<glm::vec3, 4> quad = gameObject.getWorldCoordinateQuad();
             auto texCoords = sprite.getNormalizedTextureCoordinates();

@@ -50,5 +50,5 @@ private:
     UniqueContextPtr m_context = nullptr;
     float m_worldGain = 1.0f;
 
-    void updateListener(entt::registry &registry, float deltaTime);
+    void updateListener(float deltaTime);
 };

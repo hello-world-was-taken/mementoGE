@@ -141,7 +141,7 @@ glm::vec2 Text::measure() const
 }
 
 // FIXME: for the moment rebuild gets called every frame in sprite renderer.
-void Text::rebuild(Transform &transform)
+void Text::rebuild(const Transform &transform)
 {
     vertices.clear();
 

@@ -111,8 +111,8 @@ public:
         const auto state = sceneUpdateState;
         ProbeSystem update{*state};
         update.update(context);
-        state->entity = context.registry.create();
-        context.registry.emplace<PublishedValue>(state->entity).value = 42;
+        state->entity = context.entities.create();
+        context.entities.emplace<PublishedValue>(state->entity).value = 42;
     }
 
     SystemDescriptor descriptor() const override
@@ -132,7 +132,7 @@ public:
         const auto state = sceneUpdateState;
         ++state->consumerCalls;
         state->consumerThread = std::this_thread::get_id();
-        state->observedValue = context.registry.get<PublishedValue>(state->entity).value;
+        state->observedValue = context.entities.get<const PublishedValue>(state->entity).value;
         state->observedFinished = state->finished.load(std::memory_order_relaxed);
     }
 
@@ -150,7 +150,7 @@ public:
     void update(SystemContext &context) override
     {
         const auto state = sceneUpdateState;
-        context.registry.destroy(state->entity);
+        context.entities.destroy(state->entity);
         state->finished.fetch_add(1, std::memory_order_relaxed);
         if (state->failUpdate)
         {

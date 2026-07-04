@@ -93,7 +93,7 @@ protected:
         // here should be moved to a rendering system. It doesn't make
         // sense to process gameobject's camera and start rendering here.
         Scene &scene = m_sceneManager.getActiveScene();
-        const auto &gameObjects = scene.getGameObjects();
+        auto &gameObjects = scene.getGameObjects();
 
         // Use the primary Camera component if one exists,
         GameObject *cameraObj = scene.findPrimaryCamera();

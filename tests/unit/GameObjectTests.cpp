@@ -10,10 +10,18 @@
 #include <gtest/gtest.h>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
+#include <utility>
 #include <yaml-cpp/yaml.h>
 
 namespace
 {
+static_assert(std::is_same_v<decltype(std::declval<GameObject &>().getComponent<Transform>()), Transform &>);
+static_assert(
+    std::is_same_v<decltype(std::declval<const GameObject &>().getComponent<Transform>()), const Transform &>);
+static_assert(std::is_same_v<decltype(std::declval<GameObject &>().getRegistry()), entt::registry &>);
+static_assert(std::is_same_v<decltype(std::declval<const GameObject &>().getRegistry()), const entt::registry &>);
+
 YAML::Node serializeToNode(GameObject &gameObject)
 {
     YAML::Emitter out;
@@ -22,6 +30,20 @@ YAML::Node serializeToNode(GameObject &gameObject)
     return YAML::Load(out.c_str());
 }
 } // namespace
+
+TEST(GameObjectTests, ConstHandleExposesReadOnlyComponentsAndRegistry)
+{
+    entt::registry registry;
+    GameObject object{registry};
+    object.getComponent<Transform>().position = {4.0f, 5.0f, 6.0f};
+
+    const GameObject &readOnly = object;
+    EXPECT_EQ(&readOnly.getRegistry(), &registry);
+    EXPECT_TRUE(readOnly.getRegistry().valid(readOnly.getEntityId()));
+    EXPECT_EQ(&readOnly.getComponent<Transform>(), &object.getComponent<Transform>());
+    EXPECT_EQ(readOnly.getComponent<Transform>().position, glm::vec3(4.0f, 5.0f, 6.0f));
+    EXPECT_THROW(readOnly.getComponent<ShaderEffectRequest>(), std::runtime_error);
+}
 
 TEST(GameObjectTests, SerializesTaggedGameObject)
 {

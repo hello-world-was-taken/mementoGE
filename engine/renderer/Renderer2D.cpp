@@ -96,7 +96,7 @@ unsigned int Renderer2D::getColorTexture()
 void Renderer2D::renderScene(
     const CameraOld &camera,
     double elapsedTime,
-    const std::vector<GameObject> &objects,
+    std::vector<GameObject> &objects,
     const std::vector<GameObject> &selectedObjects)
 {
     m_finalFBO.resize();
@@ -109,7 +109,7 @@ bool Renderer2D::hasRendererTypeEnabled(RendererType flag)
     return (static_cast<uint32_t>(m_enabledRenderers) & static_cast<uint32_t>(flag)) != 0;
 }
 
-void Renderer2D::renderSprites(const CameraOld &camera, double elapsedTime, const std::vector<GameObject> &gameObjects)
+void Renderer2D::renderSprites(const CameraOld &camera, double elapsedTime, std::vector<GameObject> &gameObjects)
 {
     generateIndexArrayForTriangle(m_indices);
 
@@ -173,7 +173,7 @@ void Renderer2D::renderSprites(const CameraOld &camera, double elapsedTime, cons
         }
     };
 
-    for (const GameObject &gameObject : gameObjects)
+    for (GameObject &gameObject : gameObjects)
     {
         const ShaderEffectRequest *effectRequest =
             gameObject.hasComponent<ShaderEffectRequest>() ? &gameObject.getComponent<ShaderEffectRequest>() : nullptr;
@@ -189,7 +189,7 @@ void Renderer2D::renderSprites(const CameraOld &camera, double elapsedTime, cons
         if (gameObject.hasComponent<Text>())
         {
             Text &text = gameObject.getComponent<Text>();
-            Transform &transform = gameObject.getComponent<Transform>();
+            const Transform &transform = gameObject.getComponent<Transform>();
             text.rebuild(transform); // FIXME: we should only rebuild when dirty.
             for (size_t i = 0; i + VERTEX_PER_QUAD <= text.vertices.size(); i += VERTEX_PER_QUAD)
             {
@@ -200,7 +200,7 @@ void Renderer2D::renderSprites(const CameraOld &camera, double elapsedTime, cons
         // sprite
         if (gameObject.hasComponent<Sprite>())
         {
-            Sprite &sprite = gameObject.getComponent<Sprite>();
+            const Sprite &sprite = gameObject.getComponent<Sprite>();
 
             std::array<glm::vec3, 4> quad = gameObject.getWorldCoordinateQuad();
             auto texCoords = sprite.getNormalizedTextureCoordinates();
@@ -277,7 +277,7 @@ void Renderer2D::renderSelection(
             continue;
         }
 
-        EntityInfo &entityInfo = obj.getComponent<EntityInfo>();
+        const EntityInfo &entityInfo = obj.getComponent<EntityInfo>();
         const Transform &transform = obj.getComponent<Transform>();
         glm::vec2 size = {entityInfo.width, entityInfo.height};
 
@@ -374,7 +374,7 @@ void Renderer2D::setClearColor(glm::vec4 color)
 void Renderer2D::renderLayers(
     const CameraOld &camera,
     double elapsedTime,
-    const std::vector<GameObject> &objects,
+    std::vector<GameObject> &objects,
     const std::vector<GameObject> &selectedObjects)
 {
     m_finalFBO.bind();

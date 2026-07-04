@@ -66,6 +66,7 @@ add_library(${PROJECT_NAME} STATIC
     engine/core/SystemRegistry.cpp
     engine/core/SystemGraph.cpp
     engine/core/SystemScheduler.cpp
+    engine/core/SystemContext.cpp
     engine/core/jobs/JobSystem.cpp
     engine/core/AnimationSystem.cpp
     engine/core/Physics2D.cpp
@@ -139,6 +140,9 @@ target_link_libraries(${PROJECT_NAME}
     PRIVATE opengl
 )
 
+# EnTT's type indices can be first used from engine or game worker code.
+target_compile_definitions(${PROJECT_NAME} PUBLIC ENTT_USE_ATOMIC)
+
 if(EDITOR_BUILD)
     target_compile_definitions(${PROJECT_NAME} PRIVATE EDITOR_BUILD)
 endif()
@@ -175,6 +179,7 @@ if(BUILD_TESTING)
         tests/unit/SystemDescriptorTests.cpp
         tests/unit/SystemGraphTests.cpp
         tests/unit/SystemSchedulerTests.cpp
+        tests/unit/SystemEntitiesTests.cpp
         tests/unit/FontTests.cpp
         tests/unit/TextTests.cpp
         tests/unit/AnimationPlayerTests.cpp

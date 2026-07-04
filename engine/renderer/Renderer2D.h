@@ -30,7 +30,7 @@ public:
 
     void renderScene(const CameraOld &camera,
         double elapsedTime,
-        const std::vector<GameObject> &objects,
+        std::vector<GameObject> &objects,
         const std::vector<GameObject> &selectedObjects);
 
     unsigned int getColorTexture();
@@ -38,10 +38,10 @@ public:
 private:
     void renderLayers(const CameraOld &camera,
         double elapsedTime,
-        const std::vector<GameObject> &gameObjects,
+        std::vector<GameObject> &gameObjects,
         const std::vector<GameObject> &selectedObjects);
     bool hasRendererTypeEnabled(RendererType flag);
-    void renderSprites(const CameraOld &camera, double elapsedTime, const std::vector<GameObject> &gameObjects);
+    void renderSprites(const CameraOld &camera, double elapsedTime, std::vector<GameObject> &gameObjects);
     void renderSelection(const CameraOld &camera, double elapsedTime, const std::vector<GameObject> &selectedObjects);
 
     // TODOs

@@ -4,6 +4,7 @@
 #include "core/Scene.h"
 #include "core/SystemRegistry.h"
 #include "core/SystemScheduler.h"
+#include "core/SystemContext.h"
 
 #include "util/LogChannels.h"
 
@@ -247,9 +248,26 @@ std::vector<GameObject> &Scene::getGameObjects()
     return m_gameObjects;
 }
 
+const std::vector<GameObject> &Scene::getGameObjects() const
+{
+    return m_gameObjects;
+}
+
 GameObject *Scene::findGameObjectByUuid(uint64_t uuid)
 {
     for (GameObject &gameObject : m_gameObjects)
+    {
+        if (gameObject.hasComponent<EntityInfo>() && gameObject.getComponent<EntityInfo>().uuid == uuid)
+        {
+            return &gameObject;
+        }
+    }
+    return nullptr;
+}
+
+const GameObject *Scene::findGameObjectByUuid(uint64_t uuid) const
+{
+    for (const GameObject &gameObject : m_gameObjects)
     {
         if (gameObject.hasComponent<EntityInfo>() && gameObject.getComponent<EntityInfo>().uuid == uuid)
         {
@@ -268,6 +286,18 @@ GameObject *Scene::findPrimaryCamera()
         if (go.hasComponent<Camera>() && go.getComponent<Camera>().primary)
         {
             return &go;
+        }
+    }
+    return nullptr;
+}
+
+const GameObject *Scene::findPrimaryCamera() const
+{
+    for (const GameObject &gameObject : m_gameObjects)
+    {
+        if (gameObject.hasComponent<Camera>() && gameObject.getComponent<Camera>().primary)
+        {
+            return &gameObject;
         }
     }
     return nullptr;

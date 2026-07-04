@@ -1,6 +1,7 @@
 #include "core/PhysicsSystem.h"
 
 #include "core/Physics2D.h"
+#include "core/components/EntityInfo.h"
 #include "core/components/BoxCollider2D.h"
 #include "core/components/RigidBody2D.h"
 #include "core/components/Sensor2D.h"
@@ -10,7 +11,7 @@
 SystemDescriptor PhysicsSystem::descriptor() const
 {
     return SystemDescriptor::named("PhysicsSystem")
-        .reads<Sprite>()
+        .reads<Sprite, EntityInfo>()
         .writes<Transform, RigidBody2D, BoxCollider2D, Sensor2D>()
         .writesResource(SystemResource::PhysicsWorld)
         .after("AnimationSystem")
@@ -19,5 +20,5 @@ SystemDescriptor PhysicsSystem::descriptor() const
 
 void PhysicsSystem::update(SystemContext &context)
 {
-    context.physics.simulate(context.frame.deltaTime, context.registry, context.editMode);
+    context.stepPhysics();
 }

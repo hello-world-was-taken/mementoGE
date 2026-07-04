@@ -1,5 +1,6 @@
 #include "engine/core/FollowSystem.h"
 #include "engine/core/Physics2D.h"
+#include "engine/core/SystemScheduler.h"
 #include "engine/core/components/Camera.h"
 #include "engine/core/components/EntityInfo.h"
 #include "engine/core/components/EntityRef.h"
@@ -32,18 +33,19 @@ TEST(FollowSystemTests, ClampsCameraToBackgroundBounds)
     cameraTarget.target = target;
 
     FollowSystem system;
+    SystemScheduler scheduler{JobSystemConfig{0, 8, false}};
     Physics2D physics{{0.0f, 0.0f}};
     FrameContext frame;
     frame.deltaTime = 1.0f / 60.0f;
     SystemContext context{registry, physics, frame};
 
     targetTransform.position = {-1000.0f, -1000.0f, 0.0f};
-    system.update(context);
+    scheduler.run(system, context);
     EXPECT_FLOAT_EQ(cameraTransform.position.x, -512.0f);
     EXPECT_FLOAT_EQ(cameraTransform.position.y, -288.0f);
 
     targetTransform.position = {2000.0f, 2000.0f, 0.0f};
-    system.update(context);
+    scheduler.run(system, context);
     EXPECT_FLOAT_EQ(cameraTransform.position.x, 512.0f);
     EXPECT_FLOAT_EQ(cameraTransform.position.y, 288.0f);
 }

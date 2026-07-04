@@ -16,7 +16,7 @@ SystemDescriptor AnimationSystem::descriptor() const
 
 void AnimationSystem::update(SystemContext &context)
 {
-    entt::registry &registry = context.registry;
+    SystemEntities &registry = context.entities;
     auto view = registry.view<Animator>();
     for (entt::entity entity : view)
     {

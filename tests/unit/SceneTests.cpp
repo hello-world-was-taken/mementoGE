@@ -12,11 +12,21 @@
 #include <gtest/gtest.h>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
+#include <utility>
 #include <vector>
 #include <yaml-cpp/yaml.h>
 
 namespace
 {
+static_assert(std::is_same_v<decltype(std::declval<Scene &>().getGameObjects()), std::vector<GameObject> &>);
+static_assert(
+    std::is_same_v<decltype(std::declval<const Scene &>().getGameObjects()), const std::vector<GameObject> &>);
+static_assert(std::is_same_v<decltype(std::declval<Scene &>().findGameObjectByUuid(0)), GameObject *>);
+static_assert(std::is_same_v<decltype(std::declval<const Scene &>().findGameObjectByUuid(0)), const GameObject *>);
+static_assert(std::is_same_v<decltype(std::declval<Scene &>().findPrimaryCamera()), GameObject *>);
+static_assert(std::is_same_v<decltype(std::declval<const Scene &>().findPrimaryCamera()), const GameObject *>);
+
 class CountingSystem : public ISystem
 {
 public:
@@ -129,6 +139,29 @@ YAML::Node serializeToNode(Scene &scene)
     return YAML::Load(out.c_str());
 }
 } // namespace
+
+TEST(SceneTests, ConstQueriesReturnReadOnlyObjectsAndPreserveMissingResults)
+{
+    Scene scene{std::string{"const_queries"}};
+    const Scene &readOnly = scene;
+    EXPECT_TRUE(readOnly.getGameObjects().empty());
+    EXPECT_EQ(readOnly.findGameObjectByUuid(42), nullptr);
+    EXPECT_EQ(readOnly.findPrimaryCamera(), nullptr);
+
+    GameObject &camera = scene.addGameObject(32, 48, std::string{"camera"});
+    const auto uuid = camera.getComponent<EntityInfo>().uuid;
+    camera.addComponent<Camera>();
+    camera.getComponent<Camera>().primary = false;
+    EXPECT_EQ(readOnly.findPrimaryCamera(), nullptr);
+
+    camera.getComponent<Camera>().primary = true;
+    ASSERT_EQ(readOnly.getGameObjects().size(), 1U);
+    EXPECT_EQ(readOnly.findGameObjectByUuid(uuid), &camera);
+    EXPECT_EQ(readOnly.findPrimaryCamera(), &camera);
+    EXPECT_EQ(&readOnly.getGameObjects().front(), &camera);
+    EXPECT_EQ(readOnly.findGameObjectByUuid(uuid), scene.findGameObjectByUuid(uuid));
+    EXPECT_EQ(readOnly.findPrimaryCamera(), scene.findPrimaryCamera());
+}
 
 TEST(SceneTests, DisabledSystemDoesNotUpdateAndEnablementIsNotSerialized)
 {

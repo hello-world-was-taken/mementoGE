@@ -38,13 +38,13 @@ SystemDescriptor ParticleSystem::descriptor() const
 
 void ParticleSystem::update(SystemContext &context)
 {
-    entt::registry &registry = context.registry;
+    SystemEntities &registry = context.entities;
     const float dt = context.frame.deltaTime;
-    auto view = registry.view<Transform, ParticleEmitter>();
+    auto view = registry.view<const Transform, ParticleEmitter>();
 
     for (entt::entity entity : view)
     {
-        Transform &transform = view.get<Transform>(entity);
+        const Transform &transform = view.get<const Transform>(entity);
         ParticleEmitter &emitter = view.get<ParticleEmitter>(entity);
 
         // spawn new particles
