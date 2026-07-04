@@ -21,6 +21,8 @@ SystemDescriptor AudioSystem::descriptor() const
         .writesResource(SystemResource::AssetCache)
         .requestsStructuralChanges()
         .withAffinity(SystemThreadAffinity::AnyWorker)
+        .after("FollowSystem")
+        .before("PhysicsSystem")
         .nonReentrant();
 }
 

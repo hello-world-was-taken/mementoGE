@@ -113,7 +113,7 @@ void EditorLayer::run()
                     {
                         const FrameContext tick{
                             static_cast<float>(fixedDelta), simulationTime + fixedDelta, pendingInput, frame.window};
-                        activeScene.update(tick, !m_ctx.isRuntimeActive());
+                        activeScene.update(tick, m_systemScheduler, !m_ctx.isRuntimeActive());
                         simulationTime = tick.elapsedTime;
                         accumulator -= fixedDelta;
                         ++steps;

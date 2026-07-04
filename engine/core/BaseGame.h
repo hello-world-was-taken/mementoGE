@@ -3,6 +3,7 @@
 #include "core/Camera.h"
 #include "core/FrameContext.h"
 #include "core/SceneManager.h"
+#include "core/SystemScheduler.h"
 #include "core/Window.h"
 #include "core/components/Camera.h"
 #include "core/components/Transform.h"
@@ -58,7 +59,7 @@ protected:
                 const FrameContext tick{
                     static_cast<float>(fixedDeltaTime), simulatedTime + fixedDeltaTime, pendingInput, frame.window};
                 onUpdate(tick);
-                m_sceneManager.update(tick);
+                m_sceneManager.update(tick, m_systemScheduler);
                 simulatedTime = tick.elapsedTime;
                 accumulatedTime -= fixedDeltaTime;
                 ++steps;
@@ -132,6 +133,7 @@ protected:
 public:
     // for now these should be publicly available
     Window m_window;
+    SystemScheduler m_systemScheduler;
     SceneManager m_sceneManager;
     SpriteRenderer m_spriteRenderer;
     CameraOld m_gameCamera;

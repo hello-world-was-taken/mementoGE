@@ -42,10 +42,6 @@ public:
 
     void update(SystemContext &context) override;
     SystemDescriptor descriptor() const override;
-    int executionOrder() const override
-    {
-        return 150;
-    }
 
 private:
     static constexpr float WORLD_GAIN_FADE_PER_SECOND = 4.0f;

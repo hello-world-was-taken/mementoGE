@@ -125,12 +125,14 @@ Inside MementoGE, the engine's CMake checks the same `EDITOR_BUILD` option and, 
 Systems implement `ISystem`, declare their access through the required `descriptor()` override, and receive scene services through `SystemContext`:
 
 Systems receive a mutable `SystemContext &`. It contains the scene's mutable registry and physics references,
-`const FrameContext &frame`, and `editMode`. The game/editor loop captures one
+`const FrameContext &frame`, and `editMode`.
+The game/editor loop captures one
 presentation frame after GLFW event polling. Local accumulator
 logic in `BaseGame::runLoop()` and `EditorLayer::run()` derives zero or more ticks
 with fixed `deltaTime` and simulation
 `elapsedTime`; all systems in one tick share its input and window values through
-a const reference. Keep the tick frame alive until updates finish.
+a const reference. The scheduler keeps each update's context and tick frame in
+scope until the update finishes.
 
 ```cpp
 class MovementSystem : public ISystem
@@ -141,11 +143,6 @@ public:
         return SystemDescriptor::named("MovementSystem")
             .writes<Transform>()
             .nonReentrant();
-    }
-
-    int executionOrder() const override
-    {
-        return 150;
     }
 
     void update(SystemContext &context) override
@@ -165,18 +162,63 @@ scene.setSystemEnabled("MovementSystem", true);
 ```
 
 `SystemRegistry` stores factories, so every scene owns an independent system
-instance. A system controls its own execution order by overriding
-`executionOrder()`; the default is `100`. The built-in animation and physics
-systems use orders `200` and `300`, but must be registered and added like any
-other system. Equal orders preserve insertion order. Descriptor `before`/`after`
-requirements and read/write conflicts are metadata for a future dependency
-scheduler; they do not change the current sequential loop. That scheduler will
-use explicit dependencies first and numeric order as a deterministic fallback.
-All systems in the scene appear in the editor's Systems panel.
+instance. `Scene` builds a `SystemGraph` directly from a vector of descriptors
+when systems are added or deserialized, then runs systems sequentially in its
+topological order.
+`orderedSystems()` lists descriptor names in execution order. `successors()`
+maps each descriptor name to the names of systems that directly depend on it;
+systems with no dependents have an empty list. Scene registration names can be
+aliases: graph dependencies always use the descriptor names.
+Descriptors must remain constant while installed.
+Descriptor `before()`/`after()` requirements establish system dependencies.
+Component/resource write conflicts and structural changes also produce ordering
+edges, oriented along the semantic topological order. Among ready systems,
+scene insertion order breaks ties; it cannot override an explicit or transitive
+dependency. The map's alphabetical key order does not affect execution order.
+Built-in animation and physics systems declare their dependency through
+descriptors and must be registered and added like any other system.
+
+Graph construction rejects empty or duplicate descriptor names, empty dependency
+targets, self-dependencies, contradictory dependencies, and cycles, identifying the systems involved. A
+named dependency on a system absent from the scene is ignored, so scenes can
+omit optional systems. Disabled systems remain in the graph: their update is
+skipped, while dependencies through them still order the enabled systems.
+The editor's Systems panel displays graph order. The game and editor each own
+a persistent `SystemScheduler`. It runs `MainThread` updates on the caller and
+`AnyWorker` updates through its worker pool, waiting for each whole update
+before starting the next system. `Scene::update(frame, scheduler, editMode)` returns
+only after the tick's work finishes. The overload without a scheduler uses a
+persistent zero-worker fallback.
 While editing, every enabled system runs. Systems start disabled, and entering
 Play enables every system on the disposable runtime scene. Use the panel
 checkboxes for temporary overrides. Runtime Pause still stops scene updates
 entirely.
+
+The scheduler dispatches complete systems; `SystemContext` has no job-submission
+handle. A system that touches GLFW, OpenGL, or ImGui must declare
+`.onMainThread()`, including paths that may lazily load GPU resources. Other
+systems can use the default `AnyWorker` affinity once their called services
+support it. With workers configured, these updates run on a worker; with zero
+workers, they run inline.
+
+For direct CPU work, the pool exposes one synchronous operation:
+
+```cpp
+jobs.runAndWait([&system, &context]
+{
+    system.update(context);
+});
+// The whole update has finished; its outputs can now be consumed.
+```
+
+Ordinary scene execution uses `SystemScheduler::run(system, context)` to apply
+affinity centrally. Exceptions propagate after completion, and the scene does
+not start a successor after failure. System timings include dispatch and wait.
+Grouped child jobs and automatic range splitting are deferred.
+
+Running systems one at a time preserves exclusive access between updates. It
+does not make arbitrary overlapping registry, physics, audio, asset, or platform
+access safe; ownership work is still needed before updates can overlap.
 
 Systems and editor tools traverse the same read-only
 `context.frame.input.events` vector. `InputSnapshot` has no key/button maps or

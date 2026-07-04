@@ -74,7 +74,8 @@ SystemDescriptor FollowSystem::descriptor() const
     return SystemDescriptor::named("FollowSystem")
         .reads<EntityInfo, RenderLayer, Camera>()
         .writes<EntityRef, Transform, RigidBody2D>()
-        .after("PhysicsSystem")
+        // Copy movement commands before physics; camera targets use the last completed step.
+        .before("PhysicsSystem")
         .nonReentrant();
 }
 

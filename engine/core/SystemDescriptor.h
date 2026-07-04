@@ -54,18 +54,6 @@ public:
         return *this;
     }
 
-    template <typename... Events> SystemDescriptor &consumes()
-    {
-        (addUnique(m_eventConsumes, typeId<Events>()), ...);
-        return *this;
-    }
-
-    template <typename... Events> SystemDescriptor &emits()
-    {
-        (addUnique(m_eventEmits, typeId<Events>()), ...);
-        return *this;
-    }
-
     SystemDescriptor &readsResource(SystemResource resource)
     {
         addUnique(m_resourceReads, resource);
@@ -170,16 +158,6 @@ public:
         return m_resourceWrites;
     }
 
-    [[nodiscard]] const std::vector<TypeId> &eventConsumes() const noexcept
-    {
-        return m_eventConsumes;
-    }
-
-    [[nodiscard]] const std::vector<TypeId> &eventEmits() const noexcept
-    {
-        return m_eventEmits;
-    }
-
     [[nodiscard]] const std::vector<std::string> &beforeSystems() const noexcept
     {
         return m_before;
@@ -261,8 +239,6 @@ private:
     std::vector<TypeId> m_componentWrites;
     std::vector<SystemResource> m_resourceReads;
     std::vector<SystemResource> m_resourceWrites;
-    std::vector<TypeId> m_eventConsumes;
-    std::vector<TypeId> m_eventEmits;
     std::vector<std::string> m_before;
     std::vector<std::string> m_after;
 };

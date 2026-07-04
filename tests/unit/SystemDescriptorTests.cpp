@@ -15,10 +15,6 @@ struct Velocity
 {
 };
 
-struct DamageEvent
-{
-};
-
 class SystemWithoutDescriptor final : public ISystem
 {
 public:
@@ -42,7 +38,6 @@ TEST(SystemDescriptorTests, BuilderRecordsAndDeduplicatesDeclaredAccess)
                                             .writes<Velocity, Velocity>()
                                             .readsResource(SystemResource::Input)
                                             .readsResource(SystemResource::Input)
-                                            .emits<DamageEvent, DamageEvent>()
                                             .before("PhysicsSystem")
                                             .before("PhysicsSystem")
                                             .nonReentrant();
@@ -53,7 +48,6 @@ TEST(SystemDescriptorTests, BuilderRecordsAndDeduplicatesDeclaredAccess)
     EXPECT_EQ(descriptor.componentReads().size(), 1u);
     EXPECT_EQ(descriptor.componentWrites().size(), 1u);
     EXPECT_EQ(descriptor.resourceReads().size(), 1u);
-    EXPECT_EQ(descriptor.eventEmits().size(), 1u);
     EXPECT_EQ(descriptor.beforeSystems().size(), 1u);
     EXPECT_FALSE(descriptor.isReentrant());
 }

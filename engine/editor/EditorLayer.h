@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/Scene.h"
+#include "core/SystemScheduler.h"
 #include "core/Window.h"
 
 #include "editor/EditorContext.h"
@@ -52,6 +53,7 @@ private:
 
 private:
     Window m_window;
+    SystemScheduler m_systemScheduler;
     EditorContext m_ctx{m_window};
     ScenePanel m_scenePanel{m_ctx};
     SceneHierarchyPanel m_sceneHierarchyPanel{m_ctx};

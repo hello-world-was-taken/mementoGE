@@ -10,7 +10,9 @@
 #include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
+#include <stdexcept>
 #include <string>
+#include <vector>
 #include <yaml-cpp/yaml.h>
 
 namespace
@@ -34,6 +36,90 @@ public:
 };
 
 int CountingSystem::updateCount = 0;
+
+std::vector<std::string> graphUpdates;
+
+struct GraphState
+{
+};
+
+class RecordingGraphSystem : public ISystem
+{
+public:
+    void update(SystemContext &) override
+    {
+        graphUpdates.push_back(descriptor().name());
+    }
+};
+
+class GraphHeadSystem final : public RecordingGraphSystem
+{
+public:
+    SystemDescriptor descriptor() const override
+    {
+        return SystemDescriptor::named("SceneTests.GraphHead")
+            .writes<GraphState>()
+            .before("SceneTests.GraphMiddle");
+    }
+};
+
+class GraphMiddleSystem final : public RecordingGraphSystem
+{
+public:
+    SystemDescriptor descriptor() const override
+    {
+        return SystemDescriptor::named("SceneTests.GraphMiddle")
+            .writes<GraphState>()
+            .after("SceneTests.GraphHead")
+            .before("SceneTests.GraphTail");
+    }
+};
+
+class GraphTailSystem final : public RecordingGraphSystem
+{
+public:
+    SystemDescriptor descriptor() const override
+    {
+        return SystemDescriptor::named("SceneTests.GraphTail").writes<GraphState>();
+    }
+};
+
+class GraphCycleFirstSystem final : public RecordingGraphSystem
+{
+public:
+    SystemDescriptor descriptor() const override
+    {
+        return SystemDescriptor::named("SceneTests.GraphCycleFirst").before("SceneTests.GraphCycleSecond");
+    }
+};
+
+class GraphCycleSecondSystem final : public RecordingGraphSystem
+{
+public:
+    SystemDescriptor descriptor() const override
+    {
+        return SystemDescriptor::named("SceneTests.GraphCycleSecond").before("SceneTests.GraphCycleFirst");
+    }
+};
+
+void registerGraphSystems()
+{
+    auto &systems = SystemRegistry::instance();
+    systems.registerSystem<GraphHeadSystem>("SceneTests.GraphHead");
+    systems.registerSystem<GraphMiddleSystem>("SceneTests.GraphMiddle");
+    systems.registerSystem<GraphTailSystem>("SceneTests.GraphTail");
+    systems.registerSystem<GraphCycleFirstSystem>("SceneTests.GraphCycleFirst");
+    systems.registerSystem<GraphCycleSecondSystem>("SceneTests.GraphCycleSecond");
+    graphUpdates.clear();
+}
+
+void addGraphChain(Scene &scene)
+{
+    scene.addSystem("SceneTests.GraphTail");
+    scene.addSystem("SceneTests.GraphMiddle");
+    scene.addSystem("SceneTests.GraphHead");
+    scene.setAllSystemsEnabled(true);
+}
 
 YAML::Node serializeToNode(Scene &scene)
 {
@@ -154,6 +240,158 @@ TEST(SceneTests, SystemRegistryCreatesIndependentSystemInstances)
     ASSERT_NE(first, nullptr);
     ASSERT_NE(second, nullptr);
     EXPECT_NE(first.get(), second.get());
+}
+
+TEST(SceneTests, DescriptorDependenciesOverrideRegistrationOrderAndAppearInSystemInfo)
+{
+    registerGraphSystems();
+    Scene scene{"graph scene"};
+    addGraphChain(scene);
+    scene.play();
+    scene.update(FrameContext{});
+
+    const std::vector<std::string> expected{
+        "SceneTests.GraphHead", "SceneTests.GraphMiddle", "SceneTests.GraphTail"};
+    EXPECT_EQ(graphUpdates, expected);
+
+    std::vector<std::string> displayedNames;
+    for (const auto &info : scene.getSystemInfo())
+    {
+        displayedNames.push_back(info.name);
+    }
+    EXPECT_EQ(displayedNames, expected);
+}
+
+TEST(SceneTests, FactoryAliasesPreserveDescriptorDependenciesAndSerializedNames)
+{
+    registerGraphSystems();
+    constexpr const char *headAlias = "SceneTests.HeadFactoryAlias";
+    SystemRegistry::instance().registerSystem<GraphHeadSystem>(headAlias);
+
+    Scene scene{"aliased graph scene"};
+    scene.addSystem("SceneTests.GraphTail");
+    scene.addSystem("SceneTests.GraphMiddle");
+    scene.addSystem(headAlias);
+    scene.setAllSystemsEnabled(true);
+    scene.update(FrameContext{}, true);
+
+    const std::vector<std::string> expectedUpdates{
+        "SceneTests.GraphHead", "SceneTests.GraphMiddle", "SceneTests.GraphTail"};
+    EXPECT_EQ(graphUpdates, expectedUpdates);
+    const auto info = scene.getSystemInfo();
+    ASSERT_EQ(info.size(), 3u);
+    EXPECT_EQ(info.front().name, headAlias);
+
+    graphUpdates.clear();
+    ASSERT_TRUE(scene.setSystemEnabled(headAlias, false));
+    scene.update(FrameContext{}, true);
+    EXPECT_EQ(graphUpdates, (std::vector<std::string>{"SceneTests.GraphMiddle", "SceneTests.GraphTail"}));
+
+    const auto serializedSystems = serializeToNode(scene)["aliased graph scene"]["Systems"];
+    ASSERT_EQ(serializedSystems.size(), 3u);
+    EXPECT_EQ(serializedSystems[0].as<std::string>(), "SceneTests.GraphTail");
+    EXPECT_EQ(serializedSystems[1].as<std::string>(), "SceneTests.GraphMiddle");
+    EXPECT_EQ(serializedSystems[2].as<std::string>(), headAlias);
+
+    Scene clone = scene.clone("aliased graph clone");
+    const auto clonedInfo = clone.getSystemInfo();
+    ASSERT_EQ(clonedInfo.size(), 3u);
+    EXPECT_EQ(clonedInfo.front().name, headAlias);
+    EXPECT_FALSE(clonedInfo.front().enabled);
+    clone.setAllSystemsEnabled(true);
+    Scene moved{std::move(clone)};
+    graphUpdates.clear();
+    moved.update(FrameContext{}, true);
+    EXPECT_EQ(graphUpdates, expectedUpdates);
+}
+
+TEST(SceneTests, AddingPreviouslyAbsentDependencyRebuildsTheExecutionOrder)
+{
+    registerGraphSystems();
+    Scene scene{"changing graph scene"};
+    scene.addSystem("SceneTests.GraphTail");
+    scene.addSystem("SceneTests.GraphHead");
+    scene.setAllSystemsEnabled(true);
+    scene.update(FrameContext{}, true);
+    EXPECT_EQ(graphUpdates, (std::vector<std::string>{"SceneTests.GraphTail", "SceneTests.GraphHead"}));
+
+    graphUpdates.clear();
+    scene.addSystem("SceneTests.GraphMiddle");
+    scene.setAllSystemsEnabled(true);
+    scene.update(FrameContext{}, true);
+    EXPECT_EQ(graphUpdates, (std::vector<std::string>{
+                               "SceneTests.GraphHead", "SceneTests.GraphMiddle", "SceneTests.GraphTail"}));
+}
+
+TEST(SceneTests, DisablingAnIntermediateSystemPreservesDependenciesAndCanBeReenabled)
+{
+    registerGraphSystems();
+    Scene scene{"toggle graph scene"};
+    addGraphChain(scene);
+    ASSERT_TRUE(scene.setSystemEnabled("SceneTests.GraphMiddle", false));
+    scene.update(FrameContext{}, true);
+    EXPECT_EQ(graphUpdates, (std::vector<std::string>{"SceneTests.GraphHead", "SceneTests.GraphTail"}));
+
+    graphUpdates.clear();
+    ASSERT_TRUE(scene.setSystemEnabled("SceneTests.GraphMiddle", true));
+    scene.update(FrameContext{}, true);
+    EXPECT_EQ(graphUpdates, (std::vector<std::string>{
+                               "SceneTests.GraphHead", "SceneTests.GraphMiddle", "SceneTests.GraphTail"}));
+}
+
+TEST(SceneTests, InvalidAdditionIsRejectedBeforeUpdatesAndLeavesThePreviousGraphUsable)
+{
+    registerGraphSystems();
+    Scene scene{"invalid graph scene"};
+    scene.addSystem("SceneTests.GraphCycleFirst");
+    scene.setAllSystemsEnabled(true);
+
+    EXPECT_THROW(scene.addSystem("SceneTests.GraphCycleSecond"), std::invalid_argument);
+    EXPECT_TRUE(graphUpdates.empty());
+    const auto info = scene.getSystemInfo();
+    ASSERT_EQ(info.size(), 1u);
+    EXPECT_EQ(info.front().name, "SceneTests.GraphCycleFirst");
+    EXPECT_TRUE(info.front().enabled);
+
+    scene.update(FrameContext{}, true);
+    EXPECT_EQ(graphUpdates, (std::vector<std::string>{"SceneTests.GraphCycleFirst"}));
+}
+
+TEST(SceneTests, DeserializationRejectsACycleBeforeAnySystemUpdates)
+{
+    registerGraphSystems();
+    EXPECT_THROW((Scene{YAML::Load(R"(
+invalid graph scene:
+  Systems: [SceneTests.GraphCycleFirst, SceneTests.GraphCycleSecond]
+  GameObjects: []
+)")}), std::invalid_argument);
+    EXPECT_TRUE(graphUpdates.empty());
+}
+
+TEST(SceneTests, ClonedAndMovedScenesRetainDescriptorExecutionOrder)
+{
+    registerGraphSystems();
+    Scene original{"original graph scene"};
+    addGraphChain(original);
+
+    Scene clone = original.clone("cloned graph scene");
+    clone.setAllSystemsEnabled(true);
+    clone.update(FrameContext{}, true);
+    const std::vector<std::string> expected{
+        "SceneTests.GraphHead", "SceneTests.GraphMiddle", "SceneTests.GraphTail"};
+    EXPECT_EQ(graphUpdates, expected);
+
+    graphUpdates.clear();
+    Scene moved{std::move(clone)};
+    moved.update(FrameContext{}, true);
+    EXPECT_EQ(graphUpdates, expected);
+
+    graphUpdates.clear();
+    Scene assigned{"destination graph scene"};
+    assigned.addSystem("SceneTests.GraphTail");
+    assigned = std::move(moved);
+    assigned.update(FrameContext{}, true);
+    EXPECT_EQ(graphUpdates, expected);
 }
 
 TEST(SceneTests, SerializesGameObjectsAsTaggedEntries)

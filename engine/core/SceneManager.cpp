@@ -29,6 +29,11 @@ void SceneManager::update(const FrameContext &frame)
     getActiveScene().update(frame);
 }
 
+void SceneManager::update(const FrameContext &frame, SystemScheduler &scheduler)
+{
+    getActiveScene().update(frame, scheduler);
+}
+
 void SceneManager::loadScene(std::string sceneName)
 {
     auto it = m_scenes.find(sceneName);

@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <atomic>
 #include <condition_variable>
-#include <cstdint>
 #include <cstdio>
 #include <deque>
 #include <exception>
@@ -38,73 +37,14 @@ void terminateJobSystem(std::string_view reason, std::string_view detail = {}) n
     std::terminate();
 }
 
-// Identity is independent of the JobSystem's address. Groups can observe its
-// lifetime without owning the pool or requiring shared ownership of JobSystem.
-struct JobSystemIdentity
-{
-};
 } // namespace
-
-struct TaskGroup::State
-{
-    State(std::weak_ptr<const JobSystemIdentity> ownerIdentity, std::string groupName)
-        : owner(std::move(ownerIdentity)), label(std::move(groupName))
-    {
-    }
-
-    void addTask() noexcept
-    {
-        remaining.fetch_add(1, std::memory_order_relaxed);
-    }
-
-    void finishTask(std::exception_ptr error) noexcept
-    {
-        {
-            std::lock_guard<std::mutex> lock(mutex);
-            if (error != nullptr && firstException == nullptr)
-            {
-                firstException = std::move(error);
-            }
-
-            const std::size_t previous = remaining.fetch_sub(1, std::memory_order_release);
-            if (previous == 0)
-            {
-                terminateJobSystem("Task group completed with no outstanding jobs", label);
-            }
-        }
-
-        completion.notify_all();
-    }
-
-    void rethrowIfFailed() const
-    {
-        std::exception_ptr error;
-        {
-            std::lock_guard<std::mutex> lock(mutex);
-            error = firstException;
-        }
-
-        if (error != nullptr)
-        {
-            std::rethrow_exception(error);
-        }
-    }
-
-    const std::weak_ptr<const JobSystemIdentity> owner;
-    const std::string label;
-    std::atomic<std::size_t> remaining{0};
-    mutable std::mutex mutex;
-    std::condition_variable completion;
-    std::exception_ptr firstException;
-};
 
 struct JobSystem::Impl
 {
     struct ExecutionFrame
     {
-        std::shared_ptr<const JobSystemIdentity> identity;
+        const Impl *owner;
         WorkerIndex worker;
-        const GroupList &groups;
         std::optional<std::reference_wrapper<const ExecutionFrame>> previous;
     };
 
@@ -113,9 +53,8 @@ struct JobSystem::Impl
     class ScopedExecutionContext
     {
     public:
-        ScopedExecutionContext(
-            std::shared_ptr<const JobSystemIdentity> identity, WorkerIndex worker, const GroupList &groups) noexcept
-            : m_frame{std::move(identity), worker, groups, currentExecution}
+        ScopedExecutionContext(const Impl &owner, WorkerIndex worker) noexcept
+            : m_frame{&owner, worker, currentExecution}
         {
             currentExecution = std::cref(m_frame);
         }
@@ -134,10 +73,18 @@ struct JobSystem::Impl
         const ExecutionFrame m_frame;
     };
 
+    // Each runAndWait() owns this state until its queued job has finished.
+    // queueMutex protects both fields and workAvailable signals completion.
+    struct Completion
+    {
+        bool finished = false;
+        std::exception_ptr error;
+    };
+
     struct QueuedTask
     {
         ErasedTask function;
-        GroupList groups;
+        Completion *completion = nullptr;
     };
 
     explicit Impl(JobSystemConfig jobConfig) : config(jobConfig), coordinatorThread(std::this_thread::get_id())
@@ -177,40 +124,27 @@ struct JobSystem::Impl
         }
     }
 
-    bool isInternalSubmission() const noexcept
+    std::optional<WorkerIndex> activeWorkerIndex() const noexcept
     {
-        return currentExecution && currentExecution->get().identity == identity;
-    }
-
-    bool hasActiveTask() const noexcept
-    {
+        // An inline call into another pool may suspend this pool's job.
+        // Its worker must still help when that nested call returns work here.
         for (auto frame = currentExecution; frame; frame = frame->get().previous)
         {
-            if (frame->get().identity == identity)
+            if (frame->get().owner == this)
             {
-                return true;
+                return frame->get().worker;
             }
         }
-        return false;
-    }
-
-    bool groupContainsActiveTask(const std::shared_ptr<TaskGroup::State> &group) const noexcept
-    {
-        for (auto frame = currentExecution; frame; frame = frame->get().previous)
-        {
-            const ExecutionFrame &execution = frame->get();
-            if (execution.identity == identity &&
-                std::find(execution.groups.begin(), execution.groups.end(), group) != execution.groups.end())
-            {
-                return true;
-            }
-        }
-        return false;
+        return std::nullopt;
     }
 
     std::optional<WorkerIndex> currentWorkerIndex() const noexcept
     {
-        return isInternalSubmission() ? std::optional<WorkerIndex>{currentExecution->get().worker} : std::nullopt;
+        if (currentExecution && currentExecution->get().owner == this)
+        {
+            return currentExecution->get().worker;
+        }
+        return std::nullopt;
     }
 
     bool mayAcceptSubmission(bool internal) const noexcept
@@ -218,32 +152,17 @@ struct JobSystem::Impl
         return internal || acceptingExternal.load(std::memory_order_acquire);
     }
 
-    void validateAndDeduplicateGroups(GroupList &groups) const
+    void runAndWait(ErasedTask function)
     {
-        for (const auto &group : groups)
-        {
-            if (group == nullptr)
-            {
-                throw std::invalid_argument("Cannot submit a job to an invalid task group");
-            }
-            if (group->owner.lock() != identity)
-            {
-                throw std::invalid_argument("Cannot submit a job to another JobSystem's task group");
-            }
-        }
-
-        if (groups.count == 2 && groups.states[0] == groups.states[1])
-        {
-            groups.states[1].reset();
-            groups.count = 1;
-        }
+        Completion completion;
+        enqueue(QueuedTask{std::move(function), &completion});
+        wait(completion);
     }
 
-    void enqueue(GroupList groups, ErasedTask function)
+    void enqueue(QueuedTask task)
     {
-        validateAndDeduplicateGroups(groups);
-        QueuedTask task{std::move(function), std::move(groups)};
-        const bool internal = isInternalSubmission();
+        const auto activeWorker = activeWorkerIndex();
+        const bool internal = activeWorker.has_value();
 
         if (workers.empty())
         {
@@ -254,11 +173,7 @@ struct JobSystem::Impl
                     throw std::runtime_error("JobSystem is closed");
                 }
 
-                for (const auto &group : task.groups)
-                {
-                    group->addTask();
-                }
-                inFlight.fetch_add(1, std::memory_order_release);
+                ++inFlight;
             }
 
             execute(std::move(task), WorkerIndex{0});
@@ -275,12 +190,8 @@ struct JobSystem::Impl
 
             if (internal)
             {
-                const WorkerIndex worker = currentExecution->get().worker;
                 lock.unlock();
-                if (!tryExecuteOne(worker))
-                {
-                    std::this_thread::yield();
-                }
+                tryExecuteOne(*activeWorker);
                 lock.lock();
             }
             else
@@ -299,19 +210,14 @@ struct JobSystem::Impl
             throw std::runtime_error("JobSystem is closed");
         }
 
-        // Queue insertion is the only throwing operation after acceptance is
-        // checked. Counters are published only after it succeeds and before a
-        // worker can observe the new task.
+        // Publish acceptance only after queue insertion succeeds, before a
+        // worker can observe the new job.
         queue.push_back(std::move(task));
-        for (const auto &group : queue.back().groups)
-        {
-            group->addTask();
-        }
-        inFlight.fetch_add(1, std::memory_order_release);
+        ++inFlight;
         peakQueued = std::max(peakQueued, queue.size());
 
         lock.unlock();
-        workAvailable.notify_one();
+        workAvailable.notify_all();
     }
 
     bool tryExecuteOne(WorkerIndex worker)
@@ -337,7 +243,7 @@ struct JobSystem::Impl
     {
         std::exception_ptr error;
         {
-            ScopedExecutionContext context(identity, worker, task.groups);
+            ScopedExecutionContext context(*this, worker);
             try
             {
                 task.function(worker);
@@ -346,27 +252,19 @@ struct JobSystem::Impl
             {
                 error = std::current_exception();
             }
+
+            // Release captures before publishing completion to the caller.
+            task.function = {};
         }
 
-        // The completion predicates observed through workAvailable/drained
-        // are changed while holding queueMutex. This avoids a lost wake-up
-        // between another thread checking its predicate and going to sleep.
         {
             std::lock_guard<std::mutex> lock(queueMutex);
-            for (const auto &group : task.groups)
-            {
-                group->finishTask(error);
-            }
-
-            const std::size_t previous = inFlight.fetch_sub(1, std::memory_order_acq_rel);
-            if (previous == 0)
-            {
-                terminateJobSystem("In-flight job counter underflow");
-            }
+            task.completion->error = std::move(error);
+            task.completion->finished = true;
+            --inFlight;
         }
 
         workAvailable.notify_all();
-        drained.notify_all();
     }
 
     void workerLoop(WorkerIndex worker)
@@ -379,8 +277,7 @@ struct JobSystem::Impl
                 workAvailable.wait(lock,
                     [this]
                     {
-                        return !queue.empty() || (!acceptingExternal.load(std::memory_order_acquire) &&
-                                                     inFlight.load(std::memory_order_acquire) == 0);
+                        return !queue.empty() || (!acceptingExternal.load(std::memory_order_acquire) && inFlight == 0);
                     });
 
                 if (queue.empty())
@@ -397,59 +294,40 @@ struct JobSystem::Impl
         }
     }
 
-    void wait(const std::shared_ptr<TaskGroup::State> &group)
+    void wait(Completion &completion)
     {
-        if (group == nullptr)
-        {
-            throw std::invalid_argument("Cannot wait on an invalid task group");
-        }
-        if (group->owner.lock() != identity)
-        {
-            throw std::invalid_argument("Cannot wait on another JobSystem's task group");
-        }
-
-        // Helping may nest jobs on this thread. Waiting for a group containing
-        // any suspended ancestor also deadlocks, so inspect the whole chain.
-        if (groupContainsActiveTask(group))
-        {
-            throw std::logic_error("A job cannot wait on a task group containing itself or a suspended ancestor");
-        }
-
-        const bool executingPoolTask = isInternalSubmission();
+        const auto activeWorker = activeWorkerIndex();
+        const bool executingPoolTask = activeWorker.has_value();
         const bool coordinatorMayHelp =
             config.callerHelpsWhileWaiting && std::this_thread::get_id() == coordinatorThread;
         const bool shouldHelp = executingPoolTask || coordinatorMayHelp;
+        const WorkerIndex helper = activeWorker.value_or(WorkerIndex{workers.size()});
 
-        if (shouldHelp)
+        std::unique_lock<std::mutex> lock(queueMutex);
+        while (!completion.finished)
         {
-            const WorkerIndex helper = executingPoolTask ? currentExecution->get().worker : WorkerIndex{workers.size()};
-
-            while (group->remaining.load(std::memory_order_acquire) != 0)
+            if (shouldHelp && !queue.empty())
             {
-                if (tryExecuteOne(helper))
-                {
-                    continue;
-                }
-
-                std::unique_lock<std::mutex> lock(queueMutex);
+                lock.unlock();
+                tryExecuteOne(helper);
+                lock.lock();
+            }
+            else
+            {
                 workAvailable.wait(lock,
-                    [this, &group]
+                    [this, &completion, shouldHelp]
                     {
-                        return !queue.empty() || group->remaining.load(std::memory_order_acquire) == 0;
+                        return completion.finished || (shouldHelp && !queue.empty());
                     });
             }
         }
-        else
-        {
-            std::unique_lock<std::mutex> lock(group->mutex);
-            group->completion.wait(lock,
-                [&group]
-                {
-                    return group->remaining.load(std::memory_order_acquire) == 0;
-                });
-        }
 
-        group->rethrowIfFailed();
+        const std::exception_ptr error = completion.error;
+        lock.unlock();
+        if (error != nullptr)
+        {
+            std::rethrow_exception(error);
+        }
     }
 
     void close() noexcept
@@ -466,7 +344,7 @@ struct JobSystem::Impl
 
     void join()
     {
-        if (hasActiveTask())
+        if (activeWorkerIndex().has_value())
         {
             throw std::logic_error("JobSystem::join cannot be called from one of its jobs");
         }
@@ -488,15 +366,14 @@ struct JobSystem::Impl
         }
 
         std::unique_lock<std::mutex> queueLock(queueMutex);
-        drained.wait(queueLock,
+        workAvailable.wait(queueLock,
             [this]
             {
-                return inFlight.load(std::memory_order_acquire) == 0;
+                return inFlight == 0;
             });
         joined = true;
     }
 
-    const std::shared_ptr<const JobSystemIdentity> identity = std::make_shared<const JobSystemIdentity>();
     const JobSystemConfig config;
     const std::thread::id coordinatorThread;
 
@@ -506,10 +383,9 @@ struct JobSystem::Impl
     mutable std::mutex queueMutex;
     std::condition_variable workAvailable;
     std::condition_variable queueHasRoom;
-    std::condition_variable drained;
 
     std::atomic<bool> acceptingExternal{true};
-    std::atomic<std::size_t> inFlight{0};
+    std::size_t inFlight = 0;
     std::size_t peakQueued = 0;
 
     std::mutex joinMutex;
@@ -523,25 +399,6 @@ std::size_t JobSystemConfig::recommendedWorkerCount() noexcept
 {
     const unsigned int hardwareThreads = std::thread::hardware_concurrency();
     return hardwareThreads > 1 ? hardwareThreads - 1 : 0;
-}
-
-TaskGroup::TaskGroup(std::shared_ptr<State> state) : m_state(std::move(state))
-{
-}
-
-bool TaskGroup::valid() const noexcept
-{
-    return m_state != nullptr;
-}
-
-bool TaskGroup::isComplete() const noexcept
-{
-    return m_state == nullptr || m_state->remaining.load(std::memory_order_acquire) == 0;
-}
-
-std::string TaskGroup::name() const
-{
-    return m_state != nullptr ? m_state->label : std::string{};
 }
 
 JobSystem::JobSystem(JobSystemConfig config) : m_impl(std::make_unique<Impl>(config))
@@ -570,19 +427,9 @@ JobSystem::~JobSystem()
     }
 }
 
-TaskGroup JobSystem::createGroup(std::string name)
+void JobSystem::runAndWaitErased(ErasedTask task)
 {
-    return TaskGroup(std::make_shared<TaskGroup::State>(m_impl->identity, std::move(name)));
-}
-
-void JobSystem::enqueue(GroupList groups, ErasedTask task)
-{
-    m_impl->enqueue(std::move(groups), std::move(task));
-}
-
-void JobSystem::wait(const TaskGroup &group)
-{
-    m_impl->wait(group.m_state);
+    m_impl->runAndWait(std::move(task));
 }
 
 void JobSystem::close() noexcept

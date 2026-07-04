@@ -64,6 +64,8 @@ add_library(${PROJECT_NAME} STATIC
     engine/core/AssetManager.cpp
     engine/core/AnimationPlayer.cpp
     engine/core/SystemRegistry.cpp
+    engine/core/SystemGraph.cpp
+    engine/core/SystemScheduler.cpp
     engine/core/jobs/JobSystem.cpp
     engine/core/AnimationSystem.cpp
     engine/core/Physics2D.cpp
@@ -171,6 +173,8 @@ if(BUILD_TESTING)
         tests/unit/AssetLoadingTests.cpp
         tests/unit/JobSystemTests.cpp
         tests/unit/SystemDescriptorTests.cpp
+        tests/unit/SystemGraphTests.cpp
+        tests/unit/SystemSchedulerTests.cpp
         tests/unit/FontTests.cpp
         tests/unit/TextTests.cpp
         tests/unit/AnimationPlayerTests.cpp

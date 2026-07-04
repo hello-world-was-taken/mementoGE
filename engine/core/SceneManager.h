@@ -14,6 +14,7 @@ public:
     ~SceneManager();
 
     void update(const FrameContext &frame);
+    void update(const FrameContext &frame, SystemScheduler &scheduler);
 
     void loadScene(std::string sceneName);
     void unloadScene(std::string sceneName);

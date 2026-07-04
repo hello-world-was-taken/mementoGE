@@ -3,6 +3,7 @@
 
 #include "core/Scene.h"
 #include "core/SystemRegistry.h"
+#include "core/SystemScheduler.h"
 
 #include "util/LogChannels.h"
 
@@ -29,7 +30,8 @@ Scene::Scene(const YAML::Node &&serializedScene) : m_registry{}
 Scene::Scene(Scene &&other) noexcept
     : m_registry(std::move(other.m_registry)), m_gravity(other.m_gravity),
       m_physicsWorld(std::move(other.m_physicsWorld)),
-      m_textures(std::move(other.m_textures)), m_systems(std::move(other.m_systems)), mTag(std::move(other.mTag))
+      m_textures(std::move(other.m_textures)), m_systems(std::move(other.m_systems)),
+      m_systemGraph(std::move(other.m_systemGraph)), mTag(std::move(other.mTag))
 {
     bindRigidBodyDestroyCallback();
     // Move game objects while rebinding registry
@@ -52,6 +54,7 @@ Scene &Scene::operator=(Scene &&other)
         m_physicsWorld = std::move(other.m_physicsWorld);
         m_textures = std::move(other.m_textures);
         m_systems = std::move(other.m_systems);
+        m_systemGraph = std::move(other.m_systemGraph);
         mTag = std::move(other.mTag);
 
         // Move game objects while rebinding registry
@@ -98,20 +101,41 @@ Scene Scene::clone(std::string tag)
 
 void Scene::update(const FrameContext &frame, bool editMode)
 {
+    // Standalone scenes and tests retain deterministic, inline execution.
+    static SystemScheduler serialScheduler{JobSystemConfig{0}};
+    update(frame, serialScheduler, editMode);
+}
+
+void Scene::update(const FrameContext &frame, SystemScheduler &scheduler, bool editMode)
+{
     if (!m_play && !editMode)
     {
         return;
     }
 
     SystemContext context{m_registry, m_physicsWorld, frame, editMode};
-    for (auto &entry : m_systems)
+    // Complete each whole update before the next system reuses this context.
+    for (const auto &name : m_systemGraph.orderedSystems())
     {
+        auto &entry = *std::find_if(m_systems.begin(), m_systems.end(), [&](const SystemEntry &candidate)
+        {
+            return candidate.descriptorName == name;
+        });
         if (!entry.enabled)
         {
             continue;
         }
         const auto start = std::chrono::steady_clock::now();
-        entry.system->update(context);
+        try
+        {
+            scheduler.run(*entry.system, context);
+        }
+        catch (...)
+        {
+            // run() has finished the update before reporting its failure.
+            cleanupDestroyedGameObjects();
+            throw;
+        }
         entry.lastUpdateMilliseconds =
             std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
     }
@@ -292,13 +316,24 @@ void Scene::addSystemEntry(std::string name, std::unique_ptr<ISystem> system)
         return;
     }
 
-    m_systems.push_back({std::move(name), std::move(system), false, 0.0});
-    std::stable_sort(m_systems.begin(),
-        m_systems.end(),
-        [](const SystemEntry &left, const SystemEntry &right)
+    const auto descriptorName = system->descriptor().name();
+    m_systems.push_back({std::move(name), descriptorName, std::move(system), false, 0.0});
+    try
+    {
+        std::vector<SystemDescriptor> descriptors;
+        descriptors.reserve(m_systems.size());
+        for (const auto &entry : m_systems)
         {
-            return left.system->executionOrder() < right.system->executionOrder();
-        });
+            descriptors.push_back(entry.system->descriptor());
+        }
+        m_systemGraph = SystemGraph::build(descriptors);
+    }
+    catch (...)
+    {
+        // A rejected addition must leave the previous valid plan usable.
+        m_systems.pop_back();
+        throw;
+    }
 }
 
 void Scene::addSystem(const std::string &systemName)
@@ -326,8 +361,12 @@ std::vector<Scene::SystemInfo> Scene::getSystemInfo() const
 {
     std::vector<SystemInfo> result;
     result.reserve(m_systems.size());
-    for (const auto &entry : m_systems)
+    for (const auto &name : m_systemGraph.orderedSystems())
     {
+        const auto &entry = *std::find_if(m_systems.begin(), m_systems.end(), [&](const SystemEntry &candidate)
+        {
+            return candidate.descriptorName == name;
+        });
         result.push_back({entry.name, entry.enabled, entry.lastUpdateMilliseconds});
     }
     return result;

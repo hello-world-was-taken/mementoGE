@@ -5,6 +5,7 @@
 #include "core/ISystem.h"
 #include "core/Physics2D.h"
 #include "core/SceneCamera.h"
+#include "core/SystemGraph.h"
 #include "core/components/Camera.h"
 
 #include "util/log_error.h"
@@ -21,6 +22,8 @@
 #include <type_traits>
 #include <vector>
 #include <yaml-cpp/yaml.h>
+
+class SystemScheduler;
 
 class Scene
 {
@@ -42,6 +45,7 @@ public:
     Scene &operator=(Scene &&other);    // move assignment operator
 
     void update(const FrameContext &frame, bool editMode = false);
+    void update(const FrameContext &frame, SystemScheduler &scheduler, bool editMode = false);
 
     void play();
     void pause();
@@ -73,7 +77,8 @@ public:
 private:
     struct SystemEntry
     {
-        std::string name;
+        std::string name;           // Factory name used by configuration and serialization.
+        std::string descriptorName; // Identity used by the dependency graph.
         std::unique_ptr<ISystem> system;
         bool enabled = false;
         double lastUpdateMilliseconds = 0.0;
@@ -97,4 +102,5 @@ private:
     std::vector<GameObject> m_gameObjects;
 
     std::vector<SystemEntry> m_systems;
+    SystemGraph m_systemGraph;
 };

@@ -30,7 +30,9 @@ SystemDescriptor ParticleSystem::descriptor() const
         .reads<Transform>()
         .writes<ParticleEmitter>()
         .writesResource(SystemResource::Random)
-        .after("PhysicsSystem")
+        .after("FollowSystem")
+        // Spawn from the last completed physics pose, as gameplay effects do.
+        .before("PhysicsSystem")
         .nonReentrant();
 }
 
