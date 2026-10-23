@@ -28,7 +28,7 @@ public:
     void setRendererEnablement(RendererType enablements);
     void setClearColor(glm::vec4 color);
 
-    void renderScene(const CameraOld &camera,
+    void renderScene(const Camera &camera,
         double elapsedTime,
         std::vector<GameObject> &objects,
         const std::vector<GameObject> &selectedObjects);
@@ -36,18 +36,18 @@ public:
     unsigned int getColorTexture();
 
 private:
-    void renderLayers(const CameraOld &camera,
+    void renderLayers(const Camera &camera,
         double elapsedTime,
         std::vector<GameObject> &gameObjects,
         const std::vector<GameObject> &selectedObjects);
     bool hasRendererTypeEnabled(RendererType flag);
-    void renderSprites(const CameraOld &camera, double elapsedTime, std::vector<GameObject> &gameObjects);
-    void renderSelection(const CameraOld &camera, double elapsedTime, const std::vector<GameObject> &selectedObjects);
+    void renderSprites(const Camera &camera, double elapsedTime, std::vector<GameObject> &gameObjects);
+    void renderSelection(const Camera &camera, double elapsedTime, const std::vector<GameObject> &selectedObjects);
 
     // TODOs
-    void renderGrid(const CameraOld &camera);
-    void renderPhysics(const CameraOld &camera, const std::vector<GameObject> &gameObjects);
-    void renderCameraBounds(const CameraOld &camera);
+    void renderGrid(const Camera &camera);
+    void renderPhysics(const Camera &camera, const std::vector<GameObject> &gameObjects);
+    void renderCameraBounds(const Camera &camera);
 
 public:
     // FIXME: making it public for testing purposes.

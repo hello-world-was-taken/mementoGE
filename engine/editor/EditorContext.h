@@ -1,6 +1,5 @@
 #pragma once
 
-#include "core/Camera.h"
 #include "core/FrameContext.h"
 #include "core/MovementMode.h"
 #include "core/Scene.h"
@@ -10,6 +9,7 @@
 #include "core/components/Sprite.h"
 
 #include "editor/Constants.h"
+#include "editor/EditorCamera.h"
 #include "editor/EditorInteractionMode.h"
 #include "editor/EditorMouseController.h"
 #include "editor/SceneHistory.h"

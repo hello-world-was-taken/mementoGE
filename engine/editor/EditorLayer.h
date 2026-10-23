@@ -43,7 +43,7 @@ private:
     void renderGrid();
     void renderPerformancePanel();
     void renderEditorProperties();
-    CameraOld &getPlayCamera(Scene &scene);
+    Camera getPlayCamera(const Scene &scene);
 
     void drawMouseDebugPanel();
 
@@ -66,7 +66,6 @@ private:
     GameObjectEditorPanel m_gameObjectEditorPanel{m_ctx};
 
     GridRenderer m_gridRenderer;
-    CameraOld m_playCamera;
 
     glm::vec4 editorModeClearColor = {0.41176f, 0.41176f, 0.41176f, 1.00f};
     glm::vec4 playModeClearColor = {0.0f, 0.0f, 0.0f, 1.0f};

@@ -12,13 +12,13 @@ enum class CameraProjectionType
 
 struct Camera
 {
+    // Derived by CameraUtils before rendering; these matrices are not serialized.
     glm::mat4 projection{1.0f};
     glm::mat4 view{1.0f};
 
     CameraProjectionType projectionType = CameraProjectionType::Orthographic;
 
-    // TODO: Zoom influences orthographic size or editor navigation
-    // So, does it make sense for gameplay?
+    // Visible width and height are the logical dimensions multiplied by zoom.
     float zoom = 1.0f;
     float minZoom = 0.1f;
     float maxZoom = 10.0f;

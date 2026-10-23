@@ -79,7 +79,7 @@ PhysicsRenderer::~PhysicsRenderer()
     LOG_DEBUG(LogChannel::Renderer, "PhysicsRenderer destructor called");
 }
 
-void PhysicsRenderer::render(const CameraOld &camera, double elapsedTime, const std::vector<GameObject> &gameObjects)
+void PhysicsRenderer::render(const Camera &camera, double elapsedTime, const std::vector<GameObject> &gameObjects)
 {
 
     if (m_batch == nullptr)
@@ -148,10 +148,10 @@ void PhysicsRenderer::updateBoxCollider2DVertices(const GameObject &gameObject, 
     }
 }
 
-void PhysicsRenderer::updateVertices(const CameraOld &camera, const std::vector<GameObject> &gameObjects)
+void PhysicsRenderer::updateVertices(const Camera &camera, const std::vector<GameObject> &gameObjects)
 {
     m_vertices.clear();
-    const float lineThickness = (LOGICAL_WIDTH / WINDOW_WIDTH) * camera.getZoom();
+    const float lineThickness = (LOGICAL_WIDTH / WINDOW_WIDTH) * camera.zoom;
 
     for (const GameObject &go : gameObjects)
     {

@@ -67,7 +67,7 @@ glm::vec2 EditorContext::frameBufferToWorld(glm::vec2 fbPos)
     // TODO: do we need to update z to layer images over one another?
     glm::vec4 clipCoords = glm::vec4(ndcX, ndcY, 0.0f, 1.0f);
 
-    glm::mat4 viewProj = editorCamera.getProjectionMatrix() * editorCamera.getViewMatrix();
+    glm::mat4 viewProj = editorCamera.camera().projection * editorCamera.camera().view;
     glm::mat4 invViewProj = glm::inverse(viewProj);
 
     glm::vec4 worldCoords = invViewProj * clipCoords;
@@ -85,7 +85,7 @@ glm::vec2 EditorContext::getScreenCoordinate(glm::vec2 worldPos)
 
 glm::vec2 EditorContext::worldToFrameBuffer(glm::vec2 worldPos)
 {
-    glm::mat4 viewProj = editorCamera.getProjectionMatrix() * editorCamera.getViewMatrix();
+    glm::mat4 viewProj = editorCamera.camera().projection * editorCamera.camera().view;
 
     // transform world position to clip space
     glm::vec4 clipSpaceCoords = viewProj * glm::vec4(worldPos, 0.0f, 1.0f);

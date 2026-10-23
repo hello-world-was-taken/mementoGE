@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/Camera.h"
+#include "core/components/Camera.h"
 #include "core/GameObject.h"
 
 #include "opengl/Vertex.h"
@@ -19,7 +19,7 @@ public:
     SelectionRenderer(const SelectionRenderer &) = delete;
     SelectionRenderer &operator=(const SelectionRenderer &) = delete;
 
-    void render(const CameraOld &camera, double elapsedTime, const std::vector<GameObject> &gameObjects);
+    void render(const Camera &camera, double elapsedTime, const std::vector<GameObject> &gameObjects);
 
 private:
     void updateVertices(const std::vector<GameObject> &selectedObjects);

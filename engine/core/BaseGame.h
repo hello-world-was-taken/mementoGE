@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/Camera.h"
+#include "core/CameraUtils.h"
 #include "core/FrameContext.h"
 #include "core/SceneManager.h"
 #include "core/SystemScheduler.h"
@@ -12,7 +12,6 @@
 #include "util/Time.h"
 
 #include <cmath>
-#include <glm/gtc/matrix_transform.hpp>
 #include <string>
 
 class BaseGame
@@ -99,12 +98,12 @@ protected:
         GameObject *cameraObj = scene.findPrimaryCamera();
         if (cameraObj)
         {
-            Camera &cam = cameraObj->getComponent<Camera>();
+            Camera camera = cameraObj->getComponent<Camera>();
             const Transform &camTransform = cameraObj->getComponent<Transform>();
 
-            float w = cam.logicalWidth * cam.zoom;
-            float h = cam.logicalHeight * cam.zoom;
-            float cameraAspect = w / h;
+            CameraUtils::updateMatrices(camera, camTransform);
+
+            const float cameraAspect = camera.logicalWidth / camera.logicalHeight;
 
             // Letterbox/pillarbox: fit the camera's aspect ratio into the window
             auto [vpX, vpY, vpW, vpH] = frame.window.getViewportForAspect(cameraAspect);
@@ -113,16 +112,7 @@ protected:
             // Window.h should handle this as well
             glViewport(vpX, vpY, vpW, vpH);
 
-            glm::mat4 proj = glm::ortho(0.0f, w, 0.0f, h, cam.nearClip, cam.farClip);
-            glm::mat4 view = glm::translate(glm::mat4(1.0f), -camTransform.position);
-
-            m_gameCamera.setProjectionMatrix(proj);
-            m_gameCamera.setViewMatrix(view);
-
-            // FIXME: the only reason we have m_gameCamera is because render
-            // accepts CameraOld and not the Camera gameobject component.
-            m_spriteRenderer.render(m_gameCamera, frame.elapsedTime, gameObjects);
-
+            m_spriteRenderer.render(camera, frame.elapsedTime, gameObjects);
         }
         else
         {
@@ -136,7 +126,6 @@ public:
     SystemScheduler m_systemScheduler;
     SceneManager m_sceneManager;
     SpriteRenderer m_spriteRenderer;
-    CameraOld m_gameCamera;
 
     bool m_running = true;
 };

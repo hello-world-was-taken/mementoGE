@@ -7,6 +7,7 @@
 #include "core/components/RigidBody2D.h"
 
 #include "core/ImGuiWrapper.h"
+#include "core/CameraUtils.h"
 #include "core/MovementMode.h"
 #include "core/SpriteSheet.h"
 
@@ -22,7 +23,6 @@
 #include <cmath>
 #include <filesystem>
 #include <fstream>
-#include <glm/gtc/matrix_transform.hpp>
 #include <imgui.h>
 #include <memory>
 #include <sawyer/Logger.h>
@@ -133,8 +133,7 @@ void EditorLayer::run()
                     renderGrid();
                 }
 
-                CameraOld &camera =
-                    m_ctx.isRuntimeActive() ? getPlayCamera(activeScene) : static_cast<CameraOld &>(m_ctx.editorCamera);
+                const Camera camera = m_ctx.isRuntimeActive() ? getPlayCamera(activeScene) : m_ctx.editorCamera.camera();
                 m_ctx.renderer2D.renderScene(camera, frame.elapsedTime, activeScene.getGameObjects(), m_ctx.selectedObjects);
 
                 drawEditorUI();
@@ -317,27 +316,23 @@ void EditorLayer::renderGrid()
     }
 
     constexpr int GRID_TILE_SIZE = 16;
-    m_gridRenderer.render(m_ctx.editorCamera, m_ctx.frame.elapsedTime, GRID_TILE_SIZE);
+    m_gridRenderer.render(m_ctx.editorCamera.camera(), m_ctx.frame.elapsedTime, GRID_TILE_SIZE);
 }
 
-CameraOld &EditorLayer::getPlayCamera(Scene &scene)
+Camera EditorLayer::getPlayCamera(const Scene &scene)
 {
-    GameObject *cameraObj = scene.findPrimaryCamera();
+    const GameObject *cameraObj = scene.findPrimaryCamera();
     if (!cameraObj)
     {
         throw std::runtime_error("No primary camera found!");
     }
 
-    Camera &camera = cameraObj->getComponent<Camera>();
+    Camera camera = cameraObj->getComponent<Camera>();
     const Transform &cameraTransform = cameraObj->getComponent<Transform>();
 
-    const float width = camera.logicalWidth * camera.zoom;
-    const float height = camera.logicalHeight * camera.zoom;
+    CameraUtils::updateMatrices(camera, cameraTransform);
 
-    m_playCamera.setProjectionMatrix(glm::ortho(0.0f, width, 0.0f, height, camera.nearClip, camera.farClip));
-    m_playCamera.setViewMatrix(glm::translate(glm::mat4(1.0f), -cameraTransform.position));
-
-    return m_playCamera;
+    return camera;
 }
 
 // TODO: move to separate panel

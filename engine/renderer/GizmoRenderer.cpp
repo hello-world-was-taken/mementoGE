@@ -24,7 +24,7 @@ GizmoRenderer::GizmoRenderer()
 
 GizmoRenderer::~GizmoRenderer() = default;
 
-void GizmoRenderer::render(const CameraOld &camera, double elapsedTime, const std::vector<GameObject> &selectedObjects)
+void GizmoRenderer::render(const Camera &camera, double elapsedTime, const std::vector<GameObject> &selectedObjects)
 {
     updateVertices(camera, selectedObjects);
     if (m_vertices.empty())
@@ -42,7 +42,7 @@ void GizmoRenderer::render(const CameraOld &camera, double elapsedTime, const st
     m_batch->render(camera, elapsedTime, static_cast<int>((m_vertices.size() / 4) * INDICES_PER_QUAD));
 }
 
-void GizmoRenderer::updateVertices(const CameraOld &camera, const std::vector<GameObject> &selectedObjects)
+void GizmoRenderer::updateVertices(const Camera &camera, const std::vector<GameObject> &selectedObjects)
 {
     m_vertices.clear();
     if (selectedObjects.size() != 1 || !selectedObjects.front().hasComponent<Transform>())
@@ -55,7 +55,7 @@ void GizmoRenderer::updateVertices(const CameraOld &camera, const std::vector<Ga
 
     // EditorCamera maps one logical screen pixel to this many world units.
     // Scaling by zoom keeps the gizmo visually constant while zooming.
-    const float worldUnitsPerPixel = (LOGICAL_WIDTH / WINDOW_WIDTH) * camera.getZoom();
+    const float worldUnitsPerPixel = (LOGICAL_WIDTH / WINDOW_WIDTH) * camera.zoom;
     const float axisLength = AXIS_LENGTH_PIXELS * worldUnitsPerPixel;
     const float halfThickness = SHAFT_THICKNESS_PIXELS * worldUnitsPerPixel * 0.5f;
     const float arrowLength = ARROW_LENGTH_PIXELS * worldUnitsPerPixel;

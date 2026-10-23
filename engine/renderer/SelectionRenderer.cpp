@@ -17,7 +17,7 @@ SelectionRenderer::SelectionRenderer()
 SelectionRenderer::~SelectionRenderer() = default;
 
 void SelectionRenderer::render(
-    const CameraOld &camera, double elapsedTime, const std::vector<GameObject> &selectedObjects)
+    const Camera &camera, double elapsedTime, const std::vector<GameObject> &selectedObjects)
 {
     if (m_batch == nullptr)
     {

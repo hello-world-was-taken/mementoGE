@@ -94,7 +94,7 @@ unsigned int Renderer2D::getColorTexture()
 }
 
 void Renderer2D::renderScene(
-    const CameraOld &camera,
+    const Camera &camera,
     double elapsedTime,
     std::vector<GameObject> &objects,
     const std::vector<GameObject> &selectedObjects)
@@ -109,7 +109,7 @@ bool Renderer2D::hasRendererTypeEnabled(RendererType flag)
     return (static_cast<uint32_t>(m_enabledRenderers) & static_cast<uint32_t>(flag)) != 0;
 }
 
-void Renderer2D::renderSprites(const CameraOld &camera, double elapsedTime, std::vector<GameObject> &gameObjects)
+void Renderer2D::renderSprites(const Camera &camera, double elapsedTime, std::vector<GameObject> &gameObjects)
 {
     generateIndexArrayForTriangle(m_indices);
 
@@ -255,7 +255,7 @@ void Renderer2D::renderSprites(const CameraOld &camera, double elapsedTime, std:
 }
 
 void Renderer2D::renderSelection(
-    const CameraOld &camera, double elapsedTime, const std::vector<GameObject> &selectedObjects)
+    const Camera &camera, double elapsedTime, const std::vector<GameObject> &selectedObjects)
 {
     if (selectedObjects.empty())
     {
@@ -372,7 +372,7 @@ void Renderer2D::setClearColor(glm::vec4 color)
 }
 
 void Renderer2D::renderLayers(
-    const CameraOld &camera,
+    const Camera &camera,
     double elapsedTime,
     std::vector<GameObject> &objects,
     const std::vector<GameObject> &selectedObjects)

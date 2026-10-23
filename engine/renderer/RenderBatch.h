@@ -3,8 +3,7 @@
 #include "core/components/Transform.h"
 
 #include "core/GLIncludes.h"
-#include "core/Camera.h"
-#include "core/Camera.h"
+#include "core/components/Camera.h"
 #include "core/GameObject.h"
 
 #include "opengl/Vertex.h"
@@ -31,7 +30,7 @@ public:
 
     void setVertexData(std::vector<Vertex> &vertices);
     void setIndexData(std::vector<unsigned int> &indices);
-    void render(const CameraOld &camera,
+    void render(const Camera &camera,
         double elapsedTime,
         int drawCount = 1000 * 6,
         std::shared_ptr<Shader> customShader = nullptr,

@@ -73,7 +73,7 @@ SpriteRenderer::~SpriteRenderer()
 {
 }
 
-void SpriteRenderer::render(const CameraOld &camera, double elapsedTime, std::vector<GameObject> &gameObjects)
+void SpriteRenderer::render(const Camera &camera, double elapsedTime, std::vector<GameObject> &gameObjects)
 {
     if (!m_batch)
     {

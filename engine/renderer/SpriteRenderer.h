@@ -2,7 +2,7 @@
 
 #include "core/components/RenderLayer.h"
 
-#include "core/Camera.h"
+#include "core/components/Camera.h"
 #include "core/GameObject.h"
 
 #include "opengl/Vertex.h"
@@ -20,7 +20,7 @@ public:
     ~SpriteRenderer();
 
     // Text geometry is rebuilt here on the render owner, so objects are mutable.
-    void render(const CameraOld &camera, double elapsedTime, std::vector<GameObject> &gameObjects);
+    void render(const Camera &camera, double elapsedTime, std::vector<GameObject> &gameObjects);
 
 private:
     std::unique_ptr<RenderBatch> m_batch;

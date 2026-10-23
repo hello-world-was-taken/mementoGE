@@ -43,7 +43,7 @@ GridRenderer::~GridRenderer()
 {
 }
 
-void GridRenderer::generateGridLines(const CameraOld &camera, int tileSize)
+void GridRenderer::generateGridLines(const Camera &camera, int tileSize)
 {
     m_vertices.clear();
 
@@ -51,7 +51,7 @@ void GridRenderer::generateGridLines(const CameraOld &camera, int tileSize)
     // [-1, -1] and [1, 1]. This lets us build a grid that always
     // covers the visible region, so it appears to extend infinitely
     // as the camera pans and zooms.
-    glm::mat4 invViewProj = glm::inverse(camera.getProjectionMatrix() * camera.getViewMatrix());
+    glm::mat4 invViewProj = glm::inverse(camera.projection * camera.view);
     glm::vec4 corners[2] = {
         invViewProj * glm::vec4(-1, -1, 0, 1), // bottom-left NDC
         invViewProj * glm::vec4(1, 1, 0, 1),   // top-right NDC
@@ -69,7 +69,7 @@ void GridRenderer::generateGridLines(const CameraOld &camera, int tileSize)
     int endY = static_cast<int>(std::ceil(topRight.y / tileSize)) * tileSize;
 
     // Match the old one-pixel GL_LINES appearance across editor zoom levels.
-    const float lineThickness = (LOGICAL_WIDTH / WINDOW_WIDTH) * camera.getZoom();
+    const float lineThickness = (LOGICAL_WIDTH / WINDOW_WIDTH) * camera.zoom;
 
     for (int x = startX; x <= endX; x += tileSize)
     {
@@ -81,11 +81,11 @@ void GridRenderer::generateGridLines(const CameraOld &camera, int tileSize)
     }
 }
 
-void GridRenderer::render(const CameraOld &camera, double elapsedTime, int tileSize)
+void GridRenderer::render(const Camera &camera, double elapsedTime, int tileSize)
 {
     m_shader->use();
-    m_shader->setUniform4fv("u_view_matrix", camera.getViewMatrix());
-    m_shader->setUniform4fv("u_projection_matrix", camera.getProjectionMatrix());
+    m_shader->setUniform4fv("u_view_matrix", camera.view);
+    m_shader->setUniform4fv("u_projection_matrix", camera.projection);
 
     // TODO: we can avoid generating grids by caching previous camera position
     generateGridLines(camera, tileSize);

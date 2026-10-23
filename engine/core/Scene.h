@@ -4,7 +4,6 @@
 #include "core/GameObject.h"
 #include "core/ISystem.h"
 #include "core/Physics2D.h"
-#include "core/SceneCamera.h"
 #include "core/SystemGraph.h"
 #include "core/components/Camera.h"
 

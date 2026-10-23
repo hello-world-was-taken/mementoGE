@@ -1,6 +1,15 @@
 #include "core/CameraUtils.h"
 #include <glm/gtc/matrix_transform.hpp>
 
+void CameraUtils::updateMatrices(Camera &camera, const Transform &transform)
+{
+    const float width = camera.logicalWidth * camera.zoom;
+    const float height = camera.logicalHeight * camera.zoom;
+
+    camera.projection = glm::ortho(0.0f, width, 0.0f, height, camera.nearClip, camera.farClip);
+    camera.view = glm::translate(glm::mat4(1.0f), -transform.position);
+}
+
 glm::vec2 CameraUtils::screenToWorld(
     const WindowMetrics &window, const Camera &camera, const Transform &camTransform, glm::vec2 screenPos)
 {
@@ -39,14 +48,11 @@ glm::vec2 CameraUtils::screenToWorld(
     float ndcX = ((normMouseX - normVpX) / normVpW) * 2.0f - 1.0f;
     float ndcY = ((normMouseY - normVpY) / normVpH) * 2.0f - 1.0f;
 
-    // 5. Convert NDC to World Coordinates
-    // Reconstruct the matrices used by the renderer to unproject the point.
-    // This allows for future camera changes (like rotation) to work automatically.
-    // Keep in-sync with how we calculate the matrices in BaseGame.h
-    glm::mat4 proj = glm::ortho(0.0f, w, 0.0f, h, camera.nearClip, camera.farClip);
-    glm::mat4 view = glm::translate(glm::mat4(1.0f), -camTransform.position);
+    // 5. Use the same derived matrices as rendering, without changing scene data.
+    Camera renderCamera = camera;
+    updateMatrices(renderCamera, camTransform);
 
-    glm::mat4 invPV = glm::inverse(proj * view);
+    glm::mat4 invPV = glm::inverse(renderCamera.projection * renderCamera.view);
     glm::vec4 worldPos = invPV * glm::vec4(ndcX, ndcY, 0.0f, 1.0f);
 
     return glm::vec2(worldPos.x, worldPos.y);

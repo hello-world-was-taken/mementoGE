@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/Camera.h"
+#include "core/components/Camera.h"
 #include "core/GLIncludes.h"
 #include "core/GameObject.h"
 
@@ -23,12 +23,12 @@ public:
     PhysicsRenderer(const PhysicsRenderer &) = delete;
     PhysicsRenderer &operator=(const PhysicsRenderer &) = delete;
 
-    void render(const CameraOld &camera, double elapsedTime, const std::vector<GameObject> &gameObjects);
+    void render(const Camera &camera, double elapsedTime, const std::vector<GameObject> &gameObjects);
 
 private:
     void updateBoxCollider2DVertices(const GameObject &gameObject, float lineThickness);
     void updateSensor2DVertices(const GameObject &gameObject, float lineThickness);
-    void updateVertices(const CameraOld &camera, const std::vector<GameObject> &gameObjects);
+    void updateVertices(const Camera &camera, const std::vector<GameObject> &gameObjects);
 
 private:
     std::unique_ptr<RenderBatch> m_batch;

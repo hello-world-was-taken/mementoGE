@@ -1,6 +1,5 @@
 #pragma once
 
-#include "core/Camera.h"
 #include "core/GameObject.h"
 #include "core/MovementMode.h"
 #include "core/Scene.h"

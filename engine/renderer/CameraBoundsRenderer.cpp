@@ -16,7 +16,7 @@ CameraBoundsRenderer::CameraBoundsRenderer()
 CameraBoundsRenderer::~CameraBoundsRenderer() = default;
 
 void CameraBoundsRenderer::render(
-    const CameraOld &editorCamera, double elapsedTime, const std::vector<GameObject> &gameObjects)
+    const Camera &editorCamera, double elapsedTime, const std::vector<GameObject> &gameObjects)
 {
     if (!m_batch)
     {

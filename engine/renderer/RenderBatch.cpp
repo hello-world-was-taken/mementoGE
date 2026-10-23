@@ -80,7 +80,7 @@ void RenderBatch::setIndexData(std::vector<unsigned int> &indices)
     m_ibo->updateIndicesData(m_indices.data(), m_indices.size());
 }
 
-void RenderBatch::render(const CameraOld &camera,
+void RenderBatch::render(const Camera &camera,
     double elapsedTime,
     int drawCount,
     std::shared_ptr<Shader> customShader,
@@ -94,8 +94,8 @@ void RenderBatch::render(const CameraOld &camera,
                      : GlResourceManager::instance().getShaderProgram(vertexShaderPath, fragmentShaderPath);
 
     shader->use();
-    shader->setUniform4fv("u_view_matrix", camera.getViewMatrix());
-    shader->setUniform4fv("u_projection_matrix", camera.getProjectionMatrix());
+    shader->setUniform4fv("u_view_matrix", camera.view);
+    shader->setUniform4fv("u_projection_matrix", camera.projection);
     // Custom effects can animate in both the editor viewport and gameplay,
     // without depending on a scene system to feed them a clock.
     shader->setUniform1f("u_GlobalTime", static_cast<float>(elapsedTime));
