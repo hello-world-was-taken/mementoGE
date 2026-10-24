@@ -6,6 +6,7 @@
 #include <optional>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 struct WorkerIndex
 {
@@ -53,9 +54,29 @@ public:
         runAndWaitErased(eraseTask(std::forward<Function>(function)));
     }
 
+    // Runs a finite batch of independent jobs and waits for every accepted
+    // job, even on failure. Jobs may overlap when workers are available; zero
+    // workers runs them inline. An empty batch returns immediately.
+    // The first job exception in input order is rethrown after the batch finishes.
+    // If submission fails, drain accepted jobs before reporting that failure.
+    template <typename Function> void runBatchAndWait(std::vector<Function> jobs)
+    {
+        std::vector<ErasedTask> tasks;
+        tasks.reserve(jobs.size());
+        for (auto &job : jobs)
+        {
+            tasks.push_back(eraseTask(std::move(job)));
+        }
+
+        // Destroy moved-from callables before dispatch too: a custom move
+        // constructor can leave captures behind in the original object.
+        jobs.clear();
+        runBatchAndWaitErased(std::move(tasks));
+    }
+
     // close() rejects new root calls while allowing already-running jobs to
-    // finish nested runAndWait() calls. join() drains accepted work and
-    // joins every worker. Both calls are idempotent.
+    // finish nested runAndWait()/runBatchAndWait() calls. join() drains
+    // accepted work and joins every worker. Both calls are idempotent.
     void close() noexcept;
     void join();
 
@@ -73,6 +94,7 @@ private:
     std::unique_ptr<Impl> m_impl;
 
     void runAndWaitErased(ErasedTask task);
+    void runBatchAndWaitErased(std::vector<ErasedTask> tasks);
 
     template <typename Function> static ErasedTask eraseTask(Function &&function)
     {

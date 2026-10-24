@@ -30,4 +30,8 @@ public:
     std::map<std::string, std::string> animationSourceMap; // "walk" -> "assets/character.json"
     std::string currentAnimation;
     AnimationPlayer animationPlayer;
+
+private:
+    // Playback borrows frames from this map, even after cache eviction.
+    std::shared_ptr<const AnimationMap> m_animationMap;
 };

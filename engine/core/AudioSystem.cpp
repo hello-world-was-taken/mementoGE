@@ -1,4 +1,5 @@
 #include "core/AudioSystem.h"
+#include "core/AudioResourceManager.h"
 #include "core/AudioSettings.h"
 #include "core/components/Transform.h"
 
@@ -22,7 +23,8 @@ SystemDescriptor AudioSystem::descriptor() const
         .writesResource(SystemResource::PhysicsWorld)
         .writesResource(SystemResource::AssetCache)
         .requestsStructuralChanges()
-        .withAffinity(SystemThreadAffinity::AnyWorker)
+        // Destroying an entity can also release GPU-backed components.
+        .onMainThread()
         .after("FollowSystem")
         .before("PhysicsSystem")
         .nonReentrant();
@@ -30,19 +32,8 @@ SystemDescriptor AudioSystem::descriptor() const
 
 AudioSystem::AudioSystem()
 {
-    m_device = UniqueDevicePtr(alcOpenDevice(nullptr));
-    if (!m_device)
-    {
-        throw std::runtime_error("Failed to open OpenAL device");
-    }
-
-    m_context = UniqueContextPtr(alcCreateContext(m_device.get(), nullptr));
-    if (!m_context)
-    {
-        throw std::runtime_error("Failed to create OpenAL context");
-    }
-
-    alcMakeContextCurrent(m_context.get());
+    // Scene clones and loaded scenes use the same sources/buffer context.
+    AudioResourceManager::instance();
 }
 
 void AudioSystem::update(SystemContext &context)

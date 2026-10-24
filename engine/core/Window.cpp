@@ -1,5 +1,7 @@
 #include "core/Window.h"
+#include "core/AssetManager.h"
 #include "core/EventHandler.h"
+#include "core/GlResourceManager.h"
 
 #include "editor/Constants.h"
 #include "editor/EditorCamera.h"
@@ -55,9 +57,15 @@ Window::Window()
     glEnable(GL_DEPTH_TEST);
 }
 
-// TODO: Remove all the resources we used
 Window::~Window()
 {
+    // Window is destroyed after the app's scenes, renderer, and idle scheduler.
+    // Cached assets can retain GPU objects even after those owners are gone.
+    glfwMakeContextCurrent(m_glfw_window);
+    AssetManager::instance().clear();
+    GlResourceManager::instance().clear();
+    glfwDestroyWindow(m_glfw_window);
+    glfwTerminate();
     s_instance = nullptr;
 }
 

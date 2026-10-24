@@ -174,6 +174,8 @@ if(BUILD_TESTING)
         tests/unit/FixedSimulationTests.cpp
         tests/unit/InputSnapshotTests.cpp
         tests/unit/AssetLoadingTests.cpp
+        tests/unit/AudioLifetimeTests.cpp
+        tests/unit/AuditedSystemsTests.cpp
         tests/unit/JobSystemTests.cpp
         tests/unit/SystemDescriptorTests.cpp
         tests/unit/SystemGraphTests.cpp
@@ -198,5 +200,6 @@ if(BUILD_TESTING)
     endif()
 
     include(GoogleTest)
-    gtest_discover_tests(memento_unit_tests)
+    # Exercise audio ownership without requiring an installed playback device.
+    gtest_discover_tests(memento_unit_tests PROPERTIES ENVIRONMENT "ALSOFT_DRIVERS=null")
 endif()

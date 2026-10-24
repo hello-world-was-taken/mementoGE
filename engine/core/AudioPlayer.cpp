@@ -1,5 +1,6 @@
 #include "core/AudioPlayer.h"
 #include "core/AssetManager.h"
+#include "core/AudioResourceManager.h"
 
 #include "util/LogChannels.h"
 #include "util/log_error.h"
@@ -8,6 +9,8 @@
 
 AudioPlayer::AudioPlayer()
 {
+    // Components can be created before a scene installs its AudioSystem.
+    AudioResourceManager::instance();
     alGenSources(1, &m_source);
     checkAlError("alGenSources");
 }

@@ -73,7 +73,7 @@ struct JobSystem::Impl
         const ExecutionFrame m_frame;
     };
 
-    // Each runAndWait() owns this state until its queued job has finished.
+    // Each blocking call owns this state until its queued job has finished.
     // queueMutex protects both fields and workAvailable signals completion.
     struct Completion
     {
@@ -159,6 +159,58 @@ struct JobSystem::Impl
         wait(completion);
     }
 
+    void runBatchAndWait(std::vector<ErasedTask> functions)
+    {
+        // Allocate all completion state before accepting work. Its addresses
+        // remain stable until every accepted job has released its captures.
+        std::vector<Completion> completions(functions.size());
+        std::size_t accepted = 0;
+        std::exception_ptr submissionError;
+        try
+        {
+            for (; accepted < functions.size(); ++accepted)
+            {
+                enqueue(QueuedTask{std::move(functions[accepted]), &completions[accepted]});
+            }
+        }
+        catch (...)
+        {
+            submissionError = std::current_exception();
+        }
+
+        // A moved-from std::function may retain its target. Release those
+        // copies and any unaccepted callbacks before waiting for completion.
+        functions.clear();
+
+        std::exception_ptr jobError;
+        for (std::size_t index = 0; index < accepted; ++index)
+        {
+            try
+            {
+                wait(completions[index]);
+            }
+            catch (...)
+            {
+                if (jobError == nullptr)
+                {
+                    jobError = std::current_exception();
+                }
+            }
+        }
+
+        // Submission failure explains why the full batch did not run. Both
+        // error paths wait for accepted work; job errors use input order.
+        if (submissionError != nullptr)
+        {
+            std::rethrow_exception(submissionError);
+        }
+
+        if (jobError != nullptr)
+        {
+            std::rethrow_exception(jobError);
+        }
+    }
+
     void enqueue(QueuedTask task)
     {
         const auto activeWorker = activeWorkerIndex();
@@ -176,7 +228,7 @@ struct JobSystem::Impl
                 ++inFlight;
             }
 
-            execute(std::move(task), WorkerIndex{0});
+            execute(task, WorkerIndex{0});
             return;
         }
 
@@ -235,11 +287,11 @@ struct JobSystem::Impl
         }
 
         queueHasRoom.notify_one();
-        execute(std::move(task), worker);
+        execute(task, worker);
         return true;
     }
 
-    void execute(QueuedTask task, WorkerIndex worker) noexcept
+    void execute(QueuedTask &task, WorkerIndex worker) noexcept
     {
         std::exception_ptr error;
         {
@@ -253,7 +305,8 @@ struct JobSystem::Impl
                 error = std::current_exception();
             }
 
-            // Release captures before publishing completion to the caller.
+            // Clear the executing owner's callable before completion. Moving
+            // a std::function into another local may retain the source target.
             task.function = {};
         }
 
@@ -290,7 +343,7 @@ struct JobSystem::Impl
             }
 
             queueHasRoom.notify_one();
-            execute(std::move(task), worker);
+            execute(task, worker);
         }
     }
 
@@ -430,6 +483,11 @@ JobSystem::~JobSystem()
 void JobSystem::runAndWaitErased(ErasedTask task)
 {
     m_impl->runAndWait(std::move(task));
+}
+
+void JobSystem::runBatchAndWaitErased(std::vector<ErasedTask> tasks)
+{
+    m_impl->runBatchAndWait(std::move(tasks));
 }
 
 void JobSystem::close() noexcept

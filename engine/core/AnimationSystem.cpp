@@ -10,6 +10,8 @@ SystemDescriptor AnimationSystem::descriptor() const
     return SystemDescriptor::named("AnimationSystem")
         .writes<Animator, Sprite, BoxCollider2D, Sensor2D>()
         .requestsStructuralChanges()
+        // Replacing a Sprite can release the last owner of a GL texture.
+        .onMainThread()
         .before("PhysicsSystem")
         .nonReentrant();
 }

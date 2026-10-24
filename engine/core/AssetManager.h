@@ -16,6 +16,9 @@ class AssetManager
 public:
     static AssetManager &instance();
 
+    // Cache access can load assets and mutate these maps. Systems declare
+    // AssetCache access; graphics loads and cache eviction run on the owner
+    // with a live GL context, outside worker batches.
     // TODO: shared_ptr vs returning const reference for all resource types
     std::shared_ptr<SpriteSheet> getSpriteSheet(const std::string &jsonPath);
 
@@ -23,6 +26,9 @@ public:
     std::shared_ptr<Font> getFont(const std::string &fontPath);
     unsigned int getAudioClip(const std::string &audioPath);
     void forgetAsset(const std::string &assetPath);
+    // Release cached owners after scene/render users and jobs have finished,
+    // before the window destroys its GL context.
+    void clear();
 
 private:
     AssetManager() = default;

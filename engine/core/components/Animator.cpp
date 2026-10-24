@@ -9,6 +9,7 @@
 #include <memory>
 #include <sawyer/Logger.h>
 #include <string>
+#include <utility>
 
 #ifdef EDITOR_BUILD
 #include "core/ImGuiWrapper.h"
@@ -46,6 +47,7 @@ bool Animator::play(std::string name, bool loop)
 
     currentAnimation = name;
     animationPlayer.play(animationIt->second, loop);
+    m_animationMap = std::move(animMap);
     return true;
 }
 

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <AL/al.h>
+#include <AL/alc.h>
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <string>
@@ -32,17 +34,33 @@ struct WavHeader
 class AudioResourceManager
 {
 public:
+    // One device/context owns sources and cached buffers across all scenes.
+    // System access is serialized by AudioDevice; owner access stays outside
+    // worker batches, and all AudioPlayers must die before this singleton.
     static AudioResourceManager &instance();
 
     unsigned int getAudioBuffer(const std::string &audioPath);
 
 private:
-    AudioResourceManager() = default;
+    AudioResourceManager();
     ~AudioResourceManager();
 
     AudioResourceManager(const AudioResourceManager &) = delete;
     AudioResourceManager &operator=(const AudioResourceManager &) = delete;
 
+    struct DeviceDeleter
+    {
+        void operator()(ALCdevice *device) const;
+    };
+
+    struct ContextDeleter
+    {
+        void operator()(ALCcontext *context) const;
+    };
+
+    // Declared in this order so the context is destroyed before its device.
+    std::unique_ptr<ALCdevice, DeviceDeleter> m_device;
+    std::unique_ptr<ALCcontext, ContextDeleter> m_context;
     std::map<std::string, unsigned int> bufferByPath;
 
     unsigned int loadWav(const std::string &audioPath);

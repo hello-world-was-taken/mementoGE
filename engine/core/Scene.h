@@ -43,6 +43,9 @@ public:
     Scene(Scene &&other) noexcept;      // move constructor
     Scene &operator=(Scene &&other);    // move assignment operator
 
+    // Both overloads finish all accepted updates before returning or throwing.
+    // The owner must keep this scene and frame alive and avoid external access
+    // during the tick. The overload without a scheduler executes inline.
     void update(const FrameContext &frame, bool editMode = false);
     void update(const FrameContext &frame, SystemScheduler &scheduler, bool editMode = false);
 

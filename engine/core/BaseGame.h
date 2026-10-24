@@ -58,6 +58,8 @@ protected:
                 const FrameContext tick{
                     static_cast<float>(fixedDeltaTime), simulatedTime + fixedDeltaTime, pendingInput, frame.window};
                 onUpdate(tick);
+                // Blocking tick: scene transitions above and rendering below
+                // cannot overlap any accepted system update, including failure.
                 m_sceneManager.update(tick, m_systemScheduler);
                 simulatedTime = tick.elapsedTime;
                 accumulatedTime -= fixedDeltaTime;
@@ -77,7 +79,6 @@ protected:
             glfwSwapBuffers(m_window.getGlfwWindow());
         }
 
-        glfwTerminate();
         m_running = false;
     }
 

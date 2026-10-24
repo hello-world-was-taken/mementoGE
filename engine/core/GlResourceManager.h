@@ -24,6 +24,10 @@ public:
     std::array<stbtt_aligned_quad, charsToIncludeInFontAtlas> &getFontAlignedQuad(const std::string &fontPath);
     const FontMetrics &getFontMetrics(const std::string &fontPath);
 
+    // Owner thread only, after all scene/render work and asset owners finish.
+    // Release GPU objects while the window's OpenGL context still exists.
+    void clear();
+
 private:
     GlResourceManager() = default;
     ~GlResourceManager() = default;

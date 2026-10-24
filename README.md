@@ -169,9 +169,9 @@ scene.setSystemEnabled("MovementSystem", true);
 ```
 
 `SystemRegistry` stores factories, so every scene owns an independent system
-instance. `Scene` builds a `SystemGraph` directly from a vector of descriptors
-when systems are added or deserialized, then runs systems sequentially in its
-topological order.
+instance. A dependency graph orders their updates. With workers configured,
+independent systems can run together during play; each tick finishes before
+rendering resumes. Edit mode and zero-worker execution use a serial path.
 
 ## Controls
 

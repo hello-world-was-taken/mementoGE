@@ -4,10 +4,12 @@
 #include <chrono>
 #include <cstddef>
 #include <future>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <stdexcept>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -265,6 +267,159 @@ TEST_P(JobSystemRunTests, JoinWaitsForAnAcceptedCallToFinish)
     EXPECT_FALSE(jobs.isOpen());
 }
 
+TEST_P(JobSystemRunTests, EmptyBatchesSucceedBeforeAndAfterShutdown)
+{
+    JobSystem jobs(JobSystemConfig{GetParam(), 2, false});
+    const std::vector<std::function<void()>> empty;
+
+    EXPECT_NO_THROW(jobs.runBatchAndWait(empty));
+    jobs.close();
+    EXPECT_NO_THROW(jobs.runBatchAndWait(empty));
+    jobs.join();
+    EXPECT_NO_THROW(jobs.runBatchAndWait(empty));
+    EXPECT_EQ(jobs.queuedTaskCount(), 0u);
+}
+
+TEST_P(JobSystemRunTests, BatchesCompleteEveryJobOnValidExecutionSlotsWithoutExceedingQueueCapacity)
+{
+    JobSystem jobs(JobSystemConfig{GetParam(), 2, false});
+    const auto caller = std::this_thread::get_id();
+    std::vector<int> results(12, 0);
+    std::vector<std::thread::id> threads(results.size());
+    std::vector<std::function<void(WorkerIndex)>> batch;
+    for (std::size_t index = 0; index < results.size(); ++index)
+    {
+        batch.emplace_back([&, index](WorkerIndex worker)
+            {
+                EXPECT_EQ(jobs.currentWorkerIndex(), std::optional<WorkerIndex>{worker});
+                EXPECT_LT(worker.value, jobs.executionSlotCount());
+                results[index] = static_cast<int>(index + 1);
+                threads[index] = std::this_thread::get_id();
+            });
+    }
+
+    jobs.runBatchAndWait(std::move(batch));
+
+    for (std::size_t index = 0; index < results.size(); ++index)
+    {
+        EXPECT_EQ(results[index], static_cast<int>(index + 1));
+        if (GetParam() == 0)
+        {
+            EXPECT_EQ(threads[index], caller);
+        }
+        else
+        {
+            EXPECT_NE(threads[index], caller);
+        }
+    }
+    EXPECT_LE(jobs.peakQueuedTaskCount(), 2u);
+    EXPECT_EQ(jobs.queuedTaskCount(), 0u);
+}
+
+TEST_P(JobSystemRunTests, BatchJobFailuresDoNotSkipLaterJobsAndReportTheFirstInputFailure)
+{
+    JobSystem jobs(JobSystemConfig{GetParam(), 2, false});
+    std::atomic<int> finished{0};
+    std::vector<std::function<void()>> batch;
+    for (int index = 0; index < 9; ++index)
+    {
+        batch.emplace_back([&, index]
+            {
+                finished.fetch_add(1, std::memory_order_relaxed);
+                if (index == 2)
+                {
+                    throw std::runtime_error("first input failure");
+                }
+                if (index == 6)
+                {
+                    throw std::runtime_error("later input failure");
+                }
+            });
+    }
+
+    try
+    {
+        jobs.runBatchAndWait(std::move(batch));
+        FAIL() << "Expected a batch job error";
+    }
+    catch (const std::runtime_error &error)
+    {
+        EXPECT_STREQ(error.what(), "first input failure");
+    }
+
+    EXPECT_EQ(finished.load(std::memory_order_relaxed), 9);
+    EXPECT_EQ(jobs.queuedTaskCount(), 0u);
+    EXPECT_NO_THROW(jobs.runAndWait([&]
+        {
+            finished.fetch_add(1, std::memory_order_relaxed);
+        }));
+    EXPECT_EQ(finished.load(std::memory_order_relaxed), 10);
+}
+
+TEST_P(JobSystemRunTests, BatchesOwnMoveOnlyCapturesAndReleaseThemBeforeReturning)
+{
+    JobSystem jobs(JobSystemConfig{GetParam(), 2, false});
+    std::atomic<int> released{0};
+    std::atomic<int> sum{0};
+    const auto deleter = [&](int *value)
+    {
+        delete value;
+        released.fetch_add(1, std::memory_order_relaxed);
+    };
+    const auto makeWork = [&](int value)
+    {
+        return [owned = std::unique_ptr<int, decltype(deleter)>(new int(value), deleter), &sum]
+        {
+            sum.fetch_add(*owned, std::memory_order_relaxed);
+        };
+    };
+    std::vector<decltype(makeWork(0))> batch;
+    for (int value = 1; value <= 7; ++value)
+    {
+        batch.emplace_back(makeWork(value));
+    }
+
+    jobs.runBatchAndWait(std::move(batch));
+
+    EXPECT_EQ(sum.load(std::memory_order_relaxed), 28);
+    EXPECT_EQ(released.load(std::memory_order_relaxed), 7);
+}
+
+TEST_P(JobSystemRunTests, AcceptedJobsCanRunNestedBatchesAfterCloseWithACapacityOneQueue)
+{
+    JobSystem jobs(JobSystemConfig{GetParam(), 1, false});
+    std::atomic<int> finished{0};
+    jobs.runAndWait([&]
+        {
+            jobs.close();
+            std::vector<std::function<void(WorkerIndex)>> batch;
+            for (int index = 0; index < 3; ++index)
+            {
+                batch.emplace_back([&, index](WorkerIndex worker)
+                    {
+                        EXPECT_EQ(jobs.currentWorkerIndex(), std::optional<WorkerIndex>{worker});
+                        finished.fetch_add(1, std::memory_order_relaxed);
+                        if (index == 0)
+                        {
+                            std::vector<std::function<void()>> nested(2, [&]
+                                {
+                                    finished.fetch_add(1, std::memory_order_relaxed);
+                                });
+                            jobs.runBatchAndWait(std::move(nested));
+                        }
+                    });
+            }
+            jobs.runBatchAndWait(std::move(batch));
+        });
+
+    EXPECT_EQ(finished.load(std::memory_order_relaxed), 5);
+    const std::vector<std::function<void()>> rejected{[] {}};
+    EXPECT_THROW(jobs.runBatchAndWait(rejected), std::runtime_error);
+    EXPECT_NO_THROW(jobs.join());
+    EXPECT_LE(jobs.peakQueuedTaskCount(), 1u);
+    EXPECT_EQ(jobs.queuedTaskCount(), 0u);
+}
+
 INSTANTIATE_TEST_SUITE_P(ZeroOneAndTwoWorkers, JobSystemRunTests, ::testing::Values(0U, 1U, 2U));
 
 TEST(JobSystemTests, ReusesItsWorkerAcrossCalls)
@@ -435,6 +590,243 @@ TEST(JobSystemTests, NestedPoolsCanReturnWorkToASuspendedWorkerAfterClose)
     EXPECT_EQ(result, 42);
     EXPECT_FALSE(outerJobs.isOpen());
     EXPECT_NO_THROW(outerJobs.join());
+}
+
+TEST(JobSystemTests, BatchJobsOverlapAndJoinWaitsForTheirCompletion)
+{
+    using namespace std::chrono_literals;
+    JobSystem jobs(JobSystemConfig{2, 1, false});
+    std::promise<void> firstStarted;
+    std::promise<void> secondStarted;
+    auto firstReady = firstStarted.get_future();
+    auto secondReady = secondStarted.get_future();
+    std::promise<void> release;
+    const auto released = release.get_future().share();
+    std::atomic<int> finished{0};
+    std::thread::id firstThread;
+    std::thread::id secondThread;
+    std::vector<std::function<void()>> batch{
+        [&]
+        {
+            firstThread = std::this_thread::get_id();
+            firstStarted.set_value();
+            if (released.wait_for(5s) != std::future_status::ready)
+            {
+                throw std::runtime_error("test did not release first batch job");
+            }
+            finished.fetch_add(1, std::memory_order_relaxed);
+        },
+        [&]
+        {
+            secondThread = std::this_thread::get_id();
+            secondStarted.set_value();
+            if (released.wait_for(5s) != std::future_status::ready)
+            {
+                throw std::runtime_error("test did not release second batch job");
+            }
+            finished.fetch_add(1, std::memory_order_relaxed);
+        }};
+    auto call = std::async(std::launch::async, [&]
+        {
+            jobs.runBatchAndWait(std::move(batch));
+        });
+
+    EXPECT_EQ(firstReady.wait_for(2s), std::future_status::ready);
+    EXPECT_EQ(secondReady.wait_for(2s), std::future_status::ready);
+    auto joined = std::async(std::launch::async, [&]
+        {
+            jobs.join();
+        });
+    EXPECT_EQ(call.wait_for(20ms), std::future_status::timeout);
+    EXPECT_EQ(joined.wait_for(20ms), std::future_status::timeout);
+    release.set_value();
+    EXPECT_EQ(call.wait_for(5s), std::future_status::ready);
+    EXPECT_EQ(joined.wait_for(5s), std::future_status::ready);
+    EXPECT_NO_THROW(call.get());
+    EXPECT_NO_THROW(joined.get());
+
+    EXPECT_NE(firstThread, secondThread);
+    EXPECT_EQ(finished.load(std::memory_order_relaxed), 2);
+    EXPECT_FALSE(jobs.isOpen());
+    EXPECT_EQ(jobs.queuedTaskCount(), 0u);
+}
+
+TEST(JobSystemTests, BatchErrorsUseInputOrderAfterAllJobsFinishRatherThanCompletionOrder)
+{
+    using namespace std::chrono_literals;
+    JobSystem jobs(JobSystemConfig{2, 2, false});
+    std::promise<void> firstStarted;
+    std::promise<void> laterFailed;
+    auto firstReady = firstStarted.get_future();
+    auto laterReady = laterFailed.get_future();
+    std::promise<void> releaseFirst;
+    const auto released = releaseFirst.get_future().share();
+    std::atomic<int> finished{0};
+    std::vector<std::function<void()>> batch{
+        [&]
+        {
+            firstStarted.set_value();
+            if (released.wait_for(5s) != std::future_status::ready)
+            {
+                throw std::runtime_error("test did not release first batch job");
+            }
+            finished.fetch_add(1, std::memory_order_relaxed);
+            throw std::runtime_error("first input failure");
+        },
+        [&]
+        {
+            finished.fetch_add(1, std::memory_order_relaxed);
+            throw std::runtime_error("second input failure");
+        },
+        [&]
+        {
+            finished.fetch_add(1, std::memory_order_relaxed);
+            laterFailed.set_value();
+        }};
+    auto call = std::async(std::launch::async, [&]
+        {
+            jobs.runBatchAndWait(std::move(batch));
+        });
+
+    EXPECT_EQ(firstReady.wait_for(2s), std::future_status::ready);
+    EXPECT_EQ(laterReady.wait_for(2s), std::future_status::ready);
+    EXPECT_EQ(call.wait_for(20ms), std::future_status::timeout);
+    releaseFirst.set_value();
+    EXPECT_EQ(call.wait_for(5s), std::future_status::ready);
+    try
+    {
+        call.get();
+        FAIL() << "Expected the first input error";
+    }
+    catch (const std::runtime_error &error)
+    {
+        EXPECT_STREQ(error.what(), "first input failure");
+    }
+    EXPECT_EQ(finished.load(std::memory_order_relaxed), 3);
+}
+
+TEST(JobSystemTests, BatchFailureWaitsForLaterAcceptedJobsAndTheirCaptureRelease)
+{
+    using namespace std::chrono_literals;
+    JobSystem jobs(JobSystemConfig{2, 2, false});
+    std::promise<void> laterStarted;
+    const auto laterReady = laterStarted.get_future().share();
+    std::promise<void> firstFailureProcessed;
+    auto failureReady = firstFailureProcessed.get_future();
+    std::promise<void> releaseLater;
+    const auto released = releaseLater.get_future().share();
+    std::atomic<bool> laterFinished{false};
+    std::atomic<bool> captureReleased{false};
+    std::atomic<int> observedValue{0};
+    auto owned = std::shared_ptr<int>(new int(42), [&](int *value)
+        {
+            delete value;
+            captureReleased.store(true, std::memory_order_relaxed);
+        });
+    std::vector<std::function<void()>> batch;
+    batch.emplace_back([&]
+        {
+            if (laterReady.wait_for(5s) != std::future_status::ready)
+            {
+                throw std::runtime_error("later batch job did not start");
+            }
+            throw std::runtime_error("first input failure");
+        });
+    batch.emplace_back([&, owned = std::move(owned)]
+        {
+            laterStarted.set_value();
+            if (released.wait_for(5s) != std::future_status::ready)
+            {
+                throw std::runtime_error("test did not release later batch job");
+            }
+            observedValue.store(*owned, std::memory_order_relaxed);
+            laterFinished.store(true, std::memory_order_relaxed);
+        });
+    batch.emplace_back([&]
+        {
+            // The other worker is blocked, so the first job has already failed.
+            firstFailureProcessed.set_value();
+        });
+    auto call = std::async(std::launch::async, [&]
+        {
+            jobs.runBatchAndWait(std::move(batch));
+        });
+
+    EXPECT_EQ(laterReady.wait_for(2s), std::future_status::ready);
+    EXPECT_EQ(failureReady.wait_for(2s), std::future_status::ready);
+    EXPECT_EQ(call.wait_for(20ms), std::future_status::timeout);
+    EXPECT_FALSE(laterFinished.load(std::memory_order_relaxed));
+    EXPECT_FALSE(captureReleased.load(std::memory_order_relaxed));
+    releaseLater.set_value();
+    EXPECT_EQ(call.wait_for(5s), std::future_status::ready);
+    try
+    {
+        call.get();
+        ADD_FAILURE() << "Expected the first input error";
+    }
+    catch (const std::runtime_error &error)
+    {
+        EXPECT_STREQ(error.what(), "first input failure");
+    }
+    EXPECT_TRUE(laterFinished.load(std::memory_order_relaxed));
+    EXPECT_EQ(observedValue.load(std::memory_order_relaxed), 42);
+    EXPECT_TRUE(captureReleased.load(std::memory_order_relaxed));
+    EXPECT_NO_THROW(jobs.join());
+}
+
+TEST(JobSystemTests, PartialBatchAdmissionDrainsAcceptedJobsBeforeReportingSubmissionFailure)
+{
+    using namespace std::chrono_literals;
+    JobSystem jobs(JobSystemConfig{1, 1, false});
+    std::promise<void> firstStarted;
+    auto firstReady = firstStarted.get_future();
+    std::promise<void> releaseFirst;
+    const auto released = releaseFirst.get_future().share();
+    std::atomic<int> firstFinished{0};
+    std::atomic<int> secondFinished{0};
+    std::atomic<int> thirdFinished{0};
+    std::vector<std::function<void()>> batch{
+        [&]
+        {
+            firstStarted.set_value();
+            if (released.wait_for(5s) != std::future_status::ready)
+            {
+                throw std::logic_error("test did not release accepted job");
+            }
+            firstFinished.fetch_add(1, std::memory_order_relaxed);
+            throw std::logic_error("accepted job failure must not hide submission failure");
+        },
+        [&]
+        {
+            secondFinished.fetch_add(1, std::memory_order_relaxed);
+        },
+        [&]
+        {
+            thirdFinished.fetch_add(1, std::memory_order_relaxed);
+        }};
+    auto call = std::async(std::launch::async, [&]
+        {
+            jobs.runBatchAndWait(std::move(batch));
+        });
+    EXPECT_EQ(firstReady.wait_for(2s), std::future_status::ready);
+    const auto deadline = std::chrono::steady_clock::now() + 2s;
+    while (jobs.queuedTaskCount() != 1u && std::chrono::steady_clock::now() < deadline)
+    {
+        std::this_thread::yield();
+    }
+    EXPECT_EQ(jobs.queuedTaskCount(), 1u);
+    jobs.close();
+    EXPECT_EQ(call.wait_for(20ms), std::future_status::timeout);
+    releaseFirst.set_value();
+    EXPECT_EQ(call.wait_for(5s), std::future_status::ready);
+    EXPECT_THROW(call.get(), std::runtime_error);
+
+    EXPECT_EQ(firstFinished.load(std::memory_order_relaxed), 1);
+    EXPECT_EQ(secondFinished.load(std::memory_order_relaxed), 1);
+    EXPECT_EQ(thirdFinished.load(std::memory_order_relaxed), 0);
+    EXPECT_EQ(jobs.peakQueuedTaskCount(), 1u);
+    EXPECT_EQ(jobs.queuedTaskCount(), 0u);
+    EXPECT_NO_THROW(jobs.join());
 }
 
 TEST(JobSystemTests, InvalidQueueCapacityIsRejected)

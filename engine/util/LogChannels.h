@@ -18,5 +18,6 @@ inline constexpr char Scene[] = "Scene";
 inline constexpr char SceneManager[] = "SceneManager";
 inline constexpr char Shader[] = "Shader";
 inline constexpr char SystemRegistry[] = "SystemRegistry";
+inline constexpr char SystemScheduler[] = "SystemScheduler";
 inline constexpr char Window[] = "Window";
 } // namespace LogChannel

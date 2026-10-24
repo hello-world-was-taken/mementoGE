@@ -1,16 +1,20 @@
 #include "core/Scene.h"
+#include "core/SystemGraph.h"
 #include "core/SystemRegistry.h"
 #include "core/SystemScheduler.h"
 
 #include <atomic>
 #include <chrono>
 #include <cstddef>
+#include <functional>
 #include <future>
+#include <map>
 #include <memory>
 #include <stdexcept>
 #include <string>
 #include <thread>
 #include <utility>
+#include <vector>
 
 #include <gtest/gtest.h>
 
@@ -244,6 +248,31 @@ private:
     ConcurrentQueryState &m_state;
 };
 
+class GraphProbeSystem final : public ISystem
+{
+public:
+    GraphProbeSystem(SystemDescriptor descriptor, std::function<void(SystemContext &)> update)
+        : m_descriptor(std::move(descriptor)), m_update(std::move(update))
+    {
+    }
+
+    void update(SystemContext &context) override
+    {
+        m_update(context);
+    }
+
+    SystemDescriptor descriptor() const override
+    {
+        return m_descriptor;
+    }
+
+private:
+    SystemDescriptor m_descriptor;
+    std::function<void(SystemContext &)> m_update;
+};
+
+using EnabledSystems = std::map<std::string, std::reference_wrapper<ISystem>>;
+
 void expectWorkerThread(std::size_t workerCount, std::thread::id updateThread, std::thread::id caller)
 {
     if (workerCount == 0)
@@ -375,7 +404,8 @@ TEST_P(SystemSchedulerModes, SceneConsumersObserveCompletedUpdatesInGraphOrder)
     addScheduledSystems(scene);
     frame.deltaTime = 1.0f / 60.0f;
 
-    scene.update(frame, scheduler, true);
+    scene.play();
+    scene.update(frame, scheduler);
 
     EXPECT_EQ(sceneUpdateState->calls, 1);
     EXPECT_EQ(sceneUpdateState->consumerCalls, 1);
@@ -568,6 +598,512 @@ TEST_P(SystemSchedulerModes, SceneCleansUpObjectsDestroyedByUpdatesBeforeReturni
         EXPECT_EQ(sceneUpdateState->finished.load(std::memory_order_relaxed), 1);
         EXPECT_TRUE(scene.getGameObjects().empty());
     }
+}
+
+TEST(SystemSchedulerTests, GraphWorkersOverlapWithIndependentScopesAndPreparedEmptyPools)
+{
+    entt::registry registry;
+    Physics2D physics{glm::vec2{0.0f, -9.8f}};
+    FrameContext frame;
+    frame.deltaTime = 1.0f / 60.0f;
+    SystemScheduler scheduler{JobSystemConfig{2, 1, true}};
+    std::promise<void> release;
+    const auto released = release.get_future().share();
+    ConcurrentQueryState firstState;
+    firstState.release = released;
+    ConcurrentQueryState secondState;
+    secondState.release = released;
+    auto firstStarted = firstState.started.get_future();
+    auto secondStarted = secondState.started.get_future();
+    ConcurrentQuerySystem<FirstQueryComponent, SecondQueryComponent> first{"ZFirst", firstState};
+    ConcurrentQuerySystem<SecondQueryComponent, FirstQueryComponent> second{"ASecond", secondState};
+    EXPECT_EQ(std::as_const(registry).storage<SharedQueryComponent>(), nullptr);
+    EXPECT_EQ(std::as_const(registry).storage<FirstQueryComponent>(), nullptr);
+    EXPECT_EQ(std::as_const(registry).storage<SecondQueryComponent>(), nullptr);
+    first.descriptor().prepareRegistry(registry);
+    second.descriptor().prepareRegistry(registry);
+    const auto graph = SystemGraph::build({first.descriptor(), second.descriptor()});
+    const EnabledSystems enabled{{"ZFirst", first}, {"ASecond", second}};
+    std::thread::id caller;
+    auto run = std::async(std::launch::async, [&]
+        {
+            caller = std::this_thread::get_id();
+            return scheduler.run(graph, enabled, registry, physics, frame);
+        });
+
+    EXPECT_EQ(firstStarted.wait_for(2s), std::future_status::ready);
+    EXPECT_EQ(secondStarted.wait_for(2s), std::future_status::ready);
+    EXPECT_EQ(run.wait_for(20ms), std::future_status::timeout);
+    release.set_value();
+    EXPECT_EQ(run.wait_for(5s), std::future_status::ready);
+    std::map<std::string, double> timings;
+    EXPECT_NO_THROW(timings = run.get());
+
+    EXPECT_EQ(firstState.queryPasses, 2);
+    EXPECT_EQ(secondState.queryPasses, 2);
+    EXPECT_NE(firstState.updateThread, caller);
+    EXPECT_NE(secondState.updateThread, caller);
+    EXPECT_NE(firstState.updateThread, secondState.updateThread);
+    EXPECT_EQ(timings.size(), 2u);
+    EXPECT_EQ(timings.count("ZFirst"), 1u);
+    EXPECT_EQ(timings.count("ASecond"), 1u);
+    EXPECT_EQ(std::as_const(registry).storage<SharedQueryComponent>()->size(), 0u);
+    EXPECT_EQ(std::as_const(registry).storage<FirstQueryComponent>()->size(), 0u);
+    EXPECT_EQ(std::as_const(registry).storage<SecondQueryComponent>()->size(), 0u);
+}
+
+TEST(SystemSchedulerTests, GraphFanInWaitsForBothCompletedProducers)
+{
+    entt::registry registry;
+    Physics2D physics{glm::vec2{0.0f, -9.8f}};
+    FrameContext frame;
+    SystemScheduler scheduler{JobSystemConfig{2, 1, true}};
+    std::promise<void> firstStarted;
+    std::promise<void> secondStarted;
+    auto firstReady = firstStarted.get_future();
+    auto secondReady = secondStarted.get_future();
+    std::promise<void> releaseFirst;
+    std::promise<void> releaseSecond;
+    const auto firstReleased = releaseFirst.get_future().share();
+    const auto secondReleased = releaseSecond.get_future().share();
+    std::promise<void> firstFinished;
+    auto firstDone = firstFinished.get_future();
+    std::atomic<int> finished{0};
+    std::atomic<int> consumerCalls{0};
+    int observedFinished = 0;
+    std::thread::id caller;
+    std::thread::id consumerThread;
+    GraphProbeSystem first{SystemDescriptor::named("First").before("Consumer"), [&](SystemContext &)
+        {
+            firstStarted.set_value();
+            if (firstReleased.wait_for(5s) != std::future_status::ready)
+            {
+                throw std::runtime_error("test did not release first producer");
+            }
+            finished.fetch_add(1, std::memory_order_relaxed);
+            firstFinished.set_value();
+        }};
+    GraphProbeSystem second{SystemDescriptor::named("Second").before("Consumer"), [&](SystemContext &)
+        {
+            secondStarted.set_value();
+            if (secondReleased.wait_for(5s) != std::future_status::ready)
+            {
+                throw std::runtime_error("test did not release second producer");
+            }
+            finished.fetch_add(1, std::memory_order_relaxed);
+        }};
+    GraphProbeSystem consumer{SystemDescriptor::named("Consumer").onMainThread(), [&](SystemContext &)
+        {
+            observedFinished = finished.load(std::memory_order_relaxed);
+            consumerThread = std::this_thread::get_id();
+            consumerCalls.fetch_add(1, std::memory_order_relaxed);
+        }};
+    first.descriptor().prepareRegistry(registry);
+    second.descriptor().prepareRegistry(registry);
+    consumer.descriptor().prepareRegistry(registry);
+    const auto graph = SystemGraph::build({consumer.descriptor(), first.descriptor(), second.descriptor()});
+    const EnabledSystems enabled{{"First", first}, {"Second", second}, {"Consumer", consumer}};
+    auto run = std::async(std::launch::async, [&]
+        {
+            caller = std::this_thread::get_id();
+            return scheduler.run(graph, enabled, registry, physics, frame);
+        });
+
+    EXPECT_EQ(firstReady.wait_for(2s), std::future_status::ready);
+    EXPECT_EQ(secondReady.wait_for(2s), std::future_status::ready);
+    EXPECT_EQ(consumerCalls.load(std::memory_order_relaxed), 0);
+    releaseFirst.set_value();
+    EXPECT_EQ(firstDone.wait_for(2s), std::future_status::ready);
+    EXPECT_EQ(run.wait_for(20ms), std::future_status::timeout);
+    EXPECT_EQ(consumerCalls.load(std::memory_order_relaxed), 0);
+    releaseSecond.set_value();
+    EXPECT_EQ(run.wait_for(5s), std::future_status::ready);
+    std::map<std::string, double> timings;
+    EXPECT_NO_THROW(timings = run.get());
+    EXPECT_EQ(timings.size(), 3u);
+    EXPECT_EQ(consumerCalls.load(std::memory_order_relaxed), 1);
+    EXPECT_EQ(observedFinished, 2);
+    EXPECT_EQ(consumerThread, caller);
+}
+
+TEST(SystemSchedulerTests, ReadyMainThreadSystemsFinishBeforeAnyReadyWorkersStart)
+{
+    entt::registry registry;
+    Physics2D physics{glm::vec2{0.0f, -9.8f}};
+    FrameContext frame;
+    SystemScheduler scheduler{JobSystemConfig{2, 1, true}};
+    const auto caller = std::this_thread::get_id();
+    std::promise<void> workerStarted;
+    auto workerReady = workerStarted.get_future();
+    std::atomic<int> mainCalls{0};
+    int observedMainCalls = 0;
+    std::thread::id workerThread;
+    std::vector<std::string> mainOrder;
+    GraphProbeSystem worker{SystemDescriptor::named("Worker"), [&](SystemContext &)
+        {
+            workerThread = std::this_thread::get_id();
+            observedMainCalls = mainCalls.load(std::memory_order_relaxed);
+            workerStarted.set_value();
+        }};
+    const auto runMain = [&](const std::string &name)
+    {
+        EXPECT_EQ(std::this_thread::get_id(), caller);
+        EXPECT_EQ(workerReady.wait_for(20ms), std::future_status::timeout);
+        mainOrder.push_back(name);
+        mainCalls.fetch_add(1, std::memory_order_relaxed);
+    };
+    GraphProbeSystem firstMain{SystemDescriptor::named("ZMain").onMainThread(),
+        [&](SystemContext &) { runMain("ZMain"); }};
+    GraphProbeSystem secondMain{SystemDescriptor::named("AMain").onMainThread(),
+        [&](SystemContext &) { runMain("AMain"); }};
+    worker.descriptor().prepareRegistry(registry);
+    firstMain.descriptor().prepareRegistry(registry);
+    secondMain.descriptor().prepareRegistry(registry);
+    const auto graph = SystemGraph::build({worker.descriptor(), firstMain.descriptor(), secondMain.descriptor()});
+    const EnabledSystems enabled{{"Worker", worker}, {"ZMain", firstMain}, {"AMain", secondMain}};
+
+    const auto timings = scheduler.run(graph, enabled, registry, physics, frame);
+
+    EXPECT_EQ(mainOrder, (std::vector<std::string>{"ZMain", "AMain"}));
+    EXPECT_EQ(observedMainCalls, 2);
+    EXPECT_NE(workerThread, caller);
+    EXPECT_EQ(timings.size(), 3u);
+}
+
+TEST(SystemSchedulerTests, MainThreadGraphFailureStopsReadyWorkersAndAllowsRecovery)
+{
+    entt::registry registry;
+    Physics2D physics{glm::vec2{0.0f, -9.8f}};
+    FrameContext frame;
+    SystemScheduler scheduler{JobSystemConfig{2, 1, true}};
+    bool failMain = true;
+    int mainCalls = 0;
+    int workerCalls = 0;
+    const auto caller = std::this_thread::get_id();
+    GraphProbeSystem worker{SystemDescriptor::named("Worker"), [&](SystemContext &)
+        {
+            EXPECT_NE(std::this_thread::get_id(), caller);
+            ++workerCalls;
+        }};
+    GraphProbeSystem main{SystemDescriptor::named("Main").onMainThread(), [&](SystemContext &)
+        {
+            EXPECT_EQ(std::this_thread::get_id(), caller);
+            ++mainCalls;
+            if (failMain)
+            {
+                throw std::runtime_error("main update failed");
+            }
+        }};
+    worker.descriptor().prepareRegistry(registry);
+    main.descriptor().prepareRegistry(registry);
+    const auto graph = SystemGraph::build({worker.descriptor(), main.descriptor()});
+    const EnabledSystems enabled{{"Worker", worker}, {"Main", main}};
+
+    EXPECT_THROW(scheduler.run(graph, enabled, registry, physics, frame), std::runtime_error);
+    EXPECT_EQ(mainCalls, 1);
+    EXPECT_EQ(workerCalls, 0);
+    failMain = false;
+    const auto timings = scheduler.run(graph, enabled, registry, physics, frame);
+    EXPECT_EQ(mainCalls, 2);
+    EXPECT_EQ(workerCalls, 1);
+    EXPECT_EQ(timings.size(), 2u);
+}
+
+TEST(SystemSchedulerTests, GraphFailureDrainsRunningPeersSkipsSuccessorsAndAllowsRecovery)
+{
+    entt::registry registry;
+    Physics2D physics{glm::vec2{0.0f, -9.8f}};
+    FrameContext frame;
+    frame.deltaTime = 1.0f / 60.0f;
+    SystemScheduler scheduler{JobSystemConfig{2, 1, true}};
+    bool failUpdate = true;
+    std::promise<void> peerStarted;
+    const auto peerReady = peerStarted.get_future().share();
+    std::promise<void> firstFailureProcessed;
+    auto failureReady = firstFailureProcessed.get_future();
+    std::promise<void> releasePeer;
+    const auto released = releasePeer.get_future().share();
+    std::atomic<int> firstCalls{0};
+    std::atomic<int> peerFinished{0};
+    std::atomic<int> successorCalls{0};
+    GraphProbeSystem first{SystemDescriptor::named("ZFirst"), [&](SystemContext &)
+        {
+            firstCalls.fetch_add(1, std::memory_order_relaxed);
+            if (failUpdate)
+            {
+                if (peerReady.wait_for(5s) != std::future_status::ready)
+                {
+                    throw std::runtime_error("peer update did not start");
+                }
+                throw std::runtime_error("first graph update failed");
+            }
+        }};
+    GraphProbeSystem peer{SystemDescriptor::named("APeer"), [&](SystemContext &context)
+        {
+            if (failUpdate)
+            {
+                peerStarted.set_value();
+                if (released.wait_for(5s) != std::future_status::ready)
+                {
+                    throw std::runtime_error("test did not release peer update");
+                }
+            }
+            EXPECT_EQ(&context.frame, &frame);
+            EXPECT_FLOAT_EQ(context.frame.deltaTime, frame.deltaTime);
+            peerFinished.fetch_add(1, std::memory_order_relaxed);
+        }};
+    GraphProbeSystem marker{SystemDescriptor::named("Marker"), [&](SystemContext &)
+        {
+            if (failUpdate)
+            {
+                // The peer occupies the other worker until the test releases it.
+                firstFailureProcessed.set_value();
+            }
+        }};
+    GraphProbeSystem successor{SystemDescriptor::named("Successor").after("ZFirst").after("APeer"),
+        [&](SystemContext &) { successorCalls.fetch_add(1, std::memory_order_relaxed); }};
+    first.descriptor().prepareRegistry(registry);
+    peer.descriptor().prepareRegistry(registry);
+    marker.descriptor().prepareRegistry(registry);
+    successor.descriptor().prepareRegistry(registry);
+    const auto graph = SystemGraph::build(
+        {first.descriptor(), peer.descriptor(), marker.descriptor(), successor.descriptor()});
+    const EnabledSystems enabled{
+        {"ZFirst", first}, {"APeer", peer}, {"Marker", marker}, {"Successor", successor}};
+    auto run = std::async(std::launch::async, [&]
+        {
+            return scheduler.run(graph, enabled, registry, physics, frame);
+        });
+
+    EXPECT_EQ(peerReady.wait_for(2s), std::future_status::ready);
+    EXPECT_EQ(failureReady.wait_for(2s), std::future_status::ready);
+    EXPECT_EQ(run.wait_for(20ms), std::future_status::timeout);
+    EXPECT_EQ(peerFinished.load(std::memory_order_relaxed), 0);
+    EXPECT_EQ(successorCalls.load(std::memory_order_relaxed), 0);
+    releasePeer.set_value();
+    EXPECT_EQ(run.wait_for(5s), std::future_status::ready);
+    try
+    {
+        (void)run.get();
+        ADD_FAILURE() << "Expected the graph update error";
+    }
+    catch (const std::runtime_error &error)
+    {
+        EXPECT_STREQ(error.what(), "first graph update failed");
+    }
+    EXPECT_EQ(peerFinished.load(std::memory_order_relaxed), 1);
+    EXPECT_EQ(successorCalls.load(std::memory_order_relaxed), 0);
+
+    failUpdate = false;
+    const auto timings = scheduler.run(graph, enabled, registry, physics, frame);
+    EXPECT_EQ(timings.size(), 4u);
+    EXPECT_EQ(firstCalls.load(std::memory_order_relaxed), 2);
+    EXPECT_EQ(peerFinished.load(std::memory_order_relaxed), 2);
+    EXPECT_EQ(successorCalls.load(std::memory_order_relaxed), 1);
+}
+
+TEST(SystemSchedulerTests, GraphErrorsUseStableSystemOrderRatherThanMapOrCompletionOrder)
+{
+    entt::registry registry;
+    Physics2D physics{glm::vec2{0.0f, -9.8f}};
+    FrameContext frame;
+    SystemScheduler scheduler{JobSystemConfig{2, 1, true}};
+    std::promise<void> firstStarted;
+    auto firstReady = firstStarted.get_future();
+    std::promise<void> laterFailureProcessed;
+    auto failureReady = laterFailureProcessed.get_future();
+    std::promise<void> releaseFirst;
+    const auto released = releaseFirst.get_future().share();
+    std::atomic<int> failed{0};
+    std::atomic<int> successorCalls{0};
+    GraphProbeSystem first{SystemDescriptor::named("ZFirst"), [&](SystemContext &)
+        {
+            firstStarted.set_value();
+            if (released.wait_for(5s) != std::future_status::ready)
+            {
+                throw std::runtime_error("test did not release first failing update");
+            }
+            failed.fetch_add(1, std::memory_order_relaxed);
+            throw std::runtime_error("first system error");
+        }};
+    GraphProbeSystem second{SystemDescriptor::named("ASecond"), [&](SystemContext &)
+        {
+            failed.fetch_add(1, std::memory_order_relaxed);
+            throw std::runtime_error("second system error");
+        }};
+    GraphProbeSystem marker{SystemDescriptor::named("Marker"), [&](SystemContext &)
+        {
+            // The first worker remains blocked, so the second failure is published.
+            laterFailureProcessed.set_value();
+        }};
+    GraphProbeSystem successor{SystemDescriptor::named("Successor").after("ZFirst"),
+        [&](SystemContext &) { successorCalls.fetch_add(1, std::memory_order_relaxed); }};
+    first.descriptor().prepareRegistry(registry);
+    second.descriptor().prepareRegistry(registry);
+    marker.descriptor().prepareRegistry(registry);
+    successor.descriptor().prepareRegistry(registry);
+    const auto graph = SystemGraph::build(
+        {first.descriptor(), second.descriptor(), marker.descriptor(), successor.descriptor()});
+    const EnabledSystems enabled{
+        {"ZFirst", first}, {"ASecond", second}, {"Marker", marker}, {"Successor", successor}};
+    auto run = std::async(std::launch::async, [&]
+        {
+            return scheduler.run(graph, enabled, registry, physics, frame);
+        });
+
+    EXPECT_EQ(firstReady.wait_for(2s), std::future_status::ready);
+    EXPECT_EQ(failureReady.wait_for(2s), std::future_status::ready);
+    EXPECT_EQ(run.wait_for(20ms), std::future_status::timeout);
+    releaseFirst.set_value();
+    EXPECT_EQ(run.wait_for(5s), std::future_status::ready);
+    try
+    {
+        (void)run.get();
+        ADD_FAILURE() << "Expected the first system error";
+    }
+    catch (const std::runtime_error &error)
+    {
+        EXPECT_STREQ(error.what(), "first system error");
+    }
+    EXPECT_EQ(failed.load(std::memory_order_relaxed), 2);
+    EXPECT_EQ(successorCalls.load(std::memory_order_relaxed), 0);
+}
+
+TEST_P(SystemSchedulerModes, ZeroWorkersAndEditModeFollowTheStableSerialSequence)
+{
+    SystemScheduler scheduler{JobSystemConfig{GetParam(), 2, true}};
+    for (bool editMode : {false, true})
+    {
+        if (!editMode && GetParam() != 0)
+        {
+            continue;
+        }
+        SCOPED_TRACE(editMode);
+        std::vector<std::string> observed;
+        const auto caller = std::this_thread::get_id();
+        const auto record = [&](const std::string &name, SystemContext &context)
+        {
+            observed.push_back(name);
+            EXPECT_EQ(&context.frame, &frame);
+            EXPECT_EQ(context.editMode, editMode);
+            expectWorkerThread(GetParam(), std::this_thread::get_id(), caller);
+        };
+        GraphProbeSystem dependent{SystemDescriptor::named("Dependent").after("Producer"),
+            [&](SystemContext &context) { record("Dependent", context); }};
+        GraphProbeSystem producer{SystemDescriptor::named("Producer"),
+            [&](SystemContext &context) { record("Producer", context); }};
+        GraphProbeSystem unrelated{SystemDescriptor::named("Unrelated"),
+            [&](SystemContext &context) { record("Unrelated", context); }};
+        dependent.descriptor().prepareRegistry(registry);
+        producer.descriptor().prepareRegistry(registry);
+        unrelated.descriptor().prepareRegistry(registry);
+        const auto graph = SystemGraph::build({dependent.descriptor(), producer.descriptor(), unrelated.descriptor()});
+        const EnabledSystems enabled{{"Dependent", dependent}, {"Producer", producer}, {"Unrelated", unrelated}};
+
+        const auto timings = scheduler.run(graph, enabled, registry, physics, frame, editMode);
+
+        EXPECT_EQ(observed, graph.orderedSystems());
+        EXPECT_EQ(observed, (std::vector<std::string>{"Producer", "Dependent", "Unrelated"}));
+        ASSERT_EQ(timings.size(), 3u);
+        for (const auto &name : observed)
+        {
+            EXPECT_GE(timings.at(name), 0.0);
+        }
+    }
+}
+
+TEST_P(SystemSchedulerModes, GraphConflictsWaitForWholeComponentResourceAndStructuralUpdates)
+{
+    const std::vector<std::pair<SystemDescriptor, SystemDescriptor>> conflicts{
+        {SystemDescriptor::named("ZFirst").writes<SharedQueryComponent>(),
+            SystemDescriptor::named("ASecond").reads<SharedQueryComponent>()},
+        {SystemDescriptor::named("ZFirst").writes<SharedQueryComponent>(),
+            SystemDescriptor::named("ASecond").writes<SharedQueryComponent>()},
+        {SystemDescriptor::named("ZFirst").writesResource(SystemResource::AudioDevice),
+            SystemDescriptor::named("ASecond").readsResource(SystemResource::AudioDevice)},
+        {SystemDescriptor::named("ZFirst").requestsStructuralChanges(),
+            SystemDescriptor::named("ASecond").reads<SharedQueryComponent>()}};
+    std::size_t conflictIndex = 0;
+    for (const auto &[firstDescriptor, secondDescriptor] : conflicts)
+    {
+        SCOPED_TRACE(conflictIndex++);
+        SystemScheduler scheduler{JobSystemConfig{GetParam(), 1, true}};
+        std::promise<void> firstStarted;
+        auto firstReady = firstStarted.get_future();
+        std::promise<void> release;
+        const auto released = release.get_future().share();
+        std::atomic<bool> firstFinished{false};
+        std::atomic<bool> observedFirstFinished{false};
+        std::atomic<int> secondCalls{0};
+        GraphProbeSystem first{firstDescriptor, [&](SystemContext &)
+            {
+                firstStarted.set_value();
+                if (released.wait_for(5s) != std::future_status::ready)
+                {
+                    throw std::runtime_error("test did not release conflicting update");
+                }
+                firstFinished.store(true, std::memory_order_relaxed);
+            }};
+        GraphProbeSystem second{secondDescriptor, [&](SystemContext &)
+            {
+                observedFirstFinished.store(firstFinished.load(std::memory_order_relaxed), std::memory_order_relaxed);
+                secondCalls.fetch_add(1, std::memory_order_relaxed);
+            }};
+        first.descriptor().prepareRegistry(registry);
+        second.descriptor().prepareRegistry(registry);
+        const auto graph = SystemGraph::build({first.descriptor(), second.descriptor()});
+        const EnabledSystems enabled{{"ZFirst", first}, {"ASecond", second}};
+        auto run = std::async(std::launch::async, [&]
+            {
+                return scheduler.run(graph, enabled, registry, physics, frame);
+            });
+
+        EXPECT_EQ(firstReady.wait_for(2s), std::future_status::ready);
+        EXPECT_EQ(run.wait_for(20ms), std::future_status::timeout);
+        EXPECT_EQ(secondCalls.load(std::memory_order_relaxed), 0);
+        release.set_value();
+        EXPECT_EQ(run.wait_for(5s), std::future_status::ready);
+        std::map<std::string, double> timings;
+        EXPECT_NO_THROW(timings = run.get());
+        EXPECT_EQ(timings.size(), 2u);
+        EXPECT_EQ(secondCalls.load(std::memory_order_relaxed), 1);
+        EXPECT_TRUE(observedFirstFinished.load(std::memory_order_relaxed));
+    }
+}
+
+TEST_P(SystemSchedulerModes, AllMainThreadAndDisabledNodesAdvanceTheOriginalDependencyChain)
+{
+    SystemScheduler scheduler{JobSystemConfig{GetParam(), 1, true}};
+    const auto caller = std::this_thread::get_id();
+    std::vector<std::string> observed;
+    GraphProbeSystem first{SystemDescriptor::named("ZFirst").onMainThread().before("Disabled"),
+        [&](SystemContext &)
+        {
+            EXPECT_EQ(std::this_thread::get_id(), caller);
+            observed.push_back("ZFirst");
+        }};
+    GraphProbeSystem last{SystemDescriptor::named("ALast").onMainThread().after("Disabled"),
+        [&](SystemContext &)
+        {
+            EXPECT_EQ(std::this_thread::get_id(), caller);
+            observed.push_back("ALast");
+        }};
+    first.descriptor().prepareRegistry(registry);
+    last.descriptor().prepareRegistry(registry);
+    const auto graph = SystemGraph::build(
+        {last.descriptor(), SystemDescriptor::named("Disabled"), first.descriptor()});
+    const EnabledSystems enabled{{"ZFirst", first}, {"ALast", last}};
+
+    const auto timings = scheduler.run(graph, enabled, registry, physics, frame);
+
+    EXPECT_EQ(observed, (std::vector<std::string>{"ZFirst", "ALast"}));
+    EXPECT_EQ(timings.size(), 2u);
+    EXPECT_EQ(timings.count("ZFirst"), 1u);
+    EXPECT_EQ(timings.count("ALast"), 1u);
+    EXPECT_EQ(timings.count("Disabled"), 0u);
+    EXPECT_TRUE(scheduler.run(graph, EnabledSystems{}, registry, physics, frame).empty());
+    EXPECT_EQ(observed.size(), 2u);
+    EXPECT_TRUE(scheduler.run(SystemGraph::build({}), EnabledSystems{}, registry, physics, frame).empty());
 }
 
 INSTANTIATE_TEST_SUITE_P(WorkerCounts, SystemSchedulerModes, ::testing::Values(0u, 1u, 2u));

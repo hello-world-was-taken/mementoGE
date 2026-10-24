@@ -10,8 +10,50 @@ AudioResourceManager &AudioResourceManager::instance()
     return resourceManager;
 }
 
+AudioResourceManager::AudioResourceManager() : m_device(alcOpenDevice(nullptr))
+{
+    if (!m_device)
+    {
+        throw std::runtime_error("Failed to open OpenAL device");
+    }
+
+    m_context.reset(alcCreateContext(m_device.get(), nullptr));
+    if (!m_context)
+    {
+        throw std::runtime_error("Failed to create OpenAL context");
+    }
+    if (alcMakeContextCurrent(m_context.get()) != ALC_TRUE)
+    {
+        throw std::runtime_error("Failed to make OpenAL context current");
+    }
+}
+
+void AudioResourceManager::DeviceDeleter::operator()(ALCdevice *device) const
+{
+    if (device)
+    {
+        alcCloseDevice(device);
+    }
+}
+
+void AudioResourceManager::ContextDeleter::operator()(ALCcontext *context) const
+{
+    if (context)
+    {
+        if (alcGetCurrentContext() == context)
+        {
+            alcMakeContextCurrent(nullptr);
+        }
+        alcDestroyContext(context);
+    }
+}
+
 AudioResourceManager::~AudioResourceManager()
 {
+    // AudioPlayers have already released their sources. Delete buffers while
+    // their owning context is alive; the RAII members then destroy the context
+    // and device. The members also clean up a failed initialization.
+    alcMakeContextCurrent(m_context.get());
     for (auto &[_, buffer] : bufferByPath)
     {
         alDeleteBuffers(1, &buffer);

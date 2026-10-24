@@ -95,7 +95,7 @@ public:
     // Internal state must be safe for concurrent use; component/resource access
     // must still satisfy scheduler conflict and partitioning rules.
     // This flag does not split work or schedule duplicate full update() calls.
-    // The current scene loop is sequential, and update() has no range argument.
+    // Each instance runs once per tick, and update() has no range argument.
     SystemDescriptor &reentrant(bool value = true)
     {
         m_reentrant = value;

@@ -1,10 +1,13 @@
 #pragma once
 #include <AL/al.h>
 #include <glm/vec3.hpp>
+#include <string>
 
 class AudioPlayer
 {
 public:
+    // Sources share AudioResourceManager's process-wide context. System calls
+    // that create, mutate, or destroy players declare AudioDevice writes.
     AudioPlayer();
     ~AudioPlayer();
     AudioPlayer(const AudioPlayer &) = delete;

@@ -301,16 +301,21 @@ void EditorContext::stopRuntimeScene()
         return;
     }
 
-    sceneByScenePathMap.erase("runtime_scene");
-    runtimeState = RuntimeState::Stopped;
+    // Selections borrow registry handles; release them before deleting the scene.
     selectedObjects.clear();
     selectedGameObjectsDragOffset.clear();
+    sceneByScenePathMap.erase("runtime_scene");
+    runtimeState = RuntimeState::Stopped;
 }
 
 // TODO: move this to editor layer
 void EditorContext::deserializeSelectedScene()
 {
     YAML::Node serializedScene = YAML::LoadFile(selectedScenePath);
+
+    // Both load branches can replace a registry, including an empty document.
+    selectedObjects.clear();
+    selectedGameObjectsDragOffset.clear();
 
     // Check if loaded node is valid and not empty
     if (!serializedScene.IsDefined() || serializedScene.size() == 0)
@@ -323,8 +328,6 @@ void EditorContext::deserializeSelectedScene()
 
     Scene scene{std::move(serializedScene)};
     sceneByScenePathMap.insert({selectedScenePath, std::move(scene)});
-    selectedObjects.clear();
-    selectedGameObjectsDragOffset.clear();
     LOG_INFO(LogChannel::Editor, "Deserialized scene from scene.yaml");
 }
 

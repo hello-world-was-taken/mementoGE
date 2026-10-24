@@ -2,13 +2,18 @@
 #include "engine/core/PhysicsSystem.h"
 #include "engine/core/Scene.h"
 #include "engine/core/SystemRegistry.h"
+#include "engine/core/SystemScheduler.h"
 #include "engine/core/components/EntityInfo.h"
 #include "engine/core/components/RenderLayer.h"
 #include "engine/core/components/Transform.h"
 
 #include <algorithm>
+#include <atomic>
+#include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <future>
+#include <memory>
 #include <gtest/gtest.h>
 #include <stdexcept>
 #include <string>
@@ -138,7 +143,203 @@ YAML::Node serializeToNode(Scene &scene)
     EXPECT_TRUE(out.good()) << "YAML emitter failed: " << out.GetLastError();
     return YAML::Load(out.c_str());
 }
+
+struct ConcurrentSceneState
+{
+    entt::entity entity = entt::null;
+    bool fail = false;
+    std::promise<void> destroyed;
+    std::promise<void> peerStarted;
+    std::shared_future<void> releasePeer;
+    std::atomic<bool> peerFinished{false};
+    int consumerCalls = 0;
+    float observedDelta = 0.0f;
+};
+
+std::shared_ptr<ConcurrentSceneState> concurrentSceneState;
+
+class ConcurrentSceneDestroyer final : public ISystem
+{
+public:
+    void update(SystemContext &context) override
+    {
+        const auto state = concurrentSceneState;
+        context.entities.destroy(state->entity);
+        state->destroyed.set_value();
+        if (state->fail)
+        {
+            throw std::runtime_error("concurrent scene update failed");
+        }
+    }
+
+    SystemDescriptor descriptor() const override
+    {
+        return SystemDescriptor::named("SceneTests.ConcurrentDestroyer").requestsStructuralChanges();
+    }
+};
+
+class ConcurrentScenePeer final : public ISystem
+{
+public:
+    void update(SystemContext &context) override
+    {
+        using namespace std::chrono_literals;
+        const auto state = concurrentSceneState;
+        state->peerStarted.set_value();
+        if (state->releasePeer.wait_for(5s) != std::future_status::ready)
+        {
+            throw std::runtime_error("test did not release scene peer");
+        }
+        state->observedDelta = context.frame.deltaTime;
+        state->peerFinished.store(true, std::memory_order_relaxed);
+    }
+
+    SystemDescriptor descriptor() const override
+    {
+        // This peer only reads the immutable frame, so it can overlap deletion.
+        return SystemDescriptor::named("SceneTests.ConcurrentPeer");
+    }
+};
+
+class ConcurrentSceneConsumer final : public ISystem
+{
+public:
+    void update(SystemContext &) override
+    {
+        ++concurrentSceneState->consumerCalls;
+        EXPECT_TRUE(concurrentSceneState->peerFinished.load(std::memory_order_relaxed));
+    }
+
+    SystemDescriptor descriptor() const override
+    {
+        return SystemDescriptor::named("SceneTests.ConcurrentConsumer")
+            .after("SceneTests.ConcurrentDestroyer")
+            .after("SceneTests.ConcurrentPeer")
+            .onMainThread();
+    }
+};
+
+struct EnableSnapshotState
+{
+    Scene &scene;
+    int changes = 0;
+    int updates = 0;
+};
+
+std::shared_ptr<EnableSnapshotState> enableSnapshotState;
+
+class SnapshotEnableChanger final : public ISystem
+{
+public:
+    void update(SystemContext &) override
+    {
+        auto &state = *enableSnapshotState;
+        ++state.changes;
+        EXPECT_TRUE(state.scene.setSystemEnabled("SceneTests.SnapshotConsumer", state.changes == 1));
+    }
+
+    SystemDescriptor descriptor() const override
+    {
+        return SystemDescriptor::named("SceneTests.SnapshotChanger")
+            .before("SceneTests.SnapshotConsumer")
+            .onMainThread();
+    }
+};
+
+class SnapshotEnabledConsumer final : public ISystem
+{
+public:
+    void update(SystemContext &context) override
+    {
+        auto view = context.entities.view<const GraphState>();
+        EXPECT_EQ(view.begin(), view.end());
+        ++enableSnapshotState->updates;
+    }
+
+    SystemDescriptor descriptor() const override
+    {
+        return SystemDescriptor::named("SceneTests.SnapshotConsumer").reads<GraphState>();
+    }
+};
 } // namespace
+
+TEST(SceneTests, EnableChangesDuringAnUpdateApplyToTheNextTick)
+{
+    auto &systems = SystemRegistry::instance();
+    systems.registerSystem<SnapshotEnableChanger>("SceneTests.SnapshotChanger");
+    systems.registerSystem<SnapshotEnabledConsumer>("SceneTests.SnapshotConsumer");
+    for (const std::size_t workerCount : {0U, 2U})
+    {
+        SCOPED_TRACE(workerCount);
+        SystemScheduler scheduler{JobSystemConfig{workerCount, 1, false}};
+        Scene scene{"enable snapshot scene"};
+        enableSnapshotState = std::make_shared<EnableSnapshotState>(EnableSnapshotState{scene});
+        scene.addSystem("SceneTests.SnapshotChanger");
+        scene.addSystem("SceneTests.SnapshotConsumer");
+        ASSERT_TRUE(scene.setSystemEnabled("SceneTests.SnapshotChanger", true));
+        scene.play();
+
+        scene.update(FrameContext{}, scheduler);
+        EXPECT_EQ(enableSnapshotState->updates, 0);
+        scene.update(FrameContext{}, scheduler);
+        EXPECT_EQ(enableSnapshotState->updates, 1);
+        scene.update(FrameContext{}, scheduler);
+        EXPECT_EQ(enableSnapshotState->updates, 1);
+    }
+}
+
+TEST(SceneTests, ConcurrentRuntimeTickWaitsForItsBatchBeforeCleanupOrFailureReturns)
+{
+    using namespace std::chrono_literals;
+    auto &systems = SystemRegistry::instance();
+    systems.registerSystem<ConcurrentSceneDestroyer>("SceneTests.ConcurrentDestroyer");
+    systems.registerSystem<ConcurrentScenePeer>("SceneTests.ConcurrentPeer");
+    systems.registerSystem<ConcurrentSceneConsumer>("SceneTests.ConcurrentConsumer");
+    SystemScheduler scheduler{JobSystemConfig{2, 1, false}};
+
+    for (const bool fail : {false, true})
+    {
+        SCOPED_TRACE(fail);
+        concurrentSceneState = std::make_shared<ConcurrentSceneState>();
+        const auto state = concurrentSceneState;
+        state->fail = fail;
+        auto destroyed = state->destroyed.get_future();
+        auto peerStarted = state->peerStarted.get_future();
+        std::promise<void> releasePeer;
+        state->releasePeer = releasePeer.get_future().share();
+        Scene scene{"concurrent runtime scene"};
+        state->entity = scene.addGameObject(8, 8, "removed during batch").getEntityId();
+        scene.addSystem("SceneTests.ConcurrentConsumer");
+        scene.addSystem("SceneTests.ConcurrentDestroyer");
+        scene.addSystem("SceneTests.ConcurrentPeer");
+        scene.setAllSystemsEnabled(true);
+        scene.play();
+        FrameContext frame;
+        frame.deltaTime = 1.0f / 60.0f;
+        auto tick = std::async(std::launch::async, [&]
+            {
+                scene.update(frame, scheduler);
+            });
+
+        EXPECT_EQ(destroyed.wait_for(2s), std::future_status::ready);
+        EXPECT_EQ(peerStarted.wait_for(2s), std::future_status::ready);
+        EXPECT_EQ(tick.wait_for(20ms), std::future_status::timeout);
+        releasePeer.set_value();
+        if (fail)
+        {
+            EXPECT_THROW(tick.get(), std::runtime_error);
+        }
+        else
+        {
+            EXPECT_NO_THROW(tick.get());
+        }
+
+        EXPECT_TRUE(state->peerFinished.load(std::memory_order_relaxed));
+        EXPECT_FLOAT_EQ(state->observedDelta, frame.deltaTime);
+        EXPECT_EQ(state->consumerCalls, fail ? 0 : 1);
+        EXPECT_TRUE(scene.getGameObjects().empty());
+    }
+}
 
 TEST(SceneTests, ConstQueriesReturnReadOnlyObjectsAndPreserveMissingResults)
 {

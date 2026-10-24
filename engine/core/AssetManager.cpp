@@ -105,3 +105,12 @@ void AssetManager::forgetAsset(const std::string &assetPath)
     fontByFontPath.erase(assetPath);
     audioByPath.erase(assetPath);
 }
+
+void AssetManager::clear()
+{
+    spriteSheetByPath.clear();
+    animationMaps.clear();
+    fontByFontPath.clear();
+    // These are borrowed IDs; AudioResourceManager owns their buffers.
+    audioByPath.clear();
+}

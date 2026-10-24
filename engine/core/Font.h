@@ -23,6 +23,9 @@ struct FontMetrics
 
 struct Font
 {
+    // Loaded on the owner before dispatch. Layout jobs only read these glyph
+    // metrics; editing/reloading the font and releasing its GL atlas happen
+    // outside worker batches.
     static constexpr std::size_t glyphCount = FontMetrics::glyphCount;
 
     std::string fontPath;

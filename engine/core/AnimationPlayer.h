@@ -11,6 +11,8 @@ public:
     void update(float deltaTime);
     const Frame &getCurrentFrame() const;
 
+    // Borrows animation frames, which must remain alive and unchanged while
+    // this player uses them. Animator retains the loaded AnimationMap owner.
     void play(const Animation &animation, bool loop = true);
     void pause();
     void stop();

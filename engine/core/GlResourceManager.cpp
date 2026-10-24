@@ -17,6 +17,15 @@ GlResourceManager &GlResourceManager::instance()
     return rm;
 }
 
+void GlResourceManager::clear()
+{
+    shaders.clear();
+    textureByPath.clear();
+    packedCharByPath.clear();
+    alignedQuadByPath.clear();
+    fontMetricsByPath.clear();
+}
+
 std::shared_ptr<Shader> GlResourceManager::getShaderProgram(
     const std::string &vertexShaderPath, const std::string &fragmentShaderPath)
 {

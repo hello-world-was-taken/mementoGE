@@ -4,14 +4,14 @@
 #include "core/Scene.h"
 #include "core/SystemRegistry.h"
 #include "core/SystemScheduler.h"
-#include "core/SystemContext.h"
 
 #include "util/LogChannels.h"
 
 #include <algorithm>
-#include <chrono>
 #include <entt/entt.hpp>
+#include <functional>
 #include <iostream>
+#include <map>
 #include <sawyer/Logger.h>
 #include <stdexcept>
 #include <string>
@@ -114,37 +114,36 @@ void Scene::update(const FrameContext &frame, SystemScheduler &scheduler, bool e
         return;
     }
 
-    // All installed systems are prepared before dispatch, including systems
-    // that an earlier update might enable later in this tick.
+    // Freeze this tick's graph and enabled set before any update starts.
+    // Scene ownership and system instances must remain alive until run returns.
+    const auto graph = m_systemGraph;
+    std::map<std::string, std::reference_wrapper<ISystem>> enabledSystems;
     for (const auto &entry : m_systems)
     {
         entry.system->descriptor().prepareRegistry(m_registry);
+        if (entry.enabled)
+        {
+            enabledSystems.emplace(entry.descriptorName, std::ref(*entry.system));
+        }
     }
 
-    for (const auto &name : m_systemGraph.orderedSystems())
+    try
     {
-        auto &entry = *std::find_if(m_systems.begin(), m_systems.end(), [&](const SystemEntry &candidate)
+        const auto timings = scheduler.run(graph, enabledSystems, m_registry, m_physicsWorld, frame, editMode);
+        for (auto &entry : m_systems)
         {
-            return candidate.descriptorName == name;
-        });
-        if (!entry.enabled)
-        {
-            continue;
+            const auto timing = timings.find(entry.descriptorName);
+            if (timing != timings.end())
+            {
+                entry.lastUpdateMilliseconds = timing->second;
+            }
         }
-
-        const auto start = std::chrono::steady_clock::now();
-        try
-        {
-            scheduler.run(*entry.system, m_registry, m_physicsWorld, frame, editMode);
-        }
-        catch (...)
-        {
-            // run() has finished the update before reporting its failure.
-            cleanupDestroyedGameObjects();
-            throw;
-        }
-        entry.lastUpdateMilliseconds =
-            std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
+    }
+    catch (...)
+    {
+        // The scheduler drains accepted updates before reporting a failure.
+        cleanupDestroyedGameObjects();
+        throw;
     }
 
     cleanupDestroyedGameObjects();

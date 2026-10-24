@@ -113,6 +113,8 @@ void EditorLayer::run()
                     {
                         const FrameContext tick{
                             static_cast<float>(fixedDelta), simulationTime + fixedDelta, pendingInput, frame.window};
+                        // A completed/drained tick is the boundary before UI,
+                        // resource edits, and runtime-scene replacement resume.
                         activeScene.update(tick, m_systemScheduler, !m_ctx.isRuntimeActive());
                         simulationTime = tick.elapsedTime;
                         accumulator -= fixedDelta;
@@ -142,7 +144,6 @@ void EditorLayer::run()
         glfwSwapBuffers(m_window.getGlfwWindow());
     }
 
-    glfwTerminate();
 }
 
 void EditorLayer::drawEditorUI()
