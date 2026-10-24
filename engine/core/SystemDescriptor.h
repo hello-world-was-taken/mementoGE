@@ -43,6 +43,7 @@ public:
     template <typename... Components> SystemDescriptor &reads()
     {
         (addUnique(m_componentReads, typeId<Components>()), ...);
+        (addUnique(m_storagePreparers, &prepareStorage<ComponentType<Components>>), ...);
         return *this;
     }
 
@@ -51,6 +52,7 @@ public:
     template <typename... Components> SystemDescriptor &writes()
     {
         (addUnique(m_componentWrites, typeId<Components>()), ...);
+        (addUnique(m_storagePreparers, &prepareStorage<ComponentType<Components>>), ...);
         return *this;
     }
 
@@ -116,6 +118,23 @@ public:
     {
         addUnique(m_after, std::move(systemName));
         return *this;
+    }
+
+    // Run on the registry owner before dispatch, after registry replacement,
+    // or after installing descriptors that introduce new component types.
+    // Scene loading may leave pools absent when no entity has that component.
+    // EnTT tracks all pools in one shared map: worker A lazily inserting a
+    // ParticleEmitter pool can mutate/rehash it while worker B looks up Text.
+    // That is a data race even though the component types do not conflict.
+    // The graph cannot see this hidden registry write in an ordinary query.
+    // Lazy creation is safe with exclusive registry access, including on a
+    // worker; preparing here keeps overlapping queries to read-only map lookups.
+    void prepareRegistry(entt::registry &registry) const
+    {
+        for (auto prepare : m_storagePreparers)
+        {
+            prepare(registry);
+        }
     }
 
     [[nodiscard]] const std::string &name() const noexcept
@@ -199,10 +218,16 @@ public:
     }
 
 private:
+    template <typename Component> using ComponentType = std::remove_cv_t<std::remove_reference_t<Component>>;
+
+    template <typename Component> static void prepareStorage(entt::registry &registry)
+    {
+        (void)registry.storage<Component>();
+    }
+
     template <typename T> static constexpr TypeId typeId() noexcept
     {
-        using Normalized = std::remove_cv_t<std::remove_reference_t<T>>;
-        return entt::type_hash<Normalized>::value();
+        return entt::type_hash<ComponentType<T>>::value();
     }
 
     template <typename T> static void addUnique(std::vector<T> &values, T value)
@@ -235,6 +260,7 @@ private:
     bool m_reentrant = false;
     bool m_requestsStructuralChanges = false;
 
+    std::vector<void (*)(entt::registry &)> m_storagePreparers;
     std::vector<TypeId> m_componentReads;
     std::vector<TypeId> m_componentWrites;
     std::vector<SystemResource> m_resourceReads;

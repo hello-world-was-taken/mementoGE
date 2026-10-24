@@ -125,6 +125,7 @@ TEST_P(SystemEntitiesModes, MixedViewsPreserveConstnessAndOnlyVisitTheIntersecti
                 });
         }};
 
+    system.descriptor().prepareRegistry(registry);
     scheduler.run(system, context);
 
     EXPECT_EQ(registry.get<Position>(moving).value, 8);
@@ -154,13 +155,14 @@ TEST_P(SystemEntitiesModes, UndeclaredReadsAndWritesAreRejectedBeforeMutation)
             EXPECT_THROW((void)(context.entities.any_of<Position, Velocity>(entity)), std::logic_error);
         }};
 
+    system.descriptor().prepareRegistry(registry);
     scheduler.run(system, context);
 
     EXPECT_EQ(registry.get<Position>(entity).value, 7);
     EXPECT_EQ(registry.get<Velocity>(entity).value, 9);
 }
 
-TEST_P(SystemEntitiesModes, ExclusiveUpdatesSafelyQueryInitiallyAbsentPools)
+TEST_P(SystemEntitiesModes, PreparedEmptyPoolsSupportReadOnlyAndMutableQueries)
 {
     const auto entity = registry.create();
     EXPECT_EQ(std::as_const(registry).storage<Position>(), nullptr);
@@ -169,6 +171,8 @@ TEST_P(SystemEntitiesModes, ExclusiveUpdatesSafelyQueryInitiallyAbsentPools)
     AccessSystem system{SystemDescriptor::named("EmptyPools").reads<Position>().writes<Velocity>(),
         [&](SystemContext &context)
         {
+            EXPECT_NE(std::as_const(registry).storage<Position>(), nullptr);
+            EXPECT_NE(std::as_const(registry).storage<Velocity>(), nullptr);
             const auto &readOnly = std::as_const(context.entities);
             auto readView = readOnly.view<Position, Velocity>();
             EXPECT_EQ(readView.begin(), readView.end());
@@ -177,18 +181,41 @@ TEST_P(SystemEntitiesModes, ExclusiveUpdatesSafelyQueryInitiallyAbsentPools)
             EXPECT_FALSE(readOnly.all_of<Position>(entity));
             EXPECT_FALSE((readOnly.any_of<Position, Velocity>(entity)));
 
-            // Mutable EnTT views may create missing pools while this update
-            // owns exclusive registry access. No component instances are added.
+            // Both query forms use the pools prepared by the owner before
+            // dispatch. They do not add component instances.
             auto writeView = context.entities.view<const Position, Velocity>();
             EXPECT_EQ(writeView.begin(), writeView.end());
             EXPECT_FALSE(writeView.contains(entity));
             EXPECT_EQ(context.entities.try_get<Velocity>(entity), nullptr);
         }};
 
+    system.descriptor().prepareRegistry(registry);
     scheduler.run(system, context);
 
     EXPECT_TRUE(registry.valid(entity));
     EXPECT_FALSE((registry.any_of<Position, Velocity>(entity)));
+}
+
+TEST_P(SystemEntitiesModes, MissingPoolQueriesFailWithoutCreatingStorageAndPreparedRetrySucceeds)
+{
+    SystemScheduler scheduler{JobSystemConfig{GetParam(), 8, true}};
+    AccessSystem system{SystemDescriptor::named("Unprepared").reads<Position>().writes<Velocity>(),
+        [](SystemContext &context)
+        {
+            auto view = context.entities.view<const Position, Velocity>();
+            EXPECT_EQ(view.begin(), view.end());
+        }};
+
+    EXPECT_THROW(scheduler.run(system, registry, physics, frame), std::logic_error);
+    EXPECT_EQ(std::as_const(registry).storage<Position>(), nullptr);
+    EXPECT_EQ(std::as_const(registry).storage<Velocity>(), nullptr);
+
+    system.descriptor().prepareRegistry(registry);
+    EXPECT_NO_THROW(scheduler.run(system, registry, physics, frame));
+    ASSERT_NE(std::as_const(registry).storage<Position>(), nullptr);
+    ASSERT_NE(std::as_const(registry).storage<Velocity>(), nullptr);
+    EXPECT_EQ(std::as_const(registry).storage<Position>()->size(), 0u);
+    EXPECT_EQ(std::as_const(registry).storage<Velocity>()->size(), 0u);
 }
 
 TEST_P(SystemEntitiesModes, AccessAndSavedViewsExpireAfterSuccessAndFailure)
@@ -215,10 +242,12 @@ TEST_P(SystemEntitiesModes, AccessAndSavedViewsExpireAfterSuccessAndFailure)
 
         if (failUpdate)
         {
+            system.descriptor().prepareRegistry(registry);
             EXPECT_THROW(scheduler.run(system, context), std::runtime_error);
         }
         else
         {
+            system.descriptor().prepareRegistry(registry);
             EXPECT_NO_THROW(scheduler.run(system, context));
         }
 
@@ -243,6 +272,7 @@ TEST_P(SystemEntitiesModes, ANewUpdateDoesNotReactivateAnOldView)
         {
             saved.emplace(context.entities.view<const Position>());
         }};
+    first.descriptor().prepareRegistry(registry);
     scheduler.run(first, context);
     ASSERT_TRUE(saved.has_value());
 
@@ -252,6 +282,7 @@ TEST_P(SystemEntitiesModes, ANewUpdateDoesNotReactivateAnOldView)
             EXPECT_THROW((void)saved->get<const Position>(entity), std::logic_error);
             EXPECT_EQ(context.entities.get<const Position>(entity).value, 12);
         }};
+    second.descriptor().prepareRegistry(registry);
     scheduler.run(second, context);
 }
 
@@ -271,6 +302,7 @@ TEST_P(SystemEntitiesModes, StructuralOperationsRequireTheStructuralDeclaration)
             EXPECT_THROW(context.entities.remove<Position>(entity), std::logic_error);
         }};
 
+    system.descriptor().prepareRegistry(registry);
     scheduler.run(system, context);
 
     EXPECT_TRUE(registry.valid(entity));
@@ -292,6 +324,7 @@ TEST_P(SystemEntitiesModes, StructuralDeclarationDoesNotGrantComponentWriteAcces
             EXPECT_THROW(context.entities.remove<Position>(entity), std::logic_error);
         }};
 
+    system.descriptor().prepareRegistry(registry);
     scheduler.run(system, context);
 
     EXPECT_EQ(registry.get<Position>(entity).value, 7);
@@ -315,6 +348,7 @@ TEST_P(SystemEntitiesModes, AuthorizedStructuralOperationsPreserveTheirResults)
             context.entities.destroy(created);
         }};
 
+    system.descriptor().prepareRegistry(registry);
     scheduler.run(system, context);
 
     EXPECT_TRUE(registry.valid(entity));
@@ -336,6 +370,7 @@ TEST_P(SystemEntitiesModes, RemovingPhysicsComponentsOrEntitiesAlsoRequiresPhysi
             EXPECT_THROW(context.entities.remove<RigidBody2D>(entity), std::logic_error);
         }};
 
+    system.descriptor().prepareRegistry(registry);
     scheduler.run(system, context);
 
     EXPECT_TRUE(registry.valid(entity));
@@ -349,6 +384,7 @@ TEST_P(SystemEntitiesModes, RemovingPhysicsComponentsOrEntitiesAlsoRequiresPhysi
         {
             EXPECT_EQ(context.entities.remove<RigidBody2D>(entity), 1u);
         }};
+    allowed.descriptor().prepareRegistry(registry);
     scheduler.run(allowed, context);
     EXPECT_TRUE(registry.valid(entity));
     EXPECT_FALSE(registry.all_of<RigidBody2D>(entity));
@@ -364,6 +400,7 @@ TEST_P(SystemEntitiesModes, PhysicsStepRequiresBothResourceAndCanonicalComponent
             {
                 EXPECT_THROW(context.stepPhysics(), std::logic_error);
             }};
+        system.descriptor().prepareRegistry(registry);
         scheduler.run(system, context);
     };
     checkDenied(SystemDescriptor::named("NoPhysicsResource")
@@ -390,6 +427,7 @@ TEST_P(SystemEntitiesModes, PhysicsStepRequiresBothResourceAndCanonicalComponent
         {
             EXPECT_NO_THROW(context.stepPhysics());
         }};
+    allowed.descriptor().prepareRegistry(registry);
     EXPECT_NO_THROW(scheduler.run(allowed, context));
     EXPECT_THROW(context.stepPhysics(), std::logic_error);
 }
@@ -404,6 +442,7 @@ TEST_P(SystemEntitiesModes, DisablingBodiesRequiresPhysicsWriteAndRigidBodyReadA
         {
             EXPECT_THROW(context.disablePhysicsBody(entity), std::logic_error);
         }};
+    missingResource.descriptor().prepareRegistry(registry);
     scheduler.run(missingResource, context);
     AccessSystem missingComponent{SystemDescriptor::named("PhysicsWithoutBody")
                                      .writesResource(SystemResource::PhysicsWorld),
@@ -411,6 +450,7 @@ TEST_P(SystemEntitiesModes, DisablingBodiesRequiresPhysicsWriteAndRigidBodyReadA
         {
             EXPECT_THROW(context.disablePhysicsBody(entity), std::logic_error);
         }};
+    missingComponent.descriptor().prepareRegistry(registry);
     scheduler.run(missingComponent, context);
 
     AccessSystem allowed{SystemDescriptor::named("BodyControl")
@@ -420,6 +460,7 @@ TEST_P(SystemEntitiesModes, DisablingBodiesRequiresPhysicsWriteAndRigidBodyReadA
         {
             EXPECT_NO_THROW(context.disablePhysicsBody(entity));
         }};
+    allowed.descriptor().prepareRegistry(registry);
     EXPECT_NO_THROW(scheduler.run(allowed, context));
     EXPECT_TRUE(registry.valid(entity));
 }

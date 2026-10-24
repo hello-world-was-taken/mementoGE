@@ -114,8 +114,13 @@ void Scene::update(const FrameContext &frame, SystemScheduler &scheduler, bool e
         return;
     }
 
-    SystemContext context{m_registry, m_physicsWorld, frame, editMode};
-    // Complete each whole update before the next system reuses this context.
+    // All installed systems are prepared before dispatch, including systems
+    // that an earlier update might enable later in this tick.
+    for (const auto &entry : m_systems)
+    {
+        entry.system->descriptor().prepareRegistry(m_registry);
+    }
+
     for (const auto &name : m_systemGraph.orderedSystems())
     {
         auto &entry = *std::find_if(m_systems.begin(), m_systems.end(), [&](const SystemEntry &candidate)
@@ -126,10 +131,11 @@ void Scene::update(const FrameContext &frame, SystemScheduler &scheduler, bool e
         {
             continue;
         }
+
         const auto start = std::chrono::steady_clock::now();
         try
         {
-            scheduler.run(*entry.system, context);
+            scheduler.run(*entry.system, m_registry, m_physicsWorld, frame, editMode);
         }
         catch (...)
         {

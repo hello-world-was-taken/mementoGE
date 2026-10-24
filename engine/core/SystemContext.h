@@ -6,6 +6,8 @@
 
 #include <entt/entt.hpp>
 
+// TODO: Compare a context per update with separating shared scene/frame state
+// from independent per-update access state. Which is simpler to maintain?
 struct SystemContext
 {
     SystemContext(entt::registry &registry, Physics2D &physics, const FrameContext &frame, bool editMode = false);

@@ -38,6 +38,7 @@ TEST(FollowSystemTests, ClampsCameraToBackgroundBounds)
     FrameContext frame;
     frame.deltaTime = 1.0f / 60.0f;
     SystemContext context{registry, physics, frame};
+    system.descriptor().prepareRegistry(registry);
 
     targetTransform.position = {-1000.0f, -1000.0f, 0.0f};
     scheduler.run(system, context);

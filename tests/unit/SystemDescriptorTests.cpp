@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <gtest/gtest.h>
 #include <type_traits>
+#include <utility>
 
 namespace
 {
@@ -13,6 +14,17 @@ struct Position
 
 struct Velocity
 {
+};
+
+struct PreparedComponent
+{
+    PreparedComponent()
+    {
+        ++constructed;
+    }
+
+    inline static int constructed = 0;
+    int value = 0;
 };
 
 class SystemWithoutDescriptor final : public ISystem
@@ -50,6 +62,38 @@ TEST(SystemDescriptorTests, BuilderRecordsAndDeduplicatesDeclaredAccess)
     EXPECT_EQ(descriptor.resourceReads().size(), 1u);
     EXPECT_EQ(descriptor.beforeSystems().size(), 1u);
     EXPECT_FALSE(descriptor.isReentrant());
+}
+
+TEST(SystemDescriptorTests, PreparingDeclaredPoolsNormalizesTypesWithoutCreatingEntitiesOrComponents)
+{
+    entt::registry registry;
+    PreparedComponent::constructed = 0;
+    const auto descriptor = SystemDescriptor::named("PreparedPools")
+                                .reads<Position, const Position, const PreparedComponent &>()
+                                .writes<PreparedComponent, const PreparedComponent>();
+    EXPECT_EQ(std::as_const(registry).storage<Position>(), nullptr);
+    EXPECT_EQ(std::as_const(registry).storage<PreparedComponent>(), nullptr);
+
+    descriptor.prepareRegistry(registry);
+
+    const auto *positions = std::as_const(registry).storage<Position>();
+    const auto *components = std::as_const(registry).storage<PreparedComponent>();
+    ASSERT_NE(positions, nullptr);
+    ASSERT_NE(components, nullptr);
+    EXPECT_EQ(positions->size(), 0u);
+    EXPECT_EQ(components->size(), 0u);
+    EXPECT_EQ(PreparedComponent::constructed, 0);
+    auto entities = registry.view<entt::entity>();
+    EXPECT_EQ(entities.begin(), entities.end());
+    EXPECT_EQ(descriptor.componentReads().size(), 2u);
+    EXPECT_EQ(descriptor.componentWrites().size(), 1u);
+
+    descriptor.prepareRegistry(registry);
+
+    EXPECT_EQ(std::as_const(registry).storage<Position>(), positions);
+    EXPECT_EQ(std::as_const(registry).storage<PreparedComponent>(), components);
+    EXPECT_EQ(PreparedComponent::constructed, 0);
+    EXPECT_EQ(entities.begin(), entities.end());
 }
 
 TEST(SystemDescriptorTests, ReadOnlySystemsDoNotConflict)

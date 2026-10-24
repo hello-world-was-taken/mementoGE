@@ -8,20 +8,43 @@ SystemScheduler::SystemScheduler(JobSystemConfig config)
 {
 }
 
-void SystemScheduler::run(ISystem &system, SystemContext &context)
+void SystemScheduler::run(ISystem &system,
+    entt::registry &registry,
+    Physics2D &physics,
+    const FrameContext &frame,
+    bool editMode)
 {
     const auto descriptor = system.descriptor();
-    SystemEntities::UpdateScope access(context.entities, descriptor);
+    const auto update = [&]
+    {
+        SystemContext context{registry, physics, frame, editMode};
+        SystemEntities::UpdateScope access(context.entities, descriptor);
+        system.update(context);
+    };
 
     if (descriptor.threadAffinity() == SystemThreadAffinity::MainThread)
     {
-        system.update(context);
+        update();
         return;
     }
 
-    m_jobs.runAndWait(
-        [&]
-        {
-            system.update(context);
-        });
+    m_jobs.runAndWait(update);
+}
+
+void SystemScheduler::run(ISystem &system, SystemContext &context)
+{
+    const auto descriptor = system.descriptor();
+    const auto update = [&]
+    {
+        SystemEntities::UpdateScope access(context.entities, descriptor);
+        system.update(context);
+    };
+
+    if (descriptor.threadAffinity() == SystemThreadAffinity::MainThread)
+    {
+        update();
+        return;
+    }
+
+    m_jobs.runAndWait(update);
 }

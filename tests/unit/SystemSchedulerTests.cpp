@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <utility>
 
 #include <gtest/gtest.h>
 
@@ -23,7 +24,6 @@ protected:
     entt::registry registry;
     Physics2D physics{glm::vec2{0.0f, -9.8f}};
     FrameContext frame;
-    SystemContext context{registry, physics, frame};
 };
 
 struct PublishedValue
@@ -174,6 +174,76 @@ void addScheduledSystems(Scene &scene)
     scene.setAllSystemsEnabled(true);
 }
 
+struct SharedQueryComponent
+{
+    int value = 0;
+};
+
+struct FirstQueryComponent
+{
+    int value = 0;
+};
+
+struct SecondQueryComponent
+{
+    int value = 0;
+};
+
+struct ConcurrentQueryState
+{
+    std::promise<void> started;
+    std::shared_future<void> release;
+    std::thread::id callerThread;
+    std::thread::id updateThread;
+    bool editMode = false;
+    int queryPasses = 0;
+};
+
+template <typename OwnComponent, typename OtherComponent> class ConcurrentQuerySystem final : public ISystem
+{
+public:
+    ConcurrentQuerySystem(std::string name, ConcurrentQueryState &state) : m_name(std::move(name)), m_state(state)
+    {
+    }
+
+    void update(SystemContext &context) override
+    {
+        m_state.updateThread = std::this_thread::get_id();
+        const auto query = [&]
+        {
+            auto mixed = context.entities.view<const SharedQueryComponent, OwnComponent>();
+            EXPECT_EQ(mixed.begin(), mixed.end());
+            const auto &readOnly = std::as_const(context.entities);
+            auto read = readOnly.template view<OwnComponent, SharedQueryComponent>();
+            EXPECT_EQ(read.begin(), read.end());
+            EXPECT_EQ(context.entities.try_get<OwnComponent>(entt::null), nullptr);
+            EXPECT_EQ(readOnly.template try_get<SharedQueryComponent>(entt::null), nullptr);
+            EXPECT_FALSE(context.entities.all_of<OwnComponent>(entt::null));
+            EXPECT_FALSE((context.entities.any_of<OwnComponent, SharedQueryComponent>(entt::null)));
+            EXPECT_THROW((void)context.entities.view<OtherComponent>(), std::logic_error);
+            EXPECT_EQ(context.editMode, m_state.editMode);
+            EXPECT_FLOAT_EQ(context.frame.deltaTime, 1.0f / 60.0f);
+            ++m_state.queryPasses;
+        };
+        query();
+        m_state.started.set_value();
+        if (m_state.release.wait_for(5s) != std::future_status::ready)
+        {
+            throw std::runtime_error("test did not release concurrent update");
+        }
+        query();
+    }
+
+    SystemDescriptor descriptor() const override
+    {
+        return SystemDescriptor::named(m_name).template reads<SharedQueryComponent>().template writes<OwnComponent>();
+    }
+
+private:
+    std::string m_name;
+    ConcurrentQueryState &m_state;
+};
+
 void expectWorkerThread(std::size_t workerCount, std::thread::id updateThread, std::thread::id caller)
 {
     if (workerCount == 0)
@@ -198,9 +268,9 @@ TEST_P(SystemSchedulerModes, WorkerEligibleUpdatesRunOnWorkersWithAnInlineFallba
     event.type = EventType::KeyPress;
     event.keyType = KeyType::W;
     frame.input.events.push_back(event);
-    context.editMode = true;
+    system.descriptor().prepareRegistry(registry);
 
-    scheduler.run(system, context);
+    scheduler.run(system, registry, physics, frame, true);
 
     EXPECT_EQ(state.calls, 1);
     EXPECT_EQ(state.finished.load(std::memory_order_relaxed), 1);
@@ -217,8 +287,9 @@ TEST_P(SystemSchedulerModes, MainThreadUpdatesRemainOnTheCaller)
     SystemScheduler scheduler{JobSystemConfig{GetParam(), 8, true}};
     UpdateState state;
     ProbeSystem system{state, SystemThreadAffinity::MainThread};
+    system.descriptor().prepareRegistry(registry);
 
-    scheduler.run(system, context);
+    scheduler.run(system, registry, physics, frame);
 
     EXPECT_EQ(state.calls, 1);
     EXPECT_EQ(state.finished.load(std::memory_order_relaxed), 1);
@@ -234,10 +305,11 @@ TEST_P(SystemSchedulerModes, UpdateErrorsPropagateAndTheSchedulerCanRunAgain)
         UpdateState state;
         ProbeSystem system{state, affinity};
         state.failUpdate = true;
+        system.descriptor().prepareRegistry(registry);
 
         try
         {
-            scheduler.run(system, context);
+            scheduler.run(system, registry, physics, frame);
             FAIL() << "Expected the update error";
         }
         catch (const std::runtime_error &error)
@@ -247,7 +319,7 @@ TEST_P(SystemSchedulerModes, UpdateErrorsPropagateAndTheSchedulerCanRunAgain)
         EXPECT_EQ(state.finished.load(std::memory_order_relaxed), 1);
 
         state.failUpdate = false;
-        EXPECT_NO_THROW(scheduler.run(system, context));
+        EXPECT_NO_THROW(scheduler.run(system, registry, physics, frame));
         EXPECT_EQ(state.calls, 2);
         EXPECT_EQ(state.finished.load(std::memory_order_relaxed), 2);
     }
@@ -268,10 +340,11 @@ TEST_P(SystemSchedulerModes, RunWaitsForTheWholeUpdateBeforeReturningOrThrowing)
         auto started = state.started.get_future();
         frame.deltaTime = 1.0f / 60.0f;
         frame.elapsedTime = 7.0;
+        system.descriptor().prepareRegistry(registry);
 
         auto run = std::async(std::launch::async, [&]
             {
-                scheduler.run(system, context);
+                scheduler.run(system, registry, physics, frame);
             });
 
         EXPECT_EQ(started.wait_for(5s), std::future_status::ready);
@@ -312,6 +385,67 @@ TEST_P(SystemSchedulerModes, SceneConsumersObserveCompletedUpdatesInGraphOrder)
     EXPECT_FLOAT_EQ(sceneUpdateState->observedDeltaTime, frame.deltaTime);
     expectWorkerThread(GetParam(), sceneUpdateState->updateThread, std::this_thread::get_id());
     EXPECT_EQ(sceneUpdateState->consumerThread, std::this_thread::get_id());
+}
+
+TEST(SystemSchedulerTests, IndependentInvocationsOwnTheirAccessScopesWhileQueryingPreparedPools)
+{
+    entt::registry registry;
+    Physics2D physics{glm::vec2{0.0f, -9.8f}};
+    FrameContext frame;
+    frame.deltaTime = 1.0f / 60.0f;
+    SystemScheduler scheduler{JobSystemConfig{2, 8, true}};
+    std::promise<void> release;
+    const auto released = release.get_future().share();
+    ConcurrentQueryState firstState;
+    firstState.release = released;
+    firstState.editMode = true;
+    ConcurrentQueryState secondState;
+    secondState.release = released;
+    auto firstStarted = firstState.started.get_future();
+    auto secondStarted = secondState.started.get_future();
+    ConcurrentQuerySystem<FirstQueryComponent, SecondQueryComponent> first{"ConcurrentFirst", firstState};
+    ConcurrentQuerySystem<SecondQueryComponent, FirstQueryComponent> second{"ConcurrentSecond", secondState};
+    EXPECT_FALSE(first.descriptor().conflictsWith(second.descriptor()));
+    EXPECT_EQ(std::as_const(registry).storage<SharedQueryComponent>(), nullptr);
+    EXPECT_EQ(std::as_const(registry).storage<FirstQueryComponent>(), nullptr);
+    EXPECT_EQ(std::as_const(registry).storage<SecondQueryComponent>(), nullptr);
+    first.descriptor().prepareRegistry(registry);
+    second.descriptor().prepareRegistry(registry);
+
+    auto firstRun = std::async(std::launch::async, [&]
+        {
+            firstState.callerThread = std::this_thread::get_id();
+            scheduler.run(first, registry, physics, frame, true);
+        });
+    auto secondRun = std::async(std::launch::async, [&]
+        {
+            secondState.callerThread = std::this_thread::get_id();
+            scheduler.run(second, registry, physics, frame, false);
+        });
+
+    EXPECT_EQ(firstStarted.wait_for(5s), std::future_status::ready);
+    EXPECT_EQ(secondStarted.wait_for(5s), std::future_status::ready);
+    EXPECT_EQ(firstRun.wait_for(20ms), std::future_status::timeout);
+    EXPECT_EQ(secondRun.wait_for(20ms), std::future_status::timeout);
+    release.set_value();
+    EXPECT_EQ(firstRun.wait_for(5s), std::future_status::ready);
+    EXPECT_EQ(secondRun.wait_for(5s), std::future_status::ready);
+    EXPECT_NO_THROW(firstRun.get());
+    EXPECT_NO_THROW(secondRun.get());
+
+    EXPECT_EQ(firstState.queryPasses, 2);
+    EXPECT_EQ(secondState.queryPasses, 2);
+    EXPECT_NE(firstState.updateThread, firstState.callerThread);
+    EXPECT_NE(secondState.updateThread, secondState.callerThread);
+    EXPECT_NE(firstState.updateThread, secondState.updateThread);
+    ASSERT_NE(std::as_const(registry).storage<SharedQueryComponent>(), nullptr);
+    ASSERT_NE(std::as_const(registry).storage<FirstQueryComponent>(), nullptr);
+    ASSERT_NE(std::as_const(registry).storage<SecondQueryComponent>(), nullptr);
+    EXPECT_EQ(std::as_const(registry).storage<SharedQueryComponent>()->size(), 0u);
+    EXPECT_EQ(std::as_const(registry).storage<FirstQueryComponent>()->size(), 0u);
+    EXPECT_EQ(std::as_const(registry).storage<SecondQueryComponent>()->size(), 0u);
+    const auto entities = registry.view<entt::entity>();
+    EXPECT_EQ(entities.begin(), entities.end());
 }
 
 TEST(SystemSchedulerTests, StandaloneSceneUpdatesRunInline)

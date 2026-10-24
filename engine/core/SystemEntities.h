@@ -6,9 +6,11 @@
 #include <algorithm>
 #include <cstddef>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <type_traits>
 #include <typeinfo>
 #include <utility>
@@ -31,40 +33,50 @@ public:
 
     template <typename Component> decltype(auto) get(entt::entity entity)
     {
-        requireAccess<Component>();
-        requireComponent<Component>(entity);
-        return m_registry.get<Component>(entity);
+        auto &storage = componentStorage<Component>();
+        requireComponent(storage, entity);
+        return storage.get(entity);
     }
 
     template <typename Component> decltype(auto) get(entt::entity entity) const
     {
-        requireRead<Component>();
-        requireComponent<Component>(entity);
-        return std::as_const(m_registry).get<Component>(entity);
+        const auto &storage = componentStorage<Component>();
+        requireComponent(storage, entity);
+        return storage.get(entity);
     }
 
     template <typename Component> auto try_get(entt::entity entity)
     {
-        requireAccess<Component>();
-        return m_registry.try_get<Component>(entity);
+        auto &storage = componentStorage<Component>();
+        return storage.contains(entity) ? std::addressof(storage.get(entity)) : nullptr;
     }
 
     template <typename Component> auto try_get(entt::entity entity) const
     {
-        requireRead<Component>();
-        return std::as_const(m_registry).try_get<Component>(entity);
+        const auto &storage = componentStorage<Component>();
+        return storage.contains(entity) ? std::addressof(storage.get(entity)) : nullptr;
     }
 
     template <typename... Components> bool all_of(entt::entity entity) const
     {
-        (requireRead<Components>(), ...);
-        return std::as_const(m_registry).all_of<Components...>(entity);
+        const auto pools = std::forward_as_tuple(componentStorage<Components>()...);
+        return std::apply(
+            [entity](const auto &...storage)
+            {
+                return (storage.contains(entity) && ...);
+            },
+            pools);
     }
 
     template <typename... Components> bool any_of(entt::entity entity) const
     {
-        (requireRead<Components>(), ...);
-        return std::as_const(m_registry).any_of<Components...>(entity);
+        const auto pools = std::forward_as_tuple(componentStorage<Components>()...);
+        return std::apply(
+            [entity](const auto &...storage)
+            {
+                return (storage.contains(entity) || ...);
+            },
+            pools);
     }
 
     bool valid(entt::entity entity) const
@@ -210,10 +222,48 @@ private:
         }
     }
 
-    template <typename Component> void requireComponent(entt::entity entity) const
+    template <typename Component>
+    using ComponentStorage = entt::registry::storage_for_type<std::remove_cv_t<std::remove_reference_t<Component>>>;
+
+    template <typename Component> const ComponentStorage<Component> &preparedStorage() const
+    {
+        // The const lookup uses pools.find(); non-const registry storage/view/
+        // get paths can reach assure() and its inserting pools[id] lookup.
+        const auto *storage = std::as_const(m_registry).storage<std::remove_cv_t<std::remove_reference_t<Component>>>();
+        if (storage == nullptr)
+        {
+            throw std::logic_error(
+                "System '" + descriptor().name() + "' component storage was not prepared: " + typeid(Component).name());
+        }
+        return *storage;
+    }
+
+    template <typename Component> decltype(auto) componentStorage()
+    {
+        requireAccess<Component>();
+        const auto &storage = preparedStorage<Component>();
+        if constexpr (std::is_const_v<Component>)
+        {
+            return storage;
+        }
+        else
+        {
+            // The registry is mutable, and requireAccess() checked write access.
+            // Only the existing component pool is mutable; registry lookup stays const.
+            return const_cast<ComponentStorage<Component> &>(storage);
+        }
+    }
+
+    template <typename Component> const ComponentStorage<Component> &componentStorage() const
+    {
+        requireRead<Component>();
+        return preparedStorage<Component>();
+    }
+
+    template <typename Storage> void requireComponent(const Storage &storage, entt::entity entity) const
     {
         requireEntity(entity);
-        if (!std::as_const(m_registry).all_of<Component>(entity))
+        if (!storage.contains(entity))
         {
             throw std::out_of_range("Entity does not have the requested component");
         }
@@ -321,14 +371,12 @@ private:
 
 template <typename... Components> auto SystemEntities::view()
 {
-    (requireAccess<Components>(), ...);
-    auto native = m_registry.view<Components...>();
+    auto native = entt::basic_view{componentStorage<Components>()...};
     return SystemView<decltype(native)>(*this, std::move(native), m_revision);
 }
 
 template <typename... Components> auto SystemEntities::view() const
 {
-    (requireRead<Components>(), ...);
-    auto native = std::as_const(m_registry).view<std::remove_const_t<Components>...>();
+    auto native = entt::basic_view{componentStorage<Components>()...};
     return SystemView<decltype(native)>(*this, std::move(native), m_revision);
 }
