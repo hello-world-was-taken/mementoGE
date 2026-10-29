@@ -12,6 +12,7 @@
 
 #include "editor/Constants.h"
 #include "editor/DragNDropPayloads.h"
+#include "editor/ThumbnailResourceManager.h"
 #include "editor/panels/AssetsPanel.h"
 
 #include "util/LogChannels.h"
@@ -19,6 +20,7 @@
 
 #include <ImGuiFileDialog/ImGuiFileDialog.h>
 #include <algorithm>
+#include <chrono>
 #include <filesystem>
 #include <functional>
 #include <fstream>
@@ -47,6 +49,11 @@ inline std::vector<AssetItem> getDirectoryContents(const std::string &path)
     std::error_code error;
     for (const auto &entry : fs::directory_iterator(path, error))
     {
+        // Generated previews are implementation files, not browsable source assets.
+        if (entry.path().filename() == ".thumbnails")
+        {
+            continue;
+        }
         AssetItem item;
         item.nameWithExtention = entry.path().filename().string();
         item.nameWithoutExtention = entry.path().stem().string();
@@ -219,6 +226,11 @@ std::vector<fs::path> getAssetDeletionTargets(const fs::path &assetPath)
         {
             targets.push_back(std::move(metadataPath));
         }
+        const fs::path thumbnailPath = ThumbnailResourceManager::getGeneratedThumbnailPath(assetPath);
+        if (fs::is_regular_file(thumbnailPath, error) && !error)
+        {
+            targets.push_back(thumbnailPath);
+        }
     }
     return targets;
 }
@@ -247,6 +259,62 @@ AssetsPanel::AssetsPanel(EditorContext &ctx) : EditorPanel{ctx}, m_ctx{ctx}
 
 AssetsPanel::~AssetsPanel()
 {
+}
+
+std::shared_ptr<Texture> AssetsPanel::getThumbnailTexture(const fs::path &imagePath, bool regenerate)
+{
+    const std::string key = imagePath.lexically_normal().string();
+    fs::path metadataPath = imagePath;
+    metadataPath.replace_extension(".json");
+    const auto now = std::chrono::steady_clock::now();
+    const auto cached = m_thumbnailByImagePath.find(key);
+    auto writeTime = [](const fs::path &path)
+    {
+        std::error_code error;
+        const auto time = fs::last_write_time(path, error);
+        return error ? fs::file_time_type::min() : time;
+    };
+    if (!regenerate && cached != m_thumbnailByImagePath.end())
+    {
+        ThumbnailPreview &preview = cached->second;
+        if (now < preview.nextChangeCheck)
+        {
+            return preview.texture;
+        }
+        preview.nextChangeCheck = now + std::chrono::seconds(1);
+        const auto sourceWriteTime = writeTime(imagePath);
+        if (sourceWriteTime == preview.sourceWriteTime && writeTime(metadataPath) == preview.metadataWriteTime)
+        {
+            return preview.texture;
+        }
+        regenerate = sourceWriteTime != preview.sourceWriteTime;
+    }
+
+    std::shared_ptr<Texture> texture;
+    auto sourceWriteTime = writeTime(imagePath);
+    auto metadataWriteTime = writeTime(metadataPath);
+    try
+    {
+        const AssetThumbnail thumbnail =
+            ThumbnailResourceManager::instance().getThumbnail(imagePath, getGameAssetPath("texture"), regenerate);
+        if (thumbnail.regenerated)
+        {
+            GlResourceManager::instance().forgetTexture(thumbnail.path.string());
+        }
+        texture = GlResourceManager::instance().getTexture(thumbnail.path.string());
+        sourceWriteTime = writeTime(imagePath);
+        metadataWriteTime = writeTime(metadataPath);
+    }
+    catch (const std::exception &error)
+    {
+        LOG_ERROR(LogChannel::Asset, "Could not load thumbnail for '{}': {}", key, error.what());
+    }
+
+    // Poll changes at most once per second, including metadata rewritten by the sheet editor.
+    // Unchanged failures stay cached; correcting the source/JSON or importing retries them.
+    m_thumbnailByImagePath[key] = {
+        texture, sourceWriteTime, metadataWriteTime, now + std::chrono::seconds(1)};
+    return texture;
 }
 
 void AssetsPanel::requestAssetDeletion(const fs::path &assetPath)
@@ -298,6 +366,7 @@ bool AssetsPanel::deletePendingAsset()
         }
 
         const std::string deletedPath = m_pendingDeletionPath.string();
+        m_thumbnailByImagePath.erase(m_pendingDeletionPath.lexically_normal().string());
         fs::path deletedMetadataPath = m_pendingDeletionPath;
         deletedMetadataPath.replace_extension(".json");
         if (m_ctx.selectedTextureJsonPath == deletedPath ||
@@ -353,6 +422,10 @@ void AssetsPanel::drawDeleteAssetPopup()
     {
         ImGui::TextWrapped("Its sprite and animation metadata will also be deleted:");
         ImGui::BulletText("%s", metadataPath.filename().string().c_str());
+    }
+    if (isTextureImage(m_pendingDeletionPath))
+    {
+        ImGui::TextWrapped("Its generated thumbnail will also be deleted if present.");
     }
 
     const bool deletingActiveScene =
@@ -678,21 +751,8 @@ void AssetsPanel::drawContentPanel()
                     fs::create_directories(destPath.parent_path());
                     fs::copy_file(src, destPath, fs::copy_options::update_existing);
 
-                    // Create a matching empty spritesheet JSON if it does not exist yet.
-                    fs::path jsonPath = destPath.parent_path() / (destPath.stem().string() + ".json");
-                    if (!fs::exists(jsonPath))
-                    {
-                        std::ofstream jsonFile(jsonPath);
-                        if (jsonFile.is_open())
-                        {
-                            // Match existing format: meta.texture, frames object, animations object.
-                            jsonFile << "{\n";
-                            jsonFile << "  \"meta\": { \"texture\": \"" << fileName << "\" },\n";
-                            jsonFile << "  \"frames\": {},\n";
-                            jsonFile << "  \"animations\": {}\n";
-                            jsonFile << "}\n";
-                        }
-                    }
+                    // Generate the preview and add its path without replacing existing sheet data.
+                    getThumbnailTexture(destPath, true);
                 }
                 catch (const fs::filesystem_error &e)
                 {
@@ -772,43 +832,24 @@ void AssetsPanel::drawContentPanel()
         else if (item.extension == ".png" || item.extension == ".jpg" || item.extension == ".jpeg")
         {
             const std::string jsonPath = (selectedFolder / (item.nameWithoutExtention + ".json")).string();
-            std::shared_ptr<SpriteSheet> spriteSheet;
-            if (fs::exists(jsonPath))
-            {
-                spriteSheet = AssetManager::instance().getSpriteSheet(jsonPath);
-            }
+            const std::shared_ptr<Texture> texture = getThumbnailTexture(currentAssetPath);
             bool clicked = false;
             bool renderedPreview = false;
-            if (spriteSheet)
+            if (texture && texture->getWidth() > 0 && texture->getHeight() > 0)
             {
-                const std::array<glm::vec2, 4> coordinates = spriteSheet->fullSprite.getNormalizedTextureCoordinates();
-                clicked = drawAssetImageButton(spriteSheet->fullSprite.texture,
-                    ImVec2(coordinates[0].x, coordinates[0].y),
-                    ImVec2(coordinates[2].x, coordinates[2].y),
-                    spriteSheet->fullSprite.width,
-                    spriteSheet->fullSprite.height,
+                clicked = drawAssetImageButton(texture,
+                    ImVec2(0.0f, 0.0f),
+                    ImVec2(1.0f, 1.0f),
+                    static_cast<float>(texture->getWidth()),
+                    static_cast<float>(texture->getHeight()),
                     selected);
                 renderedPreview = true;
             }
             else
             {
-                const std::shared_ptr<Texture> texture = GlResourceManager::instance().getTexture(currentContentFullPath);
-                if (texture && texture->getWidth() > 0 && texture->getHeight() > 0)
-                {
-                    clicked = drawAssetImageButton(texture,
-                        ImVec2(0.0f, 0.0f),
-                        ImVec2(1.0f, 1.0f),
-                        static_cast<float>(texture->getWidth()),
-                        static_cast<float>(texture->getHeight()),
-                        selected);
-                    renderedPreview = true;
-                }
-                else
-                {
-                    const std::string label = std::string(ICON_FA_FILE_IMAGE_O) + "  " + item.nameWithoutExtention;
-                    clicked = ImGui::Selectable(
-                        label.c_str(), selected, ImGuiSelectableFlags_None, ImVec2(assetCellWidth, 0.0f));
-                }
+                const std::string label = std::string(ICON_FA_FILE_IMAGE_O) + "  " + item.nameWithoutExtention;
+                clicked = ImGui::Selectable(
+                    label.c_str(), selected, ImGuiSelectableFlags_None, ImVec2(assetCellWidth, 0.0f));
             }
             if (clicked)
             {

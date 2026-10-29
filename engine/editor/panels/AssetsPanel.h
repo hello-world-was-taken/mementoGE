@@ -2,10 +2,15 @@
 
 #include "editor/EditorContext.h"
 #include "editor/EditorPanel.h"
+#include "editor/ThumbnailPreview.h"
 
 #include <filesystem>
+#include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
+
+class Texture;
 
 class AssetsPanel : public EditorPanel
 {
@@ -23,6 +28,7 @@ private:
     void requestAssetDeletion(const std::filesystem::path &assetPath);
     void drawDeleteAssetPopup();
     bool deletePendingAsset();
+    std::shared_ptr<Texture> getThumbnailTexture(const std::filesystem::path &imagePath, bool regenerate = false);
 
 private:
     EditorContext &m_ctx;
@@ -30,4 +36,5 @@ private:
     std::filesystem::path m_pendingDeletionPath;
     bool m_openDeleteAssetPopup = false;
     std::string m_deleteAssetError;
+    std::unordered_map<std::string, ThumbnailPreview> m_thumbnailByImagePath;
 };

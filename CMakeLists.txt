@@ -77,6 +77,7 @@ add_library(${PROJECT_NAME} STATIC
     engine/core/AudioPlayer.cpp
 
     # editor
+    engine/editor/ThumbnailResourceManager.cpp
     engine/editor/EditorLayer.cpp
     engine/editor/EditorContext.cpp
     engine/editor/EditorMouseController.cpp
@@ -104,6 +105,7 @@ add_library(${PROJECT_NAME} STATIC
     engine/renderer/CameraBoundsRenderer.cpp
 
     # utils
+    engine/util/TemporaryFile.cpp
     engine/util/log_error.cpp
     engine/util/Time.cpp
 
@@ -174,6 +176,7 @@ if(BUILD_TESTING)
         tests/unit/FixedSimulationTests.cpp
         tests/unit/InputSnapshotTests.cpp
         tests/unit/AssetLoadingTests.cpp
+        tests/unit/ThumbnailResourceManagerTests.cpp
         tests/unit/AudioLifetimeTests.cpp
         tests/unit/AuditedSystemsTests.cpp
         tests/unit/JobSystemTests.cpp

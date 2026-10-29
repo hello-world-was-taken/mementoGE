@@ -23,7 +23,8 @@ Texture::Texture(const char *texturePath, bool isTextureAtlas) : m_isTextureAtla
     generateTexture();
 
     // FIXME: Not clearing the texture buffer since we use it to access the pixel data in PixelAwareImGuiImage. We
-    // should have a better way to manage this since we don't need it in game mode. if (m_textureBuffer)
+    // should have a better way to manage this since we don't need it in game mode.
+    // if (m_textureBuffer)
     // {
     //     stbi_image_free(m_textureBuffer);
     // }
